@@ -94,18 +94,37 @@
 }
 .p-heroslider__dots button[aria-current="true"]{ width:30px; border-radius:999px; background:var(--brand); }
 
-/* ヒーローのキャラクター */
+/* ヒーローのキャラクターと吹き出し
+   吹き出しはキャラクターの真上に出したいので、2つをまとめた箱を作り、
+   その中で縦に並べています。こうすると画面幅が変わっても位置がズレません。 */
+.p-hero__mascot{
+  position:absolute; right:-8px; bottom:-14px; z-index:3;
+  width:38%; max-width:190px;
+  display:flex; flex-direction:column; align-items:center;
+}
 .p-hero__chara{
-  position:absolute; right:-8px; bottom:-14px; width:38%; max-width:190px; z-index:3;
+  width:100%; height:auto;
   filter:drop-shadow(0 10px 18px rgba(43,35,32,.22));
   animation:chara-float 3.4s ease-in-out infinite;
 }
 .p-hero__balloon{
-  position:absolute; right:34%; bottom:34%; z-index:4;
+  margin-bottom:12px; z-index:4;
   font-size:13px; padding:9px 14px; white-space:nowrap;
   animation:balloon-pop .5s .9s cubic-bezier(.2,1.4,.4,1) both;
 }
+/* 吹き出しのしっぽを中央（＝キャラクターの頭の真上）に移動 */
+.p-hero__balloon::before{ left:50%; margin-left:-11px; bottom:-16px; }
+.p-hero__balloon::after { left:50%; margin-left:-8px;  bottom:-12px; }
 @keyframes balloon-pop{ from{ opacity:0; transform:scale(.5) translateY(10px);} to{ opacity:1; transform:none; } }
+/* スマホでは吹き出しが画面の右端からはみ出すので、少し内側に寄せます */
+@media (max-width:767px){
+  .p-hero__mascot{ right:8px; }
+  .p-hero__balloon{ font-size:12.5px; padding:8px 12px; }
+}
+@media (max-width:359px){
+  .p-hero__mascot{ right:14px; }
+  .p-hero__balloon{ font-size:11.5px; padding:7px 10px; }
+}
 
 /* --------------------------------------------------------------------------
    2. 実績バー（数字はJSでカウントアップ）
