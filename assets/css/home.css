@@ -29,7 +29,7 @@
 }
 .p-hero__badge::before{ content:"📍"; }
 
-.p-hero__title{ font-size:clamp(26px,6.6vw,44px); font-weight:900; letter-spacing:.005em; }
+.p-hero__title{ font-size:clamp(27px,7.0vw,47px); font-weight:900; letter-spacing:.005em; }
 .p-hero__title .nowrap{ white-space:nowrap; }
 .p-hero__title .em{ color:var(--brand); }
 /* 文字が1文字ずつ出るアニメーション（JSで .char に分解） */
@@ -47,7 +47,7 @@
 /* 2行目。1行目より一回り小さく見せる（1行目の約6割） */
 .p-hero__title2{
   display:block; margin-top:8px;
-  font-size:clamp(17px,4.1vw,27px); line-height:1.45;
+  font-size:clamp(18px,4.6vw,31px); line-height:1.45;
 }
 .p-hero__lead{ margin-top:18px; font-size:16.5px; color:var(--ink-sub); }
 .p-hero__lead b{ color:var(--ink); font-weight:900; }
