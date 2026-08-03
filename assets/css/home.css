@@ -117,13 +117,18 @@
 .p-hero__balloon::after { left:50%; margin-left:-8px;  bottom:-12px; }
 @keyframes balloon-pop{ from{ opacity:0; transform:scale(.5) translateY(10px);} to{ opacity:1; transform:none; } }
 /* スマホでは吹き出しが画面の右端からはみ出すので、少し内側に寄せます */
+/* スマホでは写真が小さいぶんキャラクターが目立ちすぎるので、一回り小さくします。
+   吹き出しも画面の右端をはみ出さないよう内側に寄せ、文字を小さくしています。 */
 @media (max-width:767px){
-  .p-hero__mascot{ right:8px; }
-  .p-hero__balloon{ font-size:12.5px; padding:8px 12px; }
+  .p-hero__mascot{ right:8px; width:29%; max-width:128px; }
+  .p-hero__balloon{ font-size:12px; padding:7px 11px; margin-bottom:9px; }
 }
 @media (max-width:359px){
-  .p-hero__mascot{ right:14px; }
-  .p-hero__balloon{ font-size:11.5px; padding:7px 10px; }
+  /* 画面が特に狭いときは、吹き出しを中央ではなく右端に合わせて逃がします */
+  .p-hero__mascot{ right:8px; width:28%; max-width:110px; align-items:flex-end; }
+  .p-hero__balloon{ font-size:11px; padding:6px 9px; }
+  .p-hero__balloon::before{ left:auto; right:44px; margin-left:0; }
+  .p-hero__balloon::after { left:auto; right:47px; margin-left:0; }
 }
 
 /* --------------------------------------------------------------------------
@@ -575,7 +580,7 @@
 }
 @media (min-width:1024px){
   .p-hero__inner{ grid-template-columns:1.06fr .94fr; gap:48px; }
-  .p-hero__chara{ width:34%; max-width:230px; right:-20px; bottom:-24px; }
+  .p-hero__mascot{ width:34%; max-width:230px; right:-20px; bottom:-24px; }
   .p-hero__balloon{ font-size:14px; }
   .p-price__grid{ grid-template-columns:repeat(3,1fr); }
   .p-works__grid{ grid-template-columns:repeat(3,1fr); }
