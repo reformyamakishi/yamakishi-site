@@ -1,0 +1,6 @@
+Google ドライブ「ファビコン/favicons」からコピーした一式です。
+  favicon.ico / icon-16x16.png / icon-32x32.png
+  apple-touch-icon-180x180.png / icon-192x192.png / icon-512x512.png
+  site-tile-150x150.png / manifest.json
+※ favicon.ico はサイトのルート（/favicon.ico）にも置いてください。
+※ 上記以外のサイズも必要な場合は、ドライブの favicons フォルダからコピーしてください。

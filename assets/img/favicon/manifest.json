@@ -1,0 +1,16 @@
+{
+  "name": "リフォームヤマキシ｜石川・福井のリフォーム",
+  "short_name": "リフォームヤマキシ",
+  "description": "石川県・福井県に10店舗。工事費込みのパック価格と自社職人の責任施工でリフォームを承ります。",
+  "lang": "ja",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#ffffff",
+  "theme_color": "#fe3301",
+  "icons": [
+    { "src": "/assets/img/favicon/icon-192x192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/img/favicon/icon-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
