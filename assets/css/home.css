@@ -214,6 +214,37 @@
 .p-sim__choice.is-selected{ border-color:var(--brand); background:var(--brand); color:#fff; }
 .p-sim__choice svg{ width:30px; height:30px; color:var(--brand); transition:color .18s; }
 .p-sim__choice.is-selected svg{ color:#fff; }
+/* PNGアイコン。選択されると赤版から白版に差し替わります
+   （画像なのでCSSでは色を変えられないため、2種類用意しています） */
+.p-sim__ico{
+  display:block; width:34px; height:34px; margin:0 auto 2px;
+  background:center/contain no-repeat;
+}
+.p-sim__choice[data-sim-value="kitchen"] .p-sim__ico{ background-image:url("../img/icon/sim-kitchen.png"); }
+.p-sim__choice[data-sim-value="bath"] .p-sim__ico{ background-image:url("../img/icon/sim-bath.png"); }
+.p-sim__choice[data-sim-value="toilet"] .p-sim__ico{ background-image:url("../img/icon/sim-toilet.png"); }
+.p-sim__choice[data-sim-value="washroom"] .p-sim__ico{ background-image:url("../img/icon/sim-washroom.png"); }
+.p-sim__choice[data-sim-value="boiler"] .p-sim__ico{ background-image:url("../img/icon/sim-boiler.png"); }
+.p-sim__choice[data-sim-value="wall"] .p-sim__ico{ background-image:url("../img/icon/sim-wall.png"); }
+.p-sim__choice[data-sim-value="window"] .p-sim__ico{ background-image:url("../img/icon/sim-window.png"); }
+.p-sim__choice[data-sim-value="exterior"] .p-sim__ico{ background-image:url("../img/icon/sim-exterior.png"); }
+.p-sim__choice[data-sim-value="whole"] .p-sim__ico{ background-image:url("../img/icon/sim-whole.png"); }
+.p-sim__choice[data-sim-value="demolition"] .p-sim__ico{ background-image:url("../img/icon/sim-demolition.png"); }
+.p-sim__choice[data-sim-value="repair"] .p-sim__ico{ background-image:url("../img/icon/sim-repair.png"); }
+.p-sim__choice[data-sim-value="other"] .p-sim__ico{ background-image:url("../img/icon/sim-other.png"); }
+
+.p-sim__choice[data-sim-value="kitchen"].is-selected .p-sim__ico{ background-image:url("../img/icon/sim-kitchen-w.png"); }
+.p-sim__choice[data-sim-value="bath"].is-selected .p-sim__ico{ background-image:url("../img/icon/sim-bath-w.png"); }
+.p-sim__choice[data-sim-value="toilet"].is-selected .p-sim__ico{ background-image:url("../img/icon/sim-toilet-w.png"); }
+.p-sim__choice[data-sim-value="washroom"].is-selected .p-sim__ico{ background-image:url("../img/icon/sim-washroom-w.png"); }
+.p-sim__choice[data-sim-value="boiler"].is-selected .p-sim__ico{ background-image:url("../img/icon/sim-boiler-w.png"); }
+.p-sim__choice[data-sim-value="wall"].is-selected .p-sim__ico{ background-image:url("../img/icon/sim-wall-w.png"); }
+.p-sim__choice[data-sim-value="window"].is-selected .p-sim__ico{ background-image:url("../img/icon/sim-window-w.png"); }
+.p-sim__choice[data-sim-value="exterior"].is-selected .p-sim__ico{ background-image:url("../img/icon/sim-exterior-w.png"); }
+.p-sim__choice[data-sim-value="whole"].is-selected .p-sim__ico{ background-image:url("../img/icon/sim-whole-w.png"); }
+.p-sim__choice[data-sim-value="demolition"].is-selected .p-sim__ico{ background-image:url("../img/icon/sim-demolition-w.png"); }
+.p-sim__choice[data-sim-value="repair"].is-selected .p-sim__ico{ background-image:url("../img/icon/sim-repair-w.png"); }
+.p-sim__choice[data-sim-value="other"].is-selected .p-sim__ico{ background-image:url("../img/icon/sim-other-w.png"); }
 .p-sim__back{
   display:inline-flex; align-items:center; gap:6px; margin-top:16px;
   font-size:14px; font-weight:800; color:var(--ink-sub); text-decoration:underline;
@@ -227,6 +258,8 @@
   margin:6px 0 4px; color:var(--brand); font-weight:900; line-height:1.1;
 }
 .p-sim__price .num{ font-size:clamp(38px,10vw,56px); letter-spacing:-.02em; }
+/* 「ご相談ください」のように文字を出すときは、数字ほど大きくしません */
+.p-sim__price .num.is-text{ font-size:clamp(24px,6vw,34px); }
 .p-sim__price .unit{ font-size:19px; }
 .p-sim__note{ font-size:12.5px; color:var(--ink-sub); line-height:1.7; }
 .p-sim__result .c-btn{ margin-top:18px; }

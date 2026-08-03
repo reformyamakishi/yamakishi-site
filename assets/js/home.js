@@ -276,7 +276,12 @@
     boiler:   { label: '給湯器・エコキュート', range: [25, 65] },
     wall:     { label: '外壁・屋根',      range: [80, 180] },
     window:   { label: '窓・断熱',        range: [10, 60]  },
-    whole:    { label: '家まるごと',      range: [300, 800]}
+    whole:    { label: '家まるごと',      range: [300, 800]},
+    exterior:   { label: 'エクステリア',   range: [15, 90]  },
+    demolition: { label: '解体工事',       range: [80, 250] },
+    repair:     { label: '小工事',         range: [1, 15]   },
+    /* 「その他」は内容によって幅が大きすぎるため、金額を出さずご相談へ誘導します */
+    other:      { label: 'その他',         range: null, ask: true }
   };
   /* 築年数による補正 */
   var AGE_FACTOR = {
@@ -347,12 +352,28 @@
       var a = AGE_FACTOR[answer.age];
       if (!p || !a) return;
 
-      var lo = Math.round(p.range[0] * a.factor);
-      var hi = Math.round(p.range[1] * a.factor);
-
       var numEl  = sim.querySelector('[data-sim-num]');
       var partEl = sim.querySelector('[data-sim-part]');
+      var units  = sim.querySelectorAll('.p-sim__price .unit');
+      var labelEl= sim.querySelector('.p-sim__result-label');
       if (partEl) partEl.textContent = p.label;
+
+      /* 金額を出さない項目（その他）は、数字のかわりにご案内を出します */
+      if (p.ask) {
+        if (numEl) { numEl.textContent = '内容をお聞かせください'; numEl.classList.add('is-text'); }
+        for (var i = 0; i < units.length; i++) units[i].style.display = 'none';
+        if (labelEl) labelEl.textContent = 'ご希望の内容によって費用が変わります';
+        return;
+      }
+      if (numEl) numEl.classList.remove('is-text');
+      for (var j = 0; j < units.length; j++) units[j].style.display = '';
+      if (labelEl) {
+        labelEl.innerHTML = '<span data-sim-part></span>のリフォーム費用は、だいたい';
+        labelEl.querySelector('[data-sim-part]').textContent = p.label;
+      }
+
+      var lo = Math.round(p.range[0] * a.factor);
+      var hi = Math.round(p.range[1] * a.factor);
 
       /* 数字をカウントアップして表示 */
       if (numEl) {
