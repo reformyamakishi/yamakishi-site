@@ -1,6 +1,19 @@
-Google ドライブ「ファビコン/favicons」からコピーした一式です。
-  favicon.ico / icon-16x16.png / icon-32x32.png
-  apple-touch-icon-180x180.png / icon-192x192.png / icon-512x512.png
-  site-tile-150x150.png / manifest.json
-※ favicon.ico はサイトのルート（/favicon.ico）にも置いてください。
-※ 上記以外のサイズも必要な場合は、ドライブの favicons フォルダからコピーしてください。
+ファビコン一式（logo02.png のシンボルマークから生成）
+────────────────────────────────────
+favicon.ico ................ 16/32/48px を1ファイルに収めたマルチサイズ
+                             ※サイトのルート（/favicon.ico）にも同じものを配置済み
+icon-16x16.png ............. ブラウザのタブ
+icon-32x32.png ............. ブラウザのタブ（高解像度ディスプレイ）
+icon-48x48.png ............. ブックマーク・ショートカット
+apple-touch-icon-180x180.png iPhone / iPad のホーム画面
+icon-192x192.png ........... Android のホーム画面
+icon-512x512.png ........... スプラッシュ画面・ストア表示
+icon-maskable-512x512.png .. Android の丸型／角丸切り抜き用（余白を多めに確保）
+site-tile-150x150.png ...... Windows のスタートタイル
+manifest.json .............. 上記アイコンとテーマカラーの定義
+
+背景は白（#ffffff）です。ブラウザのダークモードでもマークが沈まないよう、
+透過ではなく白地に赤マークで統一しています。
+
+作り直したい場合は、assets/img/logo/logo02.png の上部シンボル部分を
+正方形の中央に置いて書き出してください。
