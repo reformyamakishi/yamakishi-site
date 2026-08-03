@@ -50,6 +50,7 @@
   font-size:clamp(17px,4.1vw,27px); line-height:1.45;
 }
 .p-hero__lead{ margin-top:18px; font-size:16.5px; color:var(--ink-sub); }
+.p-hero__lead b{ color:var(--ink); font-weight:900; }
 
 .p-hero__points{ display:flex; flex-wrap:wrap; gap:8px; margin-top:20px; }
 .p-hero__points li{
