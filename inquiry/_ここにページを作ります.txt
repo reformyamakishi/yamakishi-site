@@ -1,1 +1,0 @@
-このフォルダに inquiry ページの index.html を置きます。products/index.html を複製してお使いください。
