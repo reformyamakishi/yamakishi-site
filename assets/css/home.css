@@ -217,7 +217,7 @@
 /* PNGアイコン。選択されると赤版から白版に差し替わります
    （画像なのでCSSでは色を変えられないため、2種類用意しています） */
 .p-sim__ico{
-  display:block; width:34px; height:34px; margin:0 auto 2px;
+  display:block; width:44px; height:44px; margin:0 auto 2px;
   background:center/contain no-repeat;
 }
 .p-sim__choice[data-sim-value="kitchen"] .p-sim__ico{ background-image:url("../img/icon/sim-kitchen.png"); }
@@ -341,7 +341,7 @@
   transition:border-color .2s, background .2s, transform .2s;
 }
 .p-menu__item:hover{ border-color:var(--brand); background:var(--brand-tint); transform:translateY(-4px); }
-.p-menu__icon{ width:46px; height:46px; color:var(--brand); }
+.p-menu__icon{ width:58px; height:58px; color:var(--brand); }
 .p-menu__icon svg{ width:100%; height:100%; }
 /* メニューのアイコン（支給いただいたPNG） */
 .p-menu__item[data-icon] .p-menu__icon{ background:center/contain no-repeat; }
