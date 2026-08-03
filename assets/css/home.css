@@ -150,7 +150,12 @@
    3. お悩み → 3つの入口
    -------------------------------------------------------------------------- */
 .p-worry{ position:relative; }
+/* お困りごとの吹き出し。PCで最後の1つだけが2行目に落ちて寂しく見えないよう、
+   横幅に上限をつけて 4個＋3個 くらいで折り返させています。 */
 .p-worry__bubbles{ display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-bottom:34px; }
+@media (min-width:1024px){
+  .p-worry__bubbles{ max-width:840px; margin-inline:auto; }
+}
 .p-worry__bubbles li{
   background:#fff; border:2px dashed var(--brand-tint2); border-radius:999px;
   padding:9px 18px; font-size:14.5px; font-weight:800; color:var(--ink-sub);
