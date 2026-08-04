@@ -359,9 +359,15 @@
 .p-menu__item[data-icon="whole"] .p-menu__icon{ background-image:url("../img/icon/sim-whole.png"); }
 .p-menu__item[data-icon="ecocute"] .p-menu__icon{ background-image:url("../img/icon/sim-ecocute.png"); }
 .p-menu__item[data-icon="other"] .p-menu__icon{ background-image:url("../img/icon/sim-other.png"); }
-/* ★IH のアイコンは未支給です。届き次第、下の1行だけ差し替えてください。
-   いまは場所だけ確保するため、薄い枠を表示しています。 */
-.p-menu__item[data-icon="ih"] .p-menu__icon{
+.p-menu__item[data-icon="carport"] .p-menu__icon{ background-image:url("../img/icon/sim-exterior.png"); }
+/* ★下記のアイコンは未支給です。届き次第、それぞれ background-image を指定してください。
+   いまは場所だけ確保するため、薄い点線の枠を表示しています。
+   IH ／ 内装・改装 ／ 玄関ドア ／ 物置 ／ ベランダ・サンルーム */
+.p-menu__item[data-icon="ih"] .p-menu__icon,
+.p-menu__item[data-icon="renovation"] .p-menu__icon,
+.p-menu__item[data-icon="door"] .p-menu__icon,
+.p-menu__item[data-icon="storage"] .p-menu__icon,
+.p-menu__item[data-icon="veranda"] .p-menu__icon{
   background-image:none;
   border:2px dashed var(--brand-tint2); border-radius:12px;
 }
@@ -667,7 +673,7 @@
 /* メニューは14項目。PCでは7列×2段ではなく、ゆったり見せるため
    1024px以上で「7個ずつ2段」にそろえています。 */
 @media (min-width:1024px){
-  .p-menu__grid{ grid-template-columns:repeat(7,1fr); gap:10px; }
+  .p-menu__grid{ grid-template-columns:repeat(6,1fr); gap:10px; }
   .p-menu__item{ padding:16px 8px; }
   .p-menu__note{ font-size:11.5px; }
 }
