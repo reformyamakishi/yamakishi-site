@@ -272,3 +272,28 @@
   .p-rsvflow{ grid-template-columns:repeat(3,1fr); }
   .p-rsvflow li.is-gift{ grid-column:auto; }
 }
+
+/* --------------------------------------------------------------------------
+   ご注意事項（来店予約ページ下部）
+   -------------------------------------------------------------------------- */
+.p-notes__lead{
+  text-align:center; font-size:clamp(16px,3.6vw,19px); font-weight:900;
+  line-height:1.8; margin-bottom:32px;
+}
+.p-notes__title{
+  font-size:18px; font-weight:900; padding-left:12px; margin-bottom:16px;
+  border-left:5px solid var(--brand);
+}
+.p-notes__list{
+  background:var(--bg-soft); border-radius:var(--radius);
+  padding:20px 22px; display:grid; gap:11px;
+}
+.p-notes__list li{
+  position:relative; padding-left:1.2em;
+  font-size:14px; line-height:1.85; color:var(--ink-sub);
+}
+.p-notes__list li::before{
+  content:"●"; position:absolute; left:0; top:.15em;
+  font-size:.6em; color:var(--brand);
+}
+.p-notes__list small{ display:block; margin-top:2px; font-size:12.5px; color:var(--ink-light); }
