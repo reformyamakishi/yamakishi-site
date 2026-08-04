@@ -357,7 +357,14 @@
 .p-menu__item[data-icon="window"] .p-menu__icon{ background-image:url("../img/icon/sim-window.png"); }
 .p-menu__item[data-icon="repair"] .p-menu__icon{ background-image:url("../img/icon/sim-repair.png"); }
 .p-menu__item[data-icon="whole"] .p-menu__icon{ background-image:url("../img/icon/sim-whole.png"); }
-.p-menu__item[data-icon="allelectric"] .p-menu__icon{ background-image:url("../img/icon/sim-allelectric.png"); }
+.p-menu__item[data-icon="ecocute"] .p-menu__icon{ background-image:url("../img/icon/sim-ecocute.png"); }
+.p-menu__item[data-icon="other"] .p-menu__icon{ background-image:url("../img/icon/sim-other.png"); }
+/* ★IH のアイコンは未支給です。届き次第、下の1行だけ差し替えてください。
+   いまは場所だけ確保するため、薄い枠を表示しています。 */
+.p-menu__item[data-icon="ih"] .p-menu__icon{
+  background-image:none;
+  border:2px dashed var(--brand-tint2); border-radius:12px;
+}
 .p-menu__item[data-icon="interior"] .p-menu__icon{ background-image:url("../img/icon/sim-interior.png"); }
 .p-menu__name{ font-size:15px; font-weight:900; line-height:1.35; }
 .p-menu__note{ font-size:11.5px; color:var(--ink-sub); font-weight:700; }
@@ -620,7 +627,7 @@
   .p-route__item{ flex-direction:column; text-align:center; padding:26px 18px; }
   .p-route__arrow{ display:none; }
   .p-price__grid{ grid-template-columns:repeat(2,1fr); }
-  .p-menu__grid{ grid-template-columns:repeat(4,1fr); }
+  .p-menu__grid{ grid-template-columns:repeat(3,1fr); }
   .p-reason__grid{ grid-template-columns:repeat(2,1fr); }
   .p-works__grid{ grid-template-columns:repeat(2,1fr); }
   .p-voice__grid{ grid-template-columns:repeat(3,1fr); }
@@ -654,3 +661,11 @@
 }
 .p-reason__more a::after{ content:"›"; font-size:20px; line-height:1; }
 .p-reason__more a:hover{ border-color:var(--brand); }
+
+/* メニューは14項目。PCでは7列×2段ではなく、ゆったり見せるため
+   1024px以上で「7個ずつ2段」にそろえています。 */
+@media (min-width:1024px){
+  .p-menu__grid{ grid-template-columns:repeat(7,1fr); gap:10px; }
+  .p-menu__item{ padding:16px 8px; }
+  .p-menu__note{ font-size:11.5px; }
+}
