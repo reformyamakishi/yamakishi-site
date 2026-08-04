@@ -285,7 +285,7 @@
   };
   /* 築年数による補正 */
   var AGE_FACTOR = {
-    '10':  { label: '築0〜10年',   factor: 1.00 },
+    '10':  { label: '築10年未満',  factor: 1.00 },
     '20':  { label: '築11〜20年',  factor: 1.04 },
     '30':  { label: '築21〜30年',  factor: 1.09 },
     '40':  { label: '築31〜40年',  factor: 1.14 },
