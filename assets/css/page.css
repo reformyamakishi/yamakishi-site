@@ -178,6 +178,8 @@
 }
 .p-rsvflow h3{ font-size:17px; font-weight:900; }
 .p-rsvflow p{ margin-top:6px; font-size:14.5px; color:var(--ink-sub); line-height:1.8; }
+/* 補足の注記。本文より一段小さく、控えめに見せます */
+.p-rsvflow__sub{ margin-top:6px; font-size:12.5px !important; color:var(--ink-light); }
 .p-rsvflow__note{ margin-top:20px; font-size:13.5px; color:var(--ink-sub); text-align:center; }
 
 /* --------------------------------------------------------------------------
