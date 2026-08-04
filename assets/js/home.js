@@ -269,14 +269,15 @@
      ================================================================== */
   var PRICE = {
     /* 部位ごとの [下限, 上限]（万円・税込・工事費込み）
-       ※金額はすべて仮の数字です。実際の相場に合わせて書き換えてください。 */
-    kitchen: { label: 'キッチン',           range: [55, 130] },
-    bath:    { label: 'お風呂',             range: [65, 150] },
-    toilet:  { label: 'トイレ・洗面台',     range: [15, 40]  },
-    boiler:  { label: '給湯器・エコキュート', range: [25, 65] },
-    wall:    { label: '外壁・屋根',         range: [80, 180] },
-    /* 「その他」は内容によって幅が大きすぎるため、金額を出さずご相談へ誘導します */
-    other:   { label: 'その他',             range: null, ask: true }
+       ★下限はパック価格の実数値です。上限はまだ仮の数字なので、
+         実際の上限が決まったら書き換えてください。 */
+    kitchen: { label: 'キッチン',            range: [59.8, 130] },
+    bath:    { label: 'お風呂',              range: [84.8, 160] },
+    toilet:  { label: 'トイレ・洗面台',      range: [7.48, 40]  },
+    boiler:  { label: '給湯器・エコキュート', range: null, ask: true },
+    wall:    { label: '外壁・屋根',          range: [49.8, 180] },
+    /* 内容の幅が大きすぎるものは、金額を出さずご相談へ誘導します */
+    other:   { label: 'その他',              range: null, ask: true }
   };
   /* 築年数による補正 */
   var AGE_FACTOR = {
@@ -368,21 +369,23 @@
         labelEl.querySelector('[data-sim-part]').textContent = p.label;
       }
 
-      var lo = Math.round(p.range[0] * a.factor);
-      var hi = Math.round(p.range[1] * a.factor);
+      /* 小数のある金額（7.48万円など）もそのまま見せられるよう、小数第2位までで丸めます */
+      function fmt(v) { return String(Math.round(v * 100) / 100); }
+      var lo = Math.round(p.range[0] * a.factor * 100) / 100;
+      var hi = Math.round(p.range[1] * a.factor * 100) / 100;
 
       /* 数字をカウントアップして表示 */
       if (numEl) {
         if (reduceMotion) {
-          numEl.textContent = lo + '〜' + hi;
+          numEl.textContent = fmt(lo) + '〜' + fmt(hi);
         } else {
           var t0 = performance.now();
           (function tick(now) {
             var t = Math.min((now - t0) / 900, 1);
             var e2 = 1 - Math.pow(1 - t, 3);
-            numEl.textContent = Math.round(lo * e2) + '〜' + Math.round(hi * e2);
+            numEl.textContent = fmt(lo * e2) + '〜' + fmt(hi * e2);
             if (t < 1) requestAnimationFrame(tick);
-            else numEl.textContent = lo + '〜' + hi;
+            else numEl.textContent = fmt(lo) + '〜' + fmt(hi);
           })(t0);
         }
       }
