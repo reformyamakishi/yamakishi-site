@@ -614,6 +614,8 @@
    -------------------------------------------------------------------------- */
 @media (min-width:600px){
   .p-sim__choices{ grid-template-columns:repeat(4,1fr); }
+  /* 1問目は6択なので、3列×2段に */
+  .p-sim__choices--3{ grid-template-columns:repeat(3,1fr); }
   /* 築年数は5択なので、5列に並べて1つだけ余らないようにします */
   .p-sim__choices--5{ grid-template-columns:repeat(5,1fr); }
 }

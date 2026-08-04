@@ -268,20 +268,15 @@
         ※ 金額は目安。実データに合わせて PRICE を書き換えてください
      ================================================================== */
   var PRICE = {
-    /* 部位ごとの [下限, 上限]（万円・税込・工事費込み） */
-    kitchen:  { label: 'キッチン',        range: [55, 130] },
-    bath:     { label: 'お風呂',          range: [65, 150] },
-    toilet:   { label: 'トイレ',          range: [15, 40]  },
-    washroom: { label: '洗面台',          range: [15, 40]  },
-    boiler:   { label: '給湯器・エコキュート', range: [25, 65] },
-    wall:     { label: '外壁・屋根',      range: [80, 180] },
-    window:   { label: '窓・断熱',        range: [10, 60]  },
-    whole:    { label: '家まるごと',      range: [300, 800]},
-    exterior:   { label: 'エクステリア',   range: [15, 90]  },
-    demolition: { label: '解体工事',       range: [80, 250] },
-    repair:     { label: '小工事',         range: [1, 15]   },
+    /* 部位ごとの [下限, 上限]（万円・税込・工事費込み）
+       ※金額はすべて仮の数字です。実際の相場に合わせて書き換えてください。 */
+    kitchen: { label: 'キッチン',           range: [55, 130] },
+    bath:    { label: 'お風呂',             range: [65, 150] },
+    toilet:  { label: 'トイレ・洗面台',     range: [15, 40]  },
+    boiler:  { label: '給湯器・エコキュート', range: [25, 65] },
+    wall:    { label: '外壁・屋根',         range: [80, 180] },
     /* 「その他」は内容によって幅が大きすぎるため、金額を出さずご相談へ誘導します */
-    other:      { label: 'その他',         range: null, ask: true }
+    other:   { label: 'その他',             range: null, ask: true }
   };
   /* 築年数による補正 */
   var AGE_FACTOR = {
