@@ -29,7 +29,7 @@
 }
 .p-hero__badge::before{ content:"📍"; }
 
-.p-hero__title{ font-size:clamp(27px,7.0vw,47px); font-weight:900; letter-spacing:.005em; }
+.p-hero__title{ font-size:clamp(30px,8.4vw,58px); font-weight:900; letter-spacing:.005em; }
 .p-hero__title .nowrap{ white-space:nowrap; }
 .p-hero__title .em{ color:var(--brand); }
 /* 文字が1文字ずつ出るアニメーション（JSで .char に分解） */
