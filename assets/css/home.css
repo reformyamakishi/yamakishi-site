@@ -44,11 +44,13 @@
   display:block; font-size:clamp(15px,3.4vw,20px); font-weight:900;
   color:var(--ink-sub); margin-bottom:10px;
 }
-/* 2行目。1行目より一回り小さく見せる（1行目の約6割） */
+/* 大きい行に添える小さめの行（1行目の約6割） */
 .p-hero__title2{
   display:block; margin-top:8px;
   font-size:clamp(18px,4.6vw,31px); line-height:1.45;
 }
+/* 大きい行の「上」に置くとき */
+.p-hero__title2--lead{ margin-top:0; margin-bottom:8px; }
 .p-hero__lead{ margin-top:18px; font-size:16.5px; color:var(--ink-sub); }
 .p-hero__lead b{ color:var(--ink); font-weight:900; }
 
