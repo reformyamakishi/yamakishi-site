@@ -260,6 +260,10 @@
 
 /* 他の相談方法 */
 .p-rsvalt{ display:grid; gap:12px; max-width:460px; margin:0 auto 14px; }
+/* 電話番号のボタン。数字を大きく見せます */
+.p-rsvalt__tel .c-btn__label{ font-size:22px; letter-spacing:.02em; }
+.p-rsvalt__shop{ text-align:center; font-size:15px; font-weight:800; margin-bottom:6px; }
+.p-rsvalt__shop a{ color:var(--brand-dark); }
 
 @media (min-width:768px){
   .p-benefit__box{ grid-template-columns:1.1fr .9fr; align-items:center; padding:32px; gap:32px; }
