@@ -1,0 +1,164 @@
+@charset "UTF-8";
+/* ==========================================================================
+   lp.css ─ ランディングページ「リフォームは生活改善」専用
+   ※ common.css → page.css → lp.css の順で読み込んでください
+   ========================================================================== */
+
+.pc-only{ display:none; }
+@media (min-width:768px){ .pc-only{ display:inline; } }
+
+/* --------------------------------------------------------------------------
+   ヒーロー
+   -------------------------------------------------------------------------- */
+.p-lphero{
+  position:relative; overflow:hidden;
+  background:
+    radial-gradient(900px 420px at 82% 12%, rgba(254,51,1,.10), transparent 62%),
+    linear-gradient(180deg,#fff6f2 0%, #ffffff 78%);
+  padding:40px 0 44px;
+}
+.p-lphero::before{
+  content:""; position:absolute; inset:0; pointer-events:none; opacity:.05;
+  background:repeating-linear-gradient(-72deg, var(--brand) 0 3px, transparent 3px 30px);
+}
+.p-lphero__inner{ position:relative; }
+.p-lphero__sub{ font-size:clamp(14px,3.2vw,18px); font-weight:900; color:var(--ink-sub); margin-bottom:10px; }
+.p-lphero__title{ font-size:clamp(28px,7.2vw,50px); font-weight:900; line-height:1.35; }
+.p-lphero__title em{ font-style:normal; color:var(--brand); }
+.p-lphero__title2{
+  margin-top:10px; font-size:clamp(17px,4.2vw,28px); font-weight:900; line-height:1.5;
+}
+.p-lphero__title2 em{ font-style:normal; color:var(--brand); }
+.p-lphero__lead{
+  margin-top:20px; font-size:16px; color:var(--ink-sub); line-height:2;
+  max-width:640px;
+}
+.p-lphero__chara{
+  position:absolute; right:-10px; bottom:-40px; width:30%; max-width:150px;
+  filter:drop-shadow(0 10px 18px rgba(43,35,32,.2));
+}
+
+/* --------------------------------------------------------------------------
+   考え方
+   -------------------------------------------------------------------------- */
+.p-lpconcept{
+  background:#fff; border:2px solid var(--border); border-radius:var(--radius-lg);
+  padding:24px 22px; box-shadow:var(--shadow);
+}
+.p-lpconcept p{ font-size:16px; line-height:2.05; color:var(--ink-sub); }
+.p-lpconcept p + p{ margin-top:18px; }
+.p-lpconcept b{ color:var(--ink); }
+
+/* --------------------------------------------------------------------------
+   お悩みの例
+   -------------------------------------------------------------------------- */
+.p-lpworry{
+  display:flex; flex-wrap:wrap; justify-content:center; gap:10px;
+  max-width:860px; margin-inline:auto;
+}
+.p-lpworry li{
+  background:#fff; border:2px dashed var(--brand-tint2); border-radius:999px;
+  padding:10px 20px; font-size:15px; font-weight:800; color:var(--ink-sub);
+}
+
+/* --------------------------------------------------------------------------
+   6つのこだわり
+   -------------------------------------------------------------------------- */
+.p-lpcommit{ display:grid; gap:16px; }
+.p-lpcommit article{
+  position:relative; background:#fff; border:2px solid var(--border);
+  border-radius:var(--radius); padding:22px 22px 22px 24px;
+  transition:border-color .2s, transform .2s, box-shadow .2s;
+}
+.p-lpcommit article:hover{ border-color:var(--brand); transform:translateY(-4px); box-shadow:var(--shadow-md); }
+.p-lpcommit__no{
+  display:grid; place-items:center; width:40px; height:40px; border-radius:12px;
+  background:var(--brand); color:#fff; font-weight:900; font-size:19px; margin-bottom:12px;
+}
+.p-lpcommit h3{ font-size:19px; font-weight:900; }
+.p-lpcommit p{ margin-top:8px; font-size:14.5px; line-height:1.9; color:var(--ink-sub); }
+
+/* --------------------------------------------------------------------------
+   工期の目安
+   -------------------------------------------------------------------------- */
+.p-lpspeed{ display:grid; grid-template-columns:repeat(2,1fr); gap:12px; max-width:760px; margin-inline:auto; }
+.p-lpspeed li{
+  background:#fff; border:2px solid var(--brand-tint2); border-radius:var(--radius);
+  padding:18px 10px; text-align:center;
+}
+.p-lpspeed__name{ display:block; font-size:14.5px; font-weight:900; color:var(--ink-sub); }
+.p-lpspeed__day{ display:block; margin-top:6px; font-size:15px; font-weight:900; color:var(--brand-dark); }
+.p-lpspeed__day b{ font-size:32px; letter-spacing:-.02em; }
+.p-lpnote{ margin-top:18px; text-align:center; font-size:13px; color:var(--ink-sub); }
+
+/* --------------------------------------------------------------------------
+   12の約束
+   -------------------------------------------------------------------------- */
+.p-lppromise{ display:grid; gap:18px; }
+.p-lppromise__group{
+  background:#fff; border:2px solid var(--border); border-radius:var(--radius); padding:20px 20px 22px;
+}
+.p-lppromise__group h3{
+  font-size:16px; font-weight:900; color:var(--brand-dark);
+  padding-bottom:10px; margin-bottom:14px; border-bottom:2px dashed var(--brand-tint2);
+}
+.p-lppromise ul{ display:grid; gap:12px; }
+.p-lppromise li{
+  position:relative; padding-left:1.5em; font-size:14px; line-height:1.85; color:var(--ink-sub);
+}
+.p-lppromise li::before{
+  content:""; position:absolute; left:0; top:.45em; width:15px; height:15px; border-radius:50%;
+  background:var(--brand);
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M20 6 9 17l-5-5' fill='none' stroke='%23000' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/12px no-repeat;
+          mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M20 6 9 17l-5-5' fill='none' stroke='%23000' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/12px no-repeat;
+}
+.p-lppromise li b{ display:block; color:var(--ink); font-size:14.5px; }
+
+/* --------------------------------------------------------------------------
+   ダブル保証
+   -------------------------------------------------------------------------- */
+.p-lpwarranty{ display:grid; gap:14px; align-items:center; }
+.p-lpwarranty__card{
+  background:#fff; border:3px solid var(--brand); border-radius:var(--radius-lg);
+  padding:22px; text-align:center; box-shadow:var(--shadow);
+}
+.p-lpwarranty__tag{
+  display:inline-block; background:var(--brand); color:#fff;
+  font-size:12.5px; font-weight:900; padding:4px 14px; border-radius:999px;
+}
+.p-lpwarranty__card h3{ margin-top:12px; font-size:21px; font-weight:900; }
+.p-lpwarranty__card p{ margin-top:10px; font-size:14.5px; line-height:1.9; color:var(--ink-sub); }
+.p-lpwarranty__card small{ display:block; margin-top:10px; font-size:12.5px; color:var(--ink-light); }
+.p-lpwarranty__plus{
+  display:block; text-align:center; font-size:28px; font-weight:900; color:var(--brand);
+}
+
+/* --------------------------------------------------------------------------
+   最後のCTA
+   -------------------------------------------------------------------------- */
+.p-lpcta{
+  background:linear-gradient(180deg,#fff8f5,#ffffff);
+  border:3px solid var(--brand); border-radius:var(--radius-lg);
+  padding:28px 22px 30px; text-align:center; box-shadow:var(--shadow);
+}
+.p-lpcta__chara{ width:110px; margin:0 auto 10px; display:block; }
+.p-lpcta__title{ font-size:clamp(21px,5vw,30px); font-weight:900; }
+.p-lpcta__text{ margin-top:14px; font-size:15px; line-height:1.9; color:var(--ink-sub); }
+.p-lpcta__btns{ display:grid; gap:12px; max-width:430px; margin:24px auto 0; }
+
+/* --------------------------------------------------------------------------
+   画面が広いとき
+   -------------------------------------------------------------------------- */
+@media (min-width:768px){
+  .p-lphero{ padding:56px 0 60px; }
+  .p-lphero__chara{ width:26%; max-width:200px; bottom:-46px; right:0; }
+  .p-lpconcept{ padding:34px 36px; }
+  .p-lpcommit{ grid-template-columns:repeat(2,1fr); }
+  .p-lpspeed{ grid-template-columns:repeat(4,1fr); }
+  .p-lppromise{ grid-template-columns:repeat(3,1fr); align-items:start; }
+  .p-lpwarranty{ grid-template-columns:1fr auto 1fr; }
+  .p-lpcta{ padding:40px; }
+}
+@media (min-width:1024px){
+  .p-lpcommit{ grid-template-columns:repeat(3,1fr); }
+}

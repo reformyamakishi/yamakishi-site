@@ -605,6 +605,8 @@
    -------------------------------------------------------------------------- */
 @media (min-width:600px){
   .p-sim__choices{ grid-template-columns:repeat(4,1fr); }
+  /* 築年数は5択なので、5列に並べて1つだけ余らないようにします */
+  .p-sim__choices--5{ grid-template-columns:repeat(5,1fr); }
 }
 @media (min-width:768px){
   .p-hero{ padding:48px 0 64px; }
@@ -640,3 +642,13 @@
   .p-cta__box{ grid-template-columns:1fr 1fr; max-width:760px; }
   .p-cta__tel{ grid-column:1/-1; }
 }
+
+/* 「選ばれる理由」の下から、考え方のページへ */
+.p-reason__more{ margin-top:28px; text-align:center; font-size:15px; font-weight:800; }
+.p-reason__more a{
+  display:inline-flex; align-items:center; gap:8px;
+  color:var(--brand-dark); text-decoration:none;
+  border-bottom:2px solid var(--brand-tint2); padding-bottom:3px;
+}
+.p-reason__more a::after{ content:"›"; font-size:20px; line-height:1; }
+.p-reason__more a:hover{ border-color:var(--brand); }
