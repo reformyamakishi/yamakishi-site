@@ -1,0 +1,79 @@
+# ============================================================
+# プレビューサイトの自動作成
+#
+# main に Push されるたびに、GitHub が自動で
+# プレビュー用のコピー（gh-pages ブランチ）を作り直します。
+#
+#   公開先: https://reformyamakishi.github.io/yamakishi-site/
+#
+# このファイルは触らなくて大丈夫です。
+# gh-pages ブランチも自動生成されるので、直接編集しないでください。
+# ============================================================
+name: プレビューサイトを更新
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:      # 手動でも実行できるようにしておく
+
+permissions:
+  contents: write
+
+concurrency:
+  group: preview
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: ソースを取得
+        uses: actions/checkout@v4
+
+      - name: プレビュー用に加工する
+        env:
+          BASE: /yamakishi-site
+        run: |
+          set -e
+
+          # 作業用フォルダ _site に、公開するものだけをコピー
+          mkdir -p _site
+          rsync -a ./ _site/ \
+            --exclude '.git' \
+            --exclude '.github' \
+            --exclude '_site' \
+            --exclude 'wp'
+
+          cd _site
+
+          # 1) リンクの書き換え
+          find . -name '*.html' -print0 | xargs -0 -r sed -i \
+            -e "s|href=\"/|href=\"$BASE/|g" \
+            -e "s|src=\"/|src=\"$BASE/|g" \
+            -e "s|content=\"/assets|content=\"$BASE/assets|g"
+
+          if [ -f assets/img/favicon/manifest.json ]; then
+            sed -i \
+              -e "s|\"/assets|\"$BASE/assets|g" \
+              -e "s|\"start_url\": \"/\"|\"start_url\": \"$BASE/\"|" \
+              -e "s|\"scope\": \"/\"|\"scope\": \"$BASE/\"|" \
+              assets/img/favicon/manifest.json
+          fi
+
+          # 2) 検索エンジン除け（gh-pages側だけ。本番用のmainは汚しません）
+          printf 'User-agent: *\nDisallow: /\n' > robots.txt
+          find . -name '*.html' -print0 | xargs -0 -r sed -i \
+            's|<meta name="viewport"|<meta name="robots" content="noindex,nofollow">\n<meta name="viewport"|'
+
+          # 3) GitHub Pages の Jekyll 処理を止める
+          touch .nojekyll
+
+          echo "----- 加工後のファイル数 -----"
+          find . -type f | wc -l
+
+      - name: gh-pages ブランチに反映
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./_site
+          publish_branch: gh-pages
