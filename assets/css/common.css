@@ -202,7 +202,9 @@ address{ font-style:normal; }
   background:var(--brand); color:#fff; text-align:center;
   font-size:13px; font-weight:800; letter-spacing:.02em; padding:8px 14px;
 }
-.p-notice a{ color:#fff; text-decoration:underline; }
+/* 「くわしく見る」だけ黄色にして、赤い帯の中で目立たせています */
+.p-notice a{ color:#ffe14d; text-decoration:underline; }
+.p-notice a:hover{ color:#fff59a; }
 
 .p-header{
   position:sticky; top:0; z-index:60; background:#fff;
