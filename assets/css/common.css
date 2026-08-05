@@ -133,6 +133,7 @@ address{ font-style:normal; }
 .c-btn{
   --btn-bg:var(--brand); --btn-fg:#fff; --btn-shadow:var(--brand-deep);
   position:relative; display:inline-flex; align-items:center; justify-content:center;
+  min-width:0;
   gap:12px; min-height:60px; padding:14px 28px;
   background:var(--btn-bg); color:var(--btn-fg);
   border-radius:999px; box-shadow:0 4px 0 var(--btn-shadow);
@@ -142,8 +143,16 @@ address{ font-style:normal; }
 .c-btn:hover{ transform:translateY(-3px); box-shadow:0 7px 0 var(--btn-shadow), var(--shadow-md); }
 .c-btn:active{ transform:translateY(2px); box-shadow:0 2px 0 var(--btn-shadow); }
 .c-btn__icon{ width:26px; height:26px; flex:none; }
-.c-btn__label{ display:flex; flex-direction:column; align-items:center; gap:2px; white-space:nowrap; }
-.c-btn__sub{ font-size:12px; font-weight:700; opacity:.94; letter-spacing:.02em; }
+/* ボタンの文字。主ラベルは1行のまま、補足だけ折り返せるようにします。
+   （補足まで1行に固定すると、狭い画面でボタンが画面外へはみ出します） */
+.c-btn__label{
+  display:flex; flex-direction:column; align-items:center; gap:2px;
+  white-space:nowrap; min-width:0;
+}
+.c-btn__sub{
+  font-size:12px; font-weight:700; opacity:.94; letter-spacing:.02em;
+  white-space:normal; line-height:1.5;
+}
 
 .c-btn--line{ --btn-bg:var(--line-green); --btn-shadow:#048c40; }
 .c-btn--dark{ --btn-bg:var(--ink); --btn-shadow:#000; }
@@ -193,7 +202,9 @@ address{ font-style:normal; }
   background:var(--brand); color:#fff; text-align:center;
   font-size:13px; font-weight:800; letter-spacing:.02em; padding:8px 14px;
 }
-.p-notice a{ color:#fff; text-decoration:underline; }
+/* 「くわしく見る」だけ黄色にして、赤い帯の中で目立たせています */
+.p-notice a{ color:#ffe14d; text-decoration:underline; }
+.p-notice a:hover{ color:#fff59a; }
 
 .p-header{
   position:sticky; top:0; z-index:60; background:#fff;
