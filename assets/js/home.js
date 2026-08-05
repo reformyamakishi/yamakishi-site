@@ -110,6 +110,21 @@
     var nums = document.querySelectorAll('[data-count]');
     if (!nums.length) return;
 
+    /* 創業からの年数を自動で計算します。
+       毎年10月1日を迎えるたびに1つ増えます（創業＝1899年10月）。
+       サイトを直さなくても、ずっと正しい数字が出ます。 */
+    (function updateFoundedYears() {
+      var el = document.querySelector('[data-founded]');
+      if (!el) return;
+      var FOUNDED_YEAR  = parseInt(el.dataset.founded, 10);   // 1899
+      var FOUNDED_MONTH = parseInt(el.dataset.foundedMonth || '10', 10);
+      var now   = new Date();
+      var years = now.getFullYear() - FOUNDED_YEAR;
+      if (now.getMonth() + 1 < FOUNDED_MONTH) years -= 1;     // 記念月がまだ来ていない年は1つ引く
+      el.dataset.count = String(years);
+      el.textContent   = String(years);
+    })();
+
     if (reduceMotion || !('IntersectionObserver' in window)) {
       nums.forEach(function (el) { el.textContent = el.dataset.count; });
       return;

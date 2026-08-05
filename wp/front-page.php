@@ -8,7 +8,7 @@
  *
  * 【必要な準備】
  *   functions.php に wp/functions-snippet.php の内容を追記
- *   → カスタム投稿タイプ works（施工事例）／ voice（お客様の声）が登録されます
+ *   → カスタム投稿タイプ ymkrf_works（施工事例）／ ymkrf_voice（お客様の声）が登録されます
  *   → お知らせは通常の投稿（post）を使います
  *
  * 【画像パスの書き換え】
@@ -28,7 +28,7 @@ get_header();
 
 
 <!-- ★1 ==================================================================
-     施工事例（カスタム投稿タイプ works）
+     施工事例（カスタム投稿タイプ ymkrf_works）
      ================================================================== -->
 <section class="l-section l-section--soft" id="works">
   <div class="l-wrap">
@@ -40,7 +40,7 @@ get_header();
 
     <?php
     $works = new WP_Query( array(
-      'post_type'      => 'works',
+      'post_type'      => 'ymkrf_works',
       'posts_per_page' => 3,
       'no_found_rows'  => true,   // ページャ不要なので高速化
     ) );
@@ -51,11 +51,11 @@ get_header();
         $i = 0;
         while ( $works->have_posts() ) : $works->the_post();
           $i++;
-          $cats   = get_the_terms( get_the_ID(), 'works_cat' );
-          $areas  = get_the_terms( get_the_ID(), 'works_area' );
-          $price  = get_post_meta( get_the_ID(), 'price', true );
-          $period = get_post_meta( get_the_ID(), 'period', true );
-          $before = get_post_meta( get_the_ID(), 'before_img', true );
+          $cats   = get_the_terms( get_the_ID(), 'ymkrf_works_cat' );
+          $areas  = get_the_terms( get_the_ID(), 'ymkrf_works_area' );
+          $price  = get_post_meta( get_the_ID(), '_ymkrf_price', true );
+          $period = get_post_meta( get_the_ID(), '_ymkrf_period', true );
+          $before = get_post_meta( get_the_ID(), '_ymkrf_before_img', true );
         ?>
         <article class="p-work" data-reveal data-reveal-delay="<?php echo esc_attr( ( $i - 1 ) * 80 ); ?>">
 
@@ -109,13 +109,13 @@ get_header();
       </div>
     <?php endif; wp_reset_postdata(); ?>
 
-    <a class="c-more" href="<?php echo esc_url( get_post_type_archive_link( 'works' ) ); ?>">施工事例をもっと見る</a>
+    <a class="c-more" href="<?php echo esc_url( get_post_type_archive_link( 'ymkrf_works' ) ); ?>">施工事例をもっと見る</a>
   </div>
 </section>
 
 
 <!-- ★2 ==================================================================
-     お客様の声（カスタム投稿タイプ voice）
+     お客様の声（カスタム投稿タイプ ymkrf_voice）
      ================================================================== -->
 <section class="l-section" id="voice">
   <div class="l-wrap">
@@ -127,7 +127,7 @@ get_header();
 
     <?php
     $voices = new WP_Query( array(
-      'post_type'      => 'voice',
+      'post_type'      => 'ymkrf_voice',
       'posts_per_page' => 3,
       'no_found_rows'  => true,
     ) );
@@ -138,8 +138,8 @@ get_header();
         $i = 0;
         while ( $voices->have_posts() ) : $voices->the_post();
           $i++;
-          $who  = get_post_meta( get_the_ID(), 'customer', true );
-          $star = (int) get_post_meta( get_the_ID(), 'star', true );
+          $who  = get_post_meta( get_the_ID(), '_ymkrf_customer', true );
+          $star = (int) get_post_meta( get_the_ID(), '_ymkrf_star', true );
           $star = ( $star >= 1 && $star <= 5 ) ? $star : 5;
           $initial = $who ? mb_substr( wp_strip_all_tags( $who ), 0, 1 ) : '—';
         ?>
@@ -157,7 +157,7 @@ get_header();
       </div>
     <?php endif; wp_reset_postdata(); ?>
 
-    <a class="c-more" href="<?php echo esc_url( get_post_type_archive_link( 'voice' ) ); ?>">お客様の声をもっと見る</a>
+    <a class="c-more" href="<?php echo esc_url( get_post_type_archive_link( 'ymkrf_voice' ) ); ?>">お客様の声をもっと見る</a>
   </div>
 </section>
 

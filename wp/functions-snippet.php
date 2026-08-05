@@ -3,16 +3,32 @@
  * functions.php に追記するスニペット ─ リフォームヤマキシ
  *
  * 1. CSS / JS の読み込み（ページごとに出し分け）
- * 2. カスタム投稿タイプ（施工事例 works / お客様の声 voice）
+ * 2. カスタム投稿タイプ（施工事例 / お客様の声）
  * 3. カスタムフィールド（工事費・工期・Before画像 など）
  * 4. 表示速度まわりの調整
  *
  * ※ 必ず子テーマで作業してください（親テーマ直編集は更新で消えます）
+ *
+ * ── 名前の重複について ────────────────────────────────
+ * 1台のサーバーに複数サイトが同居しているとのことなので、
+ * 他のサイトやプラグインとぶつからないよう、すべての名前に
+ * 「ymkrf」（YaMaKishi ReForm）という接頭辞を付けています。
+ *
+ *   定数 …………… YMKRF_VER
+ *   投稿タイプ …… ymkrf_works / ymkrf_voice
+ *   分類 ………… ymkrf_works_cat / ymkrf_works_area
+ *   入力欄 ……… _ymkrf_price / _ymkrf_period / _ymkrf_before_img
+ *                 _ymkrf_customer / _ymkrf_star
+ *   関数 ………… ymkrf_meta_fields()
+ *   読み込み名 … ymkrf-common / ymkrf-home / ymkrf-page
+ *
+ * URL（/works/ /voice/）は接頭辞なしのまま。見た目は変わりません。
+ * ─────────────────────────────────────────────────
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMK_VER', '1.0.0' );   // ファイル更新時はここを上げるとキャッシュが切れます
+if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '1.0.0' );   // ファイル更新時はここを上げるとキャッシュが切れます
 
 /* ============================================================
    1. CSS / JS の読み込み
@@ -24,20 +40,20 @@ add_action( 'wp_enqueue_scripts', function () {
 
 	$dir = get_stylesheet_directory_uri();
 
-	wp_enqueue_style( 'ymk-common', $dir . '/assets/css/common.css', array(), YMK_VER );
-	wp_enqueue_script( 'ymk-common', $dir . '/assets/js/common.js', array(), YMK_VER, true );
+	wp_enqueue_style( 'ymkrf-common', $dir . '/assets/css/common.css', array(), YMKRF_VER );
+	wp_enqueue_script( 'ymkrf-common', $dir . '/assets/js/common.js', array(), YMKRF_VER, true );
 
 	if ( is_front_page() ) {
-		wp_enqueue_style( 'ymk-home', $dir . '/assets/css/home.css', array( 'ymk-common' ), YMK_VER );
-		wp_enqueue_script( 'ymk-home', $dir . '/assets/js/home.js', array( 'ymk-common' ), YMK_VER, true );
+		wp_enqueue_style( 'ymkrf-home', $dir . '/assets/css/home.css', array( 'ymkrf-common' ), YMKRF_VER );
+		wp_enqueue_script( 'ymkrf-home', $dir . '/assets/js/home.js', array( 'ymkrf-common' ), YMKRF_VER, true );
 	} else {
-		wp_enqueue_style( 'ymk-page', $dir . '/assets/css/page.css', array( 'ymk-common' ), YMK_VER );
+		wp_enqueue_style( 'ymkrf-page', $dir . '/assets/css/page.css', array( 'ymkrf-common' ), YMKRF_VER );
 	}
 } );
 
 /* defer 属性を付けて描画をブロックしないようにする */
 add_filter( 'script_loader_tag', function ( $tag, $handle ) {
-	if ( in_array( $handle, array( 'ymk-common', 'ymk-home' ), true ) ) {
+	if ( in_array( $handle, array( 'ymkrf-common', 'ymkrf-home' ), true ) ) {
 		return str_replace( ' src', ' defer src', $tag );
 	}
 	return $tag;
@@ -50,7 +66,7 @@ add_filter( 'script_loader_tag', function ( $tag, $handle ) {
 add_action( 'init', function () {
 
 	/* --- 施工事例 --- */
-	register_post_type( 'works', array(
+	register_post_type( 'ymkrf_works', array(
 		'label'        => '施工事例',
 		'public'       => true,
 		'has_archive'  => true,
@@ -62,7 +78,7 @@ add_action( 'init', function () {
 	) );
 
 	/* 部位（キッチン／お風呂／トイレ …） */
-	register_taxonomy( 'works_cat', 'works', array(
+	register_taxonomy( 'ymkrf_works_cat', 'ymkrf_works', array(
 		'label'        => '部位',
 		'hierarchical' => true,
 		'rewrite'      => array( 'slug' => 'works', 'with_front' => false ),
@@ -70,7 +86,7 @@ add_action( 'init', function () {
 	) );
 
 	/* エリア（金沢市／小松市 …）＝ 地域検索の受け皿になります */
-	register_taxonomy( 'works_area', 'works', array(
+	register_taxonomy( 'ymkrf_works_area', 'ymkrf_works', array(
 		'label'        => 'エリア',
 		'hierarchical' => true,
 		'rewrite'      => array( 'slug' => 'works-area', 'with_front' => false ),
@@ -78,7 +94,7 @@ add_action( 'init', function () {
 	) );
 
 	/* --- お客様の声 --- */
-	register_post_type( 'voice', array(
+	register_post_type( 'ymkrf_voice', array(
 		'label'        => 'お客様の声',
 		'public'       => true,
 		'has_archive'  => true,
@@ -96,25 +112,26 @@ add_action( 'init', function () {
    ============================================================ */
 add_action( 'add_meta_boxes', function () {
 
-	add_meta_box( 'ymk_works', '施工データ', function ( $post ) {
-		wp_nonce_field( 'ymk_meta_save', 'ymk_meta_nonce' );
-		ymk_meta_fields( $post->ID, array(
-			'price'      => array( '工事費（例：128万円）', 'text' ),
-			'period'     => array( '工期（例：3日）', 'text' ),
-			'before_img' => array( 'Before画像の添付ファイルID', 'number' ),
+	add_meta_box( 'ymkrf_works_box', '施工データ', function ( $post ) {
+		wp_nonce_field( 'ymkrf_meta_save', 'ymkrf_meta_nonce' );
+		ymkrf_meta_fields( $post->ID, array(
+			'_ymkrf_price'      => array( '工事費（例：128万円）', 'text' ),
+			'_ymkrf_period'     => array( '工期（例：3日）', 'text' ),
+			'_ymkrf_before_img' => array( 'Before画像の添付ファイルID', 'number' ),
 		) );
-	}, 'works', 'side' );
+	}, 'ymkrf_works', 'side' );
 
-	add_meta_box( 'ymk_voice', 'お客様情報', function ( $post ) {
-		wp_nonce_field( 'ymk_meta_save', 'ymk_meta_nonce' );
-		ymk_meta_fields( $post->ID, array(
-			'customer' => array( 'お客様（例：金沢市／K様（40代）・キッチンリフォーム）', 'text' ),
-			'star'     => array( '評価（1〜5）', 'number' ),
+	add_meta_box( 'ymkrf_voice_box', 'お客様情報', function ( $post ) {
+		wp_nonce_field( 'ymkrf_meta_save', 'ymkrf_meta_nonce' );
+		ymkrf_meta_fields( $post->ID, array(
+			'_ymkrf_customer' => array( 'お客様（例：金沢市／K様（40代）・キッチンリフォーム）', 'text' ),
+			'_ymkrf_star'     => array( '評価（1〜5）', 'number' ),
 		) );
-	}, 'voice', 'side' );
+	}, 'ymkrf_voice', 'side' );
 } );
 
-function ymk_meta_fields( $post_id, $fields ) {
+if ( ! function_exists( 'ymkrf_meta_fields' ) ) :
+function ymkrf_meta_fields( $post_id, $fields ) {
 	foreach ( $fields as $key => $f ) {
 		printf(
 			'<p><label for="%3$s" style="display:block;font-weight:600">%1$s</label>
@@ -124,14 +141,15 @@ function ymk_meta_fields( $post_id, $fields ) {
 		);
 	}
 }
+endif;
 
 add_action( 'save_post', function ( $post_id ) {
-	if ( ! isset( $_POST['ymk_meta_nonce'] ) ||
-	     ! wp_verify_nonce( sanitize_key( $_POST['ymk_meta_nonce'] ), 'ymk_meta_save' ) ) return;
+	if ( ! isset( $_POST['ymkrf_meta_nonce'] ) ||
+	     ! wp_verify_nonce( sanitize_key( $_POST['ymkrf_meta_nonce'] ), 'ymk_meta_save' ) ) return;
 	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
 	if ( ! current_user_can( 'edit_post', $post_id ) ) return;
 
-	foreach ( array( 'price', 'period', 'before_img', 'customer', 'star' ) as $key ) {
+	foreach ( array( '_ymkrf_price', '_ymkrf_period', '_ymkrf_before_img', '_ymkrf_customer', '_ymkrf_star' ) as $key ) {
 		if ( isset( $_POST[ $key ] ) ) {
 			update_post_meta( $post_id, $key, sanitize_text_field( wp_unslash( $_POST[ $key ] ) ) );
 		}
