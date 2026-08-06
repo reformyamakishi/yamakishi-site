@@ -117,12 +117,17 @@
 }
 
 /* 商品写真 */
+/* 商品写真。メーカー写真は白背景なので、枠も白にして地続きに見せます。
+   高さを決め打ちにすると上下に余白の帯が出るため、写真の縦横比のまま置きます。 */
 .p-prd__photo{
-  margin-top:20px; background:var(--bg-gray); border-radius:var(--radius);
-  aspect-ratio:16/10; display:grid; place-items:center; overflow:hidden;
-  color:#a08b80; font-weight:800; font-size:14px; text-align:center; padding:20px;
+  margin-top:20px; background:#fff; border:1px solid var(--border);
+  border-radius:var(--radius); overflow:hidden; padding:14px;
+  display:flex; align-items:center; justify-content:center;
+  color:#a08b80; font-weight:800; font-size:14px; text-align:center;
 }
-.p-prd__photo img{ width:100%; height:100%; object-fit:contain; }
+.p-prd__photo img{ width:auto; height:auto; max-width:min(100%,720px); }
+/* 写真がまだ入っていない場合の高さ確保 */
+.p-prd__photo:not(:has(img)){ aspect-ratio:16/10; }
 .p-prd__shops{ margin-top:12px; font-size:13.5px; color:var(--ink-sub); line-height:1.9; }
 .p-prd__shops b{ color:var(--ink); }
 .p-prd__caution{ margin-top:6px; font-size:12.5px; color:var(--ink-light); }
