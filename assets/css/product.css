@@ -75,8 +75,9 @@
   letter-spacing:-.02em; line-height:1;
 }
 .p-prd__price .yen{ font-size:.5em; margin-left:2px; }
-/* （税込）は行の右端へ寄せる */
-.p-prd__tax{ font-size:14px; font-weight:800; color:var(--ink-sub); margin-left:auto; }
+/* （税込）は「円」のすぐ横に。狭い画面でも離れないよう、金額とひとまとまりにしています */
+.p-prd__priceline{ display:inline-flex; align-items:baseline; gap:7px; white-space:nowrap; }
+.p-prd__tax{ font-size:14px; font-weight:800; color:var(--ink-sub); }
 /* 内訳（標準工事費 ＋ 商品代）。
    PC・スマホとも必ず1行に収まるようにしています。
    狭い画面では枠飾りを外し、そのぶん文字を大きく保ちます。 */
@@ -138,6 +139,36 @@
 /* --------------------------------------------------------------------------
    4. カラーバリエーション
    -------------------------------------------------------------------------- */
+/* カラーバリエーションの導入イメージ。横いっぱいに敷いて、
+   「こういう雰囲気になります」が一目で伝わるようにしています。 */
+.p-prd__hero{ margin-bottom:24px; }
+/* 4枚を並べて横いっぱいに。スマホでは2×2にして、
+   1枚ずつが小さくなりすぎないようにしています。 */
+.p-prd__hero__grid{
+  display:grid; grid-template-columns:repeat(2,1fr); gap:6px;
+  border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow-md);
+}
+.p-prd__hero__grid img{
+  width:100%; height:100%; object-fit:cover; display:block; aspect-ratio:4/3;
+}
+@media (min-width:600px){
+  .p-prd__hero__grid{ grid-template-columns:repeat(4,1fr); }
+  .p-prd__hero__grid img{ aspect-ratio:1/1; }
+}
+@media (min-width:900px){
+  .p-prd__hero__grid img{ aspect-ratio:4/3; }
+}
+.p-prd__hero figcaption{
+  margin-top:12px; font-size:14px; line-height:1.85; color:var(--ink-sub);
+}
+.p-prd__hero figcaption strong{
+  display:block; color:var(--ink); font-size:15.5px; font-weight:900; margin-bottom:2px;
+}
+@media (min-width:768px){
+  .p-prd__hero figcaption{ text-align:center; font-size:14.5px; }
+  .p-prd__hero figcaption strong{ font-size:17px; }
+}
+
 .p-prd__sub{ font-size:16px; font-weight:900; margin-bottom:14px; }
 .p-prd__colors{ display:grid; grid-template-columns:repeat(2,1fr); gap:14px; }
 .p-prd__colors figure figcaption{ margin-top:8px; text-align:center; font-size:13.5px; font-weight:800; }
@@ -178,10 +209,29 @@
    6. おすすめポイント
    -------------------------------------------------------------------------- */
 .p-prd__feature + .p-prd__feature{ margin-top:34px; }
-.p-prd__flabel{ display:flex; align-items:center; gap:12px; padding-bottom:12px; border-bottom:3px solid var(--brand); }
-.p-prd__flabel img{ width:64px; flex:none; }
-.p-prd__flabel div span{ display:block; font-size:13.5px; font-weight:900; color:var(--ink-sub); }
-.p-prd__flabel div strong{ display:block; font-size:clamp(18px,4.4vw,24px); font-weight:900; color:var(--brand-dark); }
+/* ポイントの見出し。以前は細い下線だけで弱かったので、
+   帯としてまとめて、小見出しはバッジに、タイトルは大きくしています。 */
+.p-prd__flabel{
+  display:flex; align-items:center; gap:14px;
+  background:linear-gradient(100deg,var(--brand-tint) 0%,#fff 72%);
+  border:2px solid var(--brand-tint2); border-left:7px solid var(--brand);
+  border-radius:14px; padding:15px 20px 15px 16px;
+  box-shadow:0 3px 14px rgba(254,51,1,.09);
+}
+.p-prd__flabel img{ width:72px; flex:none; }
+.p-prd__flabel div span{
+  display:inline-block; background:var(--brand); color:#fff;
+  font-size:12.5px; font-weight:900; letter-spacing:.05em;
+  padding:3px 13px; border-radius:999px; margin-bottom:8px;
+}
+.p-prd__flabel div strong{
+  display:block; font-size:clamp(19px,4.7vw,27px); font-weight:900;
+  color:var(--brand-dark); line-height:1.35; letter-spacing:.01em;
+}
+@media (max-width:459px){
+  .p-prd__flabel{ gap:11px; padding:13px 15px 13px 12px; }
+  .p-prd__flabel img{ width:58px; }
+}
 .p-prd__point{ margin-top:20px; }
 .p-prd__pno{
   display:inline-block; background:var(--brand); color:#fff;
