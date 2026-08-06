@@ -162,11 +162,15 @@
   margin-top:12px; font-size:14px; line-height:1.85; color:var(--ink-sub);
 }
 .p-prd__hero figcaption strong{
-  display:block; color:var(--ink); font-size:15.5px; font-weight:900; margin-bottom:2px;
+  color:var(--ink); font-size:15.5px; font-weight:900;
+}
+.p-prd__hero figcaption small{
+  margin-left:10px; font-size:12px; font-weight:700; color:var(--ink-light); white-space:nowrap;
 }
 @media (min-width:768px){
   .p-prd__hero figcaption{ text-align:center; font-size:14.5px; }
   .p-prd__hero figcaption strong{ font-size:17px; }
+  .p-prd__hero figcaption small{ font-size:12.5px; }
 }
 
 .p-prd__sub{ font-size:16px; font-weight:900; margin-bottom:14px; }
@@ -353,4 +357,12 @@
    768pxで横に並べると内訳が入りきらず、ページが横にはみ出します。 */
 @media (min-width:1024px){
   .p-prd__pricebox{ grid-template-columns:auto minmax(0,1fr); gap:26px; }
+}
+
+/* カードが1枚だけのとき（一番下のグレードで「グレードを戻す」が無い場合など）は、
+   横に間延びしないよう幅を抑えて中央に置きます。
+   ※上の2列指定より後ろに置く必要があるため、ここに書いています。 */
+.p-prd__nav.p-prd__nav--one{ grid-template-columns:1fr; }
+@media (min-width:768px){
+  .p-prd__nav.p-prd__nav--one{ grid-template-columns:minmax(0,440px); justify-content:center; }
 }
