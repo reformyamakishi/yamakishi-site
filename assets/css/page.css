@@ -104,17 +104,26 @@
 .p-pagecta{
   background:linear-gradient(135deg,#fff6f2,#ffe9e1);
   border:3px solid var(--brand); border-radius:var(--radius-lg);
-  padding:28px 22px; text-align:center; position:relative; overflow:hidden;
+  padding:26px 16px; text-align:center; position:relative; overflow:hidden;
+}
+/* 400px以上あれば左右にゆとりを戻します */
+@media (min-width:400px){
+  .p-pagecta{ padding:28px 22px; }
 }
 /* とんとこトン（虫めがね）。まわりの光の線ぶん、絵として大きめに置きます。
    画像の余白は切り落としてあるので、下の見出しとの間隔は詰めています。 */
-.p-pagecta__chara{ width:clamp(158px,44vw,196px); margin:-16px auto -12px; }
-.p-pagecta__title{ font-size:clamp(20px,4.6vw,27px); font-weight:900; }
+.p-pagecta__chara{ width:clamp(158px,44vw,196px); margin:-24px auto -12px; }
+/* text-wrap:balance ＝ 行の長さを自動でそろえる指定。
+   万一この先で文言を変えても、「ん。」だけが最終行に残るような崩れを防げます。 */
+.p-pagecta__title{
+  font-size:clamp(20px,4.6vw,27px); font-weight:900; text-wrap:balance;
+}
 /* この枠は背景がうすい赤なので、マーカーは黄色にしないと見えません */
 .p-pagecta__title .marker{ background:linear-gradient(transparent 62%, #ffe27a 62%); }
 /* スマホでは本文を少し小さく（2行の説明が主張しすぎないように） */
 .p-pagecta__text{
   margin-top:10px; font-size:clamp(13px,3.5vw,15px); line-height:1.85; color:var(--ink-sub);
+  text-wrap:balance;
 }
 .p-pagecta__btns{ display:grid; gap:12px; max-width:420px; margin:22px auto 0; }
 
