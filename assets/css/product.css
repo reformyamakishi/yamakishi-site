@@ -23,15 +23,38 @@
   padding:5px 14px; border-radius:5px; letter-spacing:.02em;
 }
 .p-prd__size{ font-size:14.5px; font-weight:900; }
+/* 工期バッジ。カレンダーのアイコンを添えて、日数を大きく見せます */
 .p-prd__days{
-  margin-left:auto; background:#0b8fd4; color:#fff; font-size:14px; font-weight:900;
-  padding:6px 16px; border-radius:6px;
+  margin-left:auto; display:inline-flex; align-items:center; gap:4px;
+  background:linear-gradient(135deg,#12a0e8,#0b6fb0); color:#fff;
+  padding:7px 16px 7px 13px; border-radius:12px; font-weight:900;
+  box-shadow:0 4px 12px rgba(11,111,176,.28);
 }
-.p-prd__days b{ font-size:20px; }
-.p-prd__points{ display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+.p-prd__days svg{ width:17px; height:17px; margin-right:4px; opacity:.92; }
+.p-prd__days .lbl { font-size:12.5px; letter-spacing:.06em; opacity:.95; }
+.p-prd__days .num { font-size:25px; line-height:1; letter-spacing:-.02em; margin-left:3px; }
+.p-prd__days .unit{ font-size:13.5px; }
+
+/* おすすめの3点。丸いアイコン＋白いピルで、押しつけがましくなく目を引くように */
+.p-prd__points{ display:flex; flex-wrap:wrap; gap:9px; margin-top:16px; }
 .p-prd__points li{
-  background:#3a9e5a; color:#fff; font-size:13px; font-weight:900;
-  padding:5px 16px; border-radius:5px;
+  display:inline-flex; align-items:center; gap:8px;
+  background:#fff; border:2px solid var(--brand-tint2); color:var(--brand-dark);
+  font-size:14px; font-weight:900; letter-spacing:.01em;
+  padding:7px 17px 7px 8px; border-radius:999px;
+  box-shadow:0 2px 10px rgba(254,51,1,.10);
+}
+.p-prd__points svg{
+  width:15px; height:15px; flex:none; padding:5px; box-sizing:content-box;
+  background:var(--brand); color:#fff; border-radius:50%;
+}
+
+@media (max-width:459px){
+  .p-prd__days{ margin-left:0; padding:6px 14px 6px 11px; }
+  .p-prd__days .num{ font-size:22px; }
+  .p-prd__points{ gap:7px; }
+  .p-prd__points li{ font-size:13px; padding:6px 14px 6px 7px; gap:6px; }
+  .p-prd__points svg{ width:13px; height:13px; padding:4.5px; }
 }
 
 /* --------------------------------------------------------------------------
@@ -52,14 +75,15 @@
   letter-spacing:-.02em; line-height:1;
 }
 .p-prd__price .yen{ font-size:.5em; margin-left:2px; }
-.p-prd__tax{ font-size:14px; font-weight:800; color:var(--ink-sub); }
+/* （税込）は行の右端へ寄せる */
+.p-prd__tax{ font-size:14px; font-weight:800; color:var(--ink-sub); margin-left:auto; }
 /* 内訳（標準工事費 ＋ 商品代）。
    PC・スマホとも必ず1行に収まるようにしています。
    狭い画面では枠飾りを外し、そのぶん文字を大きく保ちます。 */
 .p-prd__breakdown{
   display:flex; flex-wrap:nowrap; align-items:center; justify-content:center;
   gap:clamp(4px,1.4vw,8px);
-  font-size:clamp(11.5px,3.4vw,14px); font-weight:800;
+  font-size:clamp(10.6px,3.0vw,14px); font-weight:800;
   white-space:nowrap; min-width:0;
 }
 .p-prd__breakdown span{
@@ -70,8 +94,10 @@
 .p-prd__breakdown span[aria-hidden]{
   background:none; border:0; padding:0 2px; color:var(--ink-light);
 }
+/* 「標準工事費」「商品代」は見出しなので、金額より少し小さく。
+   読みやすさを保ったまま、1行に収める余裕も生まれます。 */
 .p-prd__breakdown em{
-  font-style:normal; color:var(--ink-sub); font-weight:700;
+  font-style:normal; color:var(--ink-sub); font-weight:700; font-size:.88em;
   margin-right:clamp(3px,1.2vw,6px);
 }
 .p-prd__bdopt{ font-style:normal; }
@@ -80,11 +106,10 @@
 @media (max-width:599px){
   .p-prd__breakdown span{ background:none; border:0; padding:0; }
   .p-prd__breakdown{ gap:7px; }
-  .p-prd__bdopt{ display:none; }
 }
 /* iPhone SE など、とくに狭い画面 */
 @media (max-width:359px){
-  .p-prd__breakdown{ font-size:10.9px; gap:4px; }
+  .p-prd__breakdown{ font-size:10.2px; gap:3px; }
 }
 @media (min-width:1024px){
   .p-prd__breakdown{ justify-content:flex-start; }
