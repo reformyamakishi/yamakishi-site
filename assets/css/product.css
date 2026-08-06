@@ -178,7 +178,18 @@
   .p-prd__hero figcaption small{ font-size:12.5px; }
 }
 
-.p-prd__sub{ font-size:16px; font-weight:900; margin-bottom:14px; }
+/* 小見出し（扉カラー／取っ手 など）
+   赤い縦棒を左に添えて、本文との区切りをはっきりさせています。 */
+.p-prd__sub{
+  position:relative; padding-left:15px;
+  font-size:16px; font-weight:900; letter-spacing:.02em;
+  margin-bottom:14px;
+}
+.p-prd__sub::before{
+  content:""; position:absolute; left:0; top:.16em; bottom:.16em;
+  width:5px; border-radius:3px;
+  background:linear-gradient(180deg, var(--brand), var(--brand-deep));
+}
 /* 見出しの横に添える注記。狭い画面では見出しの下に回りますが、
    注記そのものは1行に収まる大きさにしています。 */
 .p-prd__note{
@@ -189,9 +200,19 @@
   .p-prd__note{ display:block; margin-left:0; margin-top:4px; }
 }
 .p-prd__colors{ display:grid; grid-template-columns:repeat(2,1fr); gap:14px; }
-.p-prd__colors figure figcaption{ margin-top:8px; text-align:center; font-size:13.5px; font-weight:800; }
+/* 色名の上に短い赤い線を入れて、色見本と名前が1組であることを分かりやすく */
+.p-prd__colors figure figcaption{
+  position:relative; margin-top:11px; padding-top:10px;
+  text-align:center; font-size:13px; font-weight:900; letter-spacing:.04em;
+  color:var(--ink);
+}
+.p-prd__colors figure figcaption::before{
+  content:""; position:absolute; top:0; left:50%; transform:translateX(-50%);
+  width:20px; height:3px; border-radius:3px; background:var(--brand);
+}
 .p-prd__swatch{
-  aspect-ratio:3/2; border-radius:8px; border:1px solid var(--border);
+  aspect-ratio:3/2; border-radius:10px; border:1px solid var(--border);
+  box-shadow:var(--shadow);
 }
 .p-prd__handles{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; margin-top:8px; }
 .p-prd__handles figure{
@@ -205,9 +226,18 @@
 .p-prd__handles .ph img{ width:100%; height:100%; object-fit:contain; }
 .p-prd__colors .p-prd__swatch{ overflow:hidden; }
 .p-prd__colors .p-prd__swatch img{ width:100%; height:100%; object-fit:cover; display:block; }
-.p-prd__handles figcaption{ margin-top:6px; font-size:12.5px; font-weight:800; }
-/* 取っ手の型番。写真から文字が消えたので、説明の下に小さく添えます */
-.p-prd__code{ display:block; margin-top:2px; font-size:11.5px; color:var(--ink-light); letter-spacing:.06em; }
+/* 写真と名前のあいだに点線を入れて、カードの中を上下に区切ります */
+.p-prd__handles figcaption{
+  margin-top:10px; padding-top:9px; border-top:1px dashed var(--border);
+  font-size:12.5px; font-weight:900; letter-spacing:.02em; color:var(--ink);
+}
+/* 取っ手の型番。写真から文字が消えたので、名前の下に小さな札で添えます */
+.p-prd__code{
+  display:block; width:fit-content; margin:6px auto 0;
+  padding:2px 10px; border-radius:999px;
+  background:var(--brand-tint); color:var(--brand-dark);
+  font-size:10.5px; font-weight:900; letter-spacing:.12em;
+}
 
 /* --------------------------------------------------------------------------
    5. 標準仕様
@@ -288,22 +318,28 @@
 /* --------------------------------------------------------------------------
    7. おすすめオプション
    -------------------------------------------------------------------------- */
-.p-prd__opts{ display:grid; gap:14px; }
+/* オプションは「主役」ではないので控えめに。
+   用意できる写真も小さいため、はじめから横並びの小さめカードにしています。 */
+.p-prd__opts{ display:grid; gap:10px; }
 .p-prd__opt{
-  display:grid; grid-template-columns:1fr; gap:14px;
-  background:#fff; border:2px solid var(--border); border-radius:var(--radius); padding:16px;
+  display:grid; grid-template-columns:72px minmax(0,1fr); gap:12px; align-items:start;
+  background:#fff; border:1px solid var(--border); border-radius:12px; padding:12px;
 }
 .p-prd__opt .ph{
   aspect-ratio:1/1; background:var(--bg-gray); border-radius:8px;
-  display:grid; place-items:center; color:#a08b80; font-size:11px; font-weight:800;
+  display:grid; place-items:center; color:#a08b80; font-size:10px; font-weight:800;
 }
 .p-prd__opt .ph img{ width:100%; height:100%; object-fit:contain; border-radius:8px; }
-.p-prd__opt .ph:has(img){ background:#fff; border:1px solid var(--border); padding:4px; }
-.p-prd__opt h3{ font-size:15.5px; font-weight:900; color:var(--brand-dark); line-height:1.5; }
-.p-prd__opt p{ margin-top:6px; font-size:13.5px; line-height:1.8; color:var(--ink-sub); }
-.p-prd__optprice{ margin-top:8px; font-size:19px; font-weight:900; color:var(--brand); }
-.p-prd__optprice small{ font-size:12px; color:var(--ink-sub); margin-left:2px; }
-.p-prd__optprice em{ display:block; font-style:normal; font-size:12.5px; color:var(--ink-sub); margin-top:2px; }
+.p-prd__opt .ph:has(img){ background:#fff; border:1px solid var(--border); padding:3px; }
+.p-prd__opt h3{ font-size:13.8px; font-weight:900; color:var(--brand-dark); line-height:1.5; }
+.p-prd__opt p{ margin-top:4px; font-size:12.3px; line-height:1.7; color:var(--ink-sub); }
+.p-prd__optprice{ margin-top:7px; font-size:16.5px; font-weight:900; color:var(--brand); }
+.p-prd__optprice small{ font-size:11px; color:var(--ink-sub); margin-left:2px; }
+/* 「※工事費込み」は金額の右に添えます（1行ぶん節約） */
+.p-prd__optprice em{
+  display:inline-block; font-style:normal; font-size:11.5px;
+  color:var(--ink-sub); margin-left:7px;
+}
 
 /* --------------------------------------------------------------------------
    8. 標準工事の比較表（いちばんの差別化ポイント）
@@ -373,15 +409,15 @@
    10. 画面が広いとき
    -------------------------------------------------------------------------- */
 @media (min-width:420px){
-  .p-prd__opt{ grid-template-columns:96px 1fr; }
+  .p-prd__opt{ grid-template-columns:84px minmax(0,1fr); }
 }
 @media (min-width:768px){
   .p-prd__head{ padding:30px 0 34px; }
   .p-prd__pricebox{ padding:26px 30px; }
   .p-prd__colors{ grid-template-columns:repeat(4,1fr); }
   .p-prd__specs{ grid-template-columns:repeat(3,1fr); }
-  .p-prd__opts{ grid-template-columns:repeat(2,1fr); }
-  .p-prd__opt{ grid-template-columns:110px 1fr; }
+  .p-prd__opts{ grid-template-columns:repeat(2,1fr); gap:12px; }
+  .p-prd__opt{ grid-template-columns:92px minmax(0,1fr); }
   .p-prd__nav{ grid-template-columns:repeat(2,1fr); }
   .p-prd__pack{ padding:32px; }
 }
