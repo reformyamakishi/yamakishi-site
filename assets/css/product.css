@@ -276,6 +276,9 @@
 }
 /* 元の解像度が小さい図版は、引き伸ばしてぼやけないよう上限をつける */
 .p-prd__pfig--img img[data-cap]{ max-width:min(100%,390px); }
+/* 写真と説明図を縦に並べる場合（実物 → しくみ の順で見せたいとき） */
+.p-prd__pfig--stack{ flex-direction:column; align-items:center; gap:18px; }
+.p-prd__pfig--stack img{ max-width:min(100%,620px)!important; max-height:none; }
 @media (min-width:768px){
   .p-prd__pfig--img img{ max-width:calc(50% - 7px); }
   .p-prd__pfig--img img:only-child{ max-width:min(100%,560px); }
@@ -316,12 +319,36 @@
 .p-prd__packlead h3{ font-size:17px; font-weight:900; color:var(--brand-dark); }
 .p-prd__packlead p{ margin-top:8px; font-size:14.5px; line-height:1.9; color:var(--ink-sub); }
 .p-prd__packnote{ text-align:right; font-size:12.5px; color:var(--ink-sub); margin-bottom:12px; }
-.p-prd__packttl{ font-size:16px; font-weight:900; color:var(--brand-dark); line-height:1.7; margin-bottom:12px; }
-.p-prd__table-wrap{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
-.p-prd__table{ width:100%; min-width:460px; border-collapse:collapse; background:#fff; font-size:14px; }
-.p-prd__table th,.p-prd__table td{ border:1px solid var(--border); padding:12px 14px; text-align:left; line-height:1.7; }
-.p-prd__table th{ width:190px; background:var(--brand-tint); font-weight:900; white-space:nowrap; }
-.p-prd__table td{ color:var(--ink-sub); }
+.p-prd__packttl{
+  display:flex; align-items:center; gap:10px;
+  font-size:clamp(17px,4.4vw,21px); font-weight:900; color:#fff;
+  background:var(--brand); border-radius:10px; padding:11px 18px; margin-bottom:16px;
+}
+.p-prd__packttl::before{
+  content:""; width:9px; height:9px; border-radius:50%; background:#fff; flex:none; opacity:.9;
+}
+
+/* 標準工事の内容。以前は表だったため、スマホで横スクロールが必要でした。
+   チェックリストにして、どの幅でも縦に読めるようにしています。 */
+.p-prd__packlist{ display:grid; gap:10px; }
+.p-prd__packlist li{
+  display:flex; align-items:flex-start; gap:11px;
+  background:#fff; border:2px solid var(--brand-tint2); border-radius:12px;
+  padding:13px 15px;
+}
+.p-prd__packlist svg{
+  width:14px; height:14px; flex:none; margin-top:3px; padding:5px; box-sizing:content-box;
+  background:var(--brand); color:#fff; border-radius:50%;
+}
+.p-prd__packlist b{
+  display:block; font-size:15.5px; font-weight:900; color:var(--brand-dark); line-height:1.5;
+}
+.p-prd__packlist span{
+  display:block; margin-top:3px; font-size:13.5px; line-height:1.75; color:var(--ink-sub);
+}
+@media (min-width:768px){
+  .p-prd__packlist{ grid-template-columns:repeat(2,1fr); gap:12px; }
+}
 
 /* --------------------------------------------------------------------------
    9. 前後の商品
