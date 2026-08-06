@@ -376,10 +376,10 @@ $maker = ! empty( $d['makers'] ) ? $d['makers'][0] : null;
     <div class="p-pagecta">
       <img class="p-pagecta__chara" src="<?php echo esc_url( get_stylesheet_directory_uri() . '/assets/img/character/char-search-fly.webp' ); ?>"
            width="480" height="480" alt="" loading="lazy">
-      <h2 class="p-pagecta__title"><span class="marker">まずは、現物を見にいらしてください</span></h2>
+      <h2 class="p-pagecta__title"><span class="marker">まずは、現物を見に<br class="xs-only">いらしてください</span></h2>
       <p class="p-pagecta__text">
-        ショールームには北陸最大級の住宅設備を展示しています。<br>
-        見積り・現地調査は無料。しつこい営業はいたしません。
+        ショールームには北陸最大級の<br class="xs-only">住宅設備を展示しています。<br>
+        見積り・現地調査は無料。<br class="xs-only">しつこい営業はいたしません。
       </p>
       <?php ymkrf_product_cta( 'product-bottom', true ); ?>
     </div>

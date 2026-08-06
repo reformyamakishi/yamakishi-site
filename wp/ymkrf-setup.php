@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '1' );
+define( 'YMKRF_SETUP_VER', '2' );
 
 add_action( 'admin_init', function () {
 
@@ -152,7 +152,7 @@ add_action( 'admin_init', function () {
 				'_ymkrf_days'    => '3',
 				'_ymkrf_pt1'     => 'お手頃価格',
 				'_ymkrf_pt2'     => '収納抜群',
-				'_ymkrf_pt3'     => 'おそうじラクラク',
+				'_ymkrf_pt3'     => 'おそうじ楽々',
 				'_ymkrf_caution' => '※写真はイメージです。レンジフードなどが本プランと異なる場合があります。',
 			);
 			foreach ( $fields as $k => $v ) update_post_meta( $post_id, $k, $v );
@@ -303,6 +303,27 @@ add_action( 'admin_init', function () {
 				'ymkrf_shop' );
 
 			$log[] = '商品「V-style（Vスタイル）」を登録しました → ' . get_permalink( $post_id );
+		}
+	}
+
+	/* ------------------------------------------------------------
+	   3-b. すでに登録済みの商品の文言直し
+	        （新しく作り直さず、変わったところだけを上書きします）
+	   ------------------------------------------------------------ */
+	$fixes = array(
+		'v-style' => array(
+			'_ymkrf_pt3' => array( 'おそうじラクラク', 'おそうじ楽々' ),
+		),
+	);
+	foreach ( $fixes as $slug => $keys ) {
+		$post = get_page_by_path( $slug, OBJECT, 'ymkrf_product' );
+		if ( ! $post ) continue;
+		foreach ( $keys as $key => $pair ) {
+			list( $old, $new ) = $pair;
+			if ( get_post_meta( $post->ID, $key, true ) === $old ) {
+				update_post_meta( $post->ID, $key, $new );
+				$log[] = "{$slug}: {$old} → {$new}";
+			}
 		}
 	}
 

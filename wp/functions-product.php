@@ -99,7 +99,7 @@ function ymkrf_product_fields() {
 		'_ymkrf_days'    => array( '工期（日数）',     'number', '例：3', '数字だけ。「日」は自動で付きます' ),
 		'_ymkrf_pt1'     => array( '特徴 1',           'text',   '例：お手頃価格', '' ),
 		'_ymkrf_pt2'     => array( '特徴 2',           'text',   '例：収納抜群', '' ),
-		'_ymkrf_pt3'     => array( '特徴 3',           'text',   '例：おそうじラクラク', '' ),
+		'_ymkrf_pt3'     => array( '特徴 3',           'text',   '例：おそうじ楽々', '' ),
 		'_ymkrf_caution' => array( '写真の注意書き',   'text',   '例：※写真はイメージです。', '商品写真の下に小さく出ます' ),
 	);
 }
@@ -542,7 +542,7 @@ function ymkrf_product_cta( $place = 'product', $with_tel = false ) {
 	    <span class="c-btn__label">来店して現物を見る<span class="c-btn__sub">初回特典500円ヤマキシお買物券／展示のない店舗もあります</span></span>
 	  </a>
 	  <a class="c-btn c-btn--line c-btn--block" href="<?php echo esc_url( $line ); ?>" rel="noopener" data-cta="<?php echo esc_attr( $place ); ?>">
-	    <span class="c-btn__label">無料相談・お見積り<span class="c-btn__sub">ご相談だけでもOK・24時間受付</span></span>
+	    <span class="c-btn__label">LINEで相談・見積もり<span class="c-btn__sub">ご相談だけでもOK・24時間受付</span></span>
 	  </a>
 	  <?php if ( $with_tel ) : ?>
 	  <a class="c-btn c-btn--ghost c-btn--block" href="tel:0800-777-3331" data-cta="<?php echo esc_attr( $place ); ?>">

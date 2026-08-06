@@ -97,6 +97,12 @@ address{ font-style:normal; }
   .sp-only{ display:none; }
   .pc-only{ display:inline; }
 }
+/* スマホの幅（600px未満）だけで効かせたいとき。
+   タブレット幅では横に余裕があるので、改行を入れると逆にすかすかになります。 */
+.xs-only{ display:inline; }
+@media (min-width:600px){
+  .xs-only{ display:none; }
+}
 
 /* スキップリンク */
 .skip-link{

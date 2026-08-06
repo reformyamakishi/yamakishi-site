@@ -35,13 +35,18 @@
 .p-prd__days .num { font-size:25px; line-height:1; letter-spacing:-.02em; margin-left:3px; }
 .p-prd__days .unit{ font-size:13.5px; }
 
-/* おすすめの3点。丸いアイコン＋白いピルで、押しつけがましくなく目を引くように */
-.p-prd__points{ display:flex; flex-wrap:wrap; gap:9px; margin-top:16px; }
+/* 特徴3点。丸いアイコン＋白いピルで、押しつけがましくなく目を引くように。
+   スマホでも横1行に収まるよう、画面幅に応じて文字と余白が縮みます。 */
+.p-prd__points{
+  display:flex; flex-wrap:wrap; justify-content:center;
+  gap:clamp(5px,1.6vw,9px); margin-top:16px;
+}
 .p-prd__points li{
-  display:inline-flex; align-items:center; gap:8px;
+  display:inline-flex; align-items:center; gap:clamp(5px,1.6vw,8px);
   background:#fff; border:2px solid var(--brand-tint2); color:var(--brand-dark);
-  font-size:14px; font-weight:900; letter-spacing:.01em;
-  padding:7px 17px 7px 8px; border-radius:999px;
+  font-size:clamp(11.5px,3.0vw,14px); font-weight:900; letter-spacing:0;
+  padding:7px clamp(10px,3vw,17px) 7px clamp(8px,2.2vw,8px);
+  border-radius:999px; white-space:nowrap;
   box-shadow:0 2px 10px rgba(254,51,1,.10);
 }
 .p-prd__points svg{
@@ -49,12 +54,21 @@
   background:var(--brand); color:#fff; border-radius:50%;
 }
 
+/* 440px未満はアイコンの丸を外します。
+   これを残したまま1行に詰めると、文字が読めない大きさまで小さくなるためです。 */
+@media (max-width:439px){
+  .p-prd__points svg{ display:none; }
+  .p-prd__points li{ padding:6px 11px; }
+}
 @media (max-width:459px){
   .p-prd__days{ margin-left:0; padding:6px 14px 6px 11px; }
   .p-prd__days .num{ font-size:22px; }
-  .p-prd__points{ gap:7px; }
-  .p-prd__points li{ font-size:13px; padding:6px 14px 6px 7px; gap:6px; }
-  .p-prd__points svg{ width:13px; height:13px; padding:4.5px; }
+  .p-prd__points li{ padding-top:6px; padding-bottom:6px; }
+  .p-prd__points svg{ width:12px; height:12px; padding:4px; }
+}
+/* PCでは左揃えのまま（従来どおり） */
+@media (min-width:768px){
+  .p-prd__points{ justify-content:flex-start; }
 }
 
 /* --------------------------------------------------------------------------
