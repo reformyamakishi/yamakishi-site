@@ -374,10 +374,10 @@ $maker = ! empty( $d['makers'] ) ? $d['makers'][0] : null;
 <section class="l-section">
   <div class="l-wrap">
     <div class="p-pagecta">
-      <img class="p-pagecta__chara" src="<?php echo esc_url( get_stylesheet_directory_uri() . '/assets/img/character/char-bow.webp' ); ?>"
-           width="503" height="640" alt="" loading="lazy">
-      <h2 class="p-pagecta__title">まずは、現物を見にいらしてください</h2>
-      <p class="p-pagecta__lead">
+      <img class="p-pagecta__chara" src="<?php echo esc_url( get_stylesheet_directory_uri() . '/assets/img/character/char-search-fly.webp' ); ?>"
+           width="480" height="480" alt="" loading="lazy">
+      <h2 class="p-pagecta__title"><span class="marker">まずは、現物を見にいらしてください</span></h2>
+      <p class="p-pagecta__text">
         ショールームには北陸最大級の住宅設備を展示しています。<br>
         見積り・現地調査は無料。しつこい営業はいたしません。
       </p>

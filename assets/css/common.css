@@ -122,7 +122,9 @@ address{ font-style:normal; }
   color:var(--brand); margin-bottom:8px;
 }
 .c-head__title{ font-size:clamp(23px,5vw,34px); font-weight:900; letter-spacing:.01em; }
-.c-head__title .marker{
+/* 黄色いマーカー線。見出しのどこで使っても効くようにしています */
+.c-head__title .marker,
+.marker{
   background:linear-gradient(transparent 62%, var(--brand-tint2) 62%);
   padding-inline:.08em;
 }
