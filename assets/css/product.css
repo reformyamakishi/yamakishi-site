@@ -53,12 +53,42 @@
 }
 .p-prd__price .yen{ font-size:.5em; margin-left:2px; }
 .p-prd__tax{ font-size:14px; font-weight:800; color:var(--ink-sub); }
-.p-prd__breakdown{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; font-size:14px; font-weight:800; }
+/* 内訳（標準工事費 ＋ 商品代）。
+   PC・スマホとも必ず1行に収まるようにしています。
+   狭い画面では枠飾りを外し、そのぶん文字を大きく保ちます。 */
+.p-prd__breakdown{
+  display:flex; flex-wrap:nowrap; align-items:center; justify-content:center;
+  gap:clamp(4px,1.4vw,8px);
+  font-size:clamp(11.5px,3.4vw,14px); font-weight:800;
+  white-space:nowrap; min-width:0;
+}
 .p-prd__breakdown span{
   background:var(--bg-soft); border:1px solid var(--border);
-  border-radius:8px; padding:8px 14px;
+  border-radius:8px; padding:8px clamp(8px,2.4vw,14px);
 }
-.p-prd__breakdown em{ font-style:normal; color:var(--ink-sub); font-weight:700; margin-right:6px; }
+/* ＋ は枠で囲まず、記号だけにして幅を節約 */
+.p-prd__breakdown span[aria-hidden]{
+  background:none; border:0; padding:0 2px; color:var(--ink-light);
+}
+.p-prd__breakdown em{
+  font-style:normal; color:var(--ink-sub); font-weight:700;
+  margin-right:clamp(3px,1.2vw,6px);
+}
+.p-prd__bdopt{ font-style:normal; }
+/* 狭い画面：枠をやめて素の文字にし、「標準」を省いて、
+   読みやすい文字の大きさを保ったまま1行に収める */
+@media (max-width:599px){
+  .p-prd__breakdown span{ background:none; border:0; padding:0; }
+  .p-prd__breakdown{ gap:7px; }
+  .p-prd__bdopt{ display:none; }
+}
+/* iPhone SE など、とくに狭い画面 */
+@media (max-width:359px){
+  .p-prd__breakdown{ font-size:10.9px; gap:4px; }
+}
+@media (min-width:1024px){
+  .p-prd__breakdown{ justify-content:flex-start; }
+}
 
 /* 商品写真 */
 .p-prd__photo{
@@ -89,12 +119,13 @@
 .p-prd__swatch{
   aspect-ratio:3/2; border-radius:8px; border:1px solid var(--border);
 }
-.p-prd__handles{ display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr)); gap:12px; margin-top:8px; }
+.p-prd__handles{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; margin-top:8px; }
 .p-prd__handles figure{
-  background:var(--bg-soft); border-radius:8px; padding:14px 10px; text-align:center;
+  background:#fff; border:1px solid var(--border); border-radius:10px;
+  padding:14px 12px; text-align:center;
 }
 .p-prd__handles .ph{
-  height:46px; display:grid; place-items:center; color:var(--ink-light);
+  height:96px; display:grid; place-items:center; color:var(--ink-light);
   font-size:12px; font-weight:800;
 }
 .p-prd__handles .ph img{ width:100%; height:100%; object-fit:contain; }
@@ -222,7 +253,7 @@
 }
 @media (min-width:768px){
   .p-prd__head{ padding:30px 0 34px; }
-  .p-prd__pricebox{ grid-template-columns:auto 1fr; padding:26px 30px; gap:26px; }
+  .p-prd__pricebox{ padding:26px 30px; }
   .p-prd__colors{ grid-template-columns:repeat(4,1fr); }
   .p-prd__specs{ grid-template-columns:repeat(3,1fr); }
   .p-prd__opts{ grid-template-columns:repeat(2,1fr); }
@@ -233,3 +264,9 @@
 
 /* 型番などの長い英数字が、狭い画面ではみ出さないように */
 .p-prd__opt h3, .p-prd__spec figcaption{ overflow-wrap:anywhere; }
+
+/* 価格と内訳の横並びは、幅に余裕のある1024px以上から。
+   768pxで横に並べると内訳が入りきらず、ページが横にはみ出します。 */
+@media (min-width:1024px){
+  .p-prd__pricebox{ grid-template-columns:auto minmax(0,1fr); gap:26px; }
+}
