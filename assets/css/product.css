@@ -169,26 +169,27 @@
 }
 /* height は auto にしています。
    高さを100%にすると「親の高さ＝中身の高さ」の堂々めぐりになり、
-   4枚の高さが揃わなくなるためです。縦横比は aspect-ratio で決めます。 */
+   4枚の高さが揃わなくなるためです。 */
 .p-prd__hero__grid img{
-  width:100%; height:auto; object-fit:cover; display:block; aspect-ratio:4/3;
+  width:100%; height:auto; object-fit:cover; display:block;
 }
+/* 縦横比の指定は「複数枚のとき」だけに限定しています。
+   1枚のときにも aspect-ratio を書いてしまうと、
+   ブラウザ既定の「width/height属性から比率を決める」働きを打ち消してしまい、
+   写真の読み込み前に高さが大きく狂います（実際に1500pxまで伸びました）。 */
+.p-prd__hero__grid:not(:has(> img:only-child)) img{ aspect-ratio:4/3; }
 @media (min-width:600px){
   .p-prd__hero__grid{ grid-template-columns:repeat(4,1fr); }
-  .p-prd__hero__grid img{ aspect-ratio:1/1; }
+  .p-prd__hero__grid:not(:has(> img:only-child)) img{ aspect-ratio:1/1; }
 }
 @media (min-width:900px){
-  .p-prd__hero__grid img{ aspect-ratio:4/3; }
+  .p-prd__hero__grid:not(:has(> img:only-child)) img{ aspect-ratio:4/3; }
 }
 /* 写真が1枚だけのとき（CMSで1枚だけ選んだ場合）は、
    V-styleの帯と同じように、横いっぱいに1枚で敷きます。
-   高さは写真の縦横比まかせ。上限を決めると、余った分が
-   上下の余白として見えてしまうためです。 */
+   高さは写真そのものの縦横比まかせにします。 */
 .p-prd__hero__grid:has(> img:only-child){ grid-template-columns:1fr; }
-.p-prd__hero__grid > img:only-child{
-  aspect-ratio:auto; width:100%; height:auto; max-height:none; object-fit:contain;
-  display:block;
-}
+.p-prd__hero__grid > img:only-child{ object-fit:contain; }
 
 .p-prd__hero figcaption{
   margin-top:12px; font-size:14px; line-height:1.85; color:var(--ink-sub);
