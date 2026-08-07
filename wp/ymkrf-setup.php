@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '10' );
+define( 'YMKRF_SETUP_VER', '13' );
 
 add_action( 'admin_init', function () {
 
@@ -96,6 +96,8 @@ add_action( 'admin_init', function () {
 	$theme = WP_CONTENT_DIR . '/themes/ymkrf/assets/img/products';
 	$dirs = array(
 		$theme . '/rakuera',
+		$theme . '/refit',
+		$theme . '/sierra',
 		$theme . '/v-style',
 		$dir,                 // 最後の受け皿（wp-content/ymkrf-import）
 	);
@@ -176,6 +178,90 @@ add_action( 'admin_init', function () {
 		'raku-opt-dish.jpg'         => 'W450mmプルオープン食器洗い乾燥機',
 		'raku-opt-wallcab.jpg'      => 'ハンドムーブ吊戸棚（水切りタイプ照明付）',
 		'raku-opt-hood.jpg'         => '洗エールレンジフード',
+
+		/* ---- リフィット（Dグレード・タカラスタンダード） ---- */
+		'refit-main.jpg'            => 'タカラスタンダード リフィット I型2550サイズ',
+		'refit-color-light.jpg'          => '扉カラー ライト',
+		'refit-color-lightwhite.jpg'     => '扉カラー ライトホワイト',
+		'refit-color-mediumbrown.jpg'    => '扉カラー ミディアムブラウン',
+		'refit-color-darkbrown.jpg'      => '扉カラー ダークブラウン',
+		'refit-color-white.jpg'          => '扉カラー ホワイト',
+		'refit-color-superwhite.jpg'     => '扉カラー スーパーホワイト',
+		'refit-color-winered.jpg'        => '扉カラー ワインレッド',
+		'refit-top-beige.jpg'       => '天板カラー シャインベージュ',
+		'refit-top-gray.jpg'        => '天板カラー シャイングレー',
+		'refit-top-white.jpg'       => '天板カラー シャインホワイト',
+		'refit-spec-top.jpg'        => '人造大理石天板',
+		'refit-spec-sink.jpg'       => 'らくエルステンレスシンク',
+		'refit-spec-faucet.jpg'     => 'シングルレバー水栓',
+		'refit-spec-cabinet.jpg'    => '木製キャビネット（引出し底板ホーロー）',
+		'refit-spec-rail.jpg'       => 'ソフトクローズレール',
+		'refit-spec-hood.jpg'       => 'シロッコファンレンジフード',
+		'refit-spec-conro.jpg'      => 'ホーロー3口トップコンロ',
+		'refit-spec-led.jpg'        => 'LED手元照明',
+		'refit-spec-foot.jpg'       => '足元収納スライドタイプ',
+		'refit-spec-latch.jpg'      => '吊戸棚耐震ラッチ',
+		'refit-point-sink1.jpg'     => 'らくエルシンクの広さ（幅30cm・奥行50cm）',
+		'refit-point-fit.jpg'       => '1cm刻みでオーダーできることを示した図',
+		'refit-point-wall.jpg'      => '吊戸棚の高さ4種類（40・50・60・70cm）',
+		'refit-point-option.jpg'    => '食器棚のサイズバリエーション',
+		'refit-point-flow.jpg'      => '洗った水が手前に流れてこないシンクの段差',
+		'refit-point-drain.jpg'     => 'シンクと一体成型された浅型排水口',
+		'refit-point-horo1.jpg'     => 'ホーロー整流板を金属たわしで洗えることを示す写真',
+		'refit-point-horo2.jpg'     => 'ホーロー整流板を拭いているところ',
+		'refit-opt-dish.jpg'        => 'W450mmプルオープン食器洗い乾燥機',
+		'refit-opt-wallcab.jpg'     => '電動昇降吊戸棚',
+		'refit-opt-hood.jpg'        => 'ホーロークリーンフード',
+		'refit-opt-faucet.jpg'      => '浄水器内蔵ハンドシャワー水栓',
+
+		/* ---- シエラS（Cグレード・LIXIL） ---- */
+		'sierra-main.jpg'                   => 'LIXIL シエラS I型2550タイプ',
+		'sierra-color-blackstucco.jpg'      => '扉カラー ブラックスタッコ',
+		'sierra-color-greigestucco.jpg'     => '扉カラー グレージュスタッコ',
+		'sierra-color-whitestucco.jpg'      => '扉カラー ホワイトスタッコ',
+		'sierra-color-greenbronze.jpg'      => '扉カラー グリーンブロンズ',
+		'sierra-color-sunsetcopper.jpg'     => '扉カラー サンセットカッパー',
+		'sierra-color-brownbrass.jpg'       => '扉カラー ブラウンブラス',
+		'sierra-color-deepred.jpg'          => '扉カラー ディープレッド',
+		'sierra-color-palewhite-gloss.jpg'  => '扉カラー ペールホワイト（光沢）',
+		'sierra-color-burnedwood.jpg'       => '扉カラー バーンドウッド',
+		'sierra-color-bleachwood.jpg'       => '扉カラー ブリーチウッド',
+		'sierra-color-criedark.jpg'         => '扉カラー クリエダーク',
+		'sierra-color-criemocha.jpg'        => '扉カラー クリエモカ',
+		'sierra-color-criecherry.jpg'       => '扉カラー クリエチェリー',
+		'sierra-color-crieoak.jpg'          => '扉カラー クリエオーク',
+		'sierra-color-palewhite-wood.jpg'   => '扉カラー ペールホワイト（木目）',
+		'sierra-top-white.jpg'      => '天板カラー ソルティホワイト',
+		'sierra-top-gray.jpg'       => '天板カラー シルフィーグレー',
+		'sierra-top-beige.jpg'      => '天板カラー シルフィーベージュ',
+		'sierra-handle-slim-black.jpg'  => 'スリム取手 ブラック',
+		'sierra-handle-slim-nickel.jpg' => 'スリム取手 シャインニッケル',
+		'sierra-handle-slim-silver.jpg' => 'スリム取手 シルバー',
+		'sierra-handle-mid-black.jpg'   => 'ミドル取手 ブラック',
+		'sierra-handle-mid-nickel.jpg'  => 'ミドル取手 シャインニッケル',
+		'sierra-handle-mid-silver.jpg'  => 'ミドル取手 シルバー',
+		'sierra-spec-top.jpg'       => '人造大理石天板',
+		'sierra-spec-sink.jpg'      => 'スキットシンク（ステンレス）',
+		'sierra-spec-faucet.jpg'    => 'オールインワン浄水栓',
+		'sierra-spec-hood.jpg'      => 'シロッコファンレンジフード',
+		'sierra-spec-stocker.jpg'   => 'スライドストッカー',
+		'sierra-spec-rail.jpg'      => 'ソフトモーションレール',
+		'sierra-spec-wallcab.jpg'   => 'ミドル吊戸棚（扉キャッチ機構）',
+		'sierra-spec-light.jpg'     => 'システムライト',
+		'sierra-spec-panel.jpg'     => 'キッチンパネル',
+		'sierra-spec-ih.jpg'        => 'IHヒーター',
+		'sierra-point-flow1.jpg'    => 'ナイアガラフロー式で水が段差に流れ込むところ',
+		'sierra-point-flow2.jpg'    => '水滴を段差で受け止めるところ',
+		'sierra-point-pocket.jpg'   => 'シンクまわりが片付く大きなポケット',
+		'sierra-point-cartridge.jpg'=> '浄水カートリッジを内蔵した水栓の切替図',
+		'sierra-point-shower.jpg'   => 'ひろびろシャワーと整流の比較',
+		'sierra-point-eco.jpg'      => 'エコハンドルのシャワー',
+		'sierra-point-stocker1.jpg' => '足元のけこみ部分まで使えるスライドストッカー',
+		'sierra-point-rail.jpg'     => '奥行きいっぱい引き出せるソフトモーションレール',
+		'sierra-opt-dish.jpg'       => 'W450mmプルオープン食器洗い乾燥機',
+		'sierra-opt-faucet.jpg'     => 'ハンズフリー水栓',
+		'sierra-opt-pallet.jpg'     => 'クイックパレット W900',
+		'sierra-opt-sink.jpg'       => 'キレイシンク（人造大理石シンク）',
 	);
 	foreach ( $stock as $f => $alt ) {
 		if ( $img( $f, $alt ) ) $log[] = 'メディアに追加: ' . $f;
@@ -550,6 +636,309 @@ add_action( 'admin_init', function () {
 			wp_set_object_terms( $rid, array( 'komathu', 'kanadu' ), 'ymkrf_shop' );
 
 			$log[] = '商品「ラクエラ」を登録しました → ' . get_permalink( $rid );
+		}
+	}
+
+	/* ------------------------------------------------------------
+	   3-a2. リフィット（Dグレード・タカラスタンダード）を1件つくる
+	   ------------------------------------------------------------ */
+	if ( ! get_page_by_path( 'refit', OBJECT, 'ymkrf_product' ) ) {
+
+		$fid = wp_insert_post( array(
+			'post_type'   => 'ymkrf_product',
+			'post_status' => 'publish',
+			'post_title'  => 'リフィット',
+			'post_name'   => 'refit',
+		) );
+
+		if ( $fid && ! is_wp_error( $fid ) ) {
+
+			$f = array(
+				'_ymkrf_catch'   => '毎日の家事を楽しく、自分らしく彩る台所',
+				'_ymkrf_grade'   => 'Dグレード',
+				'_ymkrf_name'    => 'リフィット',
+				'_ymkrf_size'    => 'I型2550サイズ',
+				'_ymkrf_work'    => '240000',
+				'_ymkrf_item'    => '558000',
+				'_ymkrf_days'    => '2',
+				'_ymkrf_pt1'     => 'お洒落',
+				'_ymkrf_pt2'     => 'ホーロー製',
+				'_ymkrf_pt3'     => '衛生的',
+				'_ymkrf_caution' => '※写真はイメージになります。こちらの商品は2026年4月からの取り扱いとなっております。',
+			);
+			foreach ( $f as $k => $v ) update_post_meta( $fid, $k, $v );
+			update_post_meta( $fid, '_ymkrf_total', 798000 );
+
+			$m = $img( 'refit-main.jpg' );
+			if ( $m ) set_post_thumbnail( $fid, $m );
+
+			/* 扉カラー（グループ3・全7色） */
+			$fc = array(
+				array( 'refit-color-light.jpg',       'ライト' ),
+				array( 'refit-color-lightwhite.jpg',  'ライトホワイト' ),
+				array( 'refit-color-mediumbrown.jpg', 'ミディアムブラウン' ),
+				array( 'refit-color-darkbrown.jpg',   'ダークブラウン' ),
+				array( 'refit-color-white.jpg',       'ホワイト' ),
+				array( 'refit-color-superwhite.jpg',  'スーパーホワイト' ),
+				array( 'refit-color-winered.jpg',     'ワインレッド' ),
+			);
+			$rows = array();
+			foreach ( $fc as $r ) $rows[] = array( 'img' => $img( $r[0] ), 'name' => $r[1] );
+			update_post_meta( $fid, '_ymkrf_colors', $rows );
+
+			/* 天板カラー（全3色） */
+			$ft = array(
+				array( 'refit-top-beige.jpg', 'シャインベージュ' ),
+				array( 'refit-top-gray.jpg',  'シャイングレー' ),
+				array( 'refit-top-white.jpg', 'シャインホワイト' ),
+			);
+			$rows = array();
+			foreach ( $ft as $r ) $rows[] = array( 'img' => $img( $r[0] ), 'name' => $r[1] );
+			update_post_meta( $fid, '_ymkrf_tops', $rows );
+
+			/* 取っ手はカタログに記載が無いので空のまま（見出しごと出ません） */
+			update_post_meta( $fid, '_ymkrf_handles', array() );
+			update_post_meta( $fid, '_ymkrf_images', array() );
+
+			/* 標準仕様10点 */
+			$fs = array(
+				array( 'refit-spec-top.jpg',     '人造大理石天板',       '' ),
+				array( 'refit-spec-sink.jpg',    'らくエルステンレスシンク', '' ),
+				array( 'refit-spec-faucet.jpg',  'シングルレバー水栓',   'KXS871JT' ),
+				array( 'refit-spec-cabinet.jpg', '木製キャビネット',     '引出し底板ホーロー' ),
+				array( 'refit-spec-rail.jpg',    'ソフトクローズレール', '' ),
+				array( 'refit-spec-hood.jpg',    'シロッコファンレンジフード', 'VUA901AD(V)' ),
+				array( 'refit-spec-conro.jpg',   'ホーロー3口トップコンロ', 'ZGFNK6R18NKE-E' ),
+				array( 'refit-spec-led.jpg',     'LED手元照明',          '' ),
+				array( 'refit-spec-foot.jpg',    '足元収納',             'スライドタイプ' ),
+				array( 'refit-spec-latch.jpg',   '吊戸棚耐震ラッチ',     '' ),
+			);
+			$rows = array();
+			foreach ( $fs as $r ) $rows[] = array( 'img' => $img( $r[0], $r[1] ), 'name' => $r[1], 'model' => $r[2] );
+			update_post_meta( $fid, '_ymkrf_specs', $rows );
+
+			/* おすすめポイント（3グループ・7ポイント） */
+			update_post_meta( $fid, '_ymkrf_features', array(
+				array( 'gsub'=>'専業メーカーならではの品質と設計、かつ高コストパフォーマンス',
+				       'gttl'=>'「おしゃれすっきり台所へジャストにRe-フィット！」',
+				       'ttl'=>'使いやすいシンク設計',
+				       'text'=>'らくエルシンクは、小物収納を自分好みにカスタマイズ。おおきなフライパンも縦置きできる、うれしいゆったり設計。',
+				       'note'=>'', 'img'=>$img('refit-point-sink1.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'', 'gttl'=>'',
+				       'ttl'=>'ぴったり美しく',
+				       'text'=>'リフォームにありがちな微妙な隙間も、1cm刻みでオーダー可能。一軒一軒ジャストフィットで、収まりもよりキレイに！',
+				       'note'=>'', 'img'=>$img('refit-point-fit.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'', 'gttl'=>'',
+				       'ttl'=>'吊戸棚も4種類から',
+				       'text'=>'通常2〜3サイズに加え、業界初の高さ40cmもご用意。大きな窓のある現場にも気の利く収納設計です。',
+				       'note'=>'', 'img'=>$img('refit-point-wall.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'', 'gttl'=>'',
+				       'ttl'=>'豊富なオプションバリエーション',
+				       'text'=>'お求めやすい価格でも、充実のオプションラインナップをご用意。私だけの台所空間を演出できます。',
+				       'note'=>'', 'img'=>$img('refit-point-option.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'まだまだすごい', 'gttl'=>'「らくエルシンク」が衛生的',
+				       'ttl'=>'手洗い物も◎',
+				       'text'=>'奥に段差を設けて、洗った水の流れが手前に流れてこない設計です。',
+				       'note'=>'', 'img'=>$img('refit-point-flow.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'', 'gttl'=>'',
+				       'ttl'=>'おそうじ◎',
+				       'text'=>'シンクと浅型排水口が、なんと一体成型。継ぎ目がありません。',
+				       'note'=>'', 'img'=>$img('refit-point-drain.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'', 'gttl'=>'「ホーロー整流板」つきレンジフード',
+				       'ttl'=>'ホーロー製だから金属たわしもOK',
+				       'text'=>'ギトギトの油汚れがこびりついたとしても、キレイにゴシゴシ洗えます！',
+				       'note'=>'', 'img'=>$img('refit-point-horo1.jpg'), 'img2'=>$img('refit-point-horo2.jpg') ),
+			) );
+
+			/* おすすめオプション4点 */
+			update_post_meta( $fid, '_ymkrf_options', array(
+				array( 'img'=>$img('refit-opt-dish.jpg'),    'name'=>'W450mmプルオープン 食器洗い乾燥機（EW-45R3ST）',
+				       'text'=>'手洗いより節水で省エネ。家事の手間を省きます。', 'price'=>'141800', 'note'=>'' ),
+				array( 'img'=>$img('refit-opt-wallcab.jpg'), 'name'=>'電動昇降吊戸棚（W900）',
+				       'text'=>'スイッチひとつで、吊戸棚が下りてきます。', 'price'=>'183200', 'note'=>'' ),
+				array( 'img'=>$img('refit-opt-hood.jpg'),    'name'=>'ホーロークリーンフード（扉色幕板・W900）',
+				       'text'=>'本体・整流板もホーロー製なので、汚れても水拭きでキレイに。', 'price'=>'97000', 'note'=>'' ),
+				array( 'img'=>$img('refit-opt-faucet.jpg'),  'name'=>'浄水器内蔵ハンドシャワー水栓（TJS-SP30E）',
+				       'text'=>'シャワーヘッドで原水・浄水の切り替えができ、カートリッジ交換も手軽です。', 'price'=>'22500', 'note'=>'' ),
+			) );
+
+			/* ヤマキシ標準工事内容（キッチン共通） */
+			$fw = array(
+				array( '撤去工事',               '古いキッチンの撤去にかかる工事です。' ),
+				array( '廃棄処分',               '撤去した古いキッチンを廃棄処分するためにかかる費用です。' ),
+				array( 'ガス配管変更工事',       'ガスコンロを使うための配管工事です。' ),
+				array( 'キッチンパネル設置工事', 'キッチンパネルの取り付け工事費です。' ),
+				array( 'キッチンパネル部材費',   'キッチンパネル自体の部材費です。' ),
+				array( '下地工事（大工工事）',   'キッチンパネル設置面の補修、補強の工事です。' ),
+				array( 'シロッコファン取付工事', 'シロッコファンの取り付け工事費です。' ),
+			);
+			$rows = array();
+			foreach ( $fw as $r ) $rows[] = array( 'name' => $r[0], 'text' => $r[1] );
+			update_post_meta( $fid, '_ymkrf_works', $rows );
+
+			wp_set_object_terms( $fid, 'kitchen', 'ymkrf_product_cat' );
+			wp_set_object_terms( $fid, 'takara',  'ymkrf_maker' );
+
+			$log[] = '商品「リフィット」を登録しました → ' . get_permalink( $fid );
+		}
+	}
+
+	/* ------------------------------------------------------------
+	   3-a3. シエラS（Cグレード・LIXIL）を1件つくる
+	   ------------------------------------------------------------ */
+	if ( ! get_page_by_path( 'sierra-s', OBJECT, 'ymkrf_product' ) ) {
+
+		$sid = wp_insert_post( array(
+			'post_type'   => 'ymkrf_product',
+			'post_status' => 'publish',
+			'post_title'  => 'シエラS',
+			'post_name'   => 'sierra-s',
+		) );
+
+		if ( $sid && ! is_wp_error( $sid ) ) {
+
+			$f = array(
+				'_ymkrf_catch'   => 'シンプルで使いやすいキッチン',
+				'_ymkrf_grade'   => 'Cグレード',
+				'_ymkrf_name'    => 'シエラS',
+				'_ymkrf_size'    => 'I型2550タイプ',
+				'_ymkrf_work'    => '240000',
+				'_ymkrf_item'    => '658000',
+				'_ymkrf_days'    => '3',
+				'_ymkrf_pt1'     => 'スタイリッシュ',
+				'_ymkrf_pt2'     => 'エコ',
+				'_ymkrf_pt3'     => '収納力',
+				'_ymkrf_caution' => '※写真はイメージになります。朝日店はオプション付のみの展示です。',
+			);
+			foreach ( $f as $k => $v ) update_post_meta( $sid, $k, $v );
+			update_post_meta( $sid, '_ymkrf_total', 898000 );
+
+			$m = $img( 'sierra-main.jpg' );
+			if ( $m ) set_post_thumbnail( $sid, $m );
+			update_post_meta( $sid, '_ymkrf_images', array() );
+
+			/* 扉カラー グループ2（全15色） */
+			$sc = array(
+				array( 'sierra-color-blackstucco.jpg',     'ブラックスタッコ' ),
+				array( 'sierra-color-greigestucco.jpg',    'グレージュスタッコ' ),
+				array( 'sierra-color-whitestucco.jpg',     'ホワイトスタッコ' ),
+				array( 'sierra-color-greenbronze.jpg',     'グリーンブロンズ' ),
+				array( 'sierra-color-sunsetcopper.jpg',    'サンセットカッパー' ),
+				array( 'sierra-color-brownbrass.jpg',      'ブラウンブラス' ),
+				array( 'sierra-color-deepred.jpg',         'ディープレッド' ),
+				array( 'sierra-color-palewhite-gloss.jpg', 'ペールホワイト（光沢）' ),
+				array( 'sierra-color-burnedwood.jpg',      'バーンドウッド' ),
+				array( 'sierra-color-bleachwood.jpg',      'ブリーチウッド' ),
+				array( 'sierra-color-criedark.jpg',        'クリエダーク' ),
+				array( 'sierra-color-criemocha.jpg',       'クリエモカ' ),
+				array( 'sierra-color-criecherry.jpg',      'クリエチェリー' ),
+				array( 'sierra-color-crieoak.jpg',         'クリエオーク' ),
+				array( 'sierra-color-palewhite-wood.jpg',  'ペールホワイト（木目）' ),
+			);
+			$rows = array();
+			foreach ( $sc as $r ) $rows[] = array( 'img' => $img( $r[0] ), 'name' => $r[1] );
+			update_post_meta( $sid, '_ymkrf_colors', $rows );
+
+			/* 天板（全3色） */
+			$st = array(
+				array( 'sierra-top-white.jpg', 'ソルティホワイト' ),
+				array( 'sierra-top-gray.jpg',  'シルフィーグレー' ),
+				array( 'sierra-top-beige.jpg', 'シルフィーベージュ' ),
+			);
+			$rows = array();
+			foreach ( $st as $r ) $rows[] = array( 'img' => $img( $r[0] ), 'name' => $r[1] );
+			update_post_meta( $sid, '_ymkrf_tops', $rows );
+
+			/* 取っ手（スリム3色・ミドル3色） */
+			$sh = array(
+				array( 'sierra-handle-slim-black.jpg',  'スリム取手', 'ブラック' ),
+				array( 'sierra-handle-slim-nickel.jpg', 'スリム取手', 'シャインニッケル' ),
+				array( 'sierra-handle-slim-silver.jpg', 'スリム取手', 'シルバー' ),
+				array( 'sierra-handle-mid-black.jpg',   'ミドル取手', 'ブラック' ),
+				array( 'sierra-handle-mid-nickel.jpg',  'ミドル取手', 'シャインニッケル' ),
+				array( 'sierra-handle-mid-silver.jpg',  'ミドル取手', 'シルバー' ),
+			);
+			$rows = array();
+			foreach ( $sh as $r ) $rows[] = array( 'img' => $img( $r[0] ), 'name' => $r[1], 'code' => $r[2] );
+			update_post_meta( $sid, '_ymkrf_handles', $rows );
+
+			/* 標準仕様10点 */
+			$ss = array(
+				array( 'sierra-spec-top.jpg',     '人造大理石 天板',        '' ),
+				array( 'sierra-spec-sink.jpg',    'スキットシンク',         'ステンレス' ),
+				array( 'sierra-spec-faucet.jpg',  'オールインワン浄水栓',   'JFAK461SYXJG5C' ),
+				array( 'sierra-spec-hood.jpg',    'シロッコファンレンジフード', 'ASR-734KRT' ),
+				array( 'sierra-spec-stocker.jpg', 'スライドストッカー',     '' ),
+				array( 'sierra-spec-rail.jpg',    'ソフトモーションレール', '' ),
+				array( 'sierra-spec-wallcab.jpg', 'ミドル吊戸棚',           '扉キャッチ機構' ),
+				array( 'sierra-spec-light.jpg',   'システムライト',         '' ),
+				array( 'sierra-spec-panel.jpg',   'キッチンパネル',         'キッチン正面・コンロ側側面' ),
+				array( 'sierra-spec-ih.jpg',      'IHヒーター',             'CS-G321MS' ),
+			);
+			$rows = array();
+			foreach ( $ss as $r ) $rows[] = array( 'img' => $img( $r[0], $r[1] ), 'name' => $r[1], 'model' => $r[2] );
+			update_post_meta( $sid, '_ymkrf_specs', $rows );
+
+			/* おすすめポイント（3グループ・7ポイント） */
+			update_post_meta( $sid, '_ymkrf_features', array(
+				array( 'gsub'=>'水が無駄なく、スムーズに流れる。', 'gttl'=>'「スキットシンク」',
+				       'ttl'=>'汚れがスムーズに流れる、ナイアガラフロー式',
+				       'text'=>'水の広がりを抑えて、すばやく段差に流し込みます。カルキの原因になる水滴も、段差で受け止めます。',
+				       'note'=>'', 'img'=>$img('sierra-point-flow1.jpg'), 'img2'=>$img('sierra-point-flow2.jpg') ),
+				array( 'gsub'=>'', 'gttl'=>'',
+				       'ttl'=>'シンクまわりがキレイに片付く、大きなポケット',
+				       'text'=>'', 'note'=>'', 'img'=>$img('sierra-point-pocket.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'スタイリッシュで多彩な機能を搭載', 'gttl'=>'「オールインワン浄水栓」',
+				       'ttl'=>'浄水カートリッジをスマートに内蔵',
+				       'text'=>'シャワーと整流はダイヤル、浄水と原水はプッシュで切り替え。4段階切替も交換もラクラクです。',
+				       'note'=>'', 'img'=>$img('sierra-point-cartridge.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'', 'gttl'=>'',
+				       'ttl'=>'「ひろびろシャワー」で、洗い物をスピードアップ',
+				       'text'=>'', 'note'=>'', 'img'=>$img('sierra-point-shower.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'', 'gttl'=>'',
+				       'ttl'=>'エコハンドルで、無駄な給湯エネルギーを使いません',
+				       'text'=>'', 'note'=>'', 'img'=>$img('sierra-point-eco.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'限られたスペースを有効活用。', 'gttl'=>'「スライドストッカー」',
+				       'ttl'=>'足元までしっかり収納',
+				       'text'=>'足元のけこみの部分も、収納スペースとして無駄なく使えます。',
+				       'note'=>'', 'img'=>$img('sierra-point-stocker1.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'', 'gttl'=>'',
+				       'ttl'=>'ソフトモーションレール',
+				       'text'=>'引出しを滑らかに引き込む機構と、奥行きいっぱいまで引き出せる構造のソフトモーションレール仕様です。',
+				       'note'=>'', 'img'=>$img('sierra-point-rail.jpg'), 'img2'=>'' ),
+			) );
+
+			/* おすすめオプション4点 */
+			update_post_meta( $sid, '_ymkrf_options', array(
+				array( 'img'=>$img('sierra-opt-dish.jpg'),   'name'=>'W450mmプルオープン 食器洗い乾燥機（NP-45RS9WJGT）',
+				       'text'=>'手洗いより節水で省エネ。家事の手間を省きます。', 'price'=>'124000', 'note'=>'' ),
+				array( 'img'=>$img('sierra-opt-faucet.jpg'), 'name'=>'ハンズフリー水栓（SFNAH472SYJG5）',
+				       'text'=>'手を使わずに水が出て、シンク作業がはかどります。', 'price'=>'116000', 'note'=>'' ),
+				array( 'img'=>$img('sierra-opt-pallet.jpg'), 'name'=>'クイックパレット W900',
+				       'text'=>'必要な時だけスッと下ろして使える、水切り構造の仮置き棚。', 'price'=>'29000', 'note'=>'' ),
+				array( 'img'=>$img('sierra-opt-sink.jpg'),   'name'=>'キレイシンク（人造大理石シンク）',
+				       'text'=>'形・色・拭きやすさ、3つのキレイを備えたシンクです。', 'price'=>'29000', 'note'=>'' ),
+			) );
+
+			/* ヤマキシ標準工事内容（キッチン共通） */
+			$sw = array(
+				array( '撤去工事',               '古いキッチンの撤去にかかる工事です。' ),
+				array( '廃棄処分',               '撤去した古いキッチンを廃棄処分するためにかかる費用です。' ),
+				array( 'ガス配管変更工事',       'ガスコンロを使うための配管工事です。' ),
+				array( 'キッチンパネル設置工事', 'キッチンパネルの取り付け工事費です。' ),
+				array( 'キッチンパネル部材費',   'キッチンパネル自体の部材費です。' ),
+				array( '下地工事（大工工事）',   'キッチンパネル設置面の補修、補強の工事です。' ),
+				array( 'シロッコファン取付工事', 'シロッコファンの取り付け工事費です。' ),
+			);
+			$rows = array();
+			foreach ( $sw as $r ) $rows[] = array( 'name' => $r[0], 'text' => $r[1] );
+			update_post_meta( $sid, '_ymkrf_works', $rows );
+
+			wp_set_object_terms( $sid, 'kitchen', 'ymkrf_product_cat' );
+			wp_set_object_terms( $sid, 'lixil',   'ymkrf_maker' );
+			wp_set_object_terms( $sid, array( 'komathu', 'hakui', 'tazuruhama', 'asahi', 'kanadu' ), 'ymkrf_shop' );
+
+			$log[] = '商品「シエラS」を登録しました → ' . get_permalink( $sid );
 		}
 	}
 

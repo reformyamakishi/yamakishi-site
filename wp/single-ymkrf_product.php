@@ -143,7 +143,7 @@ $maker = ! empty( $d['makers'] ) ? $d['makers'][0] : null;
   </div>
 </section>
 
-<?php if ( $d['images'] || $d['colors'] || $d['handles'] ) : ?>
+<?php if ( $d['images'] || $d['colors'] || $d['tops'] || $d['handles'] ) : ?>
 <!-- =========== カラーバリエーション =========== -->
 <section class="l-section l-section--soft">
   <div class="l-wrap">
@@ -171,6 +171,18 @@ $maker = ! empty( $d['makers'] ) ? $d['makers'][0] : null;
         <?php foreach ( $d['colors'] as $r ) : ?>
           <figure>
             <div class="p-prd__swatch"><?php echo ymkrf_img( $r['img'], 'medium', '扉カラー ' . $r['name'] ); ?></div>
+            <figcaption><?php echo esc_html( $r['name'] ); ?></figcaption>
+          </figure>
+        <?php endforeach; ?>
+      </div>
+    <?php endif; ?>
+
+    <?php if ( $d['tops'] ) : ?>
+      <p class="p-prd__sub" style="margin-top:26px">天板カラー（全<?php echo count( $d['tops'] ); ?>色）</p>
+      <div class="p-prd__colors">
+        <?php foreach ( $d['tops'] as $r ) : ?>
+          <figure>
+            <div class="p-prd__swatch"><?php echo ymkrf_img( $r['img'], 'medium', '天板カラー ' . $r['name'] ); ?></div>
             <figcaption><?php echo esc_html( $r['name'] ); ?></figcaption>
           </figure>
         <?php endforeach; ?>

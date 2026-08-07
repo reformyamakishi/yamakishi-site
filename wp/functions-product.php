@@ -123,6 +123,14 @@ function ymkrf_product_repeaters() {
 				'name' => array( '色の名前', 'text', '例：ホワイト' ),
 			),
 		),
+		'_ymkrf_tops' => array(
+			'label' => '天板カラー',
+			'note'  => 'ワークトップの色見本です。無ければ空のままでOK。見出しごと出なくなります。',
+			'cols'  => array(
+				'img'  => array( '色見本', 'image' ),
+				'name' => array( '色の名前', 'text', '例：シャインベージュ' ),
+			),
+		),
 		'_ymkrf_handles' => array(
 			'label' => '取っ手',
 			'note'  => 'キッチン以外で使わない場合は、空のままでOK。見出しごと出なくなります。',
@@ -416,6 +424,61 @@ add_action( 'manage_ymkrf_product_posts_custom_column', function ( $col, $post_i
 }, 10, 2 );
 
 
+/* ------------------------------------------------------------
+   6-b. 左メニューに「カテゴリ別の入口」を出す
+        商品 → キッチン ／ お風呂 ／ トイレ … と直接開けるようにします。
+        商品が1件も無いカテゴリは出しません（メニューが長くなるのを防ぐため）。
+        すべて出したい場合は、下の 'hide_empty' を false にしてください。
+   ------------------------------------------------------------ */
+add_action( 'admin_menu', function () {
+
+	$terms = get_terms( array(
+		'taxonomy'   => 'ymkrf_product_cat',
+		'hide_empty' => true,
+		'orderby'    => 'count',
+		'order'      => 'DESC',
+	) );
+	if ( is_wp_error( $terms ) || ! $terms ) return;
+
+	$i = 0;
+	foreach ( $terms as $t ) {
+		add_submenu_page(
+			'edit.php?post_type=ymkrf_product',                       // 親メニュー
+			$t->name . 'の商品',                                       // ページの見出し
+			'　└ ' . $t->name . '（' . $t->count . '）',               // メニューに出る文字
+			'edit_posts',
+			'edit.php?post_type=ymkrf_product&ymkrf_product_cat=' . $t->slug,
+			'',
+			11 + $i                                                    // 「新しい商品」のすぐ下
+		);
+		$i++;
+	}
+} );
+
+
+/* ------------------------------------------------------------
+   6-c. 商品一覧の上に「カテゴリで絞り込む」プルダウンを出す
+   ------------------------------------------------------------ */
+add_action( 'restrict_manage_posts', function ( $post_type ) {
+	if ( $post_type !== 'ymkrf_product' ) return;
+
+	$tax = 'ymkrf_product_cat';
+	$cur = isset( $_GET[ $tax ] ) ? sanitize_text_field( wp_unslash( $_GET[ $tax ] ) ) : '';
+
+	wp_dropdown_categories( array(
+		'taxonomy'        => $tax,
+		'name'            => $tax,
+		'value_field'     => 'slug',      // URLにスラッグを渡す（IDではなく）
+		'show_option_all' => 'すべてのカテゴリ',
+		'selected'        => $cur,
+		'hierarchical'    => true,
+		'hide_empty'      => false,
+		'orderby'         => 'name',
+		'show_count'      => true,
+	) );
+} );
+
+
 /* ============================================================
    7. テンプレートから呼び出すための関数
    ============================================================ */
@@ -448,6 +511,7 @@ function ymkrf_product_data( $post_id = null ) {
 		'caution'  => $m( '_ymkrf_caution' ),
 		'images'   => $rep( '_ymkrf_images' ),
 		'colors'   => $rep( '_ymkrf_colors' ),
+		'tops'     => $rep( '_ymkrf_tops' ),
 		'handles'  => $rep( '_ymkrf_handles' ),
 		'specs'    => $rep( '_ymkrf_specs' ),
 		'features' => $rep( '_ymkrf_features' ),
