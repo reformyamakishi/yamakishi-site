@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '9' );
+define( 'YMKRF_SETUP_VER', '10' );
 
 add_action( 'admin_init', function () {
 
@@ -93,9 +93,11 @@ add_action( 'admin_init', function () {
 	/* 写真の置き場所は2か所。上から順に探します。
 	   2つめはテーマの assets（作業フォルダへの入口）なので、
 	   GitHubに入れた写真がそのままメディアに取り込めます。 */
+	$theme = WP_CONTENT_DIR . '/themes/ymkrf/assets/img/products';
 	$dirs = array(
-		$dir,
-		WP_CONTENT_DIR . '/themes/ymkrf/assets/img/products/rakuera',
+		$theme . '/rakuera',
+		$theme . '/v-style',
+		$dir,                 // 最後の受け皿（wp-content/ymkrf-import）
 	);
 
 	$img = function ( $file, $alt = '' ) use ( $dirs ) {
@@ -180,10 +182,18 @@ add_action( 'admin_init', function () {
 	}
 
 	/* 元ファイルを作り直したときは、メディア側も差し替えます。
-	   （メディアは uploads/ に別のコピーを持つので、フォルダを更新しただけでは変わりません） */
-	foreach ( array_keys( $stock ) as $f ) {
-		$id = $img( $f );
-		if ( ! $id ) continue;
+	   （メディアは uploads/ に別のコピーを持つので、フォルダを更新しただけでは変わりません）
+	   対象は「このしくみで取り込んだ写真すべて」。V-styleの写真も含みます。 */
+	$imported = get_posts( array(
+		'post_type'      => 'attachment',
+		'post_status'    => 'inherit',
+		'posts_per_page' => -1,
+		'fields'         => 'ids',
+		'meta_key'       => '_ymkrf_import',
+	) );
+	foreach ( $imported as $id ) {
+		$f = get_post_meta( $id, '_ymkrf_import', true );
+		if ( ! $f ) continue;
 		$src = '';
 		foreach ( $dirs as $d ) {
 			if ( file_exists( $d . '/' . $f ) ) { $src = $d . '/' . $f; break; }
