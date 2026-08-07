@@ -76,8 +76,17 @@ h1,h2,h3,h4,h5{ margin:0; line-height:1.45; font-weight:800; }
 p{ margin:0; }
 ul,ol{ margin:0; padding:0; list-style:none; }
 figure{ margin:0; }   /* ブラウザ既定の左右40pxの余白を消す */
+/* <picture> は「webpに対応していればwebp、そうでなければjpg」を選ぶための入れ物です。
+   display:contents を指定すると、この入れ物自体はレイアウト上いないものとして扱われ、
+   中の <img> がそのまま親の子（グリッドやフレックスの要素）になります。
+   これがないと、写真が親の枠いっぱいに広がらなくなります。 */
+/* ↓の共通指定より後ろに置く必要があります（同じ強さなので、後に書いたほうが勝ちます） */
 .nowrap{ white-space:nowrap; }   /* ここで改行させたくない語のまとまり */
 img,svg,picture{ max-width:100%; height:auto; display:block; }
+picture{ display:contents; }
+/* picture を display:contents にすると、中の <source> まで
+   グリッドやフレックスの要素として1マス分を取ってしまうため、明示的に消します。 */
+picture > source{ display:none; }
 a{ color:var(--brand-dark); text-underline-offset:.25em; }
 button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; }
 address{ font-style:normal; }
