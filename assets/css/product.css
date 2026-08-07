@@ -180,6 +180,17 @@
 @media (min-width:900px){
   .p-prd__hero__grid img{ aspect-ratio:4/3; }
 }
+/* 写真が1枚だけのとき（CMSで1枚だけ選んだ場合）は、
+   横に細長く並べず、中央に1枚で大きく見せます。 */
+.p-prd__hero__grid:has(> img:only-child){
+  grid-template-columns:1fr; box-shadow:none; border-radius:0; overflow:visible;
+}
+.p-prd__hero__grid > img:only-child{
+  aspect-ratio:auto; height:auto; object-fit:contain;
+  max-width:min(100%,720px); margin-inline:auto;
+  border-radius:var(--radius); box-shadow:var(--shadow-md);
+}
+
 .p-prd__hero figcaption{
   margin-top:12px; font-size:14px; line-height:1.85; color:var(--ink-sub);
 }

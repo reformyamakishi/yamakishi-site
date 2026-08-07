@@ -155,7 +155,12 @@ $maker = ! empty( $d['makers'] ) ? $d['makers'][0] : null;
           <?php foreach ( $d['images'] as $r ) echo ymkrf_img( $r['img'], 'medium_large', $r['alt'] ); ?>
         </div>
         <figcaption>
-          <strong>扉の色と取っ手の組み合わせで、キッチンの雰囲気はぐっと変わります。</strong><small>※画像はイメージです</small>
+          <strong><?php
+            /* 取っ手が1種類しかない商品では「組み合わせ」と書くと事実に合わないので、文を変えます */
+            echo ( count( $d['handles'] ) > 1 )
+              ? '扉の色と取っ手の組み合わせで、キッチンの雰囲気はぐっと変わります。'
+              : '扉の色で、キッチンの雰囲気はぐっと変わります。';
+          ?></strong><small>※画像はイメージです</small>
         </figcaption>
       </figure>
     <?php endif; ?>

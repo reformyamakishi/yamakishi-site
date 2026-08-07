@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '2' );
+define( 'YMKRF_SETUP_VER', '6' );
 
 add_action( 'admin_init', function () {
 
@@ -90,7 +90,15 @@ add_action( 'admin_init', function () {
 	 * ファイル名を渡すとメディアのIDを返します。
 	 * すでに取り込み済みなら、そのIDを使い回します。
 	 */
-	$img = function ( $file, $alt = '' ) use ( $dir ) {
+	/* 写真の置き場所は2か所。上から順に探します。
+	   2つめはテーマの assets（作業フォルダへの入口）なので、
+	   GitHubに入れた写真がそのままメディアに取り込めます。 */
+	$dirs = array(
+		$dir,
+		WP_CONTENT_DIR . '/themes/ymkrf/assets/img/products/rakuera',
+	);
+
+	$img = function ( $file, $alt = '' ) use ( $dirs ) {
 		static $cache = array();
 		if ( isset( $cache[ $file ] ) ) return $cache[ $file ];
 
@@ -104,8 +112,11 @@ add_action( 'admin_init', function () {
 		) );
 		if ( $found ) return $cache[ $file ] = (int) $found[0];
 
-		$path = $dir . '/' . $file;
-		if ( ! file_exists( $path ) ) return $cache[ $file ] = 0;
+		$path = '';
+		foreach ( $dirs as $d ) {
+			if ( file_exists( $d . '/' . $file ) ) { $path = $d . '/' . $file; break; }
+		}
+		if ( ! $path ) return $cache[ $file ] = 0;
 
 		$up = wp_upload_bits( $file, null, file_get_contents( $path ) );
 		if ( ! empty( $up['error'] ) ) return $cache[ $file ] = 0;
@@ -124,6 +135,76 @@ add_action( 'admin_init', function () {
 
 		return $cache[ $file ] = (int) $id;
 	};
+
+	/* ------------------------------------------------------------
+	   2-b. ラクエラの写真をメディアに入れておく
+	        （商品そのものは、管理画面から手で登録します）
+	   ------------------------------------------------------------ */
+	$stock = array(
+		'raku-main.jpg'             => 'クリナップ ラクエラ I型2550サイズ（ペールウッド扉）',
+		'raku-cabinet.jpg'          => '扉カラー4色の面材を重ねて並べたところ',
+		'raku-color-white.jpg'      => '扉カラー トーンホワイト',
+		'raku-color-charcoal.jpg'   => '扉カラー トーンチャコール',
+		'raku-color-palewood.jpg'   => '扉カラー ペールウッド',
+		'raku-color-mokawood.jpg'   => '扉カラー モカウッド',
+		'raku-color-charcoalwood.jpg' => '扉カラー チャコールウッド',
+		'raku-color-white-set.jpg'  => 'トーンホワイトのキッチンと色見本',
+		'raku-color-charcoal-set.jpg' => 'トーンチャコールのキッチンと色見本',
+		'raku-color-palewood-set.jpg' => 'ペールウッドのキッチンと色見本',
+		'raku-color-mokawood-set.jpg' => 'モカウッドのキッチンと色見本',
+		'raku-color-charcoalwood-set.jpg' => 'チャコールウッドのキッチンと色見本',
+		'raku-handle-bar.jpg'       => 'L:バー取手（シルバー）',
+		'raku-spec-conro.jpg'       => 'ホーロー3口トップコンロ',
+		'raku-spec-top.jpg'         => 'ステンレス天板',
+		'raku-spec-hood.jpg'        => 'フラットスリムレンジフード',
+		'raku-spec-sink.jpg'        => 'ステンレスTUシンク',
+		'raku-spec-rail.jpg'        => 'サイレントレール',
+		'raku-spec-faucet.jpg'      => 'シングルレバー水栓',
+		'raku-spec-wallcab.jpg'     => 'ミドル吊戸棚',
+		'raku-spec-panel.jpg'       => 'キッチンパネル',
+		'raku-spec-floor.jpg'       => '床板メラミン化粧板',
+		'raku-point-foot1.jpg'      => 'フットエリア収納にストックをしまっているところ',
+		'raku-point-foot2.jpg'      => '蹴込みレスデザインで足元まですっきりした状態',
+		'raku-point-hand1.jpg'      => 'ハンドエリア収納に調味料や鍋を収めたところ',
+		'raku-point-hand2.jpg'      => 'マグネフリーパネルに市販の収納アイテムを取り付けたところ',
+		'raku-point-hood1.jpg'      => 'フラットスリムレンジフードの外観',
+		'raku-point-hood2.jpg'      => 'レンジフードの内面を手で拭いているところ',
+		'raku-point-top1.jpg'       => 'ドット柄コイニング加工のステンレス天板',
+		'raku-opt-dish.jpg'         => 'W450mmプルオープン食器洗い乾燥機',
+		'raku-opt-wallcab.jpg'      => 'ハンドムーブ吊戸棚（水切りタイプ照明付）',
+		'raku-opt-hood.jpg'         => '洗エールレンジフード',
+	);
+	foreach ( $stock as $f => $alt ) {
+		if ( $img( $f, $alt ) ) $log[] = 'メディアに追加: ' . $f;
+	}
+
+	/* ------------------------------------------------------------
+	   2-c. サムネイルが無い写真に、あらためて作らせる
+	        PHPの画像処理機能（GD）が入っていない時期に取り込んだぶんの手当てです。
+	        GDを有効にしてApacheを再起動したあと、1回だけ動きます。
+	   ------------------------------------------------------------ */
+	if ( function_exists( 'imagecreatetruecolor' ) || class_exists( 'Imagick' ) ) {
+		$atts = get_posts( array(
+			'post_type'      => 'attachment',
+			'post_mime_type' => 'image',
+			'post_status'    => 'inherit',
+			'posts_per_page' => -1,
+			'fields'         => 'ids',
+		) );
+		$fixed = 0;
+		foreach ( $atts as $aid ) {
+			$meta = wp_get_attachment_metadata( $aid );
+			if ( ! empty( $meta['sizes'] ) ) continue;   // すでにある
+			$file = get_attached_file( $aid );
+			if ( ! $file || ! file_exists( $file ) ) continue;
+			$new = wp_generate_attachment_metadata( $aid, $file );
+			if ( $new && ! empty( $new['sizes'] ) ) {
+				wp_update_attachment_metadata( $aid, $new );
+				$fixed++;
+			}
+		}
+		if ( $fixed ) $log[] = "サムネイルを作り直した写真：{$fixed}点";
+	}
 
 	/* ------------------------------------------------------------
 	   3. V-style を1件つくる
