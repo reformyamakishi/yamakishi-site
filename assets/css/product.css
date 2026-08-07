@@ -181,14 +181,13 @@
   .p-prd__hero__grid img{ aspect-ratio:4/3; }
 }
 /* 写真が1枚だけのとき（CMSで1枚だけ選んだ場合）は、
-   横に細長く並べず、中央に1枚で大きく見せます。 */
-.p-prd__hero__grid:has(> img:only-child){
-  grid-template-columns:1fr; box-shadow:none; border-radius:0; overflow:visible;
-}
+   V-styleの帯と同じように、横いっぱいに1枚で敷きます。
+   高さは写真の縦横比まかせ。上限を決めると、余った分が
+   上下の余白として見えてしまうためです。 */
+.p-prd__hero__grid:has(> img:only-child){ grid-template-columns:1fr; }
 .p-prd__hero__grid > img:only-child{
-  aspect-ratio:auto; height:auto; object-fit:contain;
-  max-width:min(100%,720px); margin-inline:auto;
-  border-radius:var(--radius); box-shadow:var(--shadow-md);
+  aspect-ratio:auto; width:100%; height:auto; max-height:none; object-fit:contain;
+  display:block;
 }
 
 .p-prd__hero figcaption{
@@ -230,7 +229,11 @@
   /* 見出しのすぐ下に付くよう、間隔を詰めます */
   .p-prd__note{ display:block; margin-left:0; margin-top:0; line-height:1.5; }
 }
-.p-prd__colors{ display:grid; grid-template-columns:repeat(2,1fr); gap:14px; }
+/* 色数は商品によって変わります。
+   グリッドだと最後の行が左に寄って「4＋1」のように寂しく見えるため、
+   フレックスにして、余った行が中央に来るようにしています。 */
+.p-prd__colors{ display:flex; flex-wrap:wrap; justify-content:center; gap:14px; }
+.p-prd__colors > figure{ width:calc(50% - 7px); }
 .p-prd__colors figure figcaption{
   margin-top:9px;
   text-align:center; font-size:13px; font-weight:900; letter-spacing:.04em;
@@ -240,7 +243,13 @@
   aspect-ratio:3/2; border-radius:10px; border:1px solid var(--border);
   box-shadow:var(--shadow);
 }
-.p-prd__handles{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; margin-top:8px; }
+/* 扉カラーと同じ組み方（フレックス）にして、大きさをそろえています。
+   グリッドの auto-fit だと、取っ手が1種類の商品でその1枚が
+   横幅いっぱいまで引き伸ばされてしまうという事情もあります。 */
+.p-prd__handles{
+  display:flex; flex-wrap:wrap; justify-content:center; gap:14px; margin-top:8px;
+}
+.p-prd__handles > figure{ width:calc(50% - 7px); }
 .p-prd__handles figure{
   background:#fff; border:1px solid var(--border); border-radius:10px;
   padding:14px 12px; text-align:center;
@@ -428,6 +437,9 @@
   transition:border-color .2s, transform .2s;
 }
 .p-prd__navcard:hover{ border-color:var(--brand); transform:translateY(-3px); }
+/* 「ほかのグレードを見る」カードは写真が無いので、写真枠ごと省いて文字を中央に */
+.p-prd__navcard--list{ grid-template-columns:1fr; text-align:center; }
+.p-prd__navcard--list .ph{ display:none; }
 .p-prd__navcard .ph{
   aspect-ratio:4/3; background:var(--bg-gray); border-radius:6px;
   display:grid; place-items:center; color:#a08b80; font-size:10.5px; font-weight:800;
@@ -445,7 +457,17 @@
 @media (min-width:768px){
   .p-prd__head{ padding:30px 0 34px; }
   .p-prd__pricebox{ padding:26px 30px; }
-  .p-prd__colors{ grid-template-columns:repeat(4,1fr); }
+  .p-prd__colors > figure{ width:calc(25% - 10.5px); }
+  /* 取っ手は扉カラーと同じ大きさ（3列）に。
+     カードが広くなるぶん、写真の高さも上げないと横に間延びして見えます。 */
+  .p-prd__handles > figure{ width:calc(33.333% - 9.34px); }
+  /* 高さを決め打ちにすると、取っ手が横長なので上下に大きな空きが出ます。
+     取っ手写真の平均的な縦横比（およそ2.4:1）で枠を取ります。 */
+  .p-prd__handles .ph{ height:auto; aspect-ratio:2.4/1; }
+  /* 5色・6色のときだけ3列に。4列だと「4＋1」になって収まりが悪いためです */
+  .p-prd__colors:has(> figure:nth-child(5)):not(:has(> figure:nth-child(7))) > figure{
+    width:calc(33.333% - 9.34px);
+  }
   .p-prd__specs{ grid-template-columns:repeat(3,1fr); }
   .p-prd__opts{ grid-template-columns:repeat(2,1fr); gap:12px; }
   .p-prd__opt{ grid-template-columns:92px minmax(0,1fr); }
