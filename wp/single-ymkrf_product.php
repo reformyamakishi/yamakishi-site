@@ -320,15 +320,23 @@ $maker = ! empty( $d['makers'] ) ? $d['makers'][0] : null;
     if ( $sib['next'] ) $slots[] = array( 'id' => $sib['next'], 'label' => 'グレードUP →' );
 
     if ( count( $slots ) < 2 && $cat ) {
-      $listcard = array(
-        'id'    => 0,
-        'label' => 'ほかのグレードを見る',
-        'name'  => $cat->name . 'の商品一覧',
-        'url'   => get_term_link( $cat ),
-      );
-      /* いちばん安い商品では左が空くので、その位置に入れます */
-      if ( ! $sib['prev'] ) array_unshift( $slots, $listcard );
-      else                  $slots[] = $listcard;
+      if ( ! $sib['prev'] ) {
+        /* いちばん安い商品。下のグレードが無いので、左の枠に一覧への案内を入れます */
+        array_unshift( $slots, array(
+          'id'    => 0,
+          'label' => '',
+          'name'  => '他のグレードの' . $cat->name . 'を見る',
+          'url'   => get_term_link( $cat ),
+        ) );
+      } else {
+        /* いちばん高い商品。上のグレードが増えれば、自動でその商品に置き換わります */
+        $slots[] = array(
+          'id'    => 0,
+          'label' => 'グレードUP →',
+          'name'  => $cat->name . 'の商品一覧',
+          'url'   => get_term_link( $cat ),
+        );
+      }
     }
     ?>
     <div class="p-prd__nav<?php echo ( count( $slots ) < 2 ) ? ' p-prd__nav--one' : ''; ?>">
@@ -340,7 +348,9 @@ $maker = ! empty( $d['makers'] ) ? $d['makers'][0] : null;
         <a class="p-prd__navcard<?php echo $id ? '' : ' p-prd__navcard--list'; ?>" href="<?php echo esc_url( $url ); ?>">
           <div class="ph"><?php echo ( $id && has_post_thumbnail( $id ) ) ? get_the_post_thumbnail( $id, 'thumbnail' ) : ''; ?></div>
           <div>
-            <span class="p-prd__navlabel"><?php echo esc_html( $s['label'] ); ?></span>
+            <?php if ( $s['label'] !== '' ) : ?>
+              <span class="p-prd__navlabel"><?php echo esc_html( $s['label'] ); ?></span>
+            <?php endif; ?>
             <span class="p-prd__navname"><?php
               echo esc_html( $sd
                 ? ( $sd['grade'] ? '【' . $sd['grade'] . '】' : '' ) . $sd['name']
