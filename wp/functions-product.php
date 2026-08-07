@@ -413,6 +413,7 @@ add_filter( 'manage_ymkrf_product_posts_columns', function ( $cols ) {
 		$new[ $k ] = $v;
 		if ( $k === 'title' ) {
 			$new['ymkrf_thumb'] = '写真';
+			$new['ymkrf_grade'] = 'グレード';
 			$new['ymkrf_price'] = '込み価格';
 		}
 	}
@@ -425,10 +426,59 @@ add_action( 'manage_ymkrf_product_posts_custom_column', function ( $col, $post_i
 			? get_the_post_thumbnail( $post_id, array( 70, 70 ) )
 			: '<span style="color:#c00">未設定</span>';
 	}
+	if ( $col === 'ymkrf_grade' ) {
+		$g = get_post_meta( $post_id, '_ymkrf_grade', true );
+		echo $g ? esc_html( $g ) : '<span style="color:#c00">未設定</span>';
+	}
 	if ( $col === 'ymkrf_price' ) {
 		$t = (int) get_post_meta( $post_id, '_ymkrf_total', true );
 		echo $t ? esc_html( number_format( $t ) ) . ' 円' : '—';
 	}
+}, 10, 2 );
+
+/* 「グレード」「込み価格」の見出しをクリックで並べ替えられるようにします */
+add_filter( 'manage_edit-ymkrf_product_sortable_columns', function ( $cols ) {
+	$cols['ymkrf_grade'] = 'ymkrf_grade';
+	$cols['ymkrf_price'] = 'ymkrf_price';
+	return $cols;
+} );
+
+/**
+ * 一覧の並び順。
+ * ・見出しをクリックしていないときは「込み価格の安い順」
+ * ・「グレード」「込み価格」の見出しをクリックしたら、その順
+ *
+ * meta_key で並べると価格が未入力の商品が一覧から消えてしまうため、
+ * LEFT JOIN を自前で足しています（未入力の商品も必ず出ます）。
+ */
+add_filter( 'posts_clauses', function ( $clauses, $q ) {
+
+	if ( ! is_admin() || ! $q->is_main_query() ) return $clauses;
+	if ( $q->get( 'post_type' ) !== 'ymkrf_product' ) return $clauses;
+
+	global $wpdb;
+
+	$by    = $q->get( 'orderby' );
+	$order = ( strtoupper( (string) $q->get( 'order' ) ) === 'DESC' ) ? 'DESC' : 'ASC';
+
+	if ( ! $by ) {
+		$by = 'ymkrf_price';   // 見出しを押していないときの既定
+		$order = 'ASC';
+	} elseif ( ! in_array( $by, array( 'ymkrf_price', 'ymkrf_grade' ), true ) ) {
+		return $clauses;       // 日付順・タイトル順などは、そのまま
+	}
+
+	if ( $by === 'ymkrf_price' ) {
+		$clauses['join']   .= " LEFT JOIN {$wpdb->postmeta} AS ymkrf_ot"
+		                    . " ON ( ymkrf_ot.post_id = {$wpdb->posts}.ID AND ymkrf_ot.meta_key = '_ymkrf_total' )";
+		$clauses['orderby'] = "CAST( ymkrf_ot.meta_value AS SIGNED ) {$order}, {$wpdb->posts}.post_title ASC";
+	} else {
+		$clauses['join']   .= " LEFT JOIN {$wpdb->postmeta} AS ymkrf_og"
+		                    . " ON ( ymkrf_og.post_id = {$wpdb->posts}.ID AND ymkrf_og.meta_key = '_ymkrf_grade' )";
+		$clauses['orderby'] = "ymkrf_og.meta_value {$order}, {$wpdb->posts}.post_title ASC";
+	}
+
+	return $clauses;
 }, 10, 2 );
 
 
