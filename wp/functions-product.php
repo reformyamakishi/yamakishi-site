@@ -131,6 +131,14 @@ function ymkrf_product_repeaters() {
 				'name' => array( '色の名前', 'text', '例：シャインベージュ' ),
 			),
 		),
+		'_ymkrf_sinks' => array(
+			'label' => 'シンクカラー',
+			'note'  => 'シンクの色見本です。無ければ空のままでOK。見出しごと出なくなります。',
+			'cols'  => array(
+				'img'  => array( '色見本', 'image' ),
+				'name' => array( '色の名前', 'text', '例：グラニュールホワイト' ),
+			),
+		),
 		'_ymkrf_handles' => array(
 			'label' => '取っ手',
 			'note'  => 'キッチン以外で使わない場合は、空のままでOK。見出しごと出なくなります。',
@@ -512,6 +520,7 @@ function ymkrf_product_data( $post_id = null ) {
 		'images'   => $rep( '_ymkrf_images' ),
 		'colors'   => $rep( '_ymkrf_colors' ),
 		'tops'     => $rep( '_ymkrf_tops' ),
+		'sinks'    => $rep( '_ymkrf_sinks' ),
 		'handles'  => $rep( '_ymkrf_handles' ),
 		'specs'    => $rep( '_ymkrf_specs' ),
 		'features' => $rep( '_ymkrf_features' ),

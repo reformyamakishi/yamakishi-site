@@ -14,13 +14,19 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '13' );
+define( 'YMKRF_SETUP_VER', '15' );
 
 add_action( 'admin_init', function () {
 
 	if ( get_option( 'ymkrf_setup_done' ) === YMKRF_SETUP_VER ) return;
 	if ( ! current_user_can( 'manage_options' ) ) return;
 	if ( ! post_type_exists( 'ymkrf_product' ) ) return; // テーマがまだ有効でない
+
+	/* 写真を何十枚もまとめて取り込むので、時間とメモリの上限を外します。
+	   （これが無いと途中で止まり、写真が入らない商品ができてしまいます） */
+	@set_time_limit( 0 );
+	@ini_set( 'memory_limit', '512M' );
+	@ignore_user_abort( true );
 
 	require_once ABSPATH . 'wp-admin/includes/file.php';
 	require_once ABSPATH . 'wp-admin/includes/image.php';
@@ -98,6 +104,7 @@ add_action( 'admin_init', function () {
 		$theme . '/rakuera',
 		$theme . '/refit',
 		$theme . '/sierra',
+		$theme . '/sclass',
 		$theme . '/v-style',
 		$dir,                 // 最後の受け皿（wp-content/ymkrf-import）
 	);
@@ -262,6 +269,59 @@ add_action( 'admin_init', function () {
 		'sierra-opt-faucet.jpg'     => 'ハンズフリー水栓',
 		'sierra-opt-pallet.jpg'     => 'クイックパレット W900',
 		'sierra-opt-sink.jpg'       => 'キレイシンク（人造大理石シンク）',
+
+		/* --- Sクラス（Bグレード・Panasonic） --- */
+		'sclass-main.jpg'                => 'Sクラスのキッチン全体',
+		'sclass-top-white.jpg'           => '天板カラー グラニュールホワイト',
+		'sclass-sink-white.jpg'          => 'シンクカラー グラニュールホワイト',
+		'sclass-sink-beige.jpg'          => 'シンクカラー ミストベージュ',
+		'sclass-sink-gray.jpg'           => 'シンクカラー グレー',
+		'sclass-color-walnut.jpg'        => '扉カラー ソフトウォールナット柄',
+		'sclass-color-teak.jpg'          => '扉カラー ソフトチーク柄',
+		'sclass-color-chestnut.jpg'      => '扉カラー ナチュラルチェスナット柄',
+		'sclass-color-whiteash.jpg'      => '扉カラー ホワイトアッシュ柄',
+		'sclass-color-greyoak.jpg'       => '扉カラー グレーオーク柄',
+		'sclass-color-vintagemetal.jpg'  => '扉カラー ヴィンテージメタル柄',
+		'sclass-color-vintagebrown.jpg'  => '扉カラー ヴィンテージブラウン柄',
+		'sclass-color-scratchmetal.jpg'  => '扉カラー スクラッチメタル柄',
+		'sclass-color-earthwhite.jpg'    => '扉カラー アースホワイト',
+		'sclass-color-alberoblack.jpg'   => '扉カラー アルベロブラック',
+		'sclass-color-alberowhite.jpg'   => '扉カラー アルベロホワイト',
+		'sclass-color-navy.jpg'          => '扉カラー ネイビー',
+		'sclass-color-beige.jpg'         => '扉カラー ベージュ',
+		'sclass-color-beautywhite.jpg'   => '扉カラー ビューティホワイト',
+		'sclass-handle-lca.jpg'          => 'アルミライン取手 LCA',
+		'sclass-handle-han.jpg'          => 'ハンドル取手 HAN',
+		'sclass-handle-hcd.jpg'          => 'ハンドル取手 HCD',
+		'sclass-handle-hda.jpg'          => 'ハンドル取手 HDA',
+		'sclass-handle-hae.jpg'          => 'ハンドル取手 HAE',
+		'sclass-handle-hce.jpg'          => 'ハンドル取手 HCE',
+		'sclass-handle-hde.jpg'          => 'ハンドル取手 HDE',
+		'sclass-handle-mjd.jpg'          => 'ハンドル取手＋つまみ取手 MJD',
+		'sclass-handle-mje.jpg'          => 'ハンドル取手＋つまみ取手 MJE',
+		'sclass-handle-mjg.jpg'          => 'ハンドル取手＋つまみ取手 MJG',
+		'sclass-spec-ih.jpg'             => 'IHクッキングヒーター',
+		'sclass-spec-top.jpg'            => '人造大理石カウンター',
+		'sclass-spec-hood.jpg'           => 'スマートフードII さっとれるファン仕様',
+		'sclass-spec-sink.jpg'           => 'ムーブラックシンク（人造大理石）',
+		'sclass-spec-soft.jpg'           => 'ソフトクロージング機構',
+		'sclass-spec-faucet.jpg'         => '混合水栓ハンドシャワー',
+		'sclass-spec-stocker.jpg'        => '扉ストッカー',
+		'sclass-spec-wallcab.jpg'        => '吊戸棚（耐震ロック機構）',
+		'sclass-spec-outlet.jpg'         => 'クッキングコンセント（シルバー）',
+		'sclass-spec-panel.jpg'          => 'キッチンパネル',
+		'sclass-point-sink1.jpg'         => '洗剤ラックを動かして広く使えるシンク',
+		'sclass-point-sink2.jpg'         => 'ラックを縦横自由に置ける説明図',
+		'sclass-point-rack.jpg'          => '付属の洗剤ラック',
+		'sclass-point-net.jpg'           => 'ムーブラック用スラくるネット',
+		'sclass-point-outlet1.jpg'       => '手元のクッキングコンセント',
+		'sclass-point-outlet2.jpg'       => '小物フックにミトンを掛けたところ',
+		'sclass-point-hood1.jpg'         => 'スマートフードIIの本体とボタンスイッチ',
+		'sclass-point-soft1.jpg'         => '静かに閉まるソフトクロージング機構',
+		'sclass-opt-dish.jpg'            => 'W450mmプルオープン食器洗い乾燥機',
+		'sclass-opt-sink.jpg'            => 'ラクするーシンク（スゴピカ素材）',
+		'sclass-opt-hood.jpg'            => 'ほっとくリーンフード',
+		'sclass-opt-faucet.jpg'          => '混合水栓サラサラワイドシャワー',
 	);
 	foreach ( $stock as $f => $alt ) {
 		if ( $img( $f, $alt ) ) $log[] = 'メディアに追加: ' . $f;
@@ -318,6 +378,46 @@ add_action( 'admin_init', function () {
 			}
 		}
 		if ( $fixed ) $log[] = "サムネイルを作り直した写真：{$fixed}点";
+	}
+
+	/* ------------------------------------------------------------
+	   2-d. 写真が入らないまま登録された商品を、作り直せるようにする
+	        取り込みが途中で止まると、商品は出来ているのに写真だけ
+	        空っぽ（img が 0）という状態になり、次に動かしても
+	        「もう有る」と判断されて直りませんでした。その手当てです。
+	        写真がそろっている商品には、いっさい触りません。
+	   ------------------------------------------------------------ */
+	$rebuild_keys = array( '_ymkrf_images', '_ymkrf_colors', '_ymkrf_tops', '_ymkrf_sinks', '_ymkrf_handles', '_ymkrf_specs', '_ymkrf_features', '_ymkrf_options' );
+
+	foreach ( array( 'rakuera', 'refit', 'sierra-s', 's-class' ) as $slug ) {
+
+		$p = get_page_by_path( $slug, OBJECT, 'ymkrf_product' );
+		if ( ! $p ) continue;
+
+		$broken = false;
+
+		/* アイキャッチが無い、または実体が消えている */
+		$th = (int) get_post_thumbnail_id( $p->ID );
+		if ( ! $th || ! get_attached_file( $th ) ) $broken = true;
+
+		/* 一覧の中に、写真が空っぽの行がある */
+		if ( ! $broken ) {
+			foreach ( $rebuild_keys as $k ) {
+				$rows = get_post_meta( $p->ID, $k, true );
+				if ( ! is_array( $rows ) ) continue;
+				foreach ( $rows as $r ) {
+					if ( is_array( $r ) && array_key_exists( 'img', $r ) && ! (int) $r['img'] ) {
+						$broken = true;
+						break 2;
+					}
+				}
+			}
+		}
+
+		if ( $broken ) {
+			wp_delete_post( $p->ID, true );
+			$log[] = "写真が入っていなかったので「{$slug}」を登録し直しました";
+		}
 	}
 
 	/* ------------------------------------------------------------
@@ -939,6 +1039,182 @@ add_action( 'admin_init', function () {
 			wp_set_object_terms( $sid, array( 'komathu', 'hakui', 'tazuruhama', 'asahi', 'kanadu' ), 'ymkrf_shop' );
 
 			$log[] = '商品「シエラS」を登録しました → ' . get_permalink( $sid );
+		}
+	}
+
+	/* ------------------------------------------------------------
+	   3-a4. Sクラス（Bグレード・Panasonic）を1件つくる
+	   ------------------------------------------------------------ */
+	if ( ! get_page_by_path( 's-class', OBJECT, 'ymkrf_product' ) ) {
+
+		$pid = wp_insert_post( array(
+			'post_type'   => 'ymkrf_product',
+			'post_status' => 'publish',
+			'post_title'  => 'Sクラス',
+			'post_name'   => 's-class',
+		) );
+
+		if ( $pid && ! is_wp_error( $pid ) ) {
+
+			$f = array(
+				'_ymkrf_catch'   => '無意識の快適を追求したキッチン！',
+				'_ymkrf_grade'   => 'Bグレード',
+				'_ymkrf_name'    => 'Sクラス',
+				'_ymkrf_size'    => 'I型2550サイズ',
+				'_ymkrf_work'    => '640000',
+				'_ymkrf_item'    => '358000',
+				'_ymkrf_days'    => '3',
+				'_ymkrf_pt1'     => 'ひろびろ',
+				'_ymkrf_pt2'     => 'すっきり',
+				'_ymkrf_pt3'     => '便利',
+				'_ymkrf_caution' => '※写真はイメージになります。一部オプションがはいっています。',
+			);
+			foreach ( $f as $k => $v ) update_post_meta( $pid, $k, $v );
+			update_post_meta( $pid, '_ymkrf_total', 998000 );
+
+			$m = $img( 'sclass-main.jpg' );
+			if ( $m ) set_post_thumbnail( $pid, $m );
+			update_post_meta( $pid, '_ymkrf_images', array() );
+
+			/* 扉カラー（全14色） */
+			$pc = array(
+				array( 'sclass-color-walnut.jpg',       'ソフトウォールナット柄' ),
+				array( 'sclass-color-teak.jpg',         'ソフトチーク柄' ),
+				array( 'sclass-color-chestnut.jpg',     'ナチュラルチェスナット柄' ),
+				array( 'sclass-color-whiteash.jpg',     'ホワイトアッシュ柄' ),
+				array( 'sclass-color-greyoak.jpg',      'グレーオーク柄' ),
+				array( 'sclass-color-vintagemetal.jpg', 'ヴィンテージメタル柄' ),
+				array( 'sclass-color-vintagebrown.jpg', 'ヴィンテージブラウン柄' ),
+				array( 'sclass-color-scratchmetal.jpg', 'スクラッチメタル柄' ),
+				array( 'sclass-color-earthwhite.jpg',   'アースホワイト' ),
+				array( 'sclass-color-alberoblack.jpg',  'アルベロブラック' ),
+				array( 'sclass-color-alberowhite.jpg',  'アルベロホワイト' ),
+				array( 'sclass-color-navy.jpg',         'ネイビー' ),
+				array( 'sclass-color-beige.jpg',        'ベージュ' ),
+				array( 'sclass-color-beautywhite.jpg',  'ビューティホワイト' ),
+			);
+			$rows = array();
+			foreach ( $pc as $r ) $rows[] = array( 'img' => $img( $r[0] ), 'name' => $r[1] );
+			update_post_meta( $pid, '_ymkrf_colors', $rows );
+
+			/* 天板（全1色） */
+			update_post_meta( $pid, '_ymkrf_tops', array(
+				array( 'img' => $img( 'sclass-top-white.jpg' ), 'name' => 'グラニュールホワイト' ),
+			) );
+
+			/* シンク（全3色） */
+			update_post_meta( $pid, '_ymkrf_sinks', array(
+				array( 'img' => $img( 'sclass-sink-white.jpg' ), 'name' => 'グラニュールホワイト' ),
+				array( 'img' => $img( 'sclass-sink-beige.jpg' ), 'name' => 'ミストベージュ' ),
+				array( 'img' => $img( 'sclass-sink-gray.jpg' ),  'name' => 'グレー' ),
+			) );
+
+			/* 取っ手（全10種） */
+			$ph = array(
+				array( 'sclass-handle-lca.jpg', 'アルミライン取手',            'LCA' ),
+				array( 'sclass-handle-han.jpg', 'ハンドル取手',                'HAN' ),
+				array( 'sclass-handle-hcd.jpg', 'ハンドル取手',                'HCD' ),
+				array( 'sclass-handle-hda.jpg', 'ハンドル取手',                'HDA' ),
+				array( 'sclass-handle-hae.jpg', 'ハンドル取手',                'HAE' ),
+				array( 'sclass-handle-hce.jpg', 'ハンドル取手',                'HCE' ),
+				array( 'sclass-handle-hde.jpg', 'ハンドル取手',                'HDE' ),
+				array( 'sclass-handle-mjd.jpg', 'ハンドル取手＋つまみ取手',    'MJD' ),
+				array( 'sclass-handle-mje.jpg', 'ハンドル取手＋つまみ取手',    'MJE' ),
+				array( 'sclass-handle-mjg.jpg', 'ハンドル取手＋つまみ取手',    'MJG' ),
+			);
+			$rows = array();
+			foreach ( $ph as $r ) $rows[] = array( 'img' => $img( $r[0] ), 'name' => $r[1], 'code' => $r[2] );
+			update_post_meta( $pid, '_ymkrf_handles', $rows );
+
+			/* 標準仕様10点 */
+			$ps = array(
+				array( 'sclass-spec-ih.jpg',      'IHクッキングヒーター',           'KZ-J1H6AST' ),
+				array( 'sclass-spec-top.jpg',     '人造大理石カウンター',           '' ),
+				array( 'sclass-spec-hood.jpg',    'スマートフードII',               'さっとれるファン仕様' ),
+				array( 'sclass-spec-sink.jpg',    'ムーブラックシンク',             '人造大理石' ),
+				array( 'sclass-spec-soft.jpg',    'ソフトクロージング機構',         '' ),
+				array( 'sclass-spec-faucet.jpg',  '混合水栓ハンドシャワー',         'エコカチットあり' ),
+				array( 'sclass-spec-stocker.jpg', '扉ストッカー',                   '' ),
+				array( 'sclass-spec-wallcab.jpg', '吊戸棚',                         '耐震ロック機構' ),
+				array( 'sclass-spec-outlet.jpg',  'クッキングコンセント',           'シルバー' ),
+				array( 'sclass-spec-panel.jpg',   'キッチンパネル',                 'キッチン正面・コンロ側側面' ),
+			);
+			$rows = array();
+			foreach ( $ps as $r ) $rows[] = array( 'img' => $img( $r[0], $r[1] ), 'name' => $r[1], 'model' => $r[2] );
+			update_post_meta( $pid, '_ymkrf_specs', $rows );
+
+			/* おすすめポイント（4グループ・8ポイント） */
+			update_post_meta( $pid, '_ymkrf_features', array(
+				array( 'gsub'=>'広びろ使える', 'gttl'=>'「ムーブラックシンク」',
+				       'ttl'=>'洗剤ラックが自由に動かせ広びろ使えるシンク',
+				       'text'=>'', 'note'=>'',
+				       'img'=>$img('sclass-point-sink1.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'', 'gttl'=>'',
+				       'ttl'=>'ラックを縦横自由に置けるので調理スペースが広がります',
+				       'text'=>'ヤマキシのクラスSのキッチンパックには、ムーブラックシンク用洗剤ラックとムーブラック用スラくるネットが付属でついています。',
+				       'note'=>'',
+				       'img'=>$img('sclass-point-sink2.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'', 'gttl'=>'',
+				       'ttl'=>'付属の「洗剤ラック」と「スラくるネット」',
+				       'text'=>'', 'note'=>'',
+				       'img'=>$img('sclass-point-rack.jpg'), 'img2'=>$img('sclass-point-net.jpg') ),
+				array( 'gsub'=>'家電調理が使いやすい', 'gttl'=>'「クッキングコンセント」',
+				       'ttl'=>'手元にコンセント',
+				       'text'=>'手元にコンセントがあるから、コードが邪魔にならず、とても便利です。',
+				       'note'=>'',
+				       'img'=>$img('sclass-point-outlet1.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'', 'gttl'=>'',
+				       'ttl'=>'便利な小物フック付き',
+				       'text'=>'ハンドタオルやミトン、レジ袋などを掛けられます。',
+				       'note'=>'',
+				       'img'=>$img('sclass-point-outlet2.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'すっきりしたデザイン', 'gttl'=>'「スマートフードII」',
+				       'ttl'=>'お手入れがしやすいスタイリッシュデザイン',
+				       'text'=>'お手入れがラクなコンパクト清流板。凹凸がなだらかで拭きやすい内フード。リモコンのボタンスイッチ部もスッキリしたデザイン！',
+				       'note'=>'',
+				       'img'=>$img('sclass-point-hood1.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'収納物も安心', 'gttl'=>'「ソフトクロージング機構」',
+				       'ttl'=>'静かに閉まる',
+				       'text'=>'閉まりきる6cm手前からダンパーが働き、衝撃で食器同士がぶつかり合うのを抑えながら静かにしまります。',
+				       'note'=>'',
+				       'img'=>$img('sclass-point-soft1.jpg'), 'img2'=>'' ),
+			) );
+
+			/* おすすめオプション4点 */
+			update_post_meta( $pid, '_ymkrf_options', array(
+				array( 'img'=>$img('sclass-opt-dish.jpg'),   'name'=>'W450mmプルオープン 食器洗い乾燥機',
+				       'text'=>'手洗いより節水で省エネ。家事の手間を省きます。',
+				       'price'=>'77000', 'note'=>'※工事費込み' ),
+				array( 'img'=>$img('sclass-opt-sink.jpg'),   'name'=>'ラクするーシンク（スゴピカ素材）',
+				       'text'=>'汚れが落ちやすく、傷にも強いスゴピカ素材。使いやすくお手入れしやすい形状のシンク。',
+				       'price'=>'31000', 'note'=>'' ),
+				array( 'img'=>$img('sclass-opt-hood.jpg'),   'name'=>'ほっとくリーンフード（シルバー／静電タッチタイプ）',
+				       'text'=>'面倒な換気扇フィルターのお手入れも、ボタンひとつで自動洗浄。',
+				       'price'=>'137000', 'note'=>'' ),
+				array( 'img'=>$img('sclass-opt-faucet.jpg'), 'name'=>'混合水栓サラサラワイドシャワー（スゴピカ素材）JUA03FWSNEホワイト',
+				       'text'=>'水垢汚れが目立ちやすい水栓に、汚れに強いスゴピカ素材を採用。',
+				       'price'=>'27000', 'note'=>'※オプション価格は近日中に値上げするため、現時点での参考価格となります。' ),
+			) );
+
+			/* 標準工事に含まれる工事 */
+			$pw = array(
+				array( '撤去工事',               '古いキッチンの撤去にかかる工事です。' ),
+				array( '廃棄処分',               '撤去した古いキッチンを廃棄処分するためにかかる費用です。' ),
+				array( 'ガス配管変更工事',       'ガスコンロを使うための配管工事です。' ),
+				array( 'キッチンパネル設置工事', 'キッチンパネルの取り付け工事費です。' ),
+				array( 'キッチンパネル部材費',   'キッチンパネル自体の部材費です。' ),
+				array( '下地工事（大工工事）',   'キッチンパネル設置面の補修、補強の工事です。' ),
+				array( 'シロッコファン取付工事', 'シロッコファンの取付工事です。' ),
+			);
+			$rows = array();
+			foreach ( $pw as $r ) $rows[] = array( 'name' => $r[0], 'text' => $r[1] );
+			update_post_meta( $pid, '_ymkrf_works', $rows );
+
+			wp_set_object_terms( $pid, 'kitchen',   'ymkrf_product_cat' );
+			wp_set_object_terms( $pid, 'panasonic', 'ymkrf_maker' );
+			/* 展示店舗はカタログに記載が無いので未設定。管理画面から選んでください。 */
+
+			$log[] = '商品「Sクラス」を登録しました → ' . get_permalink( $pid );
 		}
 	}
 

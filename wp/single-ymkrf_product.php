@@ -143,7 +143,7 @@ $maker = ! empty( $d['makers'] ) ? $d['makers'][0] : null;
   </div>
 </section>
 
-<?php if ( $d['images'] || $d['colors'] || $d['tops'] || $d['handles'] ) : ?>
+<?php if ( ! empty( $d['images'] ) || ! empty( $d['colors'] ) || ! empty( $d['tops'] ) || ! empty( $d['sinks'] ) || ! empty( $d['handles'] ) ) : ?>
 <!-- =========== カラーバリエーション =========== -->
 <section class="l-section l-section--soft">
   <div class="l-wrap">
@@ -183,6 +183,18 @@ $maker = ! empty( $d['makers'] ) ? $d['makers'][0] : null;
         <?php foreach ( $d['tops'] as $r ) : ?>
           <figure>
             <div class="p-prd__swatch"><?php echo ymkrf_img( $r['img'], 'medium', '天板カラー ' . $r['name'] ); ?></div>
+            <figcaption><?php echo esc_html( $r['name'] ); ?></figcaption>
+          </figure>
+        <?php endforeach; ?>
+      </div>
+    <?php endif; ?>
+
+    <?php if ( ! empty( $d['sinks'] ) ) : ?>
+      <p class="p-prd__sub" style="margin-top:26px">シンクカラー（全<?php echo count( $d['sinks'] ); ?>色）</p>
+      <div class="p-prd__colors">
+        <?php foreach ( $d['sinks'] as $r ) : ?>
+          <figure>
+            <div class="p-prd__swatch"><?php echo ymkrf_img( $r['img'], 'medium', 'シンクカラー ' . $r['name'] ); ?></div>
             <figcaption><?php echo esc_html( $r['name'] ); ?></figcaption>
           </figure>
         <?php endforeach; ?>
