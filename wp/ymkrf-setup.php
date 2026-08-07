@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '6' );
+define( 'YMKRF_SETUP_VER', '7' );
 
 add_action( 'admin_init', function () {
 
@@ -384,6 +384,144 @@ add_action( 'admin_init', function () {
 				'ymkrf_shop' );
 
 			$log[] = '商品「V-style（Vスタイル）」を登録しました → ' . get_permalink( $post_id );
+		}
+	}
+
+	/* ------------------------------------------------------------
+	   3-a. ラクエラ（Eグレード・クリナップ）を1件つくる
+	   ------------------------------------------------------------ */
+	if ( ! get_page_by_path( 'rakuera', OBJECT, 'ymkrf_product' ) ) {
+
+		$rid = wp_insert_post( array(
+			'post_type'   => 'ymkrf_product',
+			'post_status' => 'publish',
+			'post_title'  => 'ラクエラ',
+			'post_name'   => 'rakuera',
+		) );
+
+		if ( $rid && ! is_wp_error( $rid ) ) {
+
+			$f = array(
+				'_ymkrf_catch'   => 'シンプルなデザインが特徴のスタイリッシュキッチン。',
+				'_ymkrf_grade'   => 'Eグレード',
+				'_ymkrf_name'    => 'ラクエラ',
+				'_ymkrf_size'    => 'I型2550サイズ',
+				'_ymkrf_work'    => '240000',
+				'_ymkrf_item'    => '458000',
+				'_ymkrf_days'    => '3',
+				'_ymkrf_pt1'     => '足元収納',
+				'_ymkrf_pt2'     => 'シンク前収納',
+				'_ymkrf_pt3'     => '節水省エネ',
+				'_ymkrf_caution' => '※写真はイメージになります。',
+			);
+			foreach ( $f as $k => $v ) update_post_meta( $rid, $k, $v );
+			update_post_meta( $rid, '_ymkrf_total', 698000 );
+
+			$m = $img( 'raku-main.jpg' );
+			if ( $m ) set_post_thumbnail( $rid, $m );
+
+			/* 組み合わせイメージ（1枚） */
+			update_post_meta( $rid, '_ymkrf_images', array(
+				array( 'img' => $img( 'raku-cabinet.jpg' ), 'alt' => '扉カラー4色の面材を重ねて並べたところ' ),
+			) );
+
+			/* 扉カラー5色（施工イメージ＋色見本の合成） */
+			$rc = array(
+				array( 'raku-color-white-set.jpg',        'トーンホワイト' ),
+				array( 'raku-color-charcoal-set.jpg',     'トーンチャコール' ),
+				array( 'raku-color-palewood-set.jpg',     'ペールウッド' ),
+				array( 'raku-color-mokawood-set.jpg',     'モカウッド' ),
+				array( 'raku-color-charcoalwood-set.jpg', 'チャコールウッド' ),
+			);
+			$rows = array();
+			foreach ( $rc as $r ) $rows[] = array( 'img' => $img( $r[0] ), 'name' => $r[1] );
+			update_post_meta( $rid, '_ymkrf_colors', $rows );
+
+			/* 取っ手1種 */
+			update_post_meta( $rid, '_ymkrf_handles', array(
+				array( 'img' => $img( 'raku-handle-bar.jpg' ), 'name' => 'バー取手（シルバー）', 'code' => 'L' ),
+			) );
+
+			/* 標準仕様9点 */
+			$rs = array(
+				array( 'raku-spec-conro.jpg',   'ホーロー3口トップコンロ',     'ZGFNK6R18NKE-E' ),
+				array( 'raku-spec-top.jpg',     'ステンレス天板',             'ドット柄コイニング加工' ),
+				array( 'raku-spec-hood.jpg',    'フラットスリムレンジフード', 'ZRS75ABZ21FS(R/L)-E・幕板扉柄' ),
+				array( 'raku-spec-sink.jpg',    'ステンレスTUシンク',         '' ),
+				array( 'raku-spec-rail.jpg',    'サイレントレール',           '' ),
+				array( 'raku-spec-faucet.jpg',  'シングルレバー水栓',         'ZZKM5111TCLE' ),
+				array( 'raku-spec-wallcab.jpg', 'ミドル吊戸棚',               '' ),
+				array( 'raku-spec-panel.jpg',   'キッチンパネル',             'キッチン正面・コンロ側側面' ),
+				array( 'raku-spec-floor.jpg',   '床板メラミン化粧板',         '' ),
+			);
+			$rows = array();
+			foreach ( $rs as $r ) $rows[] = array( 'img' => $img( $r[0], $r[1] ), 'name' => $r[1], 'model' => $r[2] );
+			update_post_meta( $rid, '_ymkrf_specs', $rows );
+
+			/* おすすめポイント（4グループ・7ポイント） */
+			update_post_meta( $rid, '_ymkrf_features', array(
+				array( 'gsub'=>'収納スペースを効率的に確保', 'gttl'=>'「フットエリア収納」',
+				       'ttl'=>'ストックの収納に',
+				       'text'=>'食品を扱う場所には、もっともふさわしい素材。', 'note'=>'',
+				       'img'=>$img('raku-point-foot1.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'', 'gttl'=>'',
+				       'ttl'=>'美しく揃う、蹴込みレスデザイン',
+				       'text'=>'開き扉タイプのキッチンによく見られる「蹴込み仕様」ではないから、足元までスッキリ。', 'note'=>'',
+				       'img'=>$img('raku-point-foot2.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'使いやすさがアップ', 'gttl'=>'「ハンドエリア収納」',
+				       'ttl'=>'よく使うものはハンドエリアへ',
+				       'text'=>'毎日の料理に欠かせない、調味料・鍋の収納に便利。', 'note'=>'',
+				       'img'=>$img('raku-point-hand1.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'', 'gttl'=>'',
+				       'ttl'=>'市販のアイテムを取り入れる自由度がアップ',
+				       'text'=>'オプションの「マグネフリーパネル」を取り付けることで、市販のマグネット収納アイテムを取り付けることができます。', 'note'=>'',
+				       'img'=>$img('raku-point-hand2.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'やわらかな質感が魅力', 'gttl'=>'「フラットスリムレンジフード」',
+				       'ttl'=>'スリムですっきりデザイン',
+				       'text'=>'フラットな内面形状でお手入れが簡単です。', 'note'=>'',
+				       'img'=>$img('raku-point-hood1.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'', 'gttl'=>'',
+				       'ttl'=>'お手入れしやすい内面形状',
+				       'text'=>'継ぎ目や凹凸の少ない内面形状に加え、ファンの入り口付近もお手入れしやすい形状です。さらに油汚れをはじきやすい「はつ油塗装」を施しました。', 'note'=>'',
+				       'img'=>$img('raku-point-hood2.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'丈夫で扱いやすい', 'gttl'=>'「ステンレス天板＋シンク」',
+				       'ttl'=>'傷が目立ちにくい',
+				       'text'=>'傷が目立ちにくいコイニング加工の天板。', 'note'=>'',
+				       'img'=>$img('raku-point-top1.jpg'), 'img2'=>'' ),
+			) );
+
+			/* おすすめオプション3点 */
+			update_post_meta( $rid, '_ymkrf_options', array(
+				array( 'img'=>$img('raku-opt-dish.jpg'),    'name'=>'W450mmプルオープン 食器洗い乾燥機',
+				       'text'=>'手洗いより節水で省エネ。家事の手間を省きます。（ZWPP45R21LDS-E）',
+				       'price'=>'132000', 'note'=>'※工事費込み' ),
+				array( 'img'=>$img('raku-opt-wallcab.jpg'), 'name'=>'ハンドムーブ吊戸棚（水切りタイプ照明付）W900/H700',
+				       'text'=>'洗い物などをしまえるので、流し台がすっきり片付きます。',
+				       'price'=>'92000', 'note'=>'' ),
+				array( 'img'=>$img('raku-opt-hood.jpg'),    'name'=>'洗エールレンジフード（W750/H700扉面材）',
+				       'text'=>'面倒なフィルターのお掃除は、レンジフードが自動洗浄。ボタンひとつで済みます。',
+				       'price'=>'187000', 'note'=>'' ),
+			) );
+
+			/* ヤマキシ標準工事内容（キッチン共通） */
+			$rw = array(
+				array( '撤去工事',               '古いキッチンの撤去にかかる工事です。' ),
+				array( '廃棄処分',               '撤去した古いキッチンを廃棄処分するためにかかる費用です。' ),
+				array( 'ガス配管変更工事',       'ガスコンロを使うための配管工事です。' ),
+				array( 'キッチンパネル設置工事', 'キッチンパネルの取り付け工事費です。' ),
+				array( 'キッチンパネル部材費',   'キッチンパネル自体の部材費です。' ),
+				array( '下地工事（大工工事）',   'キッチンパネル設置面の補修、補強の工事です。' ),
+				array( 'シロッコファン取付工事', 'シロッコファンの取り付け工事費です。' ),
+			);
+			$rows = array();
+			foreach ( $rw as $r ) $rows[] = array( 'name' => $r[0], 'text' => $r[1] );
+			update_post_meta( $rid, '_ymkrf_works', $rows );
+
+			wp_set_object_terms( $rid, 'kitchen', 'ymkrf_product_cat' );
+			wp_set_object_terms( $rid, 'cleanup', 'ymkrf_maker' );
+			wp_set_object_terms( $rid, array( 'komathu', 'kanadu' ), 'ymkrf_shop' );
+
+			$log[] = '商品「ラクエラ」を登録しました → ' . get_permalink( $rid );
 		}
 	}
 
