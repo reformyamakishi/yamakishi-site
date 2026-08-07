@@ -312,31 +312,47 @@ $maker = ! empty( $d['makers'] ) ? $d['makers'][0] : null;
 <section class="l-section">
   <div class="l-wrap">
     <h2 class="p-prd__bar"><?php echo esc_html( $cat ? $cat->name : '商品' ); ?>マルシェ</h2>
-    <?php $one = ( ! $sib['prev'] || ! $sib['next'] ) ? ' p-prd__nav--one' : ''; ?>
-    <div class="p-prd__nav<?php echo $one; ?>">
-      <?php
-      foreach ( array( 'prev' => '← グレードを戻す', 'next' => 'グレードUP →' ) as $k => $label ) :
-        if ( ! $sib[ $k ] ) continue;
-        $id = $sib[ $k ];
-        $sd = ymkrf_product_data( $id );
+    <?php
+    /* 左右2枠。上（または下）のグレードが無い商品では、
+       枠が片方だけになって寂しいので、代わりに一覧への案内を入れます。 */
+    $slots = array();
+    if ( $sib['prev'] ) $slots[] = array( 'id' => $sib['prev'], 'label' => '← グレードを戻す' );
+    if ( $sib['next'] ) $slots[] = array( 'id' => $sib['next'], 'label' => 'グレードUP →' );
+
+    if ( count( $slots ) < 2 && $cat ) {
+      $listcard = array(
+        'id'    => 0,
+        'label' => 'ほかのグレードを見る',
+        'name'  => $cat->name . 'の商品一覧',
+        'url'   => get_term_link( $cat ),
+      );
+      /* いちばん安い商品では左が空くので、その位置に入れます */
+      if ( ! $sib['prev'] ) array_unshift( $slots, $listcard );
+      else                  $slots[] = $listcard;
+    }
+    ?>
+    <div class="p-prd__nav<?php echo ( count( $slots ) < 2 ) ? ' p-prd__nav--one' : ''; ?>">
+      <?php foreach ( $slots as $s ) :
+        $id  = $s['id'];
+        $sd  = $id ? ymkrf_product_data( $id ) : null;
+        $url = $id ? get_permalink( $id ) : $s['url'];
       ?>
-        <a class="p-prd__navcard" href="<?php echo esc_url( get_permalink( $id ) ); ?>">
-          <div class="ph"><?php echo has_post_thumbnail( $id ) ? get_the_post_thumbnail( $id, 'thumbnail' ) : ''; ?></div>
+        <a class="p-prd__navcard<?php echo $id ? '' : ' p-prd__navcard--list'; ?>" href="<?php echo esc_url( $url ); ?>">
+          <div class="ph"><?php echo ( $id && has_post_thumbnail( $id ) ) ? get_the_post_thumbnail( $id, 'thumbnail' ) : ''; ?></div>
           <div>
-            <span class="p-prd__navlabel"><?php echo esc_html( $label ); ?></span>
-            <span class="p-prd__navname"><?php echo esc_html( ( $sd['grade'] ? '【' . $sd['grade'] . '】' : '' ) . $sd['name'] ); ?></span>
-            <?php if ( $sd['total'] ) : ?>
+            <span class="p-prd__navlabel"><?php echo esc_html( $s['label'] ); ?></span>
+            <span class="p-prd__navname"><?php
+              echo esc_html( $sd
+                ? ( $sd['grade'] ? '【' . $sd['grade'] . '】' : '' ) . $sd['name']
+                : $s['name'] );
+            ?></span>
+            <?php if ( $sd && $sd['total'] ) : ?>
               <span class="p-prd__navprice"><?php echo esc_html( number_format( $sd['total'] ) ); ?>円（税込）</span>
             <?php endif; ?>
           </div>
         </a>
       <?php endforeach; ?>
     </div>
-    <?php if ( $cat ) : ?>
-      <p style="text-align:center;margin-top:20px">
-        <a class="c-btn c-btn--ghost" href="<?php echo esc_url( get_term_link( $cat ) ); ?>">商品一覧に戻る</a>
-      </p>
-    <?php endif; ?>
   </div>
 </section>
 <?php endif; ?>

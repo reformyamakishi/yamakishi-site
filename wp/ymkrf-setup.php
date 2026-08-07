@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '7' );
+define( 'YMKRF_SETUP_VER', '8' );
 
 add_action( 'admin_init', function () {
 
@@ -176,6 +176,23 @@ add_action( 'admin_init', function () {
 	);
 	foreach ( $stock as $f => $alt ) {
 		if ( $img( $f, $alt ) ) $log[] = 'メディアに追加: ' . $f;
+	}
+
+	/* 元ファイルを作り直したときは、メディア側も差し替えます。
+	   （メディアは uploads/ に別のコピーを持つので、フォルダを更新しただけでは変わりません） */
+	foreach ( array_keys( $stock ) as $f ) {
+		$id = $img( $f );
+		if ( ! $id ) continue;
+		$src = '';
+		foreach ( $dirs as $d ) {
+			if ( file_exists( $d . '/' . $f ) ) { $src = $d . '/' . $f; break; }
+		}
+		$dst = get_attached_file( $id );
+		if ( ! $src || ! $dst || ! file_exists( $dst ) ) continue;
+		if ( md5_file( $src ) === md5_file( $dst ) ) continue;   // 中身が同じなら何もしない
+		if ( ! copy( $src, $dst ) ) continue;
+		wp_update_attachment_metadata( $id, wp_generate_attachment_metadata( $id, $dst ) );
+		$log[] = '写真を差し替え: ' . $f;
 	}
 
 	/* ------------------------------------------------------------
