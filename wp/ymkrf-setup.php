@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '8' );
+define( 'YMKRF_SETUP_VER', '9' );
 
 add_action( 'admin_init', function () {
 
@@ -141,7 +141,8 @@ add_action( 'admin_init', function () {
 	        （商品そのものは、管理画面から手で登録します）
 	   ------------------------------------------------------------ */
 	$stock = array(
-		'raku-main.jpg'             => 'クリナップ ラクエラ I型2550サイズ（ペールウッド扉）',
+		'raku-main.jpg'             => 'クリナップ ラクエラ I型2550サイズ（設置イメージ）',
+		'raku-main-product.jpg'     => 'クリナップ ラクエラ I型2550サイズ（ペールウッド扉）',
 		'raku-cabinet.jpg'          => '扉カラー4色の面材を重ねて並べたところ',
 		'raku-color-white.jpg'      => '扉カラー トーンホワイト',
 		'raku-color-charcoal.jpg'   => '扉カラー トーンチャコール',
@@ -560,6 +561,21 @@ add_action( 'admin_init', function () {
 				update_post_meta( $post->ID, $key, $new );
 				$log[] = "{$slug}: {$old} → {$new}";
 			}
+		}
+	}
+
+	/* ------------------------------------------------------------
+	   3-c. ラクエラのアイキャッチを「商品だけの写真」に差し替え
+	        （手で別の写真に変えてある場合は、触りません）
+	   ------------------------------------------------------------ */
+	$rp = get_page_by_path( 'rakuera', OBJECT, 'ymkrf_product' );
+	if ( $rp ) {
+		$cur = (int) get_post_thumbnail_id( $rp->ID );
+		$old = $img( 'raku-main.jpg' );
+		$new = $img( 'raku-main-product.jpg' );
+		if ( $new && $cur === $old ) {
+			set_post_thumbnail( $rp->ID, $new );
+			$log[] = 'ラクエラのアイキャッチを商品だけの写真に変更しました';
 		}
 	}
 
