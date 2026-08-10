@@ -47,11 +47,18 @@ $intro = array(
 		/* --- 3つのこだわり --- */
 		'points' => array(
 			array( 'chara' => 'char-otoku',     'name' => 'お得',
-			       'text'  => 'キッチンパネル代もコミコミ！' ),
+			       'text'  => 'キッチン標準工事費・撤去費用・キッチンパネル代などもコミコミ！' ),
 			array( 'chara' => 'char-hinshitsu', 'name' => '品質',
 			       'text'  => '経験豊富な自社職人を中心に、質の良い丁寧な工事を致します！' ),
 			array( 'chara' => 'char-anshin',    'name' => '安心',
-			       'text'  => '24時間365日トラブル対応！10年延長保証もコミコミ！' ),
+			       'text'  => '商品延長10年保証・工事保証5年・24時間365日トラブル対応付き！' ),
+		),
+		/* こだわりの下に出す、標準工事費の内訳 */
+		'pointnote' => array(
+			'label' => '標準工事費',
+			'price' => 240000,
+			'note'  => 'キッチンの標準工事費は、どの機種も一律同価格です。',
+			'items' => array( '解体', '撤去', '水道工事', '電気工事', '設置工事', '木工事', '材料費', 'キッチンパネル' ),
 		),
 
 		/* --- お悩み --- */
@@ -67,13 +74,12 @@ $intro = array(
 			'排水溝から臭いがする……',
 			'動線のせいで効率が悪いなぁ……',
 		),
-		'worrylead' => 'ヤマキシが、お客様にぴったりのキッチンをご提案します。',
+		'worrylead' => '',
 
 		/* --- 解決できます --- */
 		'solvesub'   => '実は、そのお悩み',
 		'solvetitle' => '最新キッチンで解決できます！',
-		'tags'       => array( '調味料棚付き', '流れるシンク', 'IHクッキングヒーター',
-		                       'お掃除簡単レンジフード', '食器洗い乾燥機', 'ハイブリッドコンロ' ),
+		'tags'       => array(),
 		'tagnote'    => '※各機種によって異なります　※オプションの場合もございます',
 
 		'solutions' => array(
@@ -210,9 +216,37 @@ $hero = ( $c && ! empty( $c['hero'] ) ) ? $dir . '/' . $c['hero'] : '';
       <?php endforeach; ?>
     </div>
 
+    <?php if ( ! empty( $c['pointnote']['items'] ) ) : ?>
+      <div class="p-cat__stdwork">
+        <p class="p-cat__stdworkttl"><?php echo esc_html( $c['pointnote']['label'] ); ?>にふくまれるもの</p>
+        <?php if ( ! empty( $c['pointnote']['price'] ) ) : ?>
+          <p class="p-cat__stdworkprice">
+            <span class="num"><?php echo esc_html( number_format( $c['pointnote']['price'] ) ); ?></span><span class="unit">円（税込）</span>
+          </p>
+        <?php endif; ?>
+        <ul class="p-cat__stdworklist">
+          <?php foreach ( $c['pointnote']['items'] as $w ) : ?>
+            <li><?php echo esc_html( $w ); ?></li>
+          <?php endforeach; ?>
+        </ul>
+        <?php if ( ! empty( $c['pointnote']['note'] ) ) : ?>
+          <p class="p-cat__stdworknote"><?php echo esc_html( $c['pointnote']['note'] ); ?></p>
+        <?php endif; ?>
+      </div>
+    <?php endif; ?>
+
+    <?php ymkrf_product_cta( 'category-top' ); ?>
+
   </div>
 </section>
 
+<?php
+/* 「キッチンのお悩み」「最新キッチンで解決できます」は、
+   別ページに作り直す予定のためこのページでは非表示にしています。
+   復活させるときは false を true に戻してください。 */
+$show_worry = false;
+if ( $show_worry ) :
+?>
 <!-- =========== こんなお悩みありませんか？ =========== -->
 <section class="l-section">
   <div class="l-wrap">
@@ -243,7 +277,9 @@ $hero = ( $c && ! empty( $c['hero'] ) ) ? $dir . '/' . $c['hero'] : '';
       </div>
     </div>
 
-    <p class="p-cat__worrylead"><?php echo esc_html( $c['worrylead'] ); ?></p>
+    <?php if ( ! empty( $c['worrylead'] ) ) : ?>
+      <p class="p-cat__worrylead"><?php echo esc_html( $c['worrylead'] ); ?></p>
+    <?php endif; ?>
   </div>
 </section>
 
@@ -254,13 +290,14 @@ $hero = ( $c && ! empty( $c['hero'] ) ) ? $dir . '/' . $c['hero'] : '';
     <p class="p-cat__solvesub"><?php echo esc_html( $c['solvesub'] ); ?></p>
     <h2 class="p-cat__solvetitle"><span class="marker"><?php echo esc_html( $c['solvetitle'] ); ?></span></h2>
 
-    <ul class="p-cat__tags">
-      <?php foreach ( $c['tags'] as $t ) : ?>
-        <li><?php echo esc_html( $t ); ?></li>
-      <?php endforeach; ?>
-      <li class="p-cat__tags--etc">…etc</li>
-    </ul>
-    <p class="p-cat__tagnote"><?php echo esc_html( $c['tagnote'] ); ?></p>
+    <?php if ( ! empty( $c['tags'] ) ) : ?>
+      <ul class="p-cat__tags">
+        <?php foreach ( $c['tags'] as $t ) : ?>
+          <li><?php echo esc_html( $t ); ?></li>
+        <?php endforeach; ?>
+        <li class="p-cat__tags--etc">…etc</li>
+      </ul>
+    <?php endif; ?>
 
     <div class="p-cat__sols">
       <?php foreach ( $c['solutions'] as $s ) : ?>
@@ -277,10 +314,13 @@ $hero = ( $c && ! empty( $c['hero'] ) ) ? $dir . '/' . $c['hero'] : '';
       <?php endforeach; ?>
     </div>
 
-    <?php ymkrf_product_cta( 'category-top' ); ?>
+    <?php if ( ! empty( $c['tagnote'] ) ) : ?>
+      <p class="p-cat__tagnote"><?php echo esc_html( $c['tagnote'] ); ?></p>
+    <?php endif; ?>
 
   </div>
 </section>
+<?php endif; /* $show_worry */ ?>
 
 <?php endif; /* $c */ ?>
 

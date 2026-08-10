@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '21' );
+define( 'YMKRF_SETUP_VER', '22' );
 
 /**
  * init（優先度99）に付けているので、管理画面だけでなく
@@ -1335,8 +1335,8 @@ add_action( 'init', function () {
 				'_ymkrf_grade'   => 'Bグレード',
 				'_ymkrf_name'    => 'Sクラス',
 				'_ymkrf_size'    => 'I型2550サイズ',
-				'_ymkrf_work'    => '640000',
-				'_ymkrf_item'    => '358000',
+				'_ymkrf_work'    => '240000',
+				'_ymkrf_item'    => '758000',
 				'_ymkrf_days'    => '3',
 				'_ymkrf_pt1'     => 'ひろびろ',
 				'_ymkrf_pt2'     => 'すっきり',
@@ -2401,6 +2401,19 @@ add_action( 'init', function () {
 			set_post_thumbnail( $rp->ID, $new );
 			$log[] = 'ラクエラのアイキャッチを商品だけの写真に変更しました';
 		}
+	}
+
+	/* ------------------------------------------------------------
+	   3-z. 価格の直し
+	        キッチンの標準工事費は、どの機種も一律240,000円（税込）です。
+	        Sクラスだけ工事費と商品代の入力が違っていたので直します。
+	   ------------------------------------------------------------ */
+	$sc = get_page_by_path( 's-class', OBJECT, 'ymkrf_product' );
+	if ( $sc && get_post_meta( $sc->ID, '_ymkrf_work', true ) !== '240000' ) {
+		update_post_meta( $sc->ID, '_ymkrf_work', '240000' );
+		update_post_meta( $sc->ID, '_ymkrf_item', '758000' );
+		update_post_meta( $sc->ID, '_ymkrf_total', 998000 );
+		$log[] = 'Sクラスの工事費を240,000円・商品代を758,000円に直しました（合計998,000円は変わりません）';
 	}
 
 	/* ------------------------------------------------------------
