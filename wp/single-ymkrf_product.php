@@ -353,11 +353,12 @@ $maker = ! empty( $d['makers'] ) ? $d['makers'][0] : null;
           'url'   => get_term_link( $cat ),
         ) );
       } else {
-        /* いちばん高い商品。上のグレードが増えれば、自動でその商品に置き換わります */
+        /* いちばん高い商品。上が無いので「グレードUP →」は付けません。
+           上のグレードが増えれば、自動でその商品に置き換わります */
         $slots[] = array(
           'id'    => 0,
-          'label' => 'グレードUP →',
-          'name'  => $cat->name . 'の商品一覧',
+          'label' => '',
+          'name'  => '他のグレードの' . $cat->name . 'を見る',
           'url'   => get_term_link( $cat ),
         );
       }
