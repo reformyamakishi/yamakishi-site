@@ -982,3 +982,25 @@
   background:var(--bg-soft); border:1px solid var(--border); border-radius:8px; padding:4px 10px;
 }
 .p-col__spec em{ font-style:normal; color:var(--ink-sub); font-weight:700; margin-right:5px; }
+
+/* ==========================================================================
+   メーカーのロゴ
+   画像はすべて 560×140 で書き出してあるので、どのメーカーも同じ枠に収まります
+   ========================================================================== */
+.p-maker{
+  display:inline-flex; align-items:center; justify-content:center;
+  background:#fff; border:1px solid var(--border); border-radius:5px;
+  padding:3px 7px;
+}
+.p-maker__img{ width:96px; height:24px; object-fit:contain; display:block; }
+/* ロゴが無いメーカーは、これまでどおり文字で出します */
+.p-maker--text{
+  background:var(--brand-tint); border:0; border-radius:4px; padding:3px 8px;
+  font-size:11.5px; font-weight:700; color:var(--ink-sub);
+}
+/* 一覧カードの中では、ほかのタグと高さをそろえます */
+.p-cat__cardmeta .p-maker{ padding:2px 6px; }
+.p-cat__cardmeta .p-maker__img{ width:88px; height:22px; }
+@media (min-width:600px){
+  .p-cat__cardmeta .p-maker__img{ width:100px; height:25px; }
+}
