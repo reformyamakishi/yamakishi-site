@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '22' );
+define( 'YMKRF_SETUP_VER', '24' );
 
 /**
  * init（優先度99）に付けているので、管理画面だけでなく
@@ -1028,7 +1028,7 @@ add_action( 'init', function () {
 				'_ymkrf_size'    => 'I型2550サイズ',
 				'_ymkrf_work'    => '240000',
 				'_ymkrf_item'    => '558000',
-				'_ymkrf_days'    => '2',
+				'_ymkrf_days'    => '3',
 				'_ymkrf_pt1'     => 'お洒落',
 				'_ymkrf_pt2'     => 'ホーロー製',
 				'_ymkrf_pt3'     => '衛生的',
@@ -1516,7 +1516,7 @@ add_action( 'init', function () {
 				'_ymkrf_size'    => 'I型2550サイズ',
 				'_ymkrf_work'    => '240000',
 				'_ymkrf_item'    => '858000',
-				'_ymkrf_days'    => '',   /* カタログに工期の記載がありません */
+				'_ymkrf_days'    => '3',  /* カタログに記載はありませんが、標準工期3日にそろえています */
 				'_ymkrf_pt1'     => '美しさが長持ち',
 				'_ymkrf_pt2'     => '長寿命',
 				'_ymkrf_pt3'     => 'エコ',
@@ -1700,7 +1700,7 @@ add_action( 'init', function () {
 				'_ymkrf_size'    => 'I型2550サイズ',
 				'_ymkrf_work'    => '240000',
 				'_ymkrf_item'    => '958000',
-				'_ymkrf_days'    => '2',
+				'_ymkrf_days'    => '3',
 				'_ymkrf_pt1'     => '一生ものの品質',
 				'_ymkrf_pt2'     => 'お手入れ簡単',
 				'_ymkrf_pt3'     => '収納力',
@@ -2211,7 +2211,7 @@ add_action( 'init', function () {
 				'_ymkrf_size'    => 'I型2550サイズ',
 				'_ymkrf_work'    => '240000',
 				'_ymkrf_item'    => '1508000',
-				'_ymkrf_days'    => '',   /* カタログに工期の記載がありません */
+				'_ymkrf_days'    => '3',  /* カタログに記載はありませんが、標準工期3日にそろえています */
 				'_ymkrf_pt1'     => 'キレイが長持ち',
 				'_ymkrf_pt2'     => '味わい深い',
 				'_ymkrf_pt3'     => '快適',
@@ -2414,6 +2414,60 @@ add_action( 'init', function () {
 		update_post_meta( $sc->ID, '_ymkrf_item', '758000' );
 		update_post_meta( $sc->ID, '_ymkrf_total', 998000 );
 		$log[] = 'Sクラスの工事費を240,000円・商品代を758,000円に直しました（合計998,000円は変わりません）';
+	}
+
+	/* ------------------------------------------------------------
+	   3-d. ザ・クラッソのメイン写真を新しいものに差し替え
+	        メディアに取り込んだ classo-main.jpg を新しい画像で入れ替え、
+	        アイキャッチも付け直します。
+	   ------------------------------------------------------------ */
+	$cp = get_page_by_path( 'classo', OBJECT, 'ymkrf_product' );
+	if ( $cp && get_post_meta( $cp->ID, '_ymkrf_main_ver', true ) !== '2' ) {
+
+		/* 古い classo-main.jpg の添付を消してから、新しいファイルを取り込み直します */
+		$old = $img( 'classo-main.jpg' );
+		if ( $old ) wp_delete_attachment( $old, true );
+
+		$new = $img( 'classo-main.jpg' );
+		if ( $new ) {
+			set_post_thumbnail( $cp->ID, $new );
+
+			/* ギャラリー（写真の並び）の中の古いIDも入れ替えます */
+			foreach ( array( '_ymkrf_gallery', '_ymkrf_hero' ) as $k ) {
+				$g = get_post_meta( $cp->ID, $k, true );
+				if ( is_array( $g ) ) {
+					$g2 = array();
+					foreach ( $g as $gid ) $g2[] = ( (int) $gid === (int) $old ) ? $new : $gid;
+					update_post_meta( $cp->ID, $k, $g2 );
+				}
+			}
+			update_post_meta( $cp->ID, '_ymkrf_main_ver', '2' );
+			$log[] = 'ザ・クラッソのメイン写真を新しいものに差し替えました';
+		}
+	}
+
+	/* ------------------------------------------------------------
+	   3-e. キッチンの工期を全機種3日にそろえます
+	   ------------------------------------------------------------ */
+	$kt = get_term_by( 'slug', 'kitchen', 'ymkrf_product_cat' );
+	if ( $kt && ! is_wp_error( $kt ) && get_option( 'ymkrf_kitchen_days3' ) !== '1' ) {
+		$ks = get_posts( array(
+			'post_type'      => 'ymkrf_product',
+			'posts_per_page' => -1,
+			'fields'         => 'ids',
+			'tax_query'      => array( array(
+				'taxonomy' => 'ymkrf_product_cat', 'field' => 'term_id', 'terms' => $kt->term_id,
+			) ),
+		) );
+		$n = 0;
+		foreach ( (array) $ks as $kid ) {
+			if ( get_post_meta( $kid, '_ymkrf_days', true ) !== '3' ) {
+				update_post_meta( $kid, '_ymkrf_days', '3' );
+				$n++;
+			}
+		}
+		if ( $n ) $log[] = "キッチン{$n}件の工期を3日にそろえました";
+		update_option( 'ymkrf_kitchen_days3', '1' );
 	}
 
 	/* ------------------------------------------------------------

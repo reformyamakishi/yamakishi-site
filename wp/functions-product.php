@@ -1012,9 +1012,14 @@ function ymkrf_maker_logo( $term, $class = 'p-maker' ) {
 	$webp = file_exists( $path . '.webp' )
 		? '<source srcset="' . esc_url( $uri . '.webp' ) . '" type="image/webp">' : '';
 
+	/* ロゴは高さだけそろえ、幅はロゴなりです。
+	   読み込み中に高さが変わらないよう、実寸を width / height に入れます。 */
+	$size = @getimagesize( $path . '.png' );
+	$wh   = $size ? ' width="' . (int) $size[0] . '" height="' . (int) $size[1] . '"' : '';
+
 	return '<span class="' . esc_attr( $class ) . '"><picture>' . $webp
 	     . '<img class="' . esc_attr( $class ) . '__img" src="' . esc_url( $uri . '.png' ) . '"'
-	     . ' width="560" height="140"'
+	     . $wh
 	     . ' alt="' . esc_attr( $name ) . '"'
 	     . ' title="' . esc_attr( $name . 'の製品です' ) . '"'
 	     . ' loading="lazy" decoding="async"></picture></span>';
