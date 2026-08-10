@@ -998,8 +998,11 @@
   background:var(--brand-tint); border:0; border-radius:4px; padding:3px 8px;
   font-size:11.5px; font-weight:700; color:var(--ink-sub);
 }
-/* 一覧カードの中では、ほかのタグと高さをそろえます */
-.p-cat__cardmeta .p-maker{ padding:2px 6px; }
+/* 一覧カードの中では、ほかのタグと高さをそろえます。
+   .p-cat__cardmeta span の薄いピンクに負けないよう、ここでも背景を指定します */
+.p-cat__cardmeta .p-maker{
+  padding:2px 6px; background:#fff; border:1px solid var(--border);
+}
 .p-cat__cardmeta .p-maker__img{ width:88px; height:22px; }
 @media (min-width:600px){
   .p-cat__cardmeta .p-maker__img{ width:100px; height:25px; }
