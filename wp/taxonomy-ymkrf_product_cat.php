@@ -58,17 +58,31 @@ $intro = array(
 			'label' => 'キッチンの標準工事費',
 			'price' => 240000,
 			'note'  => 'キッチンの標準工事費は、どの機種も一律同価格です。',
-			'itemsttl' => '標準工事費にふくまれる8つの工事',
-			/* name … 工事名／sub … 補足（省略可）／icon … 下の ymkrf_work_icon() の名前 */
+			'itemsttl' => '標準工事費にふくまれる工事',
+			/* name … 工事名／sub … 説明（省略可）／icon … 下の ymkrf_work_icon() の名前 */
 			'items' => array(
-				array( 'name' => '既存流し台',       'sub' => '解体撤去工事',            'icon' => 'hammer' ),
-				array( 'name' => '養生工事',         'sub' => '（床・壁・下地）',        'icon' => 'sheet'  ),
-				array( 'name' => '産業廃棄物',       'sub' => '処理運輸工事',            'icon' => 'truck'  ),
-				array( 'name' => '水道工事',         'sub' => '（給水・給湯・排水）',    'icon' => 'water'  ),
-				array( 'name' => '電気工事',         'sub' => '（設備機器の配線接続等）', 'icon' => 'bolt'   ),
-				array( 'name' => 'キッチンパネル',   'sub' => '目地なく汚れもさっと一拭き', 'icon' => 'grid' ),
-				array( 'name' => '下地工事',         'sub' => '',                        'icon' => 'wall'   ),
-				array( 'name' => 'システムキッチン', 'sub' => '取付設置',                'icon' => 'kitchen' ),
+				array( 'name' => '撤去工事',             'icon' => 'hammer',
+				       'sub'  => '古いキッチンの撤去にかかる工事' ),
+				array( 'name' => '廃棄処分',             'icon' => 'truck',
+				       'sub'  => '撤去した古いキッチンを廃棄処分するためにかかる費用です。' ),
+				array( 'name' => '養生工事',             'icon' => 'sheet',
+				       'sub'  => '（床・壁・下地）' ),
+				array( 'name' => '水道工事',             'icon' => 'water',
+				       'sub'  => '（給水・給湯・排水）' ),
+				array( 'name' => '電気工事',             'icon' => 'bolt',
+				       'sub'  => '（設備機器の配線接続等）' ),
+				array( 'name' => 'ガス配管変更工事',     'icon' => 'flame',
+				       'sub'  => 'ガスコンロを使うための配管工事です。' ),
+				array( 'name' => 'キッチンパネル設置工事', 'icon' => 'grid',
+				       'sub'  => 'キッチンパネルの取り付け工事費です。' ),
+				array( 'name' => 'キッチンパネル部材費',   'icon' => 'box',
+				       'sub'  => 'キッチンパネル自体の部材費です。' ),
+				array( 'name' => '下地工事（大工工事）',   'icon' => 'wall',
+				       'sub'  => 'キッチンパネル設置面の補修、補強の工事です。' ),
+				array( 'name' => 'シロッコファン取付工事', 'icon' => 'fan',
+				       'sub'  => 'シロッコファンの取付工事です。' ),
+				array( 'name' => 'システムキッチン取付設置', 'icon' => 'kitchen',
+				       'sub'  => '' ),
 			),
 		),
 
@@ -196,6 +210,11 @@ if ( ! function_exists( 'ymkrf_work_icon' ) ) {
 			          . '<path d="M3 9.7h18M3 14.3h18M10 5v4.7M6.5 9.7v4.6M14 9.7v4.6M10 14.3V19"/>',
 			'kitchen'=> '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18"/>'
 			          . '<circle cx="8.5" cy="15" r="1.7"/><circle cx="15.5" cy="15" r="1.7"/>',
+			'flame'  => '<path d="M12 2.6c2.6 3.2 5.5 5.3 5.5 9a5.5 5.5 0 0 1-11 0c0-2 1-3.5 2.2-4.7'
+			          . '.3 1.2 1 2 1.9 2.4C10.2 7.2 11 4.8 12 2.6z"/>',
+			'fan'    => '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.2"/>'
+			          . '<path d="M12 9.8c1.6-2.6 4.4-3.6 5.4-2.6s0 3.8-2.6 5.4"/>'
+			          . '<path d="M12 14.2c-1.6 2.6-4.4 3.6-5.4 2.6s0-3.8 2.6-5.4"/>',
 		);
 		if ( empty( $d[ $key ] ) ) return '';
 		return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" '

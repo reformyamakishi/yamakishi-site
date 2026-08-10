@@ -573,13 +573,13 @@
   background:#fff; border-radius:12px; overflow:hidden; color:var(--ink);
   display:flex; flex-direction:column;
 }
+/* 見出しは色帯をやめ、白地に細い区切り線だけにしています */
 .p-cat__calchead{
-  margin:0; padding:7px 10px; text-align:center; color:#fff;
+  margin:0; padding:10px 10px 8px; text-align:center; color:var(--ink);
   font-size:clamp(12.5px,3.4vw,17px); font-weight:900; letter-spacing:.02em;
+  border-bottom:1px solid var(--border);
 }
-.p-cat__calchead--item{ background:#0d8fd4; }
-.p-cat__calchead--work{ background:#4caf50; }
-.p-cat__calcin{ padding:10px 12px 13px; text-align:center; flex:1; }
+.p-cat__calcin{ padding:12px 12px 14px; text-align:center; flex:1; }
 .p-cat__calclead{
   margin:0; font-size:clamp(15px,4.4vw,22px); font-weight:900; color:var(--ink); line-height:1.3;
 }
@@ -617,14 +617,16 @@
 }
 .p-cat__stepsttl::before{ transform:rotate(-22deg); }
 .p-cat__stepsttl::after{ transform:rotate(22deg); }
+/* 数がいくつでも最後の行が中央にそろうよう、grid ではなく flex にしています */
 .p-cat__steps{
   list-style:none; margin:12px 0 0; padding:0;
-  display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px;
+  display:flex; flex-wrap:wrap; justify-content:center; gap:9px;
 }
 .p-cat__step{
+  flex:1 1 calc(50% - 4.5px); max-width:calc(50% - 4.5px);
   position:relative; background:#fff; border-radius:10px; color:var(--ink);
   padding:12px 8px 11px; text-align:center;
-  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px;
+  display:flex; flex-direction:column; align-items:center; justify-content:flex-start; gap:5px;
 }
 .p-cat__stepnum{
   position:absolute; top:-7px; left:-5px;
@@ -802,8 +804,11 @@
   .p-cat__calcplus{ margin:0; }
   .p-cat__calcin{ padding:14px 16px 18px; display:flex; flex-direction:column; justify-content:center; }
   .p-cat__stepsttl{ margin-top:24px; }
-  .p-cat__steps{ grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; margin-top:16px; }
-  .p-cat__step{ padding:16px 10px 14px; gap:7px; }
+  .p-cat__steps{ gap:14px; margin-top:16px; }
+  .p-cat__step{
+    flex-basis:calc(25% - 10.5px); max-width:calc(25% - 10.5px);
+    padding:16px 10px 14px; gap:7px;
+  }
   .p-cat__stepnum{ width:28px; height:28px; font-size:14px; top:-9px; left:-7px; }
   .p-cat__worrybox{ gap:18px; margin-top:6px; }
   .p-cat__worryflow{ gap:9px; }
