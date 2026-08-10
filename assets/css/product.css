@@ -985,27 +985,31 @@
 
 /* ==========================================================================
    メーカーのロゴ
-   画像はすべて 640×140 で書き出してあるので、どのメーカーも同じ枠に収まります。
-   枠の背景・線は付けず、ロゴそのものだけを見せます。
+   画像は高さ140pxにそろえて書き出してあります。
+   枠（背景・線）は付けず、高さいっぱいにロゴだけを置きます。
+   幅はロゴなりなので、横長のロゴは横に長く出ます。
    ========================================================================== */
-.p-maker{
-  display:inline-flex; align-items:center;
-  background:none; border:0; padding:0;
-}
-.p-maker__img{
-  width:110px; height:24px; object-fit:contain; object-position:left center; display:block;
-}
+.p-maker{ display:inline-flex; align-items:center; background:none; border:0; padding:0; }
+.p-maker__img{ height:22px; width:auto; max-width:130px; object-fit:contain; display:block; }
 /* ロゴが無いメーカーは、これまでどおり文字で出します */
 .p-maker--text{
   background:var(--brand-tint); border-radius:4px; padding:3px 8px;
   font-size:11.5px; font-weight:700; color:var(--ink-sub);
 }
 /* 一覧カードの中。薄いピンクの下地（.p-cat__cardmeta span）を打ち消します */
-.p-cat__cardmeta .p-maker{
-  background:none; border:0; padding:0; margin-right:2px;
-}
+.p-cat__cardmeta .p-maker{ background:none; border:0; padding:0; margin-right:2px; }
 .p-cat__cardmeta .p-maker--text{ background:var(--brand-tint); padding:3px 8px; margin-right:0; }
-.p-cat__cardmeta .p-maker__img{ width:100px; height:22px; }
 @media (min-width:600px){
-  .p-cat__cardmeta .p-maker__img{ width:112px; height:25px; }
+  .p-maker__img{ height:25px; max-width:150px; }
+}
+
+/* 商品ページの見出し（メーカー名のかわりにロゴ） */
+.p-prd__makerlogo{ display:inline-flex; align-items:center; margin-right:6px; }
+.p-prd__makerlogo__img{ height:26px; width:auto; max-width:170px; object-fit:contain; display:block; }
+.p-prd__makerlogo--text{
+  background:#0b4da2; color:#fff; font-size:13px; font-weight:900;
+  padding:5px 14px; border-radius:5px; letter-spacing:.02em;
+}
+@media (min-width:768px){
+  .p-prd__makerlogo__img{ height:32px; max-width:210px; }
 }
