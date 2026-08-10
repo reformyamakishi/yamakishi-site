@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '17' );
+define( 'YMKRF_SETUP_VER', '18' );
 
 /**
  * init（優先度99）に付けているので、管理画面だけでなく
@@ -127,6 +127,7 @@ add_action( 'init', function () {
 		$theme . '/sierra',
 		$theme . '/sclass',
 		$theme . '/stedia',
+		$theme . '/edel',
 		$theme . '/v-style',
 		$dir,                 // 最後の受け皿（wp-content/ymkrf-import）
 	);
@@ -390,6 +391,45 @@ add_action( 'init', function () {
 		'stedia-opt-araeru.jpg'        => '洗エールレンジフード',
 		'stedia-opt-hood.jpg'          => 'とってもクリンフード',
 		'stedia-opt-faucet.jpg'        => 'シャワーホース付き水栓',
+
+		/* --- エーデル（Sグレード・タカラスタンダード） --- */
+		'edel-main.jpg'            => 'エーデルのキッチン全体',
+		'edel-color-white.jpg'     => '扉カラー ホワイト',
+		'edel-color-ivory.jpg'     => '扉カラー フローラルアイボリー',
+		'edel-color-beige.jpg'     => '扉カラー ベージュ',
+		'edel-color-lightgray.jpg' => '扉カラー ライトグレー',
+		'edel-color-lightpink.jpg' => '扉カラー ライトピンク',
+		'edel-color-darkblue.jpg'  => '扉カラー ダークブルー',
+		'edel-color-brown.jpg'     => '扉カラー ブラウン',
+		'edel-top-beige.jpg'       => '天板カラー ソリッドベージュ',
+		'edel-top-gray.jpg'        => '天板カラー ソリッドグレー',
+		'edel-top-white.jpg'       => '天板カラー ソリッドホワイト',
+		'edel-sink-white.jpg'      => 'シンクカラー ホワイト',
+		'edel-sink-gray.jpg'       => 'シンクカラー グレー',
+		'edel-sink-beige.jpg'      => 'シンクカラー ベージュ',
+		'edel-spec-top.jpg'        => 'アクリル人造大理石天板',
+		'edel-spec-sink.jpg'       => 'アクリル人造大理石シンク',
+		'edel-spec-faucet.jpg'     => '浄水器内蔵ハンドシャワー',
+		'edel-spec-cabinet.jpg'    => 'ホーロー製キャビネット',
+		'edel-spec-rail.jpg'       => 'ソフトクローズレール',
+		'edel-spec-panel.jpg'      => 'ホーロークリーン キッチンパネル',
+		'edel-spec-rack.jpg'       => 'どこでもラック（アルミタイプ）',
+		'edel-spec-led.jpg'        => 'LED手元照明',
+		'edel-spec-hood.jpg'       => 'シロッコファンレンジフード',
+		'edel-spec-wallcab.jpg'    => '吊戸棚（H700）',
+		'edel-point-horo1.jpg'     => '油汚れも油性ペンも水拭きで落ちるホーロー面材',
+		'edel-point-horo2.jpg'     => 'ホーロー面材に火を近づけているところ',
+		'edel-point-horo3.jpg'     => 'ホーロー面材をタワシで磨いているところ',
+		'edel-point-horo4.jpg'     => 'キッチンのそばで遊ぶ子ども',
+		'edel-point-rack1.jpg'     => '壁に取り付けたどこでもラック',
+		'edel-point-rack2.jpg'     => 'どこでもラックの収納パーツいろいろ',
+		'edel-point-acryl1.jpg'    => '天板に熱い鍋を置いているところ',
+		'edel-point-acryl2.jpg'    => '天板の汚れを水拭きしているところ',
+		'edel-point-acryl3.jpg'    => '天板に瓶が倒れたところ',
+		'edel-opt-dish.jpg'        => 'W450mmプルオープン食器洗い乾燥機',
+		'edel-opt-lift.jpg'        => '電動昇降吊戸棚',
+		'edel-opt-hood.jpg'        => 'ホーロークリーンフード',
+		'edel-opt-irack.jpg'       => 'アイラック水切りタイプ',
 	);
 	foreach ( $stock as $f => $alt ) {
 		if ( $img( $f, $alt ) ) $log[] = 'メディアに追加: ' . $f;
@@ -464,7 +504,7 @@ add_action( 'init', function () {
 	   ------------------------------------------------------------ */
 	$rebuild_keys = array( '_ymkrf_images', '_ymkrf_colors', '_ymkrf_tops', '_ymkrf_sinks', '_ymkrf_handles', '_ymkrf_specs', '_ymkrf_features', '_ymkrf_options' );
 
-	foreach ( array( 'rakuera', 'refit', 'sierra-s', 's-class', 'stedia' ) as $slug ) {
+	foreach ( array( 'rakuera', 'refit', 'sierra-s', 's-class', 'stedia', 'edel' ) as $slug ) {
 
 		$p = get_page_by_path( $slug, OBJECT, 'ymkrf_product' );
 		if ( ! $p ) continue;
@@ -1495,6 +1535,171 @@ add_action( 'init', function () {
 
 			update_post_meta( $tid, '_ymkrf_img_missing', $missing - $m0 );
 			$log[] = '商品「ステディア」を登録しました → ' . get_permalink( $tid );
+		}
+	}
+
+	/* ------------------------------------------------------------
+	   3-a6. エーデル（Sグレード・タカラスタンダード）を1件つくる
+	   ------------------------------------------------------------ */
+	if ( ! get_page_by_path( 'edel', OBJECT, 'ymkrf_product' ) ) {
+
+		$eid = wp_insert_post( array(
+			'post_type'   => 'ymkrf_product',
+			'post_status' => 'publish',
+			'post_title'  => 'エーデル',
+			'post_name'   => 'edel',
+		) );
+
+		if ( $eid && ! is_wp_error( $eid ) ) {
+
+			$m0 = $missing;   /* この商品で見つからなかった写真を数えるための起点 */
+
+			$f = array(
+				'_ymkrf_catch'   => 'キレイと快適が毎日つづくキッチン。',
+				'_ymkrf_grade'   => 'Sグレード',
+				'_ymkrf_name'    => 'エーデル',
+				'_ymkrf_size'    => 'I型2550サイズ',
+				'_ymkrf_work'    => '240000',
+				'_ymkrf_item'    => '958000',
+				'_ymkrf_days'    => '2',
+				'_ymkrf_pt1'     => '一生ものの品質',
+				'_ymkrf_pt2'     => 'お手入れ簡単',
+				'_ymkrf_pt3'     => '収納力',
+				'_ymkrf_caution' => '※写真はイメージになります。※食洗機はオプションになります。',
+			);
+			foreach ( $f as $k => $v ) update_post_meta( $eid, $k, $v );
+			update_post_meta( $eid, '_ymkrf_total', 1198000 );
+
+			$m = $img( 'edel-main.jpg' );
+			if ( $m ) set_post_thumbnail( $eid, $m );
+			update_post_meta( $eid, '_ymkrf_images', array() );
+
+			/* 扉カラー（全7色） */
+			$ec = array(
+				array( 'edel-color-white.jpg',     'ホワイト' ),
+				array( 'edel-color-ivory.jpg',     'フローラルアイボリー' ),
+				array( 'edel-color-beige.jpg',     'ベージュ' ),
+				array( 'edel-color-lightgray.jpg', 'ライトグレー' ),
+				array( 'edel-color-lightpink.jpg', 'ライトピンク' ),
+				array( 'edel-color-darkblue.jpg',  'ダークブルー' ),
+				array( 'edel-color-brown.jpg',     'ブラウン' ),
+			);
+			$rows = array();
+			foreach ( $ec as $r ) $rows[] = array( 'img' => $img( $r[0] ), 'name' => $r[1] );
+			update_post_meta( $eid, '_ymkrf_colors', $rows );
+
+			/* 天板カラー（全3色） */
+			update_post_meta( $eid, '_ymkrf_tops', array(
+				array( 'img' => $img( 'edel-top-beige.jpg' ), 'name' => 'ソリッドベージュ' ),
+				array( 'img' => $img( 'edel-top-gray.jpg' ),  'name' => 'ソリッドグレー' ),
+				array( 'img' => $img( 'edel-top-white.jpg' ), 'name' => 'ソリッドホワイト' ),
+			) );
+
+			/* シンクカラー（全3色） */
+			update_post_meta( $eid, '_ymkrf_sinks', array(
+				array( 'img' => $img( 'edel-sink-white.jpg' ), 'name' => 'ホワイト' ),
+				array( 'img' => $img( 'edel-sink-gray.jpg' ),  'name' => 'グレー' ),
+				array( 'img' => $img( 'edel-sink-beige.jpg' ), 'name' => 'ベージュ' ),
+			) );
+
+			/* 取っ手はカタログに記載が無いので空のまま（見出しごと出ません） */
+			update_post_meta( $eid, '_ymkrf_handles', array() );
+
+			/* 標準仕様10点 */
+			$es = array(
+				array( 'edel-spec-top.jpg',     'アクリル人造大理石天板',       '' ),
+				array( 'edel-spec-sink.jpg',    'アクリル人造大理石シンク',     '' ),
+				array( 'edel-spec-faucet.jpg',  '浄水器内蔵ハンドシャワー',     'TJS-SP19E' ),
+				array( 'edel-spec-cabinet.jpg', 'ホーロー製キャビネット',       '' ),
+				array( 'edel-spec-rail.jpg',    'ソフトクローズレール',         '' ),
+				array( 'edel-spec-panel.jpg',   'ホーロークリーン キッチンパネル', '' ),
+				array( 'edel-spec-rack.jpg',    'どこでもラック',               'アルミタイプ' ),
+				array( 'edel-spec-led.jpg',     'LED手元照明',                  '' ),
+				array( 'edel-spec-hood.jpg',    'シロッコファンレンジフード',   'VRAT-752AD(L/R)(V)' ),
+				array( 'edel-spec-wallcab.jpg', '吊戸棚',                       'H700' ),
+			);
+			$rows = array();
+			foreach ( $es as $r ) $rows[] = array( 'img' => $img( $r[0], $r[1] ), 'name' => $r[1], 'model' => $r[2] );
+			update_post_meta( $eid, '_ymkrf_specs', $rows );
+
+			/* おすすめポイント（3グループ・9ポイント） */
+			update_post_meta( $eid, '_ymkrf_features', array(
+				array( 'gsub'=>'一生ものの品質', 'gttl'=>'「まるごとホーローキャビネット」',
+				       'ttl'=>'汚れに強い。',
+				       'text'=>'汚れが染みこまないので、お手入れカンタン。油汚れも、水拭きでサッと落とせます。', 'note'=>'',
+				       'img'=>$img('edel-point-horo1.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'', 'gttl'=>'',
+				       'ttl'=>'熱に強い。',
+				       'text'=>'高温になりがちなコンロまわりも、おまかせ。火を近づけても、変形・変色いたしません。', 'note'=>'',
+				       'img'=>$img('edel-point-horo2.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'', 'gttl'=>'',
+				       'ttl'=>'傷や衝撃に強い。',
+				       'text'=>'硬いお鍋が当たっても、タワシでゴシゴシ磨いても、ちょっとやそっとではキズ付きません。', 'note'=>'',
+				       'img'=>$img('edel-point-horo3.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'', 'gttl'=>'',
+				       'ttl'=>'安心素材',
+				       'text'=>'シックハウス症候群の原因となるホルムアルデヒドなどの有害物質を発生しません。', 'note'=>'',
+				       'img'=>$img('edel-point-horo4.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'壁全体を収納スペースに。', 'gttl'=>'「どこでもラック」',
+				       'ttl'=>'脱着カンタン。',
+				       'text'=>'取付け・取外しが、自由自在。マグネットと吸盤のWの力でしっかり壁にくっつきます。', 'note'=>'',
+				       'img'=>$img('edel-point-rack1.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'', 'gttl'=>'',
+				       'ttl'=>'用途いろいろ。',
+				       'text'=>'用途に応じた収納パーツを多彩にご用意。（オプション）',
+				       'note'=>'※小物棚・ふきん掛け・レードル掛けは標準装備。',
+				       'img'=>$img('edel-point-rack2.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'耐久性バツグン', 'gttl'=>'「アクリル人造大理石」天板・シンク',
+				       'ttl'=>'熱や衝撃に強い耐久性',
+				       'text'=>"大理石の質感を再現した美しさと、熱や衝撃に強い機能性を兼ね備えています。\n熱い物を置いても大丈夫！ほとんど変色しない耐久性を持っています。",
+				       'note'=>'※日常は鍋敷きをお使いください。',
+				       'img'=>$img('edel-point-acryl1.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'', 'gttl'=>'',
+				       'ttl'=>'汚れにくい',
+				       'text'=>'汚れにくい素材だから、お掃除が簡単！油汚れもサッと水拭きするだけで毎日のお手入れが簡単です。', 'note'=>'',
+				       'img'=>$img('edel-point-acryl2.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'', 'gttl'=>'',
+				       'ttl'=>'衝撃に強く、傷がつきにくい',
+				       'text'=>'硬度の高い傷付きにくい素材なので、美しさが長持ちします。', 'note'=>'',
+				       'img'=>$img('edel-point-acryl3.jpg'), 'img2'=>'' ),
+			) );
+
+			/* おすすめオプション4点 */
+			update_post_meta( $eid, '_ymkrf_options', array(
+				array( 'img'=>$img('edel-opt-dish.jpg'),  'name'=>'W450mmプルオープン 食器洗い乾燥機（EW-45R3ST）',
+				       'text'=>'手洗いより節水で省エネ。家事の手間を省きます。',
+				       'price'=>'95800', 'note'=>'' ),
+				array( 'img'=>$img('edel-opt-lift.jpg'),  'name'=>'電動昇降吊戸棚（W900）',
+				       'text'=>'スイッチひとつで、吊戸棚が昇降します。',
+				       'price'=>'169500', 'note'=>'' ),
+				array( 'img'=>$img('edel-opt-hood.jpg'),  'name'=>'ホーロークリーンフード（扉色幕板・W750）',
+				       'text'=>'本体・整流板もホーロー製なので、汚れても水拭きでキレイに。',
+				       'price'=>'55500', 'note'=>'' ),
+				array( 'img'=>$img('edel-opt-irack.jpg'), 'name'=>'アイラック水切りタイプ（間口90cm）',
+				       'text'=>'シンクの上の水切り棚で、家事を効率的に。使用しない時は、スッキリ納まります。',
+				       'price'=>'48600', 'note'=>'※オプション価格は近日中に値上げするため、現時点での参考価格となります。' ),
+			) );
+
+			/* 標準工事に含まれる工事 */
+			$ew = array(
+				array( '撤去工事',               '古いキッチンの撤去にかかる工事です。' ),
+				array( '廃棄処分',               '撤去した古いキッチンを廃棄処分するためにかかる費用です。' ),
+				array( 'ガス配管変更工事',       'ガスコンロを使うための配管工事です。' ),
+				array( 'キッチンパネル設置工事', 'キッチンパネルの取り付け工事費です。' ),
+				array( 'キッチンパネル部材費',   'キッチンパネル自体の部材費です。' ),
+				array( '下地工事（大工工事）',   'キッチンパネル設置面の補修、補強の工事です。' ),
+				array( 'シロッコファン取付工事', 'シロッコファンの取付工事です。' ),
+			);
+			$rows = array();
+			foreach ( $ew as $r ) $rows[] = array( 'name' => $r[0], 'text' => $r[1] );
+			update_post_meta( $eid, '_ymkrf_works', $rows );
+
+			wp_set_object_terms( $eid, 'kitchen', 'ymkrf_product_cat' );
+			wp_set_object_terms( $eid, 'takara',  'ymkrf_maker' );
+			wp_set_object_terms( $eid, array( 'nonoichi', 'komathu', 'hakui', 'kawakita', 'kanadu' ), 'ymkrf_shop' );
+
+			update_post_meta( $eid, '_ymkrf_img_missing', $missing - $m0 );
+			$log[] = '商品「エーデル」を登録しました → ' . get_permalink( $eid );
 		}
 	}
 
