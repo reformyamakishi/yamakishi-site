@@ -58,7 +58,8 @@ $intro = array(
 			'label' => 'キッチンの標準工事費',
 			'price' => 240000,
 			'note'  => 'キッチンの標準工事費は、どの機種も一律同価格です。',
-			'itemsttl' => '標準工事費にふくまれる工事',
+			/* | は「スマホではここで改行」の目印です */
+			'itemsttl' => 'リフォームヤマキシの|標準工事費にふくまれる工事',
 			/* name … 工事名／sub … 説明（省略可）／icon … 下の ymkrf_work_icon() の名前 */
 			'items' => array(
 				array( 'name' => '撤去工事',             'icon' => 'hammer',
@@ -364,8 +365,17 @@ if ( $show_worry ) :
 </section>
 <?php endif; /* $show_worry */ ?>
 
-<!-- =========== 商品代＋標準工事費 =========== -->
-<?php if ( ! empty( $c['pointnote']['items'] ) ) : $pn = $c['pointnote']; ?>
+<!-- =========== 商品代＋標準工事費 ===========
+     他のカテゴリ（トイレなど）でも、上の $intro にそのカテゴリの
+     'pointnote'（price / note / itemsttl / items）を書けば同じ形で出ます。
+     ・「最安値」は登録商品の商品代（_ymkrf_item）から自動で計算します
+     ・label と note は省略でき、その場合はカテゴリ名から自動で作ります  -->
+<?php if ( ! empty( $c['pointnote']['items'] ) ) :
+	$pn = $c['pointnote'];
+	if ( empty( $pn['label'] ) ) $pn['label'] = $name . 'の標準工事費';
+	if ( ! isset( $pn['note'] ) ) $pn['note']  = $name . 'の標準工事費は、どの機種も一律同価格です。';
+	if ( empty( $pn['itemsttl'] ) ) $pn['itemsttl'] = 'リフォームヤマキシの|標準工事費にふくまれる工事';
+?>
 <section class="l-section p-cat__calcsec">
   <div class="l-wrap">
     <div class="p-cat__calc">
@@ -400,7 +410,10 @@ if ( $show_worry ) :
 
       </div>
 
-      <p class="p-cat__stepsttl"><?php echo esc_html( $pn['itemsttl'] ); ?></p>
+      <p class="p-cat__stepsttl"><span><?php
+        /* 「|」を、スマホだけで効く改行に置きかえます */
+        echo str_replace( '|', '<br class="xs-only">', esc_html( $pn['itemsttl'] ) );
+      ?></span></p>
       <ol class="p-cat__steps">
         <?php foreach ( $pn['items'] as $i => $w ) : ?>
           <li class="p-cat__step">
