@@ -219,19 +219,31 @@ $hero = ( $c && ! empty( $c['hero'] ) ) ? $dir . '/' . $c['hero'] : '';
     <h2 class="p-prd__bar"><?php echo esc_html( $c['worrytitle'] ); ?></h2>
     <p class="p-cat__worryintro"><?php echo esc_html( $c['worryintro'] ); ?></p>
 
+    <?php
+    /* お悩みは2段の横スクロール（マーキー）にして、高さを抑えます。
+       途切れなくループさせるため、同じ内容を4回くり返して -50% まで動かします。 */
+    $ws   = array_values( $c['worries'] );
+    $half = (int) ceil( count( $ws ) / 2 );
+    $rows = array( array_slice( $ws, 0, $half ), array_slice( $ws, $half ) );
+    ?>
     <div class="p-cat__worrybox">
       <img class="p-cat__worrychara"
            src="<?php echo esc_url( $dir . '/assets/img/character/char-search.webp' ); ?>"
            width="480" height="480" alt="" loading="lazy" decoding="async">
-      <ul class="p-cat__worries">
-        <?php foreach ( $c['worries'] as $w ) : ?>
-          <li><?php echo esc_html( $w ); ?></li>
+      <div class="p-cat__worryflow">
+        <?php foreach ( $rows as $ri => $row ) : if ( ! $row ) continue; ?>
+          <div class="p-cat__worryrow<?php echo $ri ? ' p-cat__worryrow--rev' : ''; ?>">
+            <?php for ( $k = 0; $k < 4; $k++ ) : ?>
+              <ul class="p-cat__worries"<?php echo $k ? ' aria-hidden="true"' : ''; ?>>
+                <?php foreach ( $row as $w ) : ?><li><?php echo esc_html( $w ); ?></li><?php endforeach; ?>
+              </ul>
+            <?php endfor; ?>
+          </div>
         <?php endforeach; ?>
-      </ul>
+      </div>
     </div>
 
     <p class="p-cat__worrylead"><?php echo esc_html( $c['worrylead'] ); ?></p>
-    <?php ymkrf_product_cta( 'category-top' ); ?>
   </div>
 </section>
 
@@ -258,12 +270,14 @@ $hero = ( $c && ! empty( $c['hero'] ) ) ? $dir . '/' . $c['hero'] : '';
                  width="448" height="300" alt="<?php echo esc_attr( $s['alt'] ); ?>"
                  loading="lazy" decoding="async">
           </div>
-          <h3 class="p-cat__soltitle"><?php echo esc_html( $s['title'] ); ?></h3>
+          <h3 class="p-cat__soltitle"><span><?php echo esc_html( $s['title'] ); ?></span></h3>
           <p class="p-cat__sollead"><?php echo esc_html( $s['lead'] ); ?></p>
           <?php if ( ! empty( $s['text'] ) ) : ?><p class="p-cat__soltext"><?php echo esc_html( $s['text'] ); ?></p><?php endif; ?>
         </div>
       <?php endforeach; ?>
     </div>
+
+    <?php ymkrf_product_cta( 'category-top' ); ?>
 
   </div>
 </section>
@@ -303,9 +317,6 @@ $hero = ( $c && ! empty( $c['hero'] ) ) ? $dir . '/' . $c['hero'] : '';
                 <?php if ( $d['size'] ) : ?><span><?php echo esc_html( $d['size'] ); ?></span><?php endif; ?>
                 <?php if ( $d['days'] ) : ?><span>工期<?php echo esc_html( $d['days'] ); ?>日</span><?php endif; ?>
               </p>
-              <?php if ( $d['catch'] ) : ?>
-                <p class="p-cat__cardcatch"><?php echo esc_html( $d['catch'] ); ?></p>
-              <?php endif; ?>
               <?php if ( $d['total'] ) : ?>
                 <p class="p-cat__cardprice">
                   <span class="lbl">工事費込み</span>

@@ -565,22 +565,37 @@
 }
 
 /* --- お悩み ---
-   スマホでは、キャラクターを左に小さく置いて吹き出しを右に並べます。
-   縦積みにすると1画面に収まらないためです。 */
+   キャラクターを左に置き、右側は2段の横スクロール（マーキー）にします。
+   縦に積むと高さが出すぎるため、流して見せて高さを抑えています。 */
 .p-cat__worrybox{
   display:grid; grid-template-columns:auto minmax(0,1fr); gap:8px;
   align-items:center; margin-top:4px;
 }
-.p-cat__worrychara{ width:clamp(62px,18vw,142px); height:auto; display:block; }
-.p-cat__worries{ list-style:none; margin:0; padding:0; display:grid; gap:5px; }
+.p-cat__worrychara{ width:clamp(56px,15vw,116px); height:auto; display:block; }
+.p-cat__worryflow{
+  display:grid; gap:6px; overflow:hidden; padding:4px 0;
+  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 5%,#000 95%,transparent 100%);
+          mask-image:linear-gradient(90deg,transparent 0,#000 5%,#000 95%,transparent 100%);
+}
+.p-cat__worryrow{
+  display:flex; width:max-content;
+  animation:ymkrf-worryflow 30s linear infinite;
+  will-change:transform;
+}
+.p-cat__worryrow--rev{ animation-duration:38s; animation-direction:reverse; }
+.p-cat__worryflow:hover .p-cat__worryrow{ animation-play-state:paused; }
+@keyframes ymkrf-worryflow{ from{ transform:translateX(0); } to{ transform:translateX(-50%); } }
+@media (prefers-reduced-motion:reduce){ .p-cat__worryrow{ animation:none; } }
+.p-cat__worries{
+  list-style:none; margin:0; padding:0 3px 0 0; display:flex; gap:6px; flex:none;
+}
 .p-cat__worries li{
   position:relative; background:#fff; border:1px solid var(--border); border-radius:999px;
-  box-shadow:var(--shadow); padding:7px 12px;
+  box-shadow:var(--shadow); padding:7px 13px; white-space:nowrap;
   font-size:clamp(11px,2.95vw,15px); font-weight:700; line-height:1.5; color:var(--ink);
-  overflow-wrap:anywhere;
 }
 .p-cat__worrylead{
-  margin-top:16px; text-align:center; font-size:clamp(13.5px,3.9vw,19px); font-weight:900;
+  margin-top:12px; text-align:center; font-size:clamp(13.5px,3.9vw,19px); font-weight:900;
   line-height:1.75; color:var(--ink); text-wrap:balance;
 }
 
@@ -613,15 +628,19 @@
   background:#fff; border:1px solid var(--border); border-radius:14px;
   box-shadow:var(--shadow); overflow:hidden;
 }
-/* 見出しは薄いピンクの帯にして目立たせます */
+/* 背景は白のまま、テキストの後ろだけマーカーを引いて目立たせます */
 .p-cat__soltitle{
-  margin:0; padding:9px 10px;
-  background:var(--brand-tint); border-bottom:1px solid var(--brand-tint2);
-  font-size:clamp(12px,3.2vw,18px); font-weight:900; line-height:1.45;
+  margin:0; padding:10px 10px 0;
+  font-size:clamp(12px,3.2vw,18px); font-weight:900; line-height:1.75;
   color:var(--ink); text-wrap:balance;
 }
+.p-cat__soltitle span{
+  display:inline; padding:0 3px;
+  background:linear-gradient(transparent 58%, #ffd7e6 58%);
+  -webkit-box-decoration-break:clone; box-decoration-break:clone;
+}
 .p-cat__sollead{
-  margin:9px 10px 12px; font-size:clamp(11px,2.9vw,14px); line-height:1.7; color:var(--ink-sub);
+  margin:7px 10px 12px; font-size:clamp(11px,2.9vw,14px); line-height:1.7; color:var(--ink-sub);
 }
 .p-cat__sollead:not(:last-child){ margin-bottom:0; }
 .p-cat__solph{ overflow:hidden; }
@@ -637,7 +656,8 @@
 }
 .p-cat__cards{ display:grid; gap:14px; grid-template-columns:1fr; }
 .p-cat__card{
-  display:grid; grid-template-columns:1fr; text-decoration:none; color:inherit;
+  display:grid; grid-template-columns:1fr; grid-template-rows:auto 1fr;
+  text-decoration:none; color:inherit;
   background:#fff; border:1px solid var(--border); border-radius:14px; overflow:hidden;
   box-shadow:var(--shadow); transition:transform .18s ease, box-shadow .18s ease;
 }
@@ -649,7 +669,9 @@
   background:var(--brand); color:#fff; border-radius:6px; padding:4px 10px;
   font-size:12px; font-weight:900; letter-spacing:.04em;
 }
-.p-cat__cardbody{ padding:16px 16px 18px; }
+/* 商品名やメーカー名の行数が違っても、価格と「くわしく見る」が
+   横一列でそろうように、本文を縦フレックスにして下端に寄せます */
+.p-cat__cardbody{ padding:16px 16px 18px; display:flex; flex-direction:column; }
 .p-cat__cardname{
   font-size:clamp(17px,4.6vw,20px); font-weight:900; letter-spacing:.02em; color:var(--ink);
 }
@@ -663,14 +685,18 @@
 .p-cat__cardcatch{
   margin-top:9px; font-size:clamp(12.5px,3.4vw,14px); line-height:1.85; color:var(--ink-sub);
 }
-.p-cat__cardprice{ margin-top:12px; display:flex; align-items:baseline; flex-wrap:wrap; gap:6px; }
+.p-cat__cardprice{ margin-top:auto; padding-top:12px; display:flex; align-items:baseline; flex-wrap:wrap; gap:6px; }
 .p-cat__cardprice .lbl{
   font-size:11px; font-weight:900; color:#fff; background:var(--ink);
   border-radius:4px; padding:3px 7px;
 }
+/* 価格も黄色のマーカーを引いて目立たせます */
 .p-cat__cardprice .num{
-  font-size:clamp(24px,6.4vw,30px); font-weight:900; line-height:1; color:var(--brand);
+  font-size:clamp(24px,6.4vw,30px); font-weight:900; line-height:1.15; color:var(--brand);
   font-family:"Helvetica Neue",Arial,sans-serif; letter-spacing:-.01em;
+  padding:0 4px;
+  background:linear-gradient(transparent 55%, #ffe95c 55%);
+  -webkit-box-decoration-break:clone; box-decoration-break:clone;
 }
 .p-cat__cardprice .unit{ font-size:12.5px; font-weight:700; color:var(--ink-sub); }
 .p-cat__cardlink{
@@ -683,11 +709,12 @@
   .p-cat__points{ gap:16px; }
   .p-cat__point{ padding:20px 18px 22px; }
   .p-cat__worrybox{ gap:18px; margin-top:6px; }
-  .p-cat__worries{ grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; }
-  .p-cat__worries li{ padding:11px 16px; }
+  .p-cat__worryflow{ gap:9px; }
+  .p-cat__worries{ gap:9px; padding-right:9px; }
+  .p-cat__worries li{ padding:10px 18px; }
   .p-cat__sols{ gap:14px; }
-  .p-cat__soltitle{ padding:12px 16px; }
-  .p-cat__sollead{ margin:12px 16px 18px; line-height:1.9; }
+  .p-cat__soltitle{ padding:14px 16px 0; }
+  .p-cat__sollead{ margin:9px 16px 18px; line-height:1.9; }
   .p-cat__soltext{ margin:10px 16px 18px; line-height:1.9; }
   .p-cat__cards{ grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
