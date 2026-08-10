@@ -606,10 +606,11 @@
 }
 /* --- 工事費にふくまれる8つの工事 --- */
 .p-cat__stepsttl{
-  margin:18px 0 0; text-align:center; color:#fff; line-height:1.4;
-  font-size:clamp(13px,3.6vw,18px); font-weight:900; letter-spacing:.02em;
+  margin:18px 0 0; text-align:center; color:#fff; line-height:1.45;
+  font-size:clamp(12.5px,3.4vw,18px); font-weight:900; letter-spacing:.02em;
   display:flex; align-items:center; justify-content:center; gap:10px;
 }
+.p-cat__stepsttl span{ min-width:0; }
 /* 見出しの左右に「＼ ／」を線で描いています */
 .p-cat__stepsttl::before,
 .p-cat__stepsttl::after{
