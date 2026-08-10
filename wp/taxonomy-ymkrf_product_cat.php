@@ -32,6 +32,8 @@ $intro = array(
 
 		'en'    => 'KITCHEN',
 		'title' => 'キッチンリフォーム',
+		/* 見出しの背景写真。テーマの assets からの相対パスで書いてください */
+		'hero'  => 'assets/img/products/richelle/richelle-main.jpg',
 		'lead'  => '本体・標準工事費・古いキッチンの処分費まで込みのパック価格でご案内します。'
 		         . '<br>あとからの追加請求はありません。',
 
@@ -53,7 +55,8 @@ $intro = array(
 		),
 
 		/* --- お悩み --- */
-		'worrytitle' => 'キッチンでこんなお悩みありませんか？',
+		'worrytitle' => 'キッチンのお悩み',
+		'worryintro' => 'こんなことで悩んでいませんか？',
 		'worries'    => array(
 			'整理整頓が出来なくて……',
 			'油汚れがなかなか落ちない……',
@@ -77,48 +80,37 @@ $intro = array(
 			array(
 				'img'   => 'kitchen-sol-storage.jpg',
 				'title' => '使いやすさと収納量を両立',
-				'lead'  => 'よく使う道具が立ち位置を変えずに取り出せるので、スムーズに作業ができます。',
-				'text'  => 'たくさん入って、使いやすい。立体構造で収納スペースをムダなく活かし、大容量を実現！',
+				'lead'  => '立体構造で収納をムダなく活用。よく使う道具が、立ち位置を変えずに取り出せます。',
 				'alt'   => '立体構造で道具がたくさん入る引き出し収納',
 			),
 			array(
 				'img'   => 'kitchen-sol-fan.jpg',
 				'title' => 'ファンを自動洗浄',
-				'lead'  => '約2ヶ月に1回の洗浄で、約10年間ファンフィルターを取り外さずにお掃除できます。',
-				'text'  => '給湯トレイにお湯（40〜45℃）を入れて本体にセットし、洗浄ボタンを押すと'
-				         . '集めた油汚れを自動洗浄（約10分）。あとは、排水トレイの水を捨てるだけの簡単洗浄です。',
+				'lead'  => '給湯トレイにお湯を入れてボタンを押すだけ。約10年間、ファンを外さずにお掃除できます。',
 				'alt'   => 'レンジフードの自動洗浄のしくみ図',
 			),
 			array(
 				'img'   => 'kitchen-sol-faucet.jpg',
 				'title' => '浄水も使えるオールインワン浄水栓',
-				'lead'  => 'カートリッジの取替も簡単です。',
-				'text'  => 'カートリッジは水栓本体にスリムに内蔵されているので、簡単に取り換えることができます。'
-				         . '無意識でのお湯の使用を防止する「エコハンドル」採用。',
+				'lead'  => 'カートリッジは水栓に内蔵。取替も簡単で、お湯の使いすぎを防ぐエコハンドル付き。',
 				'alt'   => '浄水器を内蔵したオールインワン浄水栓',
 			),
 			array(
 				'img'   => 'kitchen-sol-wall.jpg',
 				'title' => '「手が届く」高さで使えるユニット',
-				'lead'  => '500〜900mmまで4サイズから選べるウォールユニット。収納量や設置スペースに合わせて選べます。',
-				'text'  => '収納棚をアイレベル（目の高さ）まで降ろして、必要な物がすぐに取り出せます。'
-				         . '（手動式）開き戸には耐震ロックを装備しているので、収納物が落下するのを防ぎます。',
+				'lead'  => '収納棚が目の高さまで降りてきて、必要な物がすぐ取り出せます。耐震ロック付き。',
 				'alt'   => '目の高さまで降りてくるウォールユニット',
 			),
 			array(
 				'img'   => 'kitchen-sol-ceramic.jpg',
 				'title' => '高温フライパンもOKの素材',
-				'lead'  => '焼き物ならではの上質で高品位な素材が、本物の風格を演出します。',
-				'text'  => '熱やキズ、汚れに優れた耐久性を発揮するセラミック。'
-				         . '耐衝撃性を高める強化構造を採用していますので、安心してお使いいただけます。',
+				'lead'  => '熱・キズ・汚れに強いセラミック。焼き物ならではの上質な風合いも魅力です。',
 				'alt'   => 'セラミックの天板に高温のフライパンを置いたところ',
 			),
 			array(
 				'img'   => 'kitchen-sol-drain.jpg',
 				'title' => 'うず水流で洗浄しながら排水',
-				'lead'  => 'キレイが続く賢い排水口。普段通りに使うだけで洗浄してくれます。',
-				'text'  => '食器や調理道具を洗ったり、普通にシンクを使うだけで、うず状の水流が排水口の汚れを洗浄。'
-				         . '面倒だった排水口のお掃除がラクになります。',
+				'lead'  => '普段どおりシンクを使うだけで、うず状の水流が排水口の汚れを洗浄します。',
 				'alt'   => 'うず状の水流が排水口の汚れを洗い流すところ',
 			),
 		),
@@ -176,7 +168,11 @@ get_header();
 <main id="main">
 
 <!-- =========== ページ見出し =========== -->
-<div class="p-pagehead">
+<?php
+$hero = ( $c && ! empty( $c['hero'] ) ) ? $dir . '/' . $c['hero'] : '';
+?>
+<div class="p-pagehead<?php echo $hero ? ' p-pagehead--photo' : ''; ?>"<?php
+  if ( $hero ) echo ' style="--ph-img:url(' . esc_url( $hero ) . ')"'; ?>>
   <div class="l-wrap p-pagehead__inner">
     <?php if ( $c && $c['en'] ) : ?>
       <span class="p-pagehead__en"><?php echo esc_html( $c['en'] ); ?></span>
@@ -221,6 +217,7 @@ get_header();
 <section class="l-section">
   <div class="l-wrap">
     <h2 class="p-prd__bar"><?php echo esc_html( $c['worrytitle'] ); ?></h2>
+    <p class="p-cat__worryintro"><?php echo esc_html( $c['worryintro'] ); ?></p>
 
     <div class="p-cat__worrybox">
       <img class="p-cat__worrychara"
@@ -263,7 +260,7 @@ get_header();
           </div>
           <h3 class="p-cat__soltitle"><?php echo esc_html( $s['title'] ); ?></h3>
           <p class="p-cat__sollead"><?php echo esc_html( $s['lead'] ); ?></p>
-          <p class="p-cat__soltext"><?php echo esc_html( $s['text'] ); ?></p>
+          <?php if ( ! empty( $s['text'] ) ) : ?><p class="p-cat__soltext"><?php echo esc_html( $s['text'] ); ?></p><?php endif; ?>
         </div>
       <?php endforeach; ?>
     </div>
