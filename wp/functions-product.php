@@ -82,6 +82,69 @@ add_action( 'init', function () {
 } );
 
 
+/* ------------------------------------------------------------
+   1-b. URLの形
+
+     分類　　： /products/kitchen/
+     商品　　： /products/kitchen/v-style/
+     商品全部： /products/
+
+   今の本番サイト（/products/kitchen/130/）と同じ形です。
+   分類を1段はさむので、分類ページと商品ページのURLがぶつかりません。
+
+   むかしの /products/v-style/ でも開けるようにしてあります
+   （WordPressが元から作るルールが残るため）。
+   ------------------------------------------------------------ */
+
+/* 商品のURLに、その商品の分類を1段はさみます */
+add_filter( 'post_type_link', function ( $link, $post ) {
+	if ( get_post_type( $post ) !== 'ymkrf_product' ) return $link;
+
+	$terms = get_the_terms( $post, 'ymkrf_product_cat' );
+	if ( ! $terms || is_wp_error( $terms ) ) return $link;   // 分類が未設定なら今までどおり
+
+	$cat = $terms[0]->slug;
+	return preg_replace( '#/products/([^/]+)/?$#', '/products/' . $cat . '/$1/', $link );
+}, 10, 2 );
+
+add_action( 'init', function () {
+
+	$slugs = get_terms( array(
+		'taxonomy'   => 'ymkrf_product_cat',
+		'hide_empty' => false,
+		'fields'     => 'slugs',
+	) );
+
+	/* /products/<分類>/ … 分類ページ（1段だけのとき） */
+	if ( ! is_wp_error( $slugs ) && $slugs ) {
+		$re = implode( '|', array_map( 'preg_quote', $slugs ) );
+		add_rewrite_rule( '^products/(' . $re . ')/page/([0-9]{1,})/?$',
+			'index.php?ymkrf_product_cat=$matches[1]&paged=$matches[2]', 'top' );
+		add_rewrite_rule( '^products/(' . $re . ')/?$',
+			'index.php?ymkrf_product_cat=$matches[1]', 'top' );
+	}
+
+	/* /products/<分類>/<商品>/ … 商品ページ（2段のとき）
+	   分類の部分は見ていないので、あとから商品の分類を変えても開けます */
+	add_rewrite_rule( '^products/[^/]+/([^/]+)/?$',
+		'index.php?ymkrf_product=$matches[1]', 'top' );
+}, 20 );
+
+/* 分類を足す・変える・消したときは、URLのルールを作り直します */
+foreach ( array( 'created', 'edited', 'delete' ) as $when ) {
+	add_action( $when . '_ymkrf_product_cat', function () {
+		delete_option( 'ymkrf_rewrite_ver' );
+	} );
+}
+
+/* 上のルールを1回だけ反映させます（数字を変えると、もう一度だけ反映されます） */
+add_action( 'init', function () {
+	if ( get_option( 'ymkrf_rewrite_ver' ) === '3' ) return;
+	flush_rewrite_rules( false );
+	update_option( 'ymkrf_rewrite_ver', '3' );
+}, 99 );
+
+
 /* ============================================================
    2. 入力欄の定義　★項目を増やすときはここ
    ============================================================ */
