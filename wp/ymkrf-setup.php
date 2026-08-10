@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '18' );
+define( 'YMKRF_SETUP_VER', '19' );
 
 /**
  * init（優先度99）に付けているので、管理画面だけでなく
@@ -128,6 +128,7 @@ add_action( 'init', function () {
 		$theme . '/sclass',
 		$theme . '/stedia',
 		$theme . '/edel',
+		$theme . '/classo',
 		$theme . '/v-style',
 		$dir,                 // 最後の受け皿（wp-content/ymkrf-import）
 	);
@@ -430,6 +431,54 @@ add_action( 'init', function () {
 		'edel-opt-lift.jpg'        => '電動昇降吊戸棚',
 		'edel-opt-hood.jpg'        => 'ホーロークリーンフード',
 		'edel-opt-irack.jpg'       => 'アイラック水切りタイプ',
+
+		/* --- ザ・クラッソ（SSグレード・TOTO） --- */
+		'classo-main.jpg'             => 'ザ・クラッソのキッチン全体',
+		'classo-top-snow.jpg'         => '天板 クリスタルスノー',
+		'classo-top-gray.jpg'         => '天板 クリスタルグレー',
+		'classo-top-greige.jpg'       => '天板 クリスタルグレージュ',
+		'classo-top-palegreen.jpg'    => '天板 クリスタルペールグリーン',
+		'classo-top-lightpink.jpg'    => '天板 クリスタルライトピンク',
+		'classo-top-dullgray.jpg'     => '天板 クリスタルダルグレー',
+		'classo-sink-snow.jpg'        => 'シンク クリスタルスノー',
+		'classo-sink-gray.jpg'        => 'シンク クリスタルグレー',
+		'classo-sink-greige.jpg'      => 'シンク クリスタルグレージュ',
+		'classo-sink-palegreen.jpg'   => 'シンク クリスタルペールグリーン',
+		'classo-sink-lightpink.jpg'   => 'シンク クリスタルライトピンク',
+		'classo-sink-dullgray.jpg'    => 'シンク クリスタルダルグレー',
+		'classo-color-unigray.jpg'    => '扉カラー ユニグレー',
+		'classo-color-barawhite.jpg'  => '扉カラー バラホワイト',
+		'classo-color-barabeige.jpg'  => '扉カラー バラベージュ',
+		'classo-color-baramarron.jpg' => '扉カラー バラマロン',
+		'classo-color-baranavy.jpg'   => '扉カラー バラネイビー',
+		'classo-color-uninature.jpg'  => '扉カラー ユニナチュレ',
+		'classo-handle-slim-silver.jpg'  => 'スリム取手 ステンシルバー',
+		'classo-handle-round-silver.jpg' => 'ラウンド取手 ステンシルバー',
+		'classo-handle-classic.jpg'      => 'クラシック取手',
+		'classo-handle-slim-black.jpg'   => 'スリム取手 ブラック',
+		'classo-handle-round-black.jpg'  => 'ラウンド取手 ブラック',
+		'classo-handle-line.jpg'         => 'ライン取手',
+		'classo-spec-ih.jpg'          => 'IHクッキングヒーター',
+		'classo-spec-counter.jpg'     => 'クリスタルカウンター単色',
+		'classo-spec-hood.jpg'        => 'ゼロフィルターフードeco',
+		'classo-spec-sink.jpg'        => 'スクエアすべり台シンク クリスタル',
+		'classo-spec-cabinet.jpg'     => '2段引き出しキャビネット',
+		'classo-spec-faucet.jpg'      => 'タッチレス水ほうき水栓LF',
+		'classo-spec-rack.jpg'        => 'アイレベルラック W900',
+		'classo-spec-panel.jpg'       => 'キッチンパネル',
+		'classo-spec-jokin.jpg'       => 'タッチレス「きれい除菌水」生成器',
+		'classo-spec-led.jpg'         => 'LEDスリムライト',
+		'classo-point-crystal1.jpg'   => '透明感のあるクリスタルカウンター',
+		'classo-point-crystal2.jpg'   => 'カウンター端部のクリアエッジ仕上げ',
+		'classo-point-crystal3.jpg'   => '磨いてキレイ・熱に強い・衝撃に強いカウンター',
+		'classo-point-faucet1.jpg'    => '幅広シャワーでお皿を洗っているところ',
+		'classo-point-faucet2.jpg'    => '大きな鍋を洗っているところ',
+		'classo-point-jokin1.jpg'     => 'センサーに手をかざすと除菌水が出るところ',
+		'classo-point-jokin2.jpg'     => '網かご・まな板・布巾を除菌水できれいに',
+		'classo-opt-dish.jpg'         => 'W450食器洗い乾燥機',
+		'classo-opt-pattern.jpg'      => 'クリスタルカウンター柄入り天板カラー',
+		'classo-opt-faucet.jpg'       => '水ほうき水栓LFクロムメッキ＋きれい除菌水生成器',
+		'classo-opt-basket.jpg'       => '水切りバスケット',
 	);
 	foreach ( $stock as $f => $alt ) {
 		if ( $img( $f, $alt ) ) $log[] = 'メディアに追加: ' . $f;
@@ -504,7 +553,7 @@ add_action( 'init', function () {
 	   ------------------------------------------------------------ */
 	$rebuild_keys = array( '_ymkrf_images', '_ymkrf_colors', '_ymkrf_tops', '_ymkrf_sinks', '_ymkrf_handles', '_ymkrf_specs', '_ymkrf_features', '_ymkrf_options' );
 
-	foreach ( array( 'rakuera', 'refit', 'sierra-s', 's-class', 'stedia', 'edel' ) as $slug ) {
+	foreach ( array( 'rakuera', 'refit', 'sierra-s', 's-class', 'stedia', 'edel', 'classo' ) as $slug ) {
 
 		$p = get_page_by_path( $slug, OBJECT, 'ymkrf_product' );
 		if ( ! $p ) continue;
@@ -1700,6 +1749,182 @@ add_action( 'init', function () {
 
 			update_post_meta( $eid, '_ymkrf_img_missing', $missing - $m0 );
 			$log[] = '商品「エーデル」を登録しました → ' . get_permalink( $eid );
+		}
+	}
+
+	/* ------------------------------------------------------------
+	   3-a7. ザ・クラッソ（SSグレード・TOTO）を1件つくる
+	   ------------------------------------------------------------ */
+	if ( ! get_page_by_path( 'classo', OBJECT, 'ymkrf_product' ) ) {
+
+		$cid = wp_insert_post( array(
+			'post_type'   => 'ymkrf_product',
+			'post_status' => 'publish',
+			'post_title'  => 'ザ・クラッソ',
+			'post_name'   => 'classo',
+		) );
+
+		if ( $cid && ! is_wp_error( $cid ) ) {
+
+			$m0 = $missing;   /* この商品で見つからなかった写真を数えるための起点 */
+
+			$f = array(
+				'_ymkrf_catch'   => '気持ち、まいにち、きらめくキッチン。',
+				'_ymkrf_grade'   => 'SSグレード',
+				'_ymkrf_name'    => 'ザ・クラッソ',
+				'_ymkrf_size'    => 'I型2550サイズ',
+				'_ymkrf_work'    => '240000',
+				'_ymkrf_item'    => '1158000',
+				'_ymkrf_days'    => '3',
+				'_ymkrf_pt1'     => '透明感',
+				'_ymkrf_pt2'     => 'きらめき',
+				'_ymkrf_pt3'     => 'お手軽きれい',
+				'_ymkrf_caution' => '※写真はイメージになります。※食洗機はオプションになります。'
+				                  . '※シンク色は、選択した人造大理石カラーに連動します。',
+			);
+			foreach ( $f as $k => $v ) update_post_meta( $cid, $k, $v );
+			update_post_meta( $cid, '_ymkrf_total', 1398000 );
+
+			$m = $img( 'classo-main.jpg' );
+			if ( $m ) set_post_thumbnail( $cid, $m );
+			update_post_meta( $cid, '_ymkrf_images', array() );
+
+			/* 扉カラー グループ1（全6色） */
+			$cc = array(
+				array( 'classo-color-unigray.jpg',    'ユニグレー' ),
+				array( 'classo-color-barawhite.jpg',  'バラホワイト' ),
+				array( 'classo-color-barabeige.jpg',  'バラベージュ' ),
+				array( 'classo-color-baramarron.jpg', 'バラマロン' ),
+				array( 'classo-color-baranavy.jpg',   'バラネイビー' ),
+				array( 'classo-color-uninature.jpg',  'ユニナチュレ' ),
+			);
+			$rows = array();
+			foreach ( $cc as $r ) $rows[] = array( 'img' => $img( $r[0] ), 'name' => $r[1] );
+			update_post_meta( $cid, '_ymkrf_colors', $rows );
+
+			/* 天板 クリスタルカウンター単色（全6色） */
+			$ct = array(
+				array( 'classo-top-snow.jpg',      'クリスタルスノー' ),
+				array( 'classo-top-gray.jpg',      'クリスタルグレー' ),
+				array( 'classo-top-greige.jpg',    'クリスタルグレージュ' ),
+				array( 'classo-top-palegreen.jpg', 'クリスタルペールグリーン' ),
+				array( 'classo-top-lightpink.jpg', 'クリスタルライトピンク' ),
+				array( 'classo-top-dullgray.jpg',  'クリスタルダルグレー' ),
+			);
+			$rows = array();
+			foreach ( $ct as $r ) $rows[] = array( 'img' => $img( $r[0] ), 'name' => $r[1] );
+			update_post_meta( $cid, '_ymkrf_tops', $rows );
+
+			/* シンク クリスタルシンク単色（全6色） */
+			$cs = array(
+				array( 'classo-sink-snow.jpg',      'クリスタルスノー' ),
+				array( 'classo-sink-gray.jpg',      'クリスタルグレー' ),
+				array( 'classo-sink-greige.jpg',    'クリスタルグレージュ' ),
+				array( 'classo-sink-palegreen.jpg', 'クリスタルペールグリーン' ),
+				array( 'classo-sink-lightpink.jpg', 'クリスタルライトピンク' ),
+				array( 'classo-sink-dullgray.jpg',  'クリスタルダルグレー' ),
+			);
+			$rows = array();
+			foreach ( $cs as $r ) $rows[] = array( 'img' => $img( $r[0] ), 'name' => $r[1] );
+			update_post_meta( $cid, '_ymkrf_sinks', $rows );
+
+			/* 取手（全6種） */
+			$ch = array(
+				array( 'classo-handle-slim-silver.jpg',  'スリム取手',   'ステンシルバー' ),
+				array( 'classo-handle-round-silver.jpg', 'ラウンド取手', 'ステンシルバー' ),
+				array( 'classo-handle-classic.jpg',      'クラシック取手', '' ),
+				array( 'classo-handle-slim-black.jpg',   'スリム取手',   'ブラック' ),
+				array( 'classo-handle-round-black.jpg',  'ラウンド取手', 'ブラック' ),
+				array( 'classo-handle-line.jpg',         'ライン取手',   '' ),
+			);
+			$rows = array();
+			foreach ( $ch as $r ) $rows[] = array( 'img' => $img( $r[0] ), 'name' => $r[1], 'code' => $r[2] );
+			update_post_meta( $cid, '_ymkrf_handles', $rows );
+
+			/* 標準仕様10点 */
+			$cp = array(
+				array( 'classo-spec-ih.jpg',      'IHクッキングヒーター',       'CS-G321MS シルバー W600' ),
+				array( 'classo-spec-counter.jpg', 'クリスタルカウンター単色',   '' ),
+				array( 'classo-spec-hood.jpg',    'ゼロフィルターフードeco',    '扉材前板シルバー W900/H700' ),
+				array( 'classo-spec-sink.jpg',    'スクエアすべり台シンク',     'クリスタル' ),
+				array( 'classo-spec-cabinet.jpg', '2段引き出しキャビネット',    'ステンレス底板' ),
+				array( 'classo-spec-faucet.jpg',  'タッチレス水ほうき水栓LF',   'センサースイッチ' ),
+				array( 'classo-spec-rack.jpg',    'アイレベルラック W900',      '※背面壁が必要です' ),
+				array( 'classo-spec-panel.jpg',   'キッチンパネル',             'キッチン正面・コンロ側側面' ),
+				array( 'classo-spec-jokin.jpg',   'タッチレス「きれい除菌水」生成器', '' ),
+				array( 'classo-spec-led.jpg',     'LEDスリムライト',            '' ),
+			);
+			$rows = array();
+			foreach ( $cp as $r ) $rows[] = array( 'img' => $img( $r[0], $r[1] ), 'name' => $r[1], 'model' => $r[2] );
+			update_post_meta( $cid, '_ymkrf_specs', $rows );
+
+			/* おすすめポイント（3グループ・6ポイント） */
+			update_post_meta( $cid, '_ymkrf_features', array(
+				array( 'gsub'=>'光を取り込み、キッチンに透明感を。', 'gttl'=>'「クリスタルカウンター・シンク」',
+				       'ttl'=>'透明感と明るさのあるカウンタートップ',
+				       'text'=>"すりガラスのような仕上げで、滑らかな手触り。空間を明るく魅力的に演出します。\n カウンター端部のクリアエッジ仕上げが輝きを放ち、空間に明るいアクセントを加えます。",
+				       'note'=>'',
+				       'img'=>$img('classo-point-crystal1.jpg'), 'img2'=>$img('classo-point-crystal2.jpg') ),
+				array( 'gsub'=>'', 'gttl'=>'',
+				       'ttl'=>'お手入れしやすく、使いやすい',
+				       'text'=>"磨いてキレイ！ 汚れや擦り傷は磨いてキレイに落とせます。\n熱に強い！ 熱冷の繰り返しに強く、安心して使えます。\n衝撃に強い！ 硬い物を落としても割れにくく、美しさを損ないません。",
+				       'note'=>'',
+				       'img'=>$img('classo-point-crystal3.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'タッチレスでスムーズに吐止水', 'gttl'=>'「タッチレス水ほうき水栓LF」',
+				       'ttl'=>'水はねしにくい、幅広シャワー。',
+				       'text'=>'水はねしにくさと洗浄力を両立した、幅広のミクロソフトシャワー。', 'note'=>'',
+				       'img'=>$img('classo-point-faucet1.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'', 'gttl'=>'',
+				       'ttl'=>'大きな鍋や大皿も洗えます！',
+				       'text'=>'吐水位置が高いので、洗い物などの際に水栓が邪魔になりません。', 'note'=>'',
+				       'img'=>$img('classo-point-faucet2.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'パパっと手軽に仕上げのひとふき。', 'gttl'=>'「タッチレスきれい除菌水生成器」',
+				       'ttl'=>'タッチレスでお手軽きれい。',
+				       'text'=>'センサーに手をかざすと、除菌効果のある水がミスト状で噴霧されます。', 'note'=>'',
+				       'img'=>$img('classo-point-jokin1.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'', 'gttl'=>'',
+				       'ttl'=>'除菌やヌメリ防止に！',
+				       'text'=>"仕上げに「きれい除菌水」をふきかければ除菌ができます。\n網かご、まな板・包丁、布巾もきれいに。",
+				       'note'=>'',
+				       'img'=>$img('classo-point-jokin2.jpg'), 'img2'=>'' ),
+			) );
+
+			/* おすすめオプション4点 */
+			update_post_meta( $cid, '_ymkrf_options', array(
+				array( 'img'=>$img('classo-opt-dish.jpg'), 'name'=>'W450食器洗い乾燥機 Pストリーム洗浄・浅型扉材 DWD27',
+				       'text'=>'手洗いより節水で省エネ。家事の手間を省きます。',
+				       'price'=>'229600', 'note'=>'※工事費込み' ),
+				array( 'img'=>$img('classo-opt-pattern.jpg'), 'name'=>'クリスタルカウンター柄入り天板カラー',
+				       'text'=>'柔らかく浮かび上がる柄が洗練された高級感を演出。',
+				       'price'=>'148700', 'note'=>'' ),
+				array( 'img'=>$img('classo-opt-faucet.jpg'), 'name'=>'水ほうき水栓LFクロムメッキ（センサースイッチ／浄水器兼用）＋タッチレスきれい除菌水生成器',
+				       'text'=>'タッチレスで浄水の切り替えも可能です。',
+				       'price'=>'82900', 'note'=>'' ),
+				array( 'img'=>$img('classo-opt-basket.jpg'), 'name'=>'水切りバスケット（スクエアすべり台シンク用）',
+				       'text'=>'ボタンを押すだけで上げ下げ。洗い物もスッキリ収納。',
+				       'price'=>'7500', 'note'=>'※オプション価格は近日中に値上げするため、現時点での参考価格となります。' ),
+			) );
+
+			/* 標準工事に含まれる工事 */
+			$cw = array(
+				array( '撤去工事',               '古いキッチンの撤去にかかる工事です。' ),
+				array( '廃棄処分',               '撤去した古いキッチンを廃棄処分するためにかかる費用です。' ),
+				array( 'ガス配管変更工事',       'ガスコンロを使うための配管工事です。' ),
+				array( 'キッチンパネル設置工事', 'キッチンパネルの取り付け工事費です。' ),
+				array( 'キッチンパネル部材費',   'キッチンパネル自体の部材費です。' ),
+				array( '下地工事（大工工事）',   'キッチンパネル設置面の補修、補強の工事です。' ),
+				array( 'シロッコファン取付工事', 'シロッコファンの取付工事です。' ),
+			);
+			$rows = array();
+			foreach ( $cw as $r ) $rows[] = array( 'name' => $r[0], 'text' => $r[1] );
+			update_post_meta( $cid, '_ymkrf_works', $rows );
+
+			wp_set_object_terms( $cid, 'kitchen', 'ymkrf_product_cat' );
+			wp_set_object_terms( $cid, 'toto',    'ymkrf_maker' );
+			wp_set_object_terms( $cid, array( 'nonoichi', 'komathu', 'hakui' ), 'ymkrf_shop' );
+
+			update_post_meta( $cid, '_ymkrf_img_missing', $missing - $m0 );
+			$log[] = '商品「ザ・クラッソ」を登録しました → ' . get_permalink( $cid );
 		}
 	}
 
