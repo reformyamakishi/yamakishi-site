@@ -558,39 +558,85 @@
   margin-top:6px; font-size:clamp(11px,2.9vw,14.5px); line-height:1.75; color:var(--ink-sub);
   text-wrap:pretty;
 }
-/* --- 標準工事費にふくまれるもの ---
-   「お得」の根拠を、こだわりの下ですぐ確認できるようにしています。 */
-.p-cat__stdwork{
-  margin-top:14px; background:#fff; border:1px solid var(--brand-tint2); border-radius:14px;
-  box-shadow:var(--shadow); padding:12px 12px 14px;
+/* ------------------------------------------------------------
+   商品代＋標準工事費（赤いパネル）
+   「値段は商品代に工事費を足すだけ」と一目で分かるようにしています。
+   ------------------------------------------------------------ */
+.p-cat__calcsec{ padding-block:0; }
+.p-cat__calc{
+  background:#c8161d; border-radius:16px; padding:16px 12px 14px; color:#fff;
 }
-.p-cat__stdworkttl{
-  margin:0; text-align:center; font-size:clamp(12.5px,3.3vw,16px); font-weight:900; color:var(--ink);
+.p-cat__calcttl{
+  margin:0 0 12px; text-align:center; font-size:clamp(15px,4.3vw,24px); font-weight:900;
+  letter-spacing:.02em; line-height:1.4;
+  display:flex; align-items:center; justify-content:center; gap:12px;
 }
-.p-cat__stdworkttl::before{
-  content:"標準"; display:inline-block; margin-right:7px; padding:2px 7px; vertical-align:2px;
-  background:var(--brand); color:#fff; border-radius:4px; font-size:10.5px; letter-spacing:.04em;
+/* 左右の「＼ ／」は文字ではなく線を傾けて描いています */
+.p-cat__calcttl::before,
+.p-cat__calcttl::after{
+  content:""; width:2px; height:1.35em; background:#fff; border-radius:2px; flex:none;
 }
-.p-cat__stdworkprice{
-  margin:7px 0 0; text-align:center; line-height:1.2;
+.p-cat__calcttl::before{ transform:rotate(-22deg); }
+.p-cat__calcttl::after{ transform:rotate(22deg); }
+
+.p-cat__calcbody{
+  display:grid; grid-template-columns:1fr; gap:24px; align-items:stretch;
 }
-.p-cat__stdworkprice .num{
-  font-size:clamp(26px,7vw,34px); font-weight:900; color:var(--brand);
-  font-family:"Helvetica Neue",Arial,sans-serif; letter-spacing:-.01em;
-  padding:0 4px; background:linear-gradient(transparent 55%, #ffe95c 55%);
-  -webkit-box-decoration-break:clone; box-decoration-break:clone;
+.p-cat__calccard{
+  background:#fff; border-radius:12px; overflow:hidden; color:var(--ink);
+  display:flex; flex-direction:column;
 }
-.p-cat__stdworkprice .unit{ font-size:12.5px; font-weight:700; color:var(--ink-sub); margin-left:2px; }
-.p-cat__stdworknote{
-  margin:9px 0 0; text-align:center; font-size:clamp(11px,2.9vw,13px); line-height:1.6; color:var(--ink-sub);
+.p-cat__calchead{
+  margin:0; padding:7px 10px; text-align:center; color:#fff;
+  font-size:clamp(12.5px,3.4vw,17px); font-weight:900; letter-spacing:.02em;
 }
-.p-cat__stdworklist{
-  list-style:none; margin:9px 0 0; padding:0;
-  display:flex; flex-wrap:wrap; justify-content:center; gap:6px;
+.p-cat__calchead--item{ background:#0d8fd4; }
+.p-cat__calchead--work{ background:#4caf50; }
+.p-cat__calcin{ padding:10px 12px 13px; text-align:center; flex:1; }
+.p-cat__calclead{
+  margin:0; font-size:clamp(15px,4.4vw,22px); font-weight:900; color:var(--ink); line-height:1.3;
 }
-.p-cat__stdworklist li{
-  background:var(--brand-tint); border-radius:999px; padding:5px 11px;
-  font-size:clamp(11px,2.9vw,13.5px); font-weight:700; color:var(--ink); white-space:nowrap;
+.p-cat__calclead--work{ color:#c8161d; }
+.p-cat__calcprice{
+  margin:2px 0 0; line-height:1.05; color:#c8161d; font-weight:900;
+}
+.p-cat__calcprice .num{
+  font-size:clamp(38px,10.5vw,54px); letter-spacing:-.02em;
+  font-family:"Helvetica Neue",Arial,sans-serif;
+}
+.p-cat__calcprice .man{ font-size:clamp(18px,5vw,26px); margin-left:1px; }
+.p-cat__calcprice .kara{ font-size:clamp(18px,5vw,26px); }
+.p-cat__calctax{
+  margin:2px 0 0; font-size:clamp(10.5px,2.8vw,13px); font-weight:700; color:var(--ink-sub);
+}
+/* ＋ の丸 */
+.p-cat__calcplus{
+  justify-self:center; align-self:center; position:relative;
+  width:clamp(34px,9vw,44px); height:clamp(34px,9vw,44px); margin:-12px 0;
+  display:grid; place-items:center; border-radius:50%;
+  background:rgba(255,255,255,.22); color:#fff;
+  font-size:clamp(20px,5.4vw,26px); font-weight:900; line-height:1;
+}
+/* 工事費内訳 */
+.p-cat__calcbreak{
+  border-top:1px dashed #d8cfca; padding:10px 12px 12px;
+}
+.p-cat__calcbreakttl{
+  margin:0 auto 8px; display:table; background:#6b6b6b; color:#fff; border-radius:4px;
+  padding:3px 10px; font-size:11px; font-weight:900; line-height:1.4; letter-spacing:.08em;
+}
+.p-cat__calclist{
+  list-style:none; margin:0; padding:0;
+  display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px 8px;
+}
+.p-cat__calclist li{
+  display:flex; align-items:center; gap:6px;
+  font-size:clamp(11px,2.9vw,13.5px); font-weight:700; color:var(--ink); line-height:1.3;
+}
+.p-cat__calclist svg{ width:1.35em; height:1.35em; flex:none; color:#6b6b6b; }
+.p-cat__calcnote{
+  margin:11px 0 0; text-align:center; line-height:1.6; color:#ffe3e0;
+  font-size:clamp(10.5px,2.8vw,13px);
 }
 /* お悩みの前置き */
 .p-cat__worryintro{
@@ -742,9 +788,21 @@
 @media (min-width:600px){
   .p-cat__points{ gap:16px; }
   .p-cat__point{ padding:20px 18px 22px; }
-  .p-cat__stdwork{ margin-top:18px; padding:16px 18px 18px; }
-  .p-cat__stdworklist{ gap:8px; margin-top:11px; }
-  .p-cat__stdworklist li{ padding:6px 15px; }
+  /* 広い画面では、参考いただいた通り「商品代 ＋ 工事費」を横並びにします */
+  .p-cat__calc{ padding:24px 26px 22px; }
+  .p-cat__calcbody{
+    grid-template-columns:minmax(0,0.78fr) auto minmax(0,1.22fr);
+    gap:0 14px; align-items:stretch;
+  }
+  .p-cat__calcplus{ margin:0; }
+  .p-cat__calcin{ padding:14px 16px 18px; display:flex; flex-direction:column; justify-content:center; }
+  .p-cat__calcin--work{
+    display:grid; grid-template-columns:minmax(0,1fr) auto; gap:14px; align-items:center;
+    padding:12px 16px 14px;
+  }
+  .p-cat__calcbreak{ border-top:none; border-left:1px dashed #d8cfca; padding:4px 0 4px 16px; }
+  .p-cat__calcbreakttl{ margin:0 0 8px; }
+  .p-cat__calclist{ gap:7px 14px; }
   .p-cat__worrybox{ gap:18px; margin-top:6px; }
   .p-cat__worryflow{ gap:9px; }
   .p-cat__worries{ gap:9px; padding-right:9px; }
