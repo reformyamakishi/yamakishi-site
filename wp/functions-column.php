@@ -178,11 +178,6 @@ function ymkrf_column_section( $slug, $catname, $number = 3 ) {
 	<section class="l-section l-section--soft" id="column">
 		<div class="l-wrap">
 			<h2 class="p-prd__bar"><?php echo esc_html( $catname ); ?>リフォームお役立ち情報</h2>
-			<p class="p-col__lead">
-				はじめての<?php echo esc_html( $catname ); ?>リフォームで迷いやすいところを、
-				ヤマキシのスタッフがかみくだいてご説明します。
-			</p>
-
 			<div class="p-col__cards">
 				<?php while ( $q->have_posts() ) : $q->the_post(); ymkrf_column_card(); endwhile; ?>
 			</div>

@@ -505,6 +505,15 @@ if ( function_exists( 'ymkrf_column_section' ) ) {
 }
 ?>
 
+<!-- =========== 施工事例 ===========
+     ダッシュボードの「施工事例」で、部位に「キッチン」を付けた記事が
+     ここに新しい順で3件出ます。1件も無いときは出ません。 -->
+<?php
+if ( function_exists( 'ymkrf_works_section' ) ) {
+	ymkrf_works_section( $slug, $name, 3 );
+}
+?>
+
 <!-- =========== 最後のご案内 =========== -->
 <section class="l-section l-section--soft">
   <div class="l-wrap">

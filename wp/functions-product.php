@@ -841,3 +841,144 @@ jQuery(function($){
 	<?php
 	return ob_get_clean();
 }
+
+
+/* ============================================================
+   カテゴリページの下に出す「施工事例」ブロック
+
+   施工事例は「部位（ymkrf_works_cat）」で分類します。
+   商品カテゴリ（キッチン／お風呂 …）と同じ名前・スラッグの部位を
+   自動で作っておくので、記事側は部位を選ぶだけで対応します。
+   ============================================================ */
+
+/* 商品カテゴリと同じ「部位」を用意します（無いものだけ作ります） */
+add_action( 'init', function () {
+	if ( get_option( 'ymkrf_works_cat_sync' ) === '1' ) return;
+	if ( ! taxonomy_exists( 'ymkrf_product_cat' ) || ! taxonomy_exists( 'ymkrf_works_cat' ) ) return;
+
+	$cats = get_terms( array( 'taxonomy' => 'ymkrf_product_cat', 'hide_empty' => false ) );
+	if ( is_wp_error( $cats ) || ! $cats ) return;
+
+	foreach ( $cats as $t ) {
+		if ( ! term_exists( $t->slug, 'ymkrf_works_cat' ) ) {
+			wp_insert_term( $t->name, 'ymkrf_works_cat', array( 'slug' => $t->slug ) );
+		}
+	}
+	update_option( 'ymkrf_works_cat_sync', '1' );
+}, 30 );
+
+
+if ( ! function_exists( 'ymkrf_works_query' ) ) :
+function ymkrf_works_query( $slug = '', $number = 3 ) {
+	$args = array(
+		'post_type'           => 'ymkrf_works',
+		'posts_per_page'      => (int) $number,
+		'ignore_sticky_posts' => true,
+		'no_found_rows'       => true,
+	);
+	if ( $slug ) {
+		$args['tax_query'] = array( array(
+			'taxonomy' => 'ymkrf_works_cat',
+			'field'    => 'slug',
+			'terms'    => $slug,
+		) );
+	}
+	return new WP_Query( $args );
+}
+endif;
+
+
+/* 施工事例のカード1枚分 */
+if ( ! function_exists( 'ymkrf_works_card' ) ) :
+function ymkrf_works_card() {
+	$area   = get_the_terms( get_the_ID(), 'ymkrf_works_area' );
+	$area   = ( $area && ! is_wp_error( $area ) ) ? $area[0]->name : '';
+	$part   = get_the_terms( get_the_ID(), 'ymkrf_works_cat' );
+	$part   = ( $part && ! is_wp_error( $part ) ) ? $part[0]->name : '';
+	$price  = get_post_meta( get_the_ID(), '_ymkrf_price', true );
+	$period = get_post_meta( get_the_ID(), '_ymkrf_period', true );
+	?>
+	<a class="p-col__card" href="<?php the_permalink(); ?>">
+		<div class="p-col__ph">
+			<?php if ( has_post_thumbnail() ) : ?>
+				<?php the_post_thumbnail( 'medium_large', array( 'loading' => 'lazy', 'alt' => '' ) ); ?>
+			<?php endif; ?>
+			<?php if ( $part ) : ?><span class="p-col__tag"><?php echo esc_html( $part ); ?></span><?php endif; ?>
+		</div>
+		<div class="p-col__body">
+			<?php if ( $area ) : ?><p class="p-col__date"><?php echo esc_html( $area ); ?></p><?php endif; ?>
+			<h3 class="p-col__title"><?php the_title(); ?></h3>
+			<?php if ( $price || $period ) : ?>
+				<p class="p-col__spec">
+					<?php if ( $price ) : ?><span><em>工事費</em><?php echo esc_html( $price ); ?></span><?php endif; ?>
+					<?php if ( $period ) : ?><span><em>工期</em><?php echo esc_html( $period ); ?></span><?php endif; ?>
+				</p>
+			<?php endif; ?>
+			<span class="p-col__more">事例を見る</span>
+		</div>
+	</a>
+	<?php
+}
+endif;
+
+
+if ( ! function_exists( 'ymkrf_works_section' ) ) :
+function ymkrf_works_section( $slug, $catname, $number = 3 ) {
+
+	$q = ymkrf_works_query( $slug, $number );
+
+	/* まだ1件も無いとき。お客様には出さず、ログイン中のスタッフにだけ案内します。 */
+	if ( ! $q->have_posts() ) {
+		wp_reset_postdata();
+		if ( ! current_user_can( 'edit_posts' ) ) return;
+		?>
+		<section class="l-section" id="works">
+			<div class="l-wrap">
+				<h2 class="p-prd__bar"><?php echo esc_html( $catname ); ?>の施工事例</h2>
+				<div class="p-col__placeholder">
+					<p><b>この場所に、施工事例が新しい順で<?php echo (int) $number; ?>件並びます。</b></p>
+					<p>
+						ダッシュボードの「施工事例」から追加し、
+						<b>部位で「<?php echo esc_html( $catname ); ?>」にチェック</b>してください。<br>
+						アイキャッチ画像・エリア・工事費・工期を入れると、カードにそのまま出ます。
+					</p>
+					<p class="p-col__placeholder__note">
+						※このご案内は、ログイン中のスタッフにだけ見えています。お客様には表示されません。
+					</p>
+					<p>
+						<a class="p-col__all" href="<?php echo esc_url( admin_url( 'post-new.php?post_type=ymkrf_works' ) ); ?>">
+							施工事例を追加する
+						</a>
+					</p>
+				</div>
+			</div>
+		</section>
+		<?php
+		return;
+	}
+
+	$term = $slug ? get_term_by( 'slug', $slug, 'ymkrf_works_cat' ) : null;
+	$more = ( $term && ! is_wp_error( $term ) )
+		? get_term_link( $term )
+		: get_post_type_archive_link( 'ymkrf_works' );
+	if ( is_wp_error( $more ) ) $more = get_post_type_archive_link( 'ymkrf_works' );
+	?>
+	<section class="l-section" id="works">
+		<div class="l-wrap">
+			<h2 class="p-prd__bar"><?php echo esc_html( $catname ); ?>の施工事例</h2>
+			<div class="p-col__cards">
+				<?php while ( $q->have_posts() ) : $q->the_post(); ymkrf_works_card(); endwhile; ?>
+			</div>
+			<?php if ( $more ) : ?>
+				<p class="p-col__allwrap">
+					<a class="p-col__all" href="<?php echo esc_url( $more ); ?>">
+						<?php echo esc_html( $catname ); ?>の施工事例をもっと見る
+					</a>
+				</p>
+			<?php endif; ?>
+		</div>
+	</section>
+	<?php
+	wp_reset_postdata();
+}
+endif;
