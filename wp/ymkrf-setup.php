@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '24' );
+define( 'YMKRF_SETUP_VER', '25' );
 
 /**
  * init（優先度99）に付けているので、管理画面だけでなく
@@ -2468,6 +2468,85 @@ add_action( 'init', function () {
 		}
 		if ( $n ) $log[] = "キッチン{$n}件の工期を3日にそろえました";
 		update_option( 'ymkrf_kitchen_days3', '1' );
+	}
+
+	/* ------------------------------------------------------------
+	   3-f. 施工事例のサンプルを3件つくります（見え方の確認用）
+	        タイトルに【サンプル】と入れてあります。
+	        本番の記事を入れたら、この3件は削除してください。
+	        一度作ったあとは、消しても作り直しません。
+	   ------------------------------------------------------------ */
+	if ( post_type_exists( 'ymkrf_works' ) && get_option( 'ymkrf_works_sample' ) !== '1' ) {
+
+		$samples = array(
+			array(
+				'title' => '【サンプル】使いにくかった対面キッチンを、片づくキッチンに',
+				'slug'  => 'sample-kitchen-01',
+				'area'  => '白山市',
+				'price' => '128万円',
+				'days'  => '3日',
+				'img'   => 'stedia-main.jpg',
+				'text'  => "調理中に家族の様子が見えないことがお悩みでした。対面のかたちはそのままに、収納の中身を見直しています。
+
+※これは表示確認用のサンプル記事です。",
+			),
+			array(
+				'title' => '【サンプル】収納が足りないI型キッチンを、引き出し収納たっぷりに',
+				'slug'  => 'sample-kitchen-02',
+				'area'  => '金沢市',
+				'price' => '98万円',
+				'days'  => '3日',
+				'img'   => 'edel-main.jpg',
+				'text'  => "開き戸の奥の物が取り出しにくいとのご相談。すべて引き出しに替え、立ったまま出し入れできるようにしました。
+
+※これは表示確認用のサンプル記事です。",
+			),
+			array(
+				'title' => '【サンプル】25年使ったキッチンを、お手入れがラクな仕様に',
+				'slug'  => 'sample-kitchen-03',
+				'area'  => '小松市',
+				'price' => '148万円',
+				'days'  => '3日',
+				'img'   => 'richelle-main.jpg',
+				'text'  => "レンジフードの掃除がご負担でした。自動洗浄タイプとキッチンパネルで、拭くだけのお手入れになりました。
+
+※これは表示確認用のサンプル記事です。",
+			),
+		);
+
+		foreach ( $samples as $sm ) {
+			if ( get_page_by_path( $sm['slug'], OBJECT, 'ymkrf_works' ) ) continue;
+
+			$wid = wp_insert_post( array(
+				'post_type'    => 'ymkrf_works',
+				'post_status'  => 'publish',
+				'post_title'   => $sm['title'],
+				'post_name'    => $sm['slug'],
+				'post_content' => $sm['text'],
+				'post_excerpt' => mb_substr( strtok( $sm['text'], "\n" ), 0, 80 ),
+			) );
+			if ( ! $wid || is_wp_error( $wid ) ) continue;
+
+			wp_set_object_terms( $wid, 'kitchen', 'ymkrf_works_cat' );
+
+			/* エリアは無ければ作ります */
+			if ( taxonomy_exists( 'ymkrf_works_area' ) ) {
+				$at = term_exists( $sm['area'], 'ymkrf_works_area' );
+				if ( ! $at ) $at = wp_insert_term( $sm['area'], 'ymkrf_works_area' );
+				if ( ! is_wp_error( $at ) ) {
+					wp_set_object_terms( $wid, (int) $at['term_id'], 'ymkrf_works_area' );
+				}
+			}
+
+			update_post_meta( $wid, '_ymkrf_price',  $sm['price'] );
+			update_post_meta( $wid, '_ymkrf_period', $sm['days'] );
+
+			$mid = $img( $sm['img'] );
+			if ( $mid ) set_post_thumbnail( $wid, $mid );
+
+			$log[] = '施工事例のサンプルを追加：' . $sm['title'];
+		}
+		update_option( 'ymkrf_works_sample', '1' );
 	}
 
 	/* ------------------------------------------------------------

@@ -1013,3 +1013,8 @@
 @media (min-width:768px){
   .p-prd__makerlogo__img{ height:32px; max-width:210px; }
 }
+
+/* サンプル表示中のおことわり */
+.p-col__samplenote{
+  margin-top:14px; text-align:center; font-size:12px; line-height:1.7; color:var(--ink-light);
+}
