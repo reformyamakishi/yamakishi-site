@@ -58,16 +58,17 @@ $intro = array(
 			'label' => 'キッチンの標準工事費',
 			'price' => 240000,
 			'note'  => 'キッチンの標準工事費は、どの機種も一律同価格です。',
-			/* アイコンの名前は、下の ymkrf_work_icon() に用意したものから選びます */
+			'itemsttl' => '標準工事費にふくまれる8つの工事',
+			/* name … 工事名／sub … 補足（省略可）／icon … 下の ymkrf_work_icon() の名前 */
 			'items' => array(
-				array( '解体',         'hammer' ),
-				array( '撤去',         'trash'  ),
-				array( '水道工事',     'water'  ),
-				array( '電気工事',     'bolt'   ),
-				array( '設置工事',     'wrench' ),
-				array( '木工事',       'saw'    ),
-				array( '材料費',       'box'    ),
-				array( 'キッチンパネル', 'grid' ),
+				array( 'name' => '既存流し台',       'sub' => '解体撤去工事',            'icon' => 'hammer' ),
+				array( 'name' => '養生工事',         'sub' => '（床・壁・下地）',        'icon' => 'sheet'  ),
+				array( 'name' => '産業廃棄物',       'sub' => '処理運輸工事',            'icon' => 'truck'  ),
+				array( 'name' => '水道工事',         'sub' => '（給水・給湯・排水）',    'icon' => 'water'  ),
+				array( 'name' => '電気工事',         'sub' => '（設備機器の配線接続等）', 'icon' => 'bolt'   ),
+				array( 'name' => 'キッチンパネル',   'sub' => '目地なく汚れもさっと一拭き', 'icon' => 'grid' ),
+				array( 'name' => '下地工事',         'sub' => '',                        'icon' => 'wall'   ),
+				array( 'name' => 'システムキッチン', 'sub' => '取付設置',                'icon' => 'kitchen' ),
 			),
 		),
 
@@ -188,6 +189,13 @@ if ( ! function_exists( 'ymkrf_work_icon' ) ) {
 			'saw'    => '<path d="M3 8h13l5 5-5 5H3z"/><path d="M3 8l2 3 2-3 2 3 2-3 2 3 2-3"/>',
 			'box'    => '<path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/>',
 			'grid'   => '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 12h18M9 4v16"/>',
+			'sheet'  => '<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/>',
+			'truck'  => '<path d="M3 6h11v10H3z"/><path d="M14 9.5h4l3 3.2V16h-7z"/>'
+			          . '<circle cx="7.2" cy="18" r="2"/><circle cx="17.3" cy="18" r="2"/>',
+			'wall'   => '<rect x="3" y="5" width="18" height="14" rx="1.5"/>'
+			          . '<path d="M3 9.7h18M3 14.3h18M10 5v4.7M6.5 9.7v4.6M14 9.7v4.6M10 14.3V19"/>',
+			'kitchen'=> '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18"/>'
+			          . '<circle cx="8.5" cy="15" r="1.7"/><circle cx="15.5" cy="15" r="1.7"/>',
 		);
 		if ( empty( $d[ $key ] ) ) return '';
 		return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" '
@@ -345,8 +353,6 @@ if ( $show_worry ) :
   <div class="l-wrap">
     <div class="p-cat__calc">
 
-      <p class="p-cat__calcttl">商品価格に工事費を足すだけ</p>
-
       <div class="p-cat__calcbody">
 
         <?php if ( $minitem ) : ?>
@@ -366,26 +372,30 @@ if ( $show_worry ) :
 
         <div class="p-cat__calccard p-cat__calccard--work">
           <p class="p-cat__calchead p-cat__calchead--work"><?php echo esc_html( $pn['label'] ); ?></p>
-          <div class="p-cat__calcin p-cat__calcin--work">
-            <div class="p-cat__calcmain">
-              <p class="p-cat__calclead p-cat__calclead--work">追加料金なし！</p>
-              <p class="p-cat__calcprice">
-                <span class="num"><?php echo esc_html( rtrim( rtrim( number_format( $pn['price'] / 10000, 1 ), '0' ), '.' ) ); ?></span><span class="man">万円</span>
-              </p>
-              <p class="p-cat__calctax">（税込<?php echo esc_html( number_format( $pn['price'] ) ); ?>円）</p>
-            </div>
-            <div class="p-cat__calcbreak">
-              <p class="p-cat__calcbreakttl">工事費内訳</p>
-              <ul class="p-cat__calclist">
-                <?php foreach ( $pn['items'] as $w ) : ?>
-                  <li><?php echo ymkrf_work_icon( $w[1] ); /* phpcs:ignore */ ?><span><?php echo esc_html( $w[0] ); ?></span></li>
-                <?php endforeach; ?>
-              </ul>
-            </div>
+          <div class="p-cat__calcin">
+            <p class="p-cat__calclead p-cat__calclead--work">追加料金なし！</p>
+            <p class="p-cat__calcprice">
+              <span class="num"><?php echo esc_html( rtrim( rtrim( number_format( $pn['price'] / 10000, 1 ), '0' ), '.' ) ); ?></span><span class="man">万円</span>
+            </p>
+            <p class="p-cat__calctax">（税込<?php echo esc_html( number_format( $pn['price'] ) ); ?>円）</p>
           </div>
         </div>
 
       </div>
+
+      <p class="p-cat__stepsttl"><?php echo esc_html( $pn['itemsttl'] ); ?></p>
+      <ol class="p-cat__steps">
+        <?php foreach ( $pn['items'] as $i => $w ) : ?>
+          <li class="p-cat__step">
+            <span class="p-cat__stepnum"><?php echo (int) ( $i + 1 ); ?></span>
+            <span class="p-cat__stepicon"><?php echo ymkrf_work_icon( $w['icon'] ); /* phpcs:ignore */ ?></span>
+            <span class="p-cat__stepname"><?php echo esc_html( $w['name'] ); ?></span>
+            <?php if ( $w['sub'] ) : ?>
+              <span class="p-cat__stepsub"><?php echo esc_html( $w['sub'] ); ?></span>
+            <?php endif; ?>
+          </li>
+        <?php endforeach; ?>
+      </ol>
 
       <?php if ( ! empty( $pn['note'] ) ) : ?>
         <p class="p-cat__calcnote"><?php echo esc_html( $pn['note'] ); ?></p>
