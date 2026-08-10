@@ -491,6 +491,16 @@ if ( $show_worry ) :
   </div>
 </section>
 
+<!-- =========== お役立ち情報（コラム） ===========
+     記事は、ダッシュボードの「コラム」から追加してください。
+     商品カテゴリに「キッチン」を付けた記事が、ここに新しい順で3件出ます。
+     1件も無いときは、このかたまりごと出ません。 -->
+<?php
+if ( function_exists( 'ymkrf_column_section' ) ) {
+	ymkrf_column_section( $slug, $name, 3 );
+}
+?>
+
 <!-- =========== 最後のご案内 =========== -->
 <section class="l-section l-section--soft">
   <div class="l-wrap">
