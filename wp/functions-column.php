@@ -139,7 +139,38 @@ if ( ! function_exists( 'ymkrf_column_section' ) ) :
 function ymkrf_column_section( $slug, $catname, $number = 3 ) {
 
 	$q = ymkrf_column_query( $slug, $number );
-	if ( ! $q->have_posts() ) { wp_reset_postdata(); return; }
+
+	/* 記事が1件も無いとき。
+	   お客様には何も出しませんが、ログイン中のスタッフには
+	   「ここに出ます」という案内を表示して、迷わないようにしています。 */
+	if ( ! $q->have_posts() ) {
+		wp_reset_postdata();
+		if ( ! current_user_can( 'edit_posts' ) ) return;
+		?>
+		<section class="l-section l-section--soft" id="column">
+			<div class="l-wrap">
+				<h2 class="p-prd__bar"><?php echo esc_html( $catname ); ?>リフォームお役立ち情報</h2>
+				<div class="p-col__placeholder">
+					<p><b>この場所に、コラムが新しい順で<?php echo (int) $number; ?>件並びます。</b></p>
+					<p>
+						ダッシュボードの「コラム」から記事を追加し、
+						<b>商品カテゴリで「<?php echo esc_html( $catname ); ?>」にチェック</b>してください。<br>
+						記事が1件でも公開されると、ここが自動で記事一覧に変わります。
+					</p>
+					<p class="p-col__placeholder__note">
+						※このご案内は、ログイン中のスタッフにだけ見えています。お客様には表示されません。
+					</p>
+					<p>
+						<a class="p-col__all" href="<?php echo esc_url( admin_url( 'post-new.php?post_type=ymkrf_column' ) ); ?>">
+							コラムを追加する
+						</a>
+					</p>
+				</div>
+			</div>
+		</section>
+		<?php
+		return;
+	}
 
 	$more = get_post_type_archive_link( 'ymkrf_column' );
 	if ( $slug && $more ) $more = add_query_arg( 'ymkrf_product_cat', $slug, $more );

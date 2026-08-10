@@ -34,8 +34,7 @@ $intro = array(
 		'title' => 'キッチンリフォーム',
 		/* 見出しの背景写真。テーマの assets からの相対パスで書いてください */
 		'hero'  => 'assets/img/products/richelle/richelle-main.jpg',
-		'lead'  => '本体・標準工事費・古いキッチンの処分費まで込みのパック価格でご案内します。'
-		         . '<br>あとからの追加請求はありません。',
+		'lead'  => '本体・標準工事費・古いキッチンの処分費まで込みのパック価格でご案内します。',
 
 		/* --- ブランド紹介 --- */
 		'brandsub'  => '家事の負担を軽くする',
@@ -58,6 +57,8 @@ $intro = array(
 			'label' => 'キッチンの標準工事費',
 			'price' => 240000,
 			'note'  => 'キッチンの標準工事費は、どの機種も一律同価格です。',
+			/* note の下に、さらに小さく出す但し書き */
+			'note2' => '※お家の形状により追加がかかる場合は、お見積りの際に詳細をお伝えさせていただきます。',
 			/* | は「スマホではここで改行」の目印です */
 			'itemsttl' => 'リフォームヤマキシの|標準工事費にふくまれる工事',
 			/* name … 工事名／sub … 説明（省略可）／icon … 下の ymkrf_work_icon() の名前 */
@@ -429,6 +430,9 @@ if ( $show_worry ) :
 
       <?php if ( ! empty( $pn['note'] ) ) : ?>
         <p class="p-cat__calcnote"><?php echo esc_html( $pn['note'] ); ?></p>
+      <?php endif; ?>
+      <?php if ( ! empty( $pn['note2'] ) ) : ?>
+        <p class="p-cat__calcnote2"><?php echo esc_html( $pn['note2'] ); ?></p>
       <?php endif; ?>
 
     </div>
