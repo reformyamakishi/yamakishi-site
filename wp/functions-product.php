@@ -130,6 +130,27 @@ add_action( 'init', function () {
 		'index.php?ymkrf_product=$matches[1]', 'top' );
 }, 20 );
 
+/**
+ * 念のための保険。
+ * URLのルールの順番によっては、/products/kitchen/ が
+ * 「kitchen という名前の商品」として読まれてしまうことがあります。
+ * そのときは分類ページとして開き直します。
+ */
+add_filter( 'request', function ( $qv ) {
+	if ( empty( $qv['ymkrf_product'] ) ) return $qv;
+	if ( ! taxonomy_exists( 'ymkrf_product_cat' ) ) return $qv;
+
+	$slug = $qv['ymkrf_product'];
+	if ( get_page_by_path( $slug, OBJECT, 'ymkrf_product' ) ) return $qv;  // 同名の商品があるなら商品を優先
+
+	$term = get_term_by( 'slug', $slug, 'ymkrf_product_cat' );
+	if ( ! $term || is_wp_error( $term ) ) return $qv;
+
+	$new = array( 'ymkrf_product_cat' => $term->slug );
+	if ( isset( $qv['paged'] ) ) $new['paged'] = $qv['paged'];
+	return $new;
+} );
+
 /* 分類を足す・変える・消したときは、URLのルールを作り直します */
 foreach ( array( 'created', 'edited', 'delete' ) as $when ) {
 	add_action( $when . '_ymkrf_product_cat', function () {
@@ -139,9 +160,9 @@ foreach ( array( 'created', 'edited', 'delete' ) as $when ) {
 
 /* 上のルールを1回だけ反映させます（数字を変えると、もう一度だけ反映されます） */
 add_action( 'init', function () {
-	if ( get_option( 'ymkrf_rewrite_ver' ) === '3' ) return;
+	if ( get_option( 'ymkrf_rewrite_ver' ) === '4' ) return;
 	flush_rewrite_rules( false );
-	update_option( 'ymkrf_rewrite_ver', '3' );
+	update_option( 'ymkrf_rewrite_ver', '4' );
 }, 99 );
 
 
