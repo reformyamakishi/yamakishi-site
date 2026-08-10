@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '15' );
+define( 'YMKRF_SETUP_VER', '16' );
 
 add_action( 'admin_init', function () {
 
@@ -105,11 +105,16 @@ add_action( 'admin_init', function () {
 		$theme . '/refit',
 		$theme . '/sierra',
 		$theme . '/sclass',
+		$theme . '/stedia',
 		$theme . '/v-style',
 		$dir,                 // 最後の受け皿（wp-content/ymkrf-import）
 	);
 
-	$img = function ( $file, $alt = '' ) use ( $dirs ) {
+	/* 見つからなかった写真の数。商品ごとに前後の差を取り、
+	   「写真が入りきらなかった商品」を確実に見分けるために使います。 */
+	$missing = 0;
+
+	$img = function ( $file, $alt = '' ) use ( $dirs, &$missing ) {
 		static $cache = array();
 		if ( isset( $cache[ $file ] ) ) return $cache[ $file ];
 
@@ -127,10 +132,10 @@ add_action( 'admin_init', function () {
 		foreach ( $dirs as $d ) {
 			if ( file_exists( $d . '/' . $file ) ) { $path = $d . '/' . $file; break; }
 		}
-		if ( ! $path ) return $cache[ $file ] = 0;
+		if ( ! $path ) { $missing++; return $cache[ $file ] = 0; }
 
 		$up = wp_upload_bits( $file, null, file_get_contents( $path ) );
-		if ( ! empty( $up['error'] ) ) return $cache[ $file ] = 0;
+		if ( ! empty( $up['error'] ) ) { $missing++; return $cache[ $file ] = 0; }
 
 		$type = wp_check_filetype( $up['file'] );
 		$id   = wp_insert_attachment( array(
@@ -138,7 +143,7 @@ add_action( 'admin_init', function () {
 			'post_title'     => $alt ?: pathinfo( $file, PATHINFO_FILENAME ),
 			'post_status'    => 'inherit',
 		), $up['file'] );
-		if ( ! $id || is_wp_error( $id ) ) return $cache[ $file ] = 0;
+		if ( ! $id || is_wp_error( $id ) ) { $missing++; return $cache[ $file ] = 0; }
 
 		wp_update_attachment_metadata( $id, wp_generate_attachment_metadata( $id, $up['file'] ) );
 		update_post_meta( $id, '_ymkrf_import', $file );
@@ -322,6 +327,48 @@ add_action( 'admin_init', function () {
 		'sclass-opt-sink.jpg'            => 'ラクするーシンク（スゴピカ素材）',
 		'sclass-opt-hood.jpg'            => 'ほっとくリーンフード',
 		'sclass-opt-faucet.jpg'          => '混合水栓サラサラワイドシャワー',
+
+		/* --- ステディア（Aグレード・クリナップ） --- */
+		'stedia-main.jpg'              => 'ステディアのキッチン全体',
+		'stedia-top-dot.jpg'           => 'ステンレス天板 ドット柄コイニング加工',
+		'stedia-color-catwhite.jpg'    => '扉カラー スエードホワイト CAT',
+		'stedia-color-c9klatte.jpg'    => '扉カラー ミクスドラテ C9K',
+		'stedia-color-ckggreige.jpg'   => '扉カラー ルオントグレージュ CKG',
+		'stedia-color-e5kgrey.jpg'     => '扉カラー ロッシュグレー E5K',
+		'stedia-color-cazcharcoal.jpg' => '扉カラー スエードチャコール CAZ',
+		'stedia-color-ecggrey.jpg'     => '扉カラー トワルグレー ECG',
+		'stedia-color-cklsepia.jpg'    => '扉カラー ルオントセピア CKL',
+		'stedia-color-e5hcharcoal.jpg' => '扉カラー ロッシュチャコール E5H',
+		'stedia-color-ecurose.jpg'     => '扉カラー トワルローズ ECU',
+		'stedia-color-c4bbirch.jpg'    => '扉カラー クラシカルバーチ C4B',
+		'stedia-handle-silver.jpg'     => 'ロングバー取手 シルバー',
+		'stedia-handle-black.jpg'      => 'ロングバー取手 ブラック',
+		'stedia-handle-nekoashi.jpg'   => 'ネコアシ取手 ブラック',
+		'stedia-handle-line.jpg'       => 'ライン取手 シルバー',
+		'stedia-handle-lineblack.jpg'  => 'ライン取手 ブラック',
+		'stedia-spec-ih.jpg'           => 'IHクッキングヒーター',
+		'stedia-spec-top.jpg'          => 'ステンレス天板',
+		'stedia-spec-sink.jpg'         => 'ステンレスシンク',
+		'stedia-spec-faucet.jpg'       => 'シャワーホース付き水栓',
+		'stedia-spec-hood.jpg'         => 'とってもクリンフード',
+		'stedia-spec-rail.jpg'         => 'サイレントレール',
+		'stedia-spec-panel.jpg'        => 'キッチンパネル',
+		'stedia-spec-cabinet.jpg'      => 'ステンレスキャビネット',
+		'stedia-spec-wallcab.jpg'      => 'ミドル吊戸棚',
+		'stedia-point-eco1.jpg'        => '骨組みまでステンレスのエコキャビネット',
+		'stedia-point-pocket1.jpg'     => '引き出しの中を立体的に使えるツールポケット',
+		'stedia-point-pocket2.jpg'     => 'ラップやホイルを立てて収納したところ',
+		'stedia-point-sink1.jpg'       => '水にのって排水口へ流れる流レールシンク',
+		'stedia-point-sink2.jpg'       => '継ぎ目の無い排水口',
+		'stedia-point-hood2.jpg'       => 'リーフプレートをスポンジで洗っているところ',
+		'stedia-point-hood3.jpg'       => '親水性塗装が油汚れを浮かせる仕組みの図',
+		'stedia-point-hood4.jpg'       => '立体構造フィルターの分解図',
+		'stedia-opt-dish.jpg'          => 'W450mmプルオープン食器洗い乾燥機',
+		'stedia-opt-acryston.jpg'      => 'アクリストン天板とアクリストンシンク',
+		'stedia-opt-trap.jpg'          => 'かってにクリントラップの仕組み図',
+		'stedia-opt-araeru.jpg'        => '洗エールレンジフード',
+		'stedia-opt-hood.jpg'          => 'とってもクリンフード',
+		'stedia-opt-faucet.jpg'        => 'シャワーホース付き水栓',
 	);
 	foreach ( $stock as $f => $alt ) {
 		if ( $img( $f, $alt ) ) $log[] = 'メディアに追加: ' . $f;
@@ -383,13 +430,20 @@ add_action( 'admin_init', function () {
 	/* ------------------------------------------------------------
 	   2-d. 写真が入らないまま登録された商品を、作り直せるようにする
 	        取り込みが途中で止まると、商品は出来ているのに写真だけ
-	        空っぽ（img が 0）という状態になり、次に動かしても
-	        「もう有る」と判断されて直りませんでした。その手当てです。
+	        空っぽという状態になり、次に動かしても「もう有る」と
+	        判断されて直りませんでした。その手当てです。
 	        写真がそろっている商品には、いっさい触りません。
+
+	        登録するときに「見つからなかった写真の枚数」を
+	        _ymkrf_img_missing に控えてあるので、それを見ます。
+	        （ステディアのように、文章だけで写真の無い行を持つ商品を
+	          「壊れている」と誤判定しないためです）
+	        この控えが無い＝古い版で登録された商品は、
+	        これまでどおり「空っぽの行があるか」で見分けます。
 	   ------------------------------------------------------------ */
 	$rebuild_keys = array( '_ymkrf_images', '_ymkrf_colors', '_ymkrf_tops', '_ymkrf_sinks', '_ymkrf_handles', '_ymkrf_specs', '_ymkrf_features', '_ymkrf_options' );
 
-	foreach ( array( 'rakuera', 'refit', 'sierra-s', 's-class' ) as $slug ) {
+	foreach ( array( 'rakuera', 'refit', 'sierra-s', 's-class', 'stedia' ) as $slug ) {
 
 		$p = get_page_by_path( $slug, OBJECT, 'ymkrf_product' );
 		if ( ! $p ) continue;
@@ -400,8 +454,14 @@ add_action( 'admin_init', function () {
 		$th = (int) get_post_thumbnail_id( $p->ID );
 		if ( ! $th || ! get_attached_file( $th ) ) $broken = true;
 
-		/* 一覧の中に、写真が空っぽの行がある */
-		if ( ! $broken ) {
+		$note = get_post_meta( $p->ID, '_ymkrf_img_missing', true );
+
+		if ( ! $broken && $note !== '' ) {
+			/* 新しい版で登録された商品：控えた枚数だけを見ます */
+			$broken = ( (int) $note > 0 );
+
+		} elseif ( ! $broken ) {
+			/* 古い版で登録された商品：空っぽの行があるかで見分けます */
 			foreach ( $rebuild_keys as $k ) {
 				$rows = get_post_meta( $p->ID, $k, true );
 				if ( ! is_array( $rows ) ) continue;
@@ -435,6 +495,8 @@ add_action( 'admin_init', function () {
 		) );
 
 		if ( $post_id && ! is_wp_error( $post_id ) ) {
+
+			$m0 = $missing;   /* この商品で見つからなかった写真を数えるための起点 */
 
 			/* --- 単一の欄 --- */
 			$fields = array(
@@ -597,6 +659,7 @@ add_action( 'admin_init', function () {
 				array( 'nonoichi', 'komathu', 'hakui', 'shinkaga', 'tazuruhama', 'kanadu' ),
 				'ymkrf_shop' );
 
+			update_post_meta( $post_id, '_ymkrf_img_missing', $missing - $m0 );
 			$log[] = '商品「V-style（Vスタイル）」を登録しました → ' . get_permalink( $post_id );
 		}
 	}
@@ -614,6 +677,8 @@ add_action( 'admin_init', function () {
 		) );
 
 		if ( $rid && ! is_wp_error( $rid ) ) {
+
+			$m0 = $missing;   /* この商品で見つからなかった写真を数えるための起点 */
 
 			$f = array(
 				'_ymkrf_catch'   => 'シンプルなデザインが特徴のスタイリッシュキッチン。',
@@ -735,6 +800,7 @@ add_action( 'admin_init', function () {
 			wp_set_object_terms( $rid, 'cleanup', 'ymkrf_maker' );
 			wp_set_object_terms( $rid, array( 'komathu', 'kanadu' ), 'ymkrf_shop' );
 
+			update_post_meta( $rid, '_ymkrf_img_missing', $missing - $m0 );
 			$log[] = '商品「ラクエラ」を登録しました → ' . get_permalink( $rid );
 		}
 	}
@@ -752,6 +818,8 @@ add_action( 'admin_init', function () {
 		) );
 
 		if ( $fid && ! is_wp_error( $fid ) ) {
+
+			$m0 = $missing;   /* この商品で見つからなかった写真を数えるための起点 */
 
 			$f = array(
 				'_ymkrf_catch'   => '毎日の家事を楽しく、自分らしく彩る台所',
@@ -879,6 +947,7 @@ add_action( 'admin_init', function () {
 			wp_set_object_terms( $fid, 'kitchen', 'ymkrf_product_cat' );
 			wp_set_object_terms( $fid, 'takara',  'ymkrf_maker' );
 
+			update_post_meta( $fid, '_ymkrf_img_missing', $missing - $m0 );
 			$log[] = '商品「リフィット」を登録しました → ' . get_permalink( $fid );
 		}
 	}
@@ -896,6 +965,8 @@ add_action( 'admin_init', function () {
 		) );
 
 		if ( $sid && ! is_wp_error( $sid ) ) {
+
+			$m0 = $missing;   /* この商品で見つからなかった写真を数えるための起点 */
 
 			$f = array(
 				'_ymkrf_catch'   => 'シンプルで使いやすいキッチン',
@@ -1038,6 +1109,7 @@ add_action( 'admin_init', function () {
 			wp_set_object_terms( $sid, 'lixil',   'ymkrf_maker' );
 			wp_set_object_terms( $sid, array( 'komathu', 'hakui', 'tazuruhama', 'asahi', 'kanadu' ), 'ymkrf_shop' );
 
+			update_post_meta( $sid, '_ymkrf_img_missing', $missing - $m0 );
 			$log[] = '商品「シエラS」を登録しました → ' . get_permalink( $sid );
 		}
 	}
@@ -1055,6 +1127,8 @@ add_action( 'admin_init', function () {
 		) );
 
 		if ( $pid && ! is_wp_error( $pid ) ) {
+
+			$m0 = $missing;   /* この商品で見つからなかった写真を数えるための起点 */
 
 			$f = array(
 				'_ymkrf_catch'   => '無意識の快適を追求したキッチン！',
@@ -1214,7 +1288,192 @@ add_action( 'admin_init', function () {
 			wp_set_object_terms( $pid, 'panasonic', 'ymkrf_maker' );
 			/* 展示店舗はカタログに記載が無いので未設定。管理画面から選んでください。 */
 
+			update_post_meta( $pid, '_ymkrf_img_missing', $missing - $m0 );
 			$log[] = '商品「Sクラス」を登録しました → ' . get_permalink( $pid );
+		}
+	}
+
+	/* ------------------------------------------------------------
+	   3-a5. ステディア（Aグレード・クリナップ）を1件つくる
+	   ------------------------------------------------------------ */
+	if ( ! get_page_by_path( 'stedia', OBJECT, 'ymkrf_product' ) ) {
+
+		$tid = wp_insert_post( array(
+			'post_type'   => 'ymkrf_product',
+			'post_status' => 'publish',
+			'post_title'  => 'ステディア',
+			'post_name'   => 'stedia',
+		) );
+
+		if ( $tid && ! is_wp_error( $tid ) ) {
+
+			$m0 = $missing;   /* この商品で見つからなかった写真を数えるための起点 */
+
+			$f = array(
+				'_ymkrf_catch'   => 'キレイと快適が毎日つづく快適キッチン！',
+				'_ymkrf_grade'   => 'Aグレード',
+				'_ymkrf_name'    => 'ステディア',
+				'_ymkrf_size'    => 'I型2550サイズ',
+				'_ymkrf_work'    => '240000',
+				'_ymkrf_item'    => '858000',
+				'_ymkrf_days'    => '',   /* カタログに工期の記載がありません */
+				'_ymkrf_pt1'     => '美しさが長持ち',
+				'_ymkrf_pt2'     => '長寿命',
+				'_ymkrf_pt3'     => 'エコ',
+				'_ymkrf_caution' => '※写真はイメージになります。※食洗器はオプションになります。'
+				                  . '※扉カラーはクラス05です。※扉色によって選べる取手が異なります（全7種）。',
+			);
+			foreach ( $f as $k => $v ) update_post_meta( $tid, $k, $v );
+			update_post_meta( $tid, '_ymkrf_total', 1098000 );
+
+			$m = $img( 'stedia-main.jpg' );
+			if ( $m ) set_post_thumbnail( $tid, $m );
+			update_post_meta( $tid, '_ymkrf_images', array() );
+
+			/* 扉カラー クラス05（全10色） */
+			$tc = array(
+				array( 'stedia-color-catwhite.jpg',    'スエードホワイト（CAT）' ),
+				array( 'stedia-color-c9klatte.jpg',    'ミクスドラテ（C9K）' ),
+				array( 'stedia-color-ckggreige.jpg',   'ルオントグレージュ（CKG）' ),
+				array( 'stedia-color-e5kgrey.jpg',     'ロッシュグレー（E5K）' ),
+				array( 'stedia-color-cazcharcoal.jpg', 'スエードチャコール（CAZ）' ),
+				array( 'stedia-color-ecggrey.jpg',     'トワルグレー（ECG）' ),
+				array( 'stedia-color-cklsepia.jpg',    'ルオントセピア（CKL）' ),
+				array( 'stedia-color-e5hcharcoal.jpg', 'ロッシュチャコール（E5H）' ),
+				array( 'stedia-color-ecurose.jpg',     'トワルローズ（ECU）' ),
+				array( 'stedia-color-c4bbirch.jpg',    'クラシカルバーチ（C4B）' ),
+			);
+			$rows = array();
+			foreach ( $tc as $r ) $rows[] = array( 'img' => $img( $r[0] ), 'name' => $r[1] );
+			update_post_meta( $tid, '_ymkrf_colors', $rows );
+
+			/* 天板（ステンレス・1種） */
+			update_post_meta( $tid, '_ymkrf_tops', array(
+				array( 'img' => $img( 'stedia-top-dot.jpg' ), 'name' => 'ステンレス ドット柄コイニング加工' ),
+			) );
+			update_post_meta( $tid, '_ymkrf_sinks', array() );
+
+			/* 取手（写真のある5種） */
+			$th = array(
+				array( 'stedia-handle-silver.jpg',    'ロングバー', 'シルバー' ),
+				array( 'stedia-handle-black.jpg',     'ロングバー', 'ブラック' ),
+				array( 'stedia-handle-nekoashi.jpg',  'ネコアシ',   'ブラック' ),
+				array( 'stedia-handle-line.jpg',      'ライン',     'シルバー' ),
+				array( 'stedia-handle-lineblack.jpg', 'ライン',     'ブラック' ),
+			);
+			$rows = array();
+			foreach ( $th as $r ) $rows[] = array( 'img' => $img( $r[0] ), 'name' => $r[1], 'code' => $r[2] );
+			update_post_meta( $tid, '_ymkrf_handles', $rows );
+
+			/* 標準仕様9点 */
+			$ts = array(
+				array( 'stedia-spec-ih.jpg',      'IHクッキングヒーター', 'CS-G321MS' ),
+				array( 'stedia-spec-top.jpg',     'ステンレス天板',       '' ),
+				array( 'stedia-spec-sink.jpg',    'ステンレスシンク',     'SA' ),
+				array( 'stedia-spec-faucet.jpg',  'シャワーホース付き水栓', '' ),
+				array( 'stedia-spec-hood.jpg',    'とってもクリンフード', 'ZRS90ACH22FSZ' ),
+				array( 'stedia-spec-rail.jpg',    'サイレントレール',     '' ),
+				array( 'stedia-spec-panel.jpg',   'キッチンパネル',       'キッチン正面・コンロ側側面' ),
+				array( 'stedia-spec-cabinet.jpg', 'ステンレスキャビネット', '' ),
+				array( 'stedia-spec-wallcab.jpg', 'ミドル吊戸棚',         '' ),
+			);
+			$rows = array();
+			foreach ( $ts as $r ) $rows[] = array( 'img' => $img( $r[0], $r[1] ), 'name' => $r[1], 'model' => $r[2] );
+			update_post_meta( $tid, '_ymkrf_specs', $rows );
+
+			/* おすすめポイント（4グループ・11ポイント）
+			   ステンレスエコキャビネットと流レールシンクには、
+			   カタログに写真の無い行があります（文章だけ）。 */
+			update_post_meta( $tid, '_ymkrf_features', array(
+				array( 'gsub'=>'水や熱に強くキレイが長持ち。', 'gttl'=>'「ステンレスエコキャビネット」',
+				       'ttl'=>'カビやニオイがつきにくい。',
+				       'text'=>'食品を扱う場所には、もっともふさわしい素材。', 'note'=>'',
+				       'img'=>$img('stedia-point-eco1.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'', 'gttl'=>'',
+				       'ttl'=>'水汚れ、サビ、熱に強い。',
+				       'text'=>'料理を思い切り楽しめます。', 'note'=>'',
+				       'img'=>'', 'img2'=>'' ),
+				array( 'gsub'=>'', 'gttl'=>'',
+				       'ttl'=>'美しさが長持ち。',
+				       'text'=>'底板・側面・骨組みまでステンレス。お手入れ簡単。', 'note'=>'',
+				       'img'=>'', 'img2'=>'' ),
+				array( 'gsub'=>'', 'gttl'=>'',
+				       'ttl'=>'長寿命で、環境にやさしい。',
+				       'text'=>'耐久年数が長く、リサイクル率は80％以上。', 'note'=>'',
+				       'img'=>'', 'img2'=>'' ),
+				array( 'gsub'=>'すぐに取り出せる。', 'gttl'=>'「ツールポケット」',
+				       'ttl'=>'出し入れラクラク！',
+				       'text'=>'よく使うものは手前に集めて引き出し内は立体的に。より効率的に出し入れできます。', 'note'=>'',
+				       'img'=>$img('stedia-point-pocket1.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'', 'gttl'=>'',
+				       'ttl'=>'こんなものの収納に！',
+				       'text'=>'ラップやホイルなどの収納におすすめ。', 'note'=>'',
+				       'img'=>$img('stedia-point-pocket2.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'汚れにくい、洗いやすい。', 'gttl'=>'「流レールシンク」',
+				       'ttl'=>'お手入れカンタン。',
+				       'text'=>'野菜くずも油汚れも、水にのって排水口へ。手間をかけずにキレイが保てます。', 'note'=>'',
+				       'img'=>$img('stedia-point-sink1.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'', 'gttl'=>'',
+				       'ttl'=>'清潔な排水口。',
+				       'text'=>'継ぎ目無し＋美コートで、汚れをガード。', 'note'=>'',
+				       'img'=>$img('stedia-point-sink2.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'', 'gttl'=>'',
+				       'ttl'=>'水音静かなシンク。',
+				       'text'=>'水はね音を抑えて、会話を妨げられません。', 'note'=>'',
+				       'img'=>'', 'img2'=>'' ),
+				array( 'gsub'=>'お手入れしやすい工夫が満載', 'gttl'=>'「とってもクリンフード」',
+				       'ttl'=>'リーフプレート',
+				       'text'=>'親水性塗装を施したプレートはスポンジで簡単に汚れを洗い流せます。', 'note'=>'',
+				       'img'=>$img('stedia-point-hood2.jpg'), 'img2'=>$img('stedia-point-hood3.jpg') ),
+				array( 'gsub'=>'', 'gttl'=>'',
+				       'ttl'=>'立体構造フィルター',
+				       'text'=>'リーフプレートとベルマウスや煙道部によって形成された立体型フィルター。油捕集性能とお手入れのしやすさを両立。', 'note'=>'',
+				       'img'=>$img('stedia-point-hood4.jpg'), 'img2'=>'' ),
+			) );
+
+			/* おすすめオプション6点 */
+			update_post_meta( $tid, '_ymkrf_options', array(
+				array( 'img'=>$img('stedia-opt-dish.jpg'), 'name'=>'W450mmプルオープン 食器洗い乾燥機（ZWPP45R21LDS-E）',
+				       'text'=>'手洗いより節水で省エネ。家事の手間を省きます。',
+				       'price'=>'119000', 'note'=>'※工事費込み' ),
+				array( 'img'=>$img('stedia-opt-acryston.jpg'), 'name'=>'アクリストン天板（ソリッド）＋アクリストン（AE）シンク（かってにクリントラップなし）',
+				       'text'=>'美しさと丈夫さを兼ね備えた素材です。',
+				       'price'=>'89000', 'note'=>'' ),
+				array( 'img'=>$img('stedia-opt-trap.jpg'), 'name'=>'かってにクリントラップ仕様（SAシンク）',
+				       'text'=>'自動洗浄機能を搭載した新機能トラップ。ヌメリの発生を抑止し、キレイをキープします。',
+				       'price'=>'33000', 'note'=>'' ),
+				array( 'img'=>$img('stedia-opt-araeru.jpg'), 'name'=>'洗エールレンジフード',
+				       'text'=>'面倒な換気扇フィルターのお手入れも、ボタンひとつで自動洗浄。（W900／H700扉面材）',
+				       'price'=>'106000', 'note'=>'' ),
+				array( 'img'=>$img('stedia-opt-hood.jpg'), 'name'=>'とってもクリンフード',
+				       'text'=>'お手入れしやすい工夫が満載。親水性塗装を施したプレートはスポンジで簡単に汚れを洗い流せます。',
+				       'price'=>'90200', 'note'=>'' ),
+				array( 'img'=>$img('stedia-opt-faucet.jpg'), 'name'=>'シャワーホース付き水栓',
+				       'text'=>'引き出し可能なシャワーホースでシンクの掃除も快適に行え、省スペースで設置可能なモデルです。',
+				       'price'=>'21300', 'note'=>'※オプション価格は近日中に値上げするため、現時点での参考価格となります。' ),
+			) );
+
+			/* 標準工事に含まれる工事 */
+			$tw = array(
+				array( '撤去工事',               '古いキッチンの撤去にかかる工事です。' ),
+				array( '廃棄処分',               '撤去した古いキッチンを廃棄処分するためにかかる費用です。' ),
+				array( 'ガス配管変更工事',       'ガスコンロを使うための配管工事です。' ),
+				array( 'キッチンパネル設置工事', 'キッチンパネルの取り付け工事費です。' ),
+				array( 'キッチンパネル部材費',   'キッチンパネル自体の部材費です。' ),
+				array( '下地工事（大工工事）',   'キッチンパネル設置面の補修、補強の工事です。' ),
+				array( 'シロッコファン取付工事', 'シロッコファンの取付工事です。' ),
+			);
+			$rows = array();
+			foreach ( $tw as $r ) $rows[] = array( 'name' => $r[0], 'text' => $r[1] );
+			update_post_meta( $tid, '_ymkrf_works', $rows );
+
+			wp_set_object_terms( $tid, 'kitchen',  'ymkrf_product_cat' );
+			wp_set_object_terms( $tid, 'cleanup',  'ymkrf_maker' );
+			wp_set_object_terms( $tid, array( 'nonoichi', 'komathu', 'hakui', 'shinkaga',
+				'kawakita', 'tazuruhama', 'asahi', 'kanadu' ), 'ymkrf_shop' );
+
+			update_post_meta( $tid, '_ymkrf_img_missing', $missing - $m0 );
+			$log[] = '商品「ステディア」を登録しました → ' . get_permalink( $tid );
 		}
 	}
 
