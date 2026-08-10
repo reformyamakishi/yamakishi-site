@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '20' );
+define( 'YMKRF_SETUP_VER', '21' );
 
 /**
  * init（優先度99）に付けているので、管理画面だけでなく
@@ -130,6 +130,7 @@ add_action( 'init', function () {
 		$theme . '/edel',
 		$theme . '/classo',
 		$theme . '/richelle',
+		$theme . '/centro',
 		$theme . '/v-style',
 		$dir,                 // 最後の受け皿（wp-content/ymkrf-import）
 	);
@@ -524,6 +525,50 @@ add_action( 'init', function () {
 		'richelle-opt-downwall.jpg'        => 'オートダウンウォール',
 		'richelle-opt-hood.jpg'            => 'よごれんフード',
 		'richelle-opt-water.jpg'           => 'ビルトイン型浄水器 専用水栓ナビッシュ',
+
+		/* --- セントロ（プレミアム・クリナップ） --- */
+		'centro-main.jpg'              => 'セントロのキッチン全体',
+		'centro-top-albanium.jpg'      => '天板 アルバニウム',
+		'centro-top-creta.jpg'         => '天板 クレタ',
+		'centro-top-sirius.jpg'        => '天板 シリウス',
+		'centro-top-edra.jpg'          => '天板 エドラ',
+		'centro-color-white.jpg'        => '扉カラー ホワイト',
+		'centro-color-charcoal.jpg'     => '扉カラー チャコール',
+		'centro-color-silver.jpg'       => '扉カラー シルバー',
+		'centro-color-midnightgray.jpg' => '扉カラー ミッドナイトグレー',
+		'centro-color-ash.jpg'          => '扉カラー アッシュ',
+		'centro-color-oak.jpg'          => '扉カラー オーク',
+		'centro-color-cherry.jpg'       => '扉カラー チェリー',
+		'centro-color-walnut.jpg'       => '扉カラー ウォールナット',
+		'centro-color-rocagreige.jpg'   => '扉カラー ロカグレージュ',
+		'centro-color-rocacharcoal.jpg' => '扉カラー ロカチャコール',
+		'centro-handle-longbar-silver.jpg' => 'ロングバー取手 シャンパンシルバー',
+		'centro-handle-longbar-black.jpg'  => 'ロングバー取手 ブラック',
+		'centro-handle-line-silver.jpg'    => 'ライン取手 シルバー',
+		'centro-handle-line-black.jpg'     => 'ライン取手 ブラック',
+		'centro-handle-bar-gold.jpg'       => 'バー取手 オクトゴールド',
+		'centro-handle-bar-bronze.jpg'     => 'バー取手 コッピングブロンズ',
+		'centro-spec-ih.jpg'           => 'IHクッキングヒーター',
+		'centro-spec-top.jpg'          => 'セラミックワークトップ',
+		'centro-spec-hood.jpg'         => 'とってもクリンレンジフード',
+		'centro-spec-sink.jpg'         => 'ステンレスシンク',
+		'centro-spec-sinkcab.jpg'      => 'シンクキャビネット（ツールコンテナ付き）',
+		'centro-spec-conrocab.jpg'     => 'コンロキャビネット（ツールコンテナ付き）',
+		'centro-spec-wallcab.jpg'      => 'ハンドムーブ吊戸棚',
+		'centro-spec-drain.jpg'        => '収納水切りタイプ（照明付き）',
+		'centro-spec-panel.jpg'        => 'キッチンパネル',
+		'centro-spec-faucet.jpg'       => 'タッチレス水栓',
+		'centro-point-eco1.jpg'        => '骨組みまでステンレスのエコキャビネット',
+		'centro-point-ceramic1.jpg'    => 'セラミックワークトップでの調理風景',
+		'centro-point-ceramic2.jpg'    => 'セラミックワークトップの端部',
+		'centro-point-sink1.jpg'       => '水にのって排水口へ流れる流レールシンク',
+		'centro-point-sink2.jpg'       => '継ぎ目の無い排水口',
+		'centro-point-hand1.jpg'       => 'ハンドムーブ吊戸棚の調味料タイプ',
+		'centro-point-hand2.jpg'       => 'ハンドムーブ吊戸棚の水切りタイプ',
+		'centro-opt-dish.jpg'          => 'W450mmプルオープン食器洗い乾燥機',
+		'centro-opt-fortex.jpg'        => '流レールシンク（フォルテックス）',
+		'centro-opt-trap.jpg'          => 'かってにクリントラップの仕組み図',
+		'centro-opt-araeru.jpg'        => '洗エールレンジフード',
 	);
 	foreach ( $stock as $f => $alt ) {
 		if ( $img( $f, $alt ) ) $log[] = 'メディアに追加: ' . $f;
@@ -598,7 +643,7 @@ add_action( 'init', function () {
 	   ------------------------------------------------------------ */
 	$rebuild_keys = array( '_ymkrf_images', '_ymkrf_colors', '_ymkrf_tops', '_ymkrf_sinks', '_ymkrf_handles', '_ymkrf_specs', '_ymkrf_features', '_ymkrf_options' );
 
-	foreach ( array( 'rakuera', 'refit', 'sierra-s', 's-class', 'stedia', 'edel', 'classo', 'richelle' ) as $slug ) {
+	foreach ( array( 'rakuera', 'refit', 'sierra-s', 's-class', 'stedia', 'edel', 'classo', 'richelle', 'centro' ) as $slug ) {
 
 		$p = get_page_by_path( $slug, OBJECT, 'ymkrf_product' );
 		if ( ! $p ) continue;
@@ -2140,6 +2185,185 @@ add_action( 'init', function () {
 
 			update_post_meta( $xid, '_ymkrf_img_missing', $missing - $m0 );
 			$log[] = '商品「リシェル」を登録しました → ' . get_permalink( $xid );
+		}
+	}
+
+	/* ------------------------------------------------------------
+	   3-a9. セントロ（プレミアム・クリナップ）を1件つくる
+	   ------------------------------------------------------------ */
+	if ( ! get_page_by_path( 'centro', OBJECT, 'ymkrf_product' ) ) {
+
+		$nid = wp_insert_post( array(
+			'post_type'   => 'ymkrf_product',
+			'post_status' => 'publish',
+			'post_title'  => 'セントロ',
+			'post_name'   => 'centro',
+		) );
+
+		if ( $nid && ! is_wp_error( $nid ) ) {
+
+			$m0 = $missing;   /* この商品で見つからなかった写真を数えるための起点 */
+
+			$f = array(
+				'_ymkrf_catch'   => 'キレイと快適が毎日つづく快適キッチン！',
+				'_ymkrf_grade'   => 'プレミアム',
+				'_ymkrf_name'    => 'セントロ',
+				'_ymkrf_size'    => 'I型2550サイズ',
+				'_ymkrf_work'    => '240000',
+				'_ymkrf_item'    => '1508000',
+				'_ymkrf_days'    => '',   /* カタログに工期の記載がありません */
+				'_ymkrf_pt1'     => 'キレイが長持ち',
+				'_ymkrf_pt2'     => '味わい深い',
+				'_ymkrf_pt3'     => '快適',
+				'_ymkrf_caution' => '※写真はイメージになります。※食洗機はオプションになります。',
+			);
+			foreach ( $f as $k => $v ) update_post_meta( $nid, $k, $v );
+			update_post_meta( $nid, '_ymkrf_total', 1748000 );
+
+			$m = $img( 'centro-main.jpg' );
+			if ( $m ) set_post_thumbnail( $nid, $m );
+			update_post_meta( $nid, '_ymkrf_images', array() );
+
+			/* 扉カラー06クラス（全10色） */
+			$nc = array(
+				array( 'centro-color-white.jpg',        'ホワイト（CAT）' ),
+				array( 'centro-color-charcoal.jpg',     'チャコール（CAZ）' ),
+				array( 'centro-color-silver.jpg',       'シルバー' ),
+				array( 'centro-color-midnightgray.jpg', 'ミッドナイトグレー（CAV）' ),
+				array( 'centro-color-ash.jpg',          'アッシュ（E3M）' ),
+				array( 'centro-color-oak.jpg',          'オーク（C3A）' ),
+				array( 'centro-color-cherry.jpg',       'チェリー（C3B）' ),
+				array( 'centro-color-walnut.jpg',       'ウォールナット（C3L）' ),
+				array( 'centro-color-rocagreige.jpg',   'ロカグレージュ（E5K）' ),
+				array( 'centro-color-rocacharcoal.jpg', 'ロカチャコール（E5H）' ),
+			);
+			$rows = array();
+			foreach ( $nc as $r ) $rows[] = array( 'img' => $img( $r[0] ), 'name' => $r[1] );
+			update_post_meta( $nid, '_ymkrf_colors', $rows );
+
+			/* 天板 インダストリアルコレクション（全4種） */
+			update_post_meta( $nid, '_ymkrf_tops', array(
+				array( 'img' => $img( 'centro-top-albanium.jpg' ), 'name' => 'アルバニウム' ),
+				array( 'img' => $img( 'centro-top-creta.jpg' ),    'name' => 'クレタ' ),
+				array( 'img' => $img( 'centro-top-sirius.jpg' ),   'name' => 'シリウス' ),
+				array( 'img' => $img( 'centro-top-edra.jpg' ),     'name' => 'エドラ（J）' ),
+			) );
+			update_post_meta( $nid, '_ymkrf_sinks', array() );
+
+			/* 取手（全6種） */
+			$nh = array(
+				array( 'centro-handle-longbar-silver.jpg', 'ロングバー取手', 'シャンパンシルバー' ),
+				array( 'centro-handle-longbar-black.jpg',  'ロングバー取手', 'ブラック' ),
+				array( 'centro-handle-line-silver.jpg',    'ライン取手',     'シルバー' ),
+				array( 'centro-handle-line-black.jpg',     'ライン取手',     'ブラック' ),
+				array( 'centro-handle-bar-gold.jpg',       'バー取手',       'オクトゴールド' ),
+				array( 'centro-handle-bar-bronze.jpg',     'バー取手',       'コッピングブロンズ' ),
+			);
+			$rows = array();
+			foreach ( $nh as $r ) $rows[] = array( 'img' => $img( $r[0] ), 'name' => $r[1], 'code' => $r[2] );
+			update_post_meta( $nid, '_ymkrf_handles', $rows );
+
+			/* 標準仕様10点 */
+			$ns = array(
+				array( 'centro-spec-ih.jpg',       'IHクッキングヒーター',       'CS-G321MS シルバー W600' ),
+				array( 'centro-spec-top.jpg',      'セラミックワークトップ',     '' ),
+				array( 'centro-spec-hood.jpg',     'とってもクリンレンジフード', 'ZRS90ACH22FSZ' ),
+				array( 'centro-spec-sink.jpg',     'ステンレスシンク',           'SC' ),
+				array( 'centro-spec-sinkcab.jpg',  'シンクキャビネット',         'ツールコンテナ付き' ),
+				array( 'centro-spec-conrocab.jpg', 'コンロキャビネット',         'ツールコンテナ付き' ),
+				array( 'centro-spec-wallcab.jpg',  'ハンドムーブ吊戸棚',         '' ),
+				array( 'centro-spec-drain.jpg',    '収納水切りタイプ',           '照明付き・収納タイプ' ),
+				array( 'centro-spec-panel.jpg',    'キッチンパネル',             'キッチン正面・コンロ側側面' ),
+				array( 'centro-spec-faucet.jpg',   'タッチレス水栓',             'ZZSFNA451SY' ),
+			);
+			$rows = array();
+			foreach ( $ns as $r ) $rows[] = array( 'img' => $img( $r[0], $r[1] ), 'name' => $r[1], 'model' => $r[2] );
+			update_post_meta( $nid, '_ymkrf_specs', $rows );
+
+			/* おすすめポイント（4グループ・12ポイント） */
+			update_post_meta( $nid, '_ymkrf_features', array(
+				array( 'gsub'=>'水や熱に強くキレイが長持ち。', 'gttl'=>'「ステンレスエコキャビネット」',
+				       'ttl'=>'カビやニオイがつきにくい。',
+				       'text'=>'食品を扱う場所には、もっともふさわしい素材。', 'note'=>'',
+				       'img'=>$img('centro-point-eco1.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'', 'gttl'=>'',
+				       'ttl'=>'水汚れ、サビ、熱に強い。',
+				       'text'=>'料理を思い切り楽しめます。', 'note'=>'', 'img'=>'', 'img2'=>'' ),
+				array( 'gsub'=>'', 'gttl'=>'',
+				       'ttl'=>'美しさが長持ち。',
+				       'text'=>'底板・側面・骨組みまでステンレス。お手入れ簡単。', 'note'=>'', 'img'=>'', 'img2'=>'' ),
+				array( 'gsub'=>'', 'gttl'=>'',
+				       'ttl'=>'長寿命で、環境にやさしい。',
+				       'text'=>'耐久年数が長く、リサイクル率は80％以上。', 'note'=>'', 'img'=>'', 'img2'=>'' ),
+				array( 'gsub'=>'陶器のような味わい深さと輝き。', 'gttl'=>'「セラミックワークトップ」',
+				       'ttl'=>'熱・洗剤での変色なし！',
+				       'text'=>'高温に耐え得る高いパフォーマンスで、変色や変質の心配がほとんどなく長くお使いいただけます。ほぼ無孔質なので化学品に対しても高い抵抗性を誇ります。',
+				       'note'=>'', 'img'=>$img('centro-point-ceramic1.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'', 'gttl'=>'',
+				       'ttl'=>'衝撃に強く割れにくい！',
+				       'text'=>'引っ掻き傷に対し強靭な強さを発揮します。', 'note'=>'',
+				       'img'=>$img('centro-point-ceramic2.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'汚れにくい、洗いやすい。', 'gttl'=>'「流レールシンク」',
+				       'ttl'=>'お手入れカンタン。',
+				       'text'=>'野菜くずも油汚れも、水にのって排水口へ。手間をかけずにキレイが保てます。', 'note'=>'',
+				       'img'=>$img('centro-point-sink1.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'', 'gttl'=>'',
+				       'ttl'=>'清潔な排水口。',
+				       'text'=>'継ぎ目無し＋美コートで、汚れをガード。', 'note'=>'',
+				       'img'=>$img('centro-point-sink2.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'', 'gttl'=>'',
+				       'ttl'=>'水音静かなシンク。',
+				       'text'=>'水はね音を抑えるから、会話を妨げられません。', 'note'=>'', 'img'=>'', 'img2'=>'' ),
+				array( 'gsub'=>'楽な姿勢で、手が届く。', 'gttl'=>'「ハンドムーブ」',
+				       'ttl'=>'カウンター面はいつもスッキリ。',
+				       'text'=>'調味料や洗い物などをしまえるので、調理台がすっきり片付きます。', 'note'=>'',
+				       'img'=>'', 'img2'=>'' ),
+				array( 'gsub'=>'', 'gttl'=>'',
+				       'ttl'=>'調味料タイプ',
+				       'text'=>'キッチンペーパーなどをまとめて収納。', 'note'=>'',
+				       'img'=>$img('centro-point-hand1.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'', 'gttl'=>'',
+				       'ttl'=>'水切りタイプ',
+				       'text'=>'洗い物を濡れたままそのまま置けます。', 'note'=>'',
+				       'img'=>$img('centro-point-hand2.jpg'), 'img2'=>'' ),
+			) );
+
+			/* おすすめオプション4点 */
+			update_post_meta( $nid, '_ymkrf_options', array(
+				array( 'img'=>$img('centro-opt-dish.jpg'), 'name'=>'W450mmプルオープン 食器洗い乾燥機 ZWPJ45M21PDZ',
+				       'text'=>'手洗いより節水で省エネ。家事の手間を省きます。',
+				       'price'=>'289900', 'note'=>'' ),
+				array( 'img'=>$img('centro-opt-fortex.jpg'), 'name'=>'流レールシンク（フォルテックス）',
+				       'text'=>'アクリストンよりも硬度をあげ、丈夫さが増した硬質アクリル人造大理石。',
+				       'price'=>'57500', 'note'=>'' ),
+				array( 'img'=>$img('centro-opt-trap.jpg'), 'name'=>'かってにクリントラップ仕様（SAシンク）',
+				       'text'=>'自動洗浄機能を搭載した新機能トラップ。ヌメリの発生を抑止し、キレイをキープします。',
+				       'price'=>'52300', 'note'=>'' ),
+				array( 'img'=>$img('centro-opt-araeru.jpg'), 'name'=>'洗エールレンジフード',
+				       'text'=>'面倒な換気扇フィルターのお手入れも、ボタンひとつで自動洗浄。（W900／H700扉面材）',
+				       'price'=>'94700', 'note'=>'※オプション価格は近日中に値上げするため、現時点での参考価格となります。' ),
+			) );
+
+			/* 標準工事に含まれる工事 */
+			$nw = array(
+				array( '撤去工事',               '古いキッチンの撤去にかかる工事です。' ),
+				array( '廃棄処分',               '撤去した古いキッチンを廃棄処分するためにかかる費用です。' ),
+				array( 'ガス配管変更工事',       'ガスコンロを使うための配管工事です。' ),
+				array( 'キッチンパネル設置工事', 'キッチンパネルの取り付け工事費です。' ),
+				array( 'キッチンパネル部材費',   'キッチンパネル自体の部材費です。' ),
+				array( '下地工事（大工工事）',   'キッチンパネル設置面の補修、補強の工事です。' ),
+				array( 'シロッコファン取付工事', 'シロッコファンの取付工事です。' ),
+			);
+			$rows = array();
+			foreach ( $nw as $r ) $rows[] = array( 'name' => $r[0], 'text' => $r[1] );
+			update_post_meta( $nid, '_ymkrf_works', $rows );
+
+			wp_set_object_terms( $nid, 'kitchen', 'ymkrf_product_cat' );
+			wp_set_object_terms( $nid, 'cleanup', 'ymkrf_maker' );
+			wp_set_object_terms( $nid, array( 'nonoichi', 'komathu', 'hakui' ), 'ymkrf_shop' );
+
+			update_post_meta( $nid, '_ymkrf_img_missing', $missing - $m0 );
+			$log[] = '商品「セントロ」を登録しました → ' . get_permalink( $nid );
 		}
 	}
 
