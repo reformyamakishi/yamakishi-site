@@ -982,3 +982,41 @@ function ymkrf_works_section( $slug, $catname, $number = 3 ) {
 	wp_reset_postdata();
 }
 endif;
+
+
+/* ============================================================
+   メーカーのロゴ
+
+   画像は themes/ymkrf/assets/img/logo/maker/<スラッグ>.png に置きます。
+   すべて 560×140 の同じ大きさで書き出してあるので、
+   どのメーカーでも同じ枠におさまります。
+   ロゴが無いメーカーは、これまでどおり文字で出します。
+   ============================================================ */
+if ( ! function_exists( 'ymkrf_maker_logo' ) ) :
+function ymkrf_maker_logo( $term, $class = 'p-maker' ) {
+
+	if ( ! $term || is_wp_error( $term ) ) return '';
+	$name = $term->name;
+	$slug = $term->slug;
+
+	$rel  = '/assets/img/logo/maker/' . $slug;
+	$path = get_stylesheet_directory() . $rel;
+
+	/* ロゴが無いときは文字にもどします */
+	if ( ! file_exists( $path . '.png' ) ) {
+		return '<span class="' . esc_attr( $class ) . ' ' . esc_attr( $class ) . '--text">'
+		     . esc_html( $name ) . '</span>';
+	}
+
+	$uri  = get_stylesheet_directory_uri() . $rel;
+	$webp = file_exists( $path . '.webp' )
+		? '<source srcset="' . esc_url( $uri . '.webp' ) . '" type="image/webp">' : '';
+
+	return '<span class="' . esc_attr( $class ) . '"><picture>' . $webp
+	     . '<img class="' . esc_attr( $class ) . '__img" src="' . esc_url( $uri . '.png' ) . '"'
+	     . ' width="560" height="140"'
+	     . ' alt="' . esc_attr( $name ) . '"'
+	     . ' title="' . esc_attr( $name . 'の製品です' ) . '"'
+	     . ' loading="lazy" decoding="async"></picture></span>';
+}
+endif;

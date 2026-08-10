@@ -456,8 +456,8 @@ if ( $show_worry ) :
 
       <div class="p-cat__cards">
         <?php while ( $q->have_posts() ) : $q->the_post();
-          $d = ymkrf_product_data();
-          $m = ! empty( $d['makers'] ) ? $d['makers'][0]->name : '';
+          $d  = ymkrf_product_data();
+          $mt = ! empty( $d['makers'] ) ? $d['makers'][0] : null;
         ?>
           <a class="p-cat__card" href="<?php the_permalink(); ?>">
             <div class="p-cat__cardph">
@@ -471,7 +471,7 @@ if ( $show_worry ) :
             <div class="p-cat__cardbody">
               <h3 class="p-cat__cardname"><?php echo esc_html( $d['name'] ); ?></h3>
               <p class="p-cat__cardmeta">
-                <?php if ( $m ) : ?><span><?php echo esc_html( $m ); ?></span><?php endif; ?>
+                <?php if ( $mt ) echo ymkrf_maker_logo( $mt, 'p-maker' ); /* phpcs:ignore */ ?>
                 <?php if ( $d['size'] ) : ?><span><?php echo esc_html( $d['size'] ); ?></span><?php endif; ?>
                 <?php if ( $d['days'] ) : ?><span>工期<?php echo esc_html( $d['days'] ); ?>日</span><?php endif; ?>
               </p>
