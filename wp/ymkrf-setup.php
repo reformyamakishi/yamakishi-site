@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '19' );
+define( 'YMKRF_SETUP_VER', '20' );
 
 /**
  * init（優先度99）に付けているので、管理画面だけでなく
@@ -129,6 +129,7 @@ add_action( 'init', function () {
 		$theme . '/stedia',
 		$theme . '/edel',
 		$theme . '/classo',
+		$theme . '/richelle',
 		$theme . '/v-style',
 		$dir,                 // 最後の受け皿（wp-content/ymkrf-import）
 	);
@@ -479,6 +480,50 @@ add_action( 'init', function () {
 		'classo-opt-pattern.jpg'      => 'クリスタルカウンター柄入り天板カラー',
 		'classo-opt-faucet.jpg'       => '水ほうき水栓LFクロムメッキ＋きれい除菌水生成器',
 		'classo-opt-basket.jpg'       => '水切りバスケット',
+
+		/* --- リシェル（SSSグレード・LIXIL） --- */
+		'richelle-main.jpg'                => 'リシェルのキッチン全体',
+		'richelle-top-carbon.jpg'          => '天板 ラパートカーボン',
+		'richelle-top-taupe.jpg'           => '天板 ラパートトープ',
+		'richelle-top-silk.jpg'            => '天板 ラパートシルク',
+		'richelle-top-glazegray.jpg'       => '天板 グレーズグレー',
+		'richelle-top-basaltblack.jpg'     => '天板 バサルトブラック',
+		'richelle-top-calacattawhite.jpg'  => '天板 カラカッタホワイト',
+		'richelle-color-blackstucco.jpg'   => '扉カラー ブラックスタッコ',
+		'richelle-color-greigestucco.jpg'  => '扉カラー グレージュスタッコ',
+		'richelle-color-whitestucco.jpg'   => '扉カラー ホワイトスタッコ',
+		'richelle-color-airywhite.jpg'     => '扉カラー エアリィホワイト',
+		'richelle-color-criedark.jpg'      => '扉カラー クリエダーク',
+		'richelle-color-criemocha.jpg'     => '扉カラー クリエモカ',
+		'richelle-color-crieivory.jpg'     => '扉カラー クリエアイボリー',
+		'richelle-color-plainwalnut.jpg'   => '扉カラー プレーンウォルナット',
+		'richelle-color-rusticash.jpg'     => '扉カラー ラスティックアッシュ',
+		'richelle-color-rusticoak.jpg'     => '扉カラー ラスティックオーク',
+		'richelle-sink-cosmicgray.jpg'     => 'シンク コズミックグレー',
+		'richelle-sink-taupebeige.jpg'     => 'シンク トープベージュ',
+		'richelle-sink-shellwhite.jpg'     => 'シンク シェルホワイト',
+		'richelle-spec-top.jpg'            => 'セラミックトップ',
+		'richelle-spec-sink.jpg'           => 'ハイブリットクォーツシンク',
+		'richelle-spec-led.jpg'            => 'LED照明（クイックポケット一体型）',
+		'richelle-spec-hood.jpg'           => 'シロッコファンレンジフード',
+		'richelle-spec-rakupat.jpg'        => 'らくパット収納',
+		'richelle-spec-rail.jpg'           => 'ソフトモーションレール',
+		'richelle-spec-bottom.jpg'         => 'ステンレス引出し底板',
+		'richelle-spec-pocket.jpg'         => 'クイックポケット',
+		'richelle-spec-pallet.jpg'         => 'クイックパレット',
+		'richelle-spec-faucet.jpg'         => 'ハンズフリー水栓H7エコハンドル',
+		'richelle-point-ceramic1.jpg'      => 'セラミックトップに高温の鍋を直接置いたところ',
+		'richelle-point-ceramic2.jpg'      => 'セラミックトップを金属のフォークでこすったところ',
+		'richelle-point-ceramic3.jpg'      => 'セラミックトップにこぼれた油汚れ',
+		'richelle-point-ceramic4.jpg'      => '缶が倒れても割れにくい強化構造',
+		'richelle-point-raku1.jpg'         => '斜めに傾く扉のらくパット収納',
+		'richelle-point-raku2.jpg'         => '引き出しを大きく開けずに取り出せるパッとシェルフ',
+		'richelle-point-quartz1.jpg'       => 'ハイブリットクォーツシンク',
+		'richelle-point-quartz2.jpg'       => 'ナイアガラフロー方式で水が段差へ流れるところ',
+		'richelle-opt-dish.jpg'            => 'W450mmプルオープン食器洗い乾燥機',
+		'richelle-opt-downwall.jpg'        => 'オートダウンウォール',
+		'richelle-opt-hood.jpg'            => 'よごれんフード',
+		'richelle-opt-water.jpg'           => 'ビルトイン型浄水器 専用水栓ナビッシュ',
 	);
 	foreach ( $stock as $f => $alt ) {
 		if ( $img( $f, $alt ) ) $log[] = 'メディアに追加: ' . $f;
@@ -553,7 +598,7 @@ add_action( 'init', function () {
 	   ------------------------------------------------------------ */
 	$rebuild_keys = array( '_ymkrf_images', '_ymkrf_colors', '_ymkrf_tops', '_ymkrf_sinks', '_ymkrf_handles', '_ymkrf_specs', '_ymkrf_features', '_ymkrf_options' );
 
-	foreach ( array( 'rakuera', 'refit', 'sierra-s', 's-class', 'stedia', 'edel', 'classo' ) as $slug ) {
+	foreach ( array( 'rakuera', 'refit', 'sierra-s', 's-class', 'stedia', 'edel', 'classo', 'richelle' ) as $slug ) {
 
 		$p = get_page_by_path( $slug, OBJECT, 'ymkrf_product' );
 		if ( ! $p ) continue;
@@ -1925,6 +1970,176 @@ add_action( 'init', function () {
 
 			update_post_meta( $cid, '_ymkrf_img_missing', $missing - $m0 );
 			$log[] = '商品「ザ・クラッソ」を登録しました → ' . get_permalink( $cid );
+		}
+	}
+
+	/* ------------------------------------------------------------
+	   3-a8. リシェル（SSSグレード・LIXIL）を1件つくる
+	   ------------------------------------------------------------ */
+	if ( ! get_page_by_path( 'richelle', OBJECT, 'ymkrf_product' ) ) {
+
+		$xid = wp_insert_post( array(
+			'post_type'   => 'ymkrf_product',
+			'post_status' => 'publish',
+			'post_title'  => 'リシェル',
+			'post_name'   => 'richelle',
+		) );
+
+		if ( $xid && ! is_wp_error( $xid ) ) {
+
+			$m0 = $missing;   /* この商品で見つからなかった写真を数えるための起点 */
+
+			$f = array(
+				'_ymkrf_catch'   => 'シンプルで使いやすいキッチン',
+				'_ymkrf_grade'   => 'SSSグレード',
+				'_ymkrf_name'    => 'リシェル',
+				'_ymkrf_size'    => 'I型2550タイプ',
+				'_ymkrf_work'    => '240000',
+				'_ymkrf_item'    => '1458000',
+				'_ymkrf_days'    => '3',
+				'_ymkrf_pt1'     => '強い素材',
+				'_ymkrf_pt2'     => '快適',
+				'_ymkrf_pt3'     => '収納力',
+				'_ymkrf_caution' => '※写真はイメージになります。'
+				                  . '※扉カラーのグループ1は4シリーズ・全10色の中からお選びいただけます。',
+			);
+			foreach ( $f as $k => $v ) update_post_meta( $xid, $k, $v );
+			update_post_meta( $xid, '_ymkrf_total', 1698000 );
+
+			$m = $img( 'richelle-main.jpg' );
+			if ( $m ) set_post_thumbnail( $xid, $m );
+			update_post_meta( $xid, '_ymkrf_images', array() );
+
+			/* 扉カラー グループ1（4シリーズ・全10色） */
+			$xc = array(
+				array( 'richelle-color-blackstucco.jpg',  'ブラックスタッコ（KP1）' ),
+				array( 'richelle-color-greigestucco.jpg', 'グレージュスタッコ（VP1）' ),
+				array( 'richelle-color-whitestucco.jpg',  'ホワイトスタッコ（WP1）' ),
+				array( 'richelle-color-airywhite.jpg',    'エアリィホワイト（WP0）' ),
+				array( 'richelle-color-criedark.jpg',     'クリエダーク（AQ1）' ),
+				array( 'richelle-color-criemocha.jpg',    'クリエモカ（UQ1）' ),
+				array( 'richelle-color-crieivory.jpg',    'クリエアイボリー（HQ1）' ),
+				array( 'richelle-color-plainwalnut.jpg',  'プレーンウォルナット（AQ0）' ),
+				array( 'richelle-color-rusticash.jpg',    'ラスティックアッシュ（IQ0）' ),
+				array( 'richelle-color-rusticoak.jpg',    'ラスティックオーク（NQ0）' ),
+			);
+			$rows = array();
+			foreach ( $xc as $r ) $rows[] = array( 'img' => $img( $r[0] ), 'name' => $r[1] );
+			update_post_meta( $xid, '_ymkrf_colors', $rows );
+
+			/* 天板（全6色） */
+			$xt = array(
+				array( 'richelle-top-carbon.jpg',         'ラパートカーボン' ),
+				array( 'richelle-top-taupe.jpg',          'ラパートトープ' ),
+				array( 'richelle-top-silk.jpg',           'ラパートシルク' ),
+				array( 'richelle-top-glazegray.jpg',      'グレーズグレー' ),
+				array( 'richelle-top-basaltblack.jpg',    'バサルトブラック' ),
+				array( 'richelle-top-calacattawhite.jpg', 'カラカッタホワイト' ),
+			);
+			$rows = array();
+			foreach ( $xt as $r ) $rows[] = array( 'img' => $img( $r[0] ), 'name' => $r[1] );
+			update_post_meta( $xid, '_ymkrf_tops', $rows );
+
+			/* シンク（全3色） */
+			update_post_meta( $xid, '_ymkrf_sinks', array(
+				array( 'img' => $img( 'richelle-sink-cosmicgray.jpg' ), 'name' => 'コズミックグレー' ),
+				array( 'img' => $img( 'richelle-sink-taupebeige.jpg' ), 'name' => 'トープベージュ' ),
+				array( 'img' => $img( 'richelle-sink-shellwhite.jpg' ), 'name' => 'シェルホワイト' ),
+			) );
+
+			/* 取っ手はカタログに一覧が無いので空のまま（見出しごと出ません） */
+			update_post_meta( $xid, '_ymkrf_handles', array() );
+
+			/* 標準仕様10点 */
+			$xs = array(
+				array( 'richelle-spec-top.jpg',     'セラミックトップ',           '' ),
+				array( 'richelle-spec-sink.jpg',    'ハイブリットクォーツシンク', '' ),
+				array( 'richelle-spec-led.jpg',     'LED照明',                    'クイックポケット一体型' ),
+				array( 'richelle-spec-hood.jpg',    'シロッコファンレンジフード', 'SER-933S1' ),
+				array( 'richelle-spec-rakupat.jpg', 'らくパット収納',             'シンク下・コンロ下' ),
+				array( 'richelle-spec-rail.jpg',    'ソフトモーションレール',     '' ),
+				array( 'richelle-spec-bottom.jpg',  'ステンレス引出し底板',       '' ),
+				array( 'richelle-spec-pocket.jpg',  'クイックポケット',           '' ),
+				array( 'richelle-spec-pallet.jpg',  'クイックパレット',           '' ),
+				array( 'richelle-spec-faucet.jpg',  'ハンズフリー水栓H7エコハンドル', 'SFNAH472SYJG5' ),
+			);
+			$rows = array();
+			foreach ( $xs as $r ) $rows[] = array( 'img' => $img( $r[0], $r[1] ), 'name' => $r[1], 'model' => $r[2] );
+			update_post_meta( $xid, '_ymkrf_specs', $rows );
+
+			/* おすすめポイント（3グループ・8ポイント） */
+			update_post_meta( $xid, '_ymkrf_features', array(
+				array( 'gsub'=>'熱にもキズにも汚れにも、強い。だから、調理に専念できます。', 'gttl'=>'「セラミックトップ」',
+				       'ttl'=>'熱に強い。',
+				       'text'=>"焼き物ならではの繊細な味わい深い表情が、キッチンを個性的に彩ります。\n高温の鍋を直接置いても変形や変色が起こりにくい丈夫な素材です。",
+				       'note'=>'',
+				       'img'=>$img('richelle-point-ceramic1.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'', 'gttl'=>'',
+				       'ttl'=>'キズに強い。',
+				       'text'=>'表面硬度が高く、金属などでこすってもキズがつきにくくなっています。', 'note'=>'',
+				       'img'=>$img('richelle-point-ceramic2.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'', 'gttl'=>'',
+				       'ttl'=>'汚れに強い。',
+				       'text'=>'汚れが染み込みにくいので、軽く拭くだけでお手入れできます。', 'note'=>'',
+				       'img'=>$img('richelle-point-ceramic3.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'', 'gttl'=>'',
+				       'ttl'=>'衝撃に強い。',
+				       'text'=>'耐衝撃性を高める強化構造を採用。', 'note'=>'',
+				       'img'=>$img('richelle-point-ceramic4.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'斜めに傾く扉がポイント！', 'gttl'=>'「らくパッと収納」',
+				       'ttl'=>'パッとポケット',
+				       'text'=>"軽い力でラクに開けられます。\n包丁などは扉を傾けるだけで取り出せます。", 'note'=>'',
+				       'img'=>$img('richelle-point-raku1.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'', 'gttl'=>'',
+				       'ttl'=>'パッとシェルフ',
+				       'text'=>'ボウルなども、引き出しを大きく開けなくても、取り出せます。', 'note'=>'',
+				       'img'=>$img('richelle-point-raku2.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'シンクに適した素材。', 'gttl'=>'「ハイブリットクォーツシンク」',
+				       'ttl'=>'ハイブリットクォーツ',
+				       'text'=>'耐摩耗性、耐衝撃性、耐防汚性などシンクに求められる様々な性能をバランスよく達成しました。', 'note'=>'',
+				       'img'=>$img('richelle-point-quartz1.jpg'), 'img2'=>'' ),
+				array( 'gsub'=>'', 'gttl'=>'',
+				       'ttl'=>'ナイアガラフロー方式',
+				       'text'=>'シンクの奥の段差に向けて汚れやゴミをスムーズに洗い流せます。', 'note'=>'',
+				       'img'=>$img('richelle-point-quartz2.jpg'), 'img2'=>'' ),
+			) );
+
+			/* おすすめオプション4点 */
+			update_post_meta( $xid, '_ymkrf_options', array(
+				array( 'img'=>$img('richelle-opt-dish.jpg'), 'name'=>'W450mmプルオープン 食器洗い乾燥機 NP-45ME9WPJG',
+				       'text'=>'手洗いより節水で省エネ。家事の手間を省きます。',
+				       'price'=>'423000', 'note'=>'' ),
+				array( 'img'=>$img('richelle-opt-downwall.jpg'), 'name'=>'オートダウンウォール（W900収納＋W750水切り）',
+				       'text'=>'スイッチ操作で棚が自動的に昇降。上段も目の高さで便利に使えます。',
+				       'price'=>'193000', 'note'=>'' ),
+				array( 'img'=>$img('richelle-opt-hood.jpg'), 'name'=>'よごれんフード（W900・扉色幕板）',
+				       'text'=>'フード内部の面倒なお掃除から開放してくれます。',
+				       'price'=>'75000', 'note'=>'' ),
+				array( 'img'=>$img('richelle-opt-water.jpg'), 'name'=>'ビルトイン型浄水器 専用水栓ナビッシュ JF-ND701-JG',
+				       'text'=>'手をかざすだけで楽々吐水。カートリッジ1本付き。',
+				       'price'=>'95000', 'note'=>'※オプション価格は近日中に値上げするため、現時点での参考価格となります。' ),
+			) );
+
+			/* 標準工事に含まれる工事 */
+			$xw = array(
+				array( '撤去工事',               '古いキッチンの撤去にかかる工事です。' ),
+				array( '廃棄処分',               '撤去した古いキッチンを廃棄処分するためにかかる費用です。' ),
+				array( 'ガス配管変更工事',       'ガスコンロを使うための配管工事です。' ),
+				array( 'キッチンパネル設置工事', 'キッチンパネルの取り付け工事費です。' ),
+				array( 'キッチンパネル部材費',   'キッチンパネル自体の部材費です。' ),
+				array( '下地工事（大工工事）',   'キッチンパネル設置面の補修、補強の工事です。' ),
+				array( 'シロッコファン取付工事', 'シロッコファンの取付工事です。' ),
+			);
+			$rows = array();
+			foreach ( $xw as $r ) $rows[] = array( 'name' => $r[0], 'text' => $r[1] );
+			update_post_meta( $xid, '_ymkrf_works', $rows );
+
+			wp_set_object_terms( $xid, 'kitchen', 'ymkrf_product_cat' );
+			wp_set_object_terms( $xid, 'lixil',   'ymkrf_maker' );
+			wp_set_object_terms( $xid, array( 'nonoichi', 'komathu', 'hakui', 'kanadu' ), 'ymkrf_shop' );
+
+			update_post_meta( $xid, '_ymkrf_img_missing', $missing - $m0 );
+			$log[] = '商品「リシェル」を登録しました → ' . get_permalink( $xid );
 		}
 	}
 
