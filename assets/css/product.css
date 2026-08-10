@@ -566,19 +566,6 @@
 .p-cat__calc{
   background:#c8161d; border-radius:16px; padding:16px 12px 14px; color:#fff;
 }
-.p-cat__calcttl{
-  margin:0 0 12px; text-align:center; font-size:clamp(15px,4.3vw,24px); font-weight:900;
-  letter-spacing:.02em; line-height:1.4;
-  display:flex; align-items:center; justify-content:center; gap:12px;
-}
-/* 左右の「＼ ／」は文字ではなく線を傾けて描いています */
-.p-cat__calcttl::before,
-.p-cat__calcttl::after{
-  content:""; width:2px; height:1.35em; background:#fff; border-radius:2px; flex:none;
-}
-.p-cat__calcttl::before{ transform:rotate(-22deg); }
-.p-cat__calcttl::after{ transform:rotate(22deg); }
-
 .p-cat__calcbody{
   display:grid; grid-template-columns:1fr; gap:24px; align-items:stretch;
 }
@@ -617,25 +604,46 @@
   background:rgba(255,255,255,.22); color:#fff;
   font-size:clamp(20px,5.4vw,26px); font-weight:900; line-height:1;
 }
-/* 工事費内訳 */
-.p-cat__calcbreak{
-  border-top:1px dashed #d8cfca; padding:10px 12px 12px;
+/* --- 工事費にふくまれる8つの工事 --- */
+.p-cat__stepsttl{
+  margin:18px 0 0; text-align:center; color:#fff; line-height:1.4;
+  font-size:clamp(13px,3.6vw,18px); font-weight:900; letter-spacing:.02em;
+  display:flex; align-items:center; justify-content:center; gap:10px;
 }
-.p-cat__calcbreakttl{
-  margin:0 auto 8px; display:table; background:#6b6b6b; color:#fff; border-radius:4px;
-  padding:3px 10px; font-size:11px; font-weight:900; line-height:1.4; letter-spacing:.08em;
+/* 見出しの左右に「＼ ／」を線で描いています */
+.p-cat__stepsttl::before,
+.p-cat__stepsttl::after{
+  content:""; width:2px; height:1.25em; background:#fff; border-radius:2px; flex:none;
 }
-.p-cat__calclist{
-  list-style:none; margin:0; padding:0;
-  display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px 8px;
+.p-cat__stepsttl::before{ transform:rotate(-22deg); }
+.p-cat__stepsttl::after{ transform:rotate(22deg); }
+.p-cat__steps{
+  list-style:none; margin:12px 0 0; padding:0;
+  display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px;
 }
-.p-cat__calclist li{
-  display:flex; align-items:center; gap:6px;
-  font-size:clamp(11px,2.9vw,13.5px); font-weight:700; color:var(--ink); line-height:1.3;
+.p-cat__step{
+  position:relative; background:#fff; border-radius:10px; color:var(--ink);
+  padding:12px 8px 11px; text-align:center;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px;
 }
-.p-cat__calclist svg{ width:1.35em; height:1.35em; flex:none; color:#6b6b6b; }
+.p-cat__stepnum{
+  position:absolute; top:-7px; left:-5px;
+  width:24px; height:24px; border-radius:50%; background:#c8161d; border:2px solid #fff;
+  color:#fff; font-size:12.5px; font-weight:900; line-height:1;
+  font-family:"Helvetica Neue",Arial,sans-serif;
+  display:grid; place-items:center;
+}
+.p-cat__stepicon{ display:block; color:#c8161d; }
+.p-cat__stepicon svg{ width:clamp(28px,7.5vw,36px); height:clamp(28px,7.5vw,36px); display:block; }
+.p-cat__stepname{
+  font-size:clamp(11.5px,3vw,14px); font-weight:900; line-height:1.35; text-wrap:balance;
+}
+.p-cat__stepsub{
+  margin-top:-2px; font-size:clamp(9.5px,2.5vw,11.5px); font-weight:700; line-height:1.4;
+  color:var(--ink-sub); text-wrap:balance;
+}
 .p-cat__calcnote{
-  margin:11px 0 0; text-align:center; line-height:1.6; color:#ffe3e0;
+  margin:13px 0 0; text-align:center; line-height:1.6; color:#ffe3e0;
   font-size:clamp(10.5px,2.8vw,13px);
 }
 /* お悩みの前置き */
@@ -788,21 +796,15 @@
 @media (min-width:600px){
   .p-cat__points{ gap:16px; }
   .p-cat__point{ padding:20px 18px 22px; }
-  /* 広い画面では、参考いただいた通り「商品代 ＋ 工事費」を横並びにします */
+  /* 広い画面では「商品代 ＋ 工事費」を横並びにします */
   .p-cat__calc{ padding:24px 26px 22px; }
-  .p-cat__calcbody{
-    grid-template-columns:minmax(0,0.78fr) auto minmax(0,1.22fr);
-    gap:0 14px; align-items:stretch;
-  }
+  .p-cat__calcbody{ grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); gap:0 16px; }
   .p-cat__calcplus{ margin:0; }
   .p-cat__calcin{ padding:14px 16px 18px; display:flex; flex-direction:column; justify-content:center; }
-  .p-cat__calcin--work{
-    display:grid; grid-template-columns:minmax(0,1fr) auto; gap:14px; align-items:center;
-    padding:12px 16px 14px;
-  }
-  .p-cat__calcbreak{ border-top:none; border-left:1px dashed #d8cfca; padding:4px 0 4px 16px; }
-  .p-cat__calcbreakttl{ margin:0 0 8px; }
-  .p-cat__calclist{ gap:7px 14px; }
+  .p-cat__stepsttl{ margin-top:24px; }
+  .p-cat__steps{ grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; margin-top:16px; }
+  .p-cat__step{ padding:16px 10px 14px; gap:7px; }
+  .p-cat__stepnum{ width:28px; height:28px; font-size:14px; top:-9px; left:-7px; }
   .p-cat__worrybox{ gap:18px; margin-top:6px; }
   .p-cat__worryflow{ gap:9px; }
   .p-cat__worries{ gap:9px; padding-right:9px; }
