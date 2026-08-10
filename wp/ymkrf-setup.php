@@ -14,13 +14,30 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '16' );
+define( 'YMKRF_SETUP_VER', '17' );
 
-add_action( 'admin_init', function () {
+/**
+ * init（優先度99）に付けているので、管理画面だけでなく
+ * サイトの普通のページを開いたときにも動きます。
+ * 「管理画面にログインしないと商品が増えない」という手間をなくすためです。
+ *
+ * ただし本番サーバーで誰でも動かせては困るので、
+ * ・管理者としてログインしている
+ * ・または localhost（手元のXAMPP）で見ている
+ * のどちらかのときだけ動きます。
+ */
+add_action( 'init', function () {
 
 	if ( get_option( 'ymkrf_setup_done' ) === YMKRF_SETUP_VER ) return;
-	if ( ! current_user_can( 'manage_options' ) ) return;
 	if ( ! post_type_exists( 'ymkrf_product' ) ) return; // テーマがまだ有効でない
+	if ( wp_doing_ajax() || ( defined( 'DOING_CRON' ) && DOING_CRON ) ) return;
+	if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) return;
+
+	$host  = isset( $_SERVER['HTTP_HOST'] ) ? strtolower( (string) $_SERVER['HTTP_HOST'] ) : '';
+	$host  = explode( ':', $host )[0];
+	$local = in_array( $host, array( 'localhost', '127.0.0.1', '::1' ), true );
+
+	if ( ! $local && ! current_user_can( 'manage_options' ) ) return;
 
 	/* 写真を何十枚もまとめて取り込むので、時間とメモリの上限を外します。
 	   （これが無いと途中で止まり、写真が入らない商品ができてしまいます） */
@@ -28,8 +45,12 @@ add_action( 'admin_init', function () {
 	@ini_set( 'memory_limit', '512M' );
 	@ignore_user_abort( true );
 
+	/* サイト側から動かすときは、管理画面用の関数がまだ読み込まれていないので、
+	   ここで読み込みます（wp_generate_attachment_metadata などを使うため）。 */
 	require_once ABSPATH . 'wp-admin/includes/file.php';
+	require_once ABSPATH . 'wp-admin/includes/media.php';
 	require_once ABSPATH . 'wp-admin/includes/image.php';
+	require_once ABSPATH . 'wp-admin/includes/post.php';
 
 	$log = array();
 
@@ -1519,7 +1540,7 @@ add_action( 'admin_init', function () {
 	flush_rewrite_rules();
 	update_option( 'ymkrf_setup_done', YMKRF_SETUP_VER );
 	update_option( 'ymkrf_setup_log', $log );
-} );
+}, 99 );   /* 99 ＝ テーマが商品の投稿タイプを登録し終わったあとに動かすため */
 
 
 /* 管理画面の上に、結果を1度だけ表示します */
