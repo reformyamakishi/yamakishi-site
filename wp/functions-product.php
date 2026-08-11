@@ -1121,7 +1121,7 @@ endif;
    ============================================================ */
 add_action( 'init', function () {
 
-	$ver = '2026-08-11a';
+	$ver = '2026-08-11b';
 	if ( get_option( 'ymkrf_works_ver' ) === $ver ) return;
 	if ( ! post_type_exists( 'ymkrf_product' ) ) return;
 	if ( ! taxonomy_exists( 'ymkrf_product_cat' ) ) return;
@@ -1136,8 +1136,8 @@ add_action( 'init', function () {
 			array( 'ガス配管変更工事',       'ガスコンロを使うための配管工事です。' ),
 			array( 'キッチンパネル設置工事', 'キッチンパネル部材費込み施工いたします。' ),
 			array( '下地工事',               '大工工事です。キッチンパネル設置面の補修、補強を行います。' ),
-			array( 'シロッコファン取付工事', 'シロッコファンの取付工事です。' ),
 			array( 'システムキッチン取付設置', '新しいシステムキッチンの取り付け・設置工事です。' ),
+			array( 'シロッコファン取付工事', 'シロッコファンの取付工事です。' ),
 		),
 		'bathroom' => array(
 			array( '既存ユニットバス解体撤去工事', '古い浴槽の撤去にかかる工事です。' ),
