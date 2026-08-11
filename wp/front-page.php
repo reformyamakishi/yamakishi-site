@@ -2,18 +2,14 @@
 /**
  * front-page.php ─ トップページ（リフォームヤマキシ）
  *
- * index.html のうち、更新が発生する 3 か所だけを WordPress のループに置き換えたものです。
- * それ以外の HTML は index.html とまったく同じなので、
- * このファイルの ★1〜★3 だけを差し替えれば動きます。
+ * 置き場所： wp-content/themes/ymkrf/front-page.php
  *
- * 【必要な準備】
- *   functions.php に wp/functions-snippet.php の内容を追記
- *   → カスタム投稿タイプ ymkrf_works（施工事例）／ ymkrf_voice（お客様の声）が登録されます
- *   → お知らせは通常の投稿（post）を使います
+ * 静的サイトの index.html から <main> の中身をそのまま持ってきて、
+ * 画像のパスとサイト内リンクだけ WordPress の書き方に直したものです。
+ * ヘッダー・フッター・固定の問い合わせバーは header.php / footer.php が出します。
  *
- * 【画像パスの書き換え】
- *   index.html の  src="assets/img/..."
- *   → PHP では  src="<?php echo esc_url( get_stylesheet_directory_uri() ); ?>/assets/img/..."
+ * 施工事例・お客様の声・お知らせを「投稿から自動で出す」ようにするのは、
+ * 記事がそろってからの作業です。いまは静的サイトと同じ見た目のままです。
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
@@ -24,12 +20,522 @@ get_header();
 
 <main id="main">
 
-<?php /* ── ヒーロー 〜 選ばれる理由 までは index.html をそのまま貼り付け ── */ ?>
+<!-- ==========================================================
+     ヒーロー
+     ========================================================== -->
+<section class="p-hero">
+  <div class="l-wrap p-hero__inner">
 
+    <div class="p-hero__copy">
+      <span class="p-hero__badge">石川県・福井県に10店舗</span>
 
-<!-- ★1 ==================================================================
-     施工事例（カスタム投稿タイプ ymkrf_works）
-     ================================================================== -->
+      <h1 class="p-hero__title" data-split-text>
+        <span class="p-hero__title2 p-hero__title2--lead">工事費込みのパック価格だから</span>
+        <span class="nowrap"><span class="em">早い！安い！安心！</span></span>
+      </h1>
+
+      <p class="p-hero__lead">
+        建築士から設備・内装まで<b>自社施工！</b>
+        <b>自社在庫＆30分圏内</b>だから、安くて早い！あなたの町の頼れるリフォーム店！
+      </p>
+
+      <div class="p-hero__cta">
+        <a class="c-btn c-btn--line c-btn--block" href="https://lin.ee/UJZuSTrz" rel="noopener" data-cta="hero">
+          <svg class="c-btn__icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.5 2 2 5.6 2 10.1c0 4 3.6 7.4 8.4 8 .3.1.8.2.9.5.1.3.1.7 0 1l-.1.9c0 .3-.2 1 .9.6 1.1-.5 6-3.5 8.2-6C21.7 13.5 22 11.9 22 10.1 22 5.6 17.5 2 12 2z"/></svg>
+          <span class="c-btn__label">LINEで無料見積り<span class="c-btn__sub">ご相談だけでもOK・24時間受付</span></span>
+        </a>
+        <a class="c-btn c-btn--block" href="<?php echo esc_url( home_url( '/inquiry/webrsv/' ) ); ?>" data-cta="hero">
+          <svg class="c-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+          <span class="c-btn__label">ショールーム来店予約<span class="c-btn__sub">初回特典500円ヤマキシお買物券</span></span>
+        </a>
+      </div>
+
+      <p class="p-hero__note">※しつこい営業は一切いたしません。ご相談だけでも歓迎です。</p>
+    </div>
+
+    <div class="p-hero__visual">
+      <div class="p-heroslider" data-slider>
+        <div class="p-heroslider__item">
+          <picture>
+            <source srcset="<?php echo $asset; ?>/assets/img/common/hero-01.webp" type="image/webp">
+            <img src="<?php echo $asset; ?>/assets/img/common/hero-01.jpg" width="1600" height="1200"
+                 alt="外壁材のサンプルを使って、お客様にご説明するリフォームヤマキシのスタッフ"
+                 fetchpriority="high" decoding="async">
+          </picture>
+        </div>
+        <div class="p-heroslider__item">
+          <picture>
+            <source srcset="<?php echo $asset; ?>/assets/img/common/hero-02.webp" type="image/webp">
+            <img src="<?php echo $asset; ?>/assets/img/common/hero-02.jpg" width="1600" height="1200"
+                 alt="カタログを見ながらリフォームのご相談をされるお客様とスタッフ"
+                 loading="lazy" decoding="async">
+          </picture>
+        </div>
+        <div class="p-heroslider__item">
+          <picture>
+            <source srcset="<?php echo $asset; ?>/assets/img/common/hero-03.webp" type="image/webp">
+            <img src="<?php echo $asset; ?>/assets/img/common/hero-03.jpg" width="1560" height="1170"
+                 alt="リフォームヤマキシ金沢野々市店のショールームとスタッフ"
+                 loading="lazy" decoding="async">
+          </picture>
+        </div>
+        <div class="p-heroslider__dots" role="tablist" aria-label="メインビジュアルの切り替え"></div>
+      </div>
+
+      <div class="p-hero__mascot">
+        <p class="c-balloon p-hero__balloon">相談だけでも大丈夫トン♪</p>
+        <img class="p-hero__chara" src="<?php echo $asset; ?>/assets/img/character/char-hello.webp" width="503" height="640"
+             alt="ヤマキシのキャラクターがあいさつしているイラスト" fetchpriority="high">
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ==========================================================
+     実績バー（数字はスクロールでカウントアップ）
+     ========================================================== -->
+<div class="p-stats">
+  <div class="l-wrap">
+    <ul class="p-stats__list">
+      <li class="p-stats__item">
+        <span class="p-stats__num"><span data-count="10">10</span></span>
+        <span class="p-stats__label">石川・福井の店舗数</span>
+      </li>
+      <li class="p-stats__item">
+        <span class="p-stats__num"><span data-count="126" data-founded="1899" data-founded-month="10">126</span><span class="unit">年</span></span>
+        <span class="p-stats__label">創業からの年数</span>
+      </li>
+      <li class="p-stats__item">
+        <span class="p-stats__num"><span data-count="30">30</span><span class="unit">分</span></span>
+        <span class="p-stats__label">お店から伺える目安</span>
+      </li>
+      <li class="p-stats__item">
+        <span class="p-stats__num"><span data-count="0">0</span><span class="unit">円</span></span>
+        <span class="p-stats__label">見積り・現地調査</span>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<!-- ==========================================================
+     お困りごと → 3つの相談入口
+     ========================================================== -->
+<section class="l-section l-section--soft p-worry">
+  <div class="l-wrap">
+    <div class="c-head" data-reveal>
+      <span class="c-head__en">CONTACT</span>
+      <h2 class="c-head__title">ご相談は、<span class="marker">お好きな方法</span>で</h2>
+      <p class="c-head__lead">「いくらかかるのか知りたいだけ」でも大丈夫です。</p>
+    </div>
+
+    <ul class="p-worry__bubbles" data-reveal>
+      <li>お風呂が寒い</li>
+      <li>床がきしむ</li>
+      <li>給湯器が壊れた</li>
+      <li>家が古くなってきた</li>
+      <li>雨漏りを見てほしい</li>
+      <li>シロアリが心配</li>
+      <li>外壁が色あせてきた</li>
+      <li>いくらかかるか知りたい</li>
+    </ul>
+
+    <div class="p-route">
+      <a class="p-route__item p-route__item--line" href="https://lin.ee/UJZuSTrz" rel="noopener" data-cta="route" data-reveal>
+        <span class="p-route__icon">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.5 2 2 5.6 2 10.1c0 4 3.6 7.4 8.4 8 .3.1.8.2.9.5.1.3.1.7 0 1l-.1.9c0 .3-.2 1 .9.6 1.1-.5 6-3.5 8.2-6C21.7 13.5 22 11.9 22 10.1 22 5.6 17.5 2 12 2z"/></svg>
+        </span>
+        <span class="p-route__body">
+          <strong>LINEで相談・見積り</strong>
+          <span>気になる場所のお写真とお困りごとを送ってください。24時間受付</span>
+        </span>
+        <span class="p-route__arrow">›</span>
+      </a>
+
+      <a class="p-route__item" href="tel:0800-777-3331" data-cta="route" data-reveal data-reveal-delay="100">
+        <span class="p-route__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg>
+        </span>
+        <span class="p-route__body">
+          <strong>電話で相談する</strong>
+          <span>0800-777-3331／通話無料</span>
+        </span>
+        <span class="p-route__arrow">›</span>
+      </a>
+
+      <a class="p-route__item" href="<?php echo esc_url( home_url( '/inquiry/webrsv/' ) ); ?>" data-cta="route" data-reveal data-reveal-delay="200">
+        <span class="p-route__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 15h3"/></svg>
+        </span>
+        <span class="p-route__body">
+          <strong>ショールーム来店予約</strong>
+          <span>実物を見て決められる。特典500円分</span>
+        </span>
+        <span class="p-route__arrow">›</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================
+     かんたん見積りシミュレーター（JS）
+     ========================================================== -->
+<section class="l-section" id="sim">
+  <div class="l-wrap">
+    <div class="p-sim" data-sim data-reveal="zoom">
+      <div class="p-sim__head">
+        <h2>30秒でわかる、<br class="sp-only">おおよその費用</h2>
+        <p>3つ選ぶだけ。メールアドレスの入力はいりません。</p>
+      </div>
+
+      <ol class="p-sim__steps" aria-hidden="true">
+        <li class="is-active">1</li><li>2</li><li>3</li><li>✓</li>
+      </ol>
+
+      <!-- STEP1 -->
+      <div class="p-sim__panel is-active">
+        <p class="p-sim__q">どこを直したいですか？</p>
+        <div class="p-sim__choices p-sim__choices--3">
+          <button class="p-sim__choice" type="button" data-sim-key="part" data-sim-value="kitchen">
+            <span class="p-sim__ico"></span>キッチン</button>
+          <button class="p-sim__choice" type="button" data-sim-key="part" data-sim-value="bath">
+            <span class="p-sim__ico"></span>お風呂</button>
+          <button class="p-sim__choice" type="button" data-sim-key="part" data-sim-value="toilet">
+            <span class="p-sim__ico"></span>トイレ・洗面台</button>
+          <button class="p-sim__choice" type="button" data-sim-key="part" data-sim-value="boiler">
+            <span class="p-sim__ico"></span>給湯器・エコキュート</button>
+          <button class="p-sim__choice" type="button" data-sim-key="part" data-sim-value="wall">
+            <span class="p-sim__ico"></span>外壁・屋根</button>
+          <button class="p-sim__choice" type="button" data-sim-key="part" data-sim-value="other">
+            <span class="p-sim__ico"></span>その他</button>
+        </div>
+      </div>
+
+      <!-- STEP2 -->
+      <div class="p-sim__panel">
+        <p class="p-sim__q">お住まいはどのくらい経ちますか？</p>
+        <div class="p-sim__choices p-sim__choices--5">
+          <button class="p-sim__choice" type="button" data-sim-key="age" data-sim-value="10">築0〜10年</button>
+          <button class="p-sim__choice" type="button" data-sim-key="age" data-sim-value="20">築11〜20年</button>
+          <button class="p-sim__choice" type="button" data-sim-key="age" data-sim-value="30">築21〜30年</button>
+          <button class="p-sim__choice" type="button" data-sim-key="age" data-sim-value="40">築31〜40年</button>
+          <button class="p-sim__choice" type="button" data-sim-key="age" data-sim-value="50">築41年以上</button>
+        </div>
+        <a class="p-sim__back" href="#sim">← ひとつ前にもどる</a>
+      </div>
+
+      <!-- STEP3 -->
+      <div class="p-sim__panel">
+        <p class="p-sim__q">いつごろのご予定ですか？</p>
+        <div class="p-sim__choices">
+          <button class="p-sim__choice" type="button" data-sim-key="when" data-sim-value="now">できるだけ<br>早く</button>
+          <button class="p-sim__choice" type="button" data-sim-key="when" data-sim-value="m3">3か月<br>以内に</button>
+          <button class="p-sim__choice" type="button" data-sim-key="when" data-sim-value="m6">半年〜1年<br>のうちに</button>
+          <button class="p-sim__choice" type="button" data-sim-key="when" data-sim-value="plan">まだ考え<br>はじめたところ</button>
+        </div>
+        <a class="p-sim__back" href="#sim">← ひとつ前にもどる</a>
+      </div>
+
+      <!-- 結果 -->
+      <div class="p-sim__panel">
+        <div class="p-sim__result">
+          <p class="p-sim__result-label"><span data-sim-part>キッチン</span>のリフォーム費用は、だいたい</p>
+          <p class="p-sim__price">
+            <span class="unit">工事費込み</span>
+            <span class="num" data-sim-num>0</span>
+            <span class="unit">万円（税込）</span>
+          </p>
+          <p class="p-sim__note">
+            ※お住まいの状態やご希望の設備によって変わります。<br>
+            正確な金額は、無料の現地調査でお出しします。
+          </p>
+          <a class="c-btn c-btn--line c-btn--block" href="https://lin.ee/UJZuSTrz" rel="noopener" data-sim-line data-cta="simulator">
+            <svg class="c-btn__icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.5 2 2 5.6 2 10.1c0 4 3.6 7.4 8.4 8 .3.1.8.2.9.5.1.3.1.7 0 1l-.1.9c0 .3-.2 1 .9.6 1.1-.5 6-3.5 8.2-6C21.7 13.5 22 11.9 22 10.1 22 5.6 17.5 2 12 2z"/></svg>
+            <span class="c-btn__label">この内容でLINE相談する<span class="c-btn__sub" data-sim-memo>写真を送ると、より正確にお答えできます</span></span>
+          </a>
+          <a class="p-sim__retry" href="#sim">もう一度やりなおす</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================
+     補助金
+     ========================================================== -->
+<section class="l-section l-section--soft" id="subsidy">
+  <div class="l-wrap">
+    <div class="p-subsidy" data-reveal>
+      <div class="p-subsidy__body">
+        <span class="p-subsidy__tag">2026年度 受付中</span>
+        <h2 class="p-subsidy__title">補助金を使えば、<br><b>今がいちばん</b>お得です。</h2>
+        <p class="p-subsidy__text">
+          対象になるかの確認から申請書類の準備まで、当社がまとめて代行します。
+          「うちは使えるの？」というご質問だけでも、お気軽にどうぞ。
+        </p>
+        <a class="c-btn c-btn--ghost" href="https://lin.ee/UJZuSTrz" rel="noopener" data-cta="subsidy">補助金が使えるか聞いてみる</a>
+      </div>
+
+      <div>
+        <ul class="p-subsidy__list">
+          <li><span>窓・内窓リフォーム</span><b>最大100万円</b></li>
+          <li><span>エコキュート交換</span><b>最大12万円</b></li>
+          <li><span>浴室・トイレ・キッチンの断熱改修</span><b>対象</b></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================
+     パック価格
+     ========================================================== -->
+<section class="l-section" id="price">
+  <div class="l-wrap">
+    <div class="c-head" data-reveal>
+      <span class="c-head__en">PACK PRICE</span>
+      <h2 class="c-head__title">「結局いくら？」に<span class="marker">先に</span>お答えします</h2>
+      <p class="c-head__lead">本体・工事費・古い設備の処分費まで込みのパック価格。あとからの追加請求はありません。</p>
+    </div>
+
+    <div class="p-price__grid">
+
+      <div class="p-price__card p-price__card--feature" data-reveal>
+        <p class="p-price__badge">WEB限定・いちばん人気</p>
+        <div class="p-price__photo">［写真］水まわり4点パック</div>
+        <div class="p-price__body">
+          <h3 class="p-price__name">水まわり4点パック</h3>
+          <p class="p-price__desc">キッチン・お風呂・トイレ・洗面をまとめて。別々に頼むよりぐんとお得です。</p>
+          <p class="p-price__yen"><span class="lbl">工事費込み</span><span class="num">162.8</span><span class="unit">万円〜（税込）</span></p>
+          <p class="p-price__inc">本体＋標準工事＋既存撤去処分＋保証</p>
+          <a class="p-price__link" href="<?php echo esc_url( home_url( '/products/pack4/' ) ); ?>">プランを見る</a>
+        </div>
+      </div>
+
+      <div class="p-price__card" data-reveal data-reveal-delay="80">
+        <div class="p-price__photo">
+          <picture>
+            <source srcset="<?php echo $asset; ?>/assets/img/products/v-style/main.webp" type="image/webp">
+            <img src="<?php echo $asset; ?>/assets/img/products/v-style/main.jpg" width="863" height="784"
+                 alt="システムキッチン V-style（Vスタイル）" loading="lazy" decoding="async">
+          </picture>
+        </div>
+        <div class="p-price__body">
+          <h3 class="p-price__name">キッチン</h3>
+          <p class="p-price__desc">クリナップ・LIXIL・TOTOなど主要メーカーを、標準工事費込みで。</p>
+          <p class="p-price__yen"><span class="lbl">工事費込み</span><span class="num">59.8</span><span class="unit">万円〜（税込）</span></p>
+          <p class="p-price__inc">本体＋標準工事＋既存撤去処分</p>
+          <a class="p-price__link" href="<?php echo esc_url( home_url( '/products/kitchen/' ) ); ?>">プランを見る</a>
+        </div>
+      </div>
+
+      <div class="p-price__card" data-reveal data-reveal-delay="160">
+        <div class="p-price__photo">［写真］ユニットバス</div>
+        <div class="p-price__body">
+          <h3 class="p-price__name">お風呂（ユニットバス）</h3>
+          <p class="p-price__desc">断熱浴槽で冬もあたたか。工期は3〜5日が目安です。</p>
+          <p class="p-price__yen"><span class="lbl">工事費込み</span><span class="num">84.8</span><span class="unit">万円〜（税込）</span></p>
+          <p class="p-price__inc">本体＋標準工事＋既存撤去処分</p>
+          <a class="p-price__link" href="<?php echo esc_url( home_url( '/products/bathroom/' ) ); ?>">プランを見る</a>
+        </div>
+      </div>
+
+      <div class="p-price__card" data-reveal>
+        <div class="p-price__photo">［写真］トイレ</div>
+        <div class="p-price__body">
+          <h3 class="p-price__name">トイレ</h3>
+          <p class="p-price__desc">最短半日で交換完了。お掃除がラクな最新モデルにも対応します。</p>
+          <p class="p-price__yen"><span class="lbl">工事費込み</span><span class="num">12.9</span><span class="unit">万円〜（税込）</span></p>
+          <p class="p-price__inc">本体＋標準工事＋既存撤去処分</p>
+          <a class="p-price__link" href="<?php echo esc_url( home_url( '/products/toilet/' ) ); ?>">プランを見る</a>
+        </div>
+      </div>
+
+      <div class="p-price__card" data-reveal data-reveal-delay="80">
+        <div class="p-price__photo">［写真］洗面化粧台</div>
+        <div class="p-price__body">
+          <h3 class="p-price__name">洗面化粧台</h3>
+          <p class="p-price__desc">朝の身支度がしやすく。収納が増えて、掃除もラクになります。</p>
+          <p class="p-price__yen"><span class="lbl">工事費込み</span><span class="num">7.48</span><span class="unit">万円〜（税込）</span></p>
+          <p class="p-price__inc">本体＋標準工事＋既存撤去処分</p>
+          <a class="p-price__link" href="<?php echo esc_url( home_url( '/products/lavatory/' ) ); ?>">プランを見る</a>
+        </div>
+      </div>
+
+      <div class="p-price__card" data-reveal data-reveal-delay="80">
+        <div class="p-price__photo">［写真］エコキュート</div>
+        <div class="p-price__body">
+          <h3 class="p-price__name">給湯器・エコキュート</h3>
+          <p class="p-price__desc">お湯が出ない、というときもすぐお伺いします。夜間・休日のトラブルにも対応。</p>
+          <p class="p-price__yen p-price__yen--challenge"><span class="lbl">工事費込み</span><span class="chal">地域最安値に<br class="sp-only">挑戦中！</span></p>
+          <p class="p-price__inc">本体＋標準工事＋既存撤去処分</p>
+          <a class="p-price__link" href="<?php echo esc_url( home_url( '/products/boiler/' ) ); ?>">プランを見る</a>
+        </div>
+      </div>
+
+      <div class="p-price__card" data-reveal data-reveal-delay="160">
+        <div class="p-price__photo">［写真］外壁塗装</div>
+        <div class="p-price__body">
+          <h3 class="p-price__name">外壁塗装</h3>
+          <p class="p-price__desc">北陸の雪と雨に耐える塗料選びから。専門サイトもご用意しています。</p>
+          <p class="p-price__yen"><span class="lbl">100㎡・足場込み</span><span class="num">49.8</span><span class="unit">万円〜（税込）</span></p>
+          <p class="p-price__inc">足場＋高圧洗浄＋下塗り〜上塗り</p>
+          <a class="p-price__link" href="<?php echo esc_url( home_url( '/products/outer-wall/' ) ); ?>">プランを見る</a>
+        </div>
+      </div>
+
+    </div>
+
+    <a class="c-more" href="<?php echo esc_url( home_url( '/products/' ) ); ?>">すべての商品・価格を見る</a>
+  </div>
+</section>
+
+<!-- ==========================================================
+     リフォームメニュー
+     ========================================================== -->
+<section class="l-section l-section--soft p-menu" id="menu">
+  <div class="l-wrap">
+    <div class="c-head" data-reveal>
+      <span class="c-head__en">MENU</span>
+      <h2 class="c-head__title">リフォームメニュー</h2>
+      <p class="c-head__lead">家まるごとから、蛇口ひとつの修理まで。</p>
+    </div>
+
+    <div class="p-menu__grid" data-reveal>
+      <a class="p-menu__item" href="<?php echo esc_url( home_url( '/products/kitchen/' ) ); ?>" data-icon="kitchen">
+        <span class="p-menu__icon"></span>
+        <span class="p-menu__name">キッチン</span><span class="p-menu__note">システムキッチン交換</span>
+      </a>
+      <a class="p-menu__item" href="<?php echo esc_url( home_url( '/products/bathroom/' ) ); ?>" data-icon="bath">
+        <span class="p-menu__icon"></span>
+        <span class="p-menu__name">お風呂</span><span class="p-menu__note">断熱浴槽であたたかく</span>
+      </a>
+      <a class="p-menu__item" href="<?php echo esc_url( home_url( '/products/toilet/' ) ); ?>" data-icon="toilet">
+        <span class="p-menu__icon"></span>
+        <span class="p-menu__name">トイレ</span><span class="p-menu__note">最短半日で交換</span>
+      </a>
+      <a class="p-menu__item" href="<?php echo esc_url( home_url( '/products/lavatory/' ) ); ?>" data-icon="washroom">
+        <span class="p-menu__icon"></span>
+        <span class="p-menu__name">洗面化粧台</span><span class="p-menu__note">収納たっぷり</span>
+      </a>
+      <a class="p-menu__item" href="<?php echo esc_url( home_url( '/products/boiler/' ) ); ?>" data-icon="boiler">
+        <span class="p-menu__icon"></span>
+        <span class="p-menu__name">給湯器</span><span class="p-menu__note">故障・交換のご相談</span>
+      </a>
+      <a class="p-menu__item" href="<?php echo esc_url( home_url( '/products/ecocute/' ) ); ?>" data-icon="ecocute">
+        <span class="p-menu__icon"></span>
+        <span class="p-menu__name">エコキュート</span><span class="p-menu__note">電気でお湯をつくる</span>
+      </a>
+      <a class="p-menu__item" href="<?php echo esc_url( home_url( '/products/ih/' ) ); ?>" data-icon="ih">
+        <span class="p-menu__icon"></span>
+        <span class="p-menu__name">IH</span><span class="p-menu__note">IHクッキングヒーター</span>
+      </a>
+      <a class="p-menu__item" href="<?php echo esc_url( home_url( '/products/interior/' ) ); ?>" data-icon="interior">
+        <span class="p-menu__icon"></span>
+        <span class="p-menu__name">内装・クロス・床</span><span class="p-menu__note">お部屋の模様替え</span>
+      </a>
+      <a class="p-menu__item" href="<?php echo esc_url( home_url( '/products/renovation/' ) ); ?>" data-icon="renovation">
+        <span class="p-menu__icon"></span>
+        <span class="p-menu__name">内装・改装</span><span class="p-menu__note">間取りの変更も</span>
+      </a>
+      <a class="p-menu__item" href="<?php echo esc_url( home_url( '/products/window/' ) ); ?>" data-icon="window">
+        <span class="p-menu__icon"></span>
+        <span class="p-menu__name">窓・断熱</span><span class="p-menu__note">補助金の対象工事</span>
+      </a>
+      <a class="p-menu__item" href="<?php echo esc_url( home_url( '/products/door/' ) ); ?>" data-icon="door">
+        <span class="p-menu__icon"></span>
+        <span class="p-menu__name">玄関ドア</span><span class="p-menu__note">1日で交換できます</span>
+      </a>
+      <a class="p-menu__item" href="<?php echo esc_url( home_url( '/products/outer-wall/' ) ); ?>" data-icon="wall">
+        <span class="p-menu__icon"></span>
+        <span class="p-menu__name">外壁・屋根</span><span class="p-menu__note">塗装・サイディング</span>
+      </a>
+      <a class="p-menu__item" href="<?php echo esc_url( home_url( '/products/carport/' ) ); ?>" data-icon="carport">
+        <span class="p-menu__icon"></span>
+        <span class="p-menu__name">カーポート</span><span class="p-menu__note">雪や雨から車を守る</span>
+      </a>
+      <a class="p-menu__item" href="<?php echo esc_url( home_url( '/products/storage/' ) ); ?>" data-icon="storage">
+        <span class="p-menu__icon"></span>
+        <span class="p-menu__name">物置</span><span class="p-menu__note">庭まわりの収納に</span>
+      </a>
+      <a class="p-menu__item" href="<?php echo esc_url( home_url( '/products/veranda/' ) ); ?>" data-icon="veranda">
+        <span class="p-menu__icon"></span>
+        <span class="p-menu__name">ベランダ・サンルーム</span><span class="p-menu__note">洗濯物も安心</span>
+      </a>
+      <a class="p-menu__item" href="<?php echo esc_url( home_url( '/works/repair/' ) ); ?>" data-icon="repair">
+        <span class="p-menu__icon"></span>
+        <span class="p-menu__name">修理・小工事</span><span class="p-menu__note">水漏れ・建具・電気</span>
+      </a>
+      <a class="p-menu__item" href="<?php echo esc_url( home_url( '/works/whole/' ) ); ?>" data-icon="whole">
+        <span class="p-menu__icon"></span>
+        <span class="p-menu__name">全面リフォーム</span><span class="p-menu__note">住まいまるごと</span>
+      </a>
+      <a class="p-menu__item" href="<?php echo esc_url( home_url( '/inquiry/' ) ); ?>" data-icon="other">
+        <span class="p-menu__icon"></span>
+        <span class="p-menu__name">その他</span><span class="p-menu__note">まずはご相談ください</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================
+     選ばれる理由
+     ========================================================== -->
+<section class="l-section" id="reason">
+  <div class="l-wrap">
+    <div class="c-head" data-reveal>
+      <span class="c-head__en">REASON</span>
+      <h2 class="c-head__title">安いのには、<span class="marker">理由があります</span></h2>
+      <p class="c-head__lead">ただ安いだけのリフォームは、いたしません。徹底的にコストを削っているから、良いものをこの価格でお届けできます。</p>
+    </div>
+
+    <div class="p-reason__grid">
+      <article class="p-reason__card" data-reveal>
+        <span class="p-reason__no">REASON 01</span>
+        <span class="p-reason__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 12-8.5 8.5a2.12 2.12 0 1 1-3-3L12 9"/><path d="M17.64 15 22 10.64"/><path d="m20.91 11.7-1.25-1.25c-.6-.6-.93-1.4-.93-2.25v-.86L16.01 4.6a5.56 5.56 0 0 0-3.94-1.64H9l.92.82A6.18 6.18 0 0 1 12 8.4v1.56l2 2h2.47l2.26 1.91"/></svg>
+        </span>
+        <h3 class="p-reason__title">自社の職人が<br>責任をもって施工</h3>
+        <p class="p-reason__text">大工・設備・電気・内装まで自社の職人が担当します。工事を下請けに丸投げしないので中間コストがかからず、仕上がりの責任も当社が持ちます。</p>
+      </article>
+
+      <article class="p-reason__card" data-reveal data-reveal-delay="80">
+        <span class="p-reason__no">REASON 02</span>
+        <span class="p-reason__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h18l-1.6 3.4a2 2 0 0 1-1.8 1.1H6.4a2 2 0 0 1-1.8-1.1z"/><path d="M5 11.5V20h14v-8.5"/><path d="M9.5 20v-5h5v5"/><path d="M7 7V4h10v3"/></svg>
+        </span>
+        <h3 class="p-reason__title">10店舗＋全国100社の<br>まとめ仕入れ</h3>
+        <p class="p-reason__text">石川・福井の10店舗分をまとめ、さらに全国100社以上が加盟する「ファストリフォーム」グループで共同仕入れ。だから商品を安く入れられます。</p>
+      </article>
+
+      <article class="p-reason__card" data-reveal data-reveal-delay="160">
+        <span class="p-reason__no">REASON 03</span>
+        <span class="p-reason__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 4 5v6.5c0 4.6 3.4 8.7 8 9.5 4.6-.8 8-4.9 8-9.5V5z"/><path d="m8.6 12.2 2.4 2.4 4.4-4.9"/></svg>
+        </span>
+        <h3 class="p-reason__title">工事費込みだから<br>あとから増えない</h3>
+        <p class="p-reason__text">「本体は安いのに、工事費で結局高くなった」をなくしました。標準工事も古い設備の処分も含んだ総額表示なので、比べやすく、納得して選べます。</p>
+      </article>
+
+      <article class="p-reason__card" data-reveal data-reveal-delay="240">
+        <span class="p-reason__no">REASON 04</span>
+        <span class="p-reason__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 6.6V12l3.6 2.2"/></svg>
+        </span>
+        <h3 class="p-reason__title">お店から30分。<br>だからすぐ来られる</h3>
+        <p class="p-reason__text">石川・福井の10店舗から、およそ30分以内で伺える範囲が対応エリアです。工事のあとも、いちばん近いお店がずっと窓口としてお付き合いします。</p>
+      </article>
+    </div>
+
+    <p class="p-reason__more">
+      <a href="<?php echo esc_url( home_url( '/lp/seikatsu-kaizen/' ) ); ?>">ヤマキシの考え方「リフォームは生活改善」をもっと見る</a>
+    </p>
+  </div>
+</section>
+
+<!-- ==========================================================
+     施工事例（Before / After 比較スライダー）
+     ========================================================== -->
 <section class="l-section l-section--soft" id="works">
   <div class="l-wrap">
     <div class="c-head" data-reveal>
@@ -38,85 +544,71 @@ get_header();
       <p class="c-head__lead">石川・福井の実際のお宅で、どう変わったか。金額も公開しています。</p>
     </div>
 
-    <?php
-    $works = new WP_Query( array(
-      'post_type'      => 'ymkrf_works',
-      'posts_per_page' => 3,
-      'no_found_rows'  => true,   // ページャ不要なので高速化
-    ) );
+    <div class="p-works__grid">
 
-    if ( $works->have_posts() ) : ?>
-      <div class="p-works__grid">
-        <?php
-        $i = 0;
-        while ( $works->have_posts() ) : $works->the_post();
-          $i++;
-          $cats   = get_the_terms( get_the_ID(), 'ymkrf_works_cat' );
-          $areas  = get_the_terms( get_the_ID(), 'ymkrf_works_area' );
-          $price  = get_post_meta( get_the_ID(), '_ymkrf_price', true );
-          $period = get_post_meta( get_the_ID(), '_ymkrf_period', true );
-          $before = get_post_meta( get_the_ID(), '_ymkrf_before_img', true );
-        ?>
-        <article class="p-work" data-reveal data-reveal-delay="<?php echo esc_attr( ( $i - 1 ) * 80 ); ?>">
-
-          <div class="p-compare" data-compare style="--pos:50%">
-            <div class="p-compare__layer p-compare__layer--before">
-              <?php
-              if ( $before ) {
-                echo wp_get_attachment_image( (int) $before, 'large', false, array(
-                  'alt'     => esc_attr( get_the_title() . '（施工前）' ),
-                  'loading' => 'lazy',
-                ) );
-              } else { ?>
-                <p class="p-compare__ph">BEFORE 写真</p>
-              <?php } ?>
-            </div>
-
-            <div class="p-compare__layer p-compare__layer--after">
-              <?php
-              if ( has_post_thumbnail() ) {
-                the_post_thumbnail( 'large', array(
-                  'alt'     => esc_attr( get_the_title() . '（施工後）' ),
-                  'loading' => 'lazy',
-                ) );
-              } else { ?>
-                <p class="p-compare__ph">AFTER 写真</p>
-              <?php } ?>
-            </div>
-
-            <span class="p-compare__tag p-compare__tag--before">BEFORE</span>
-            <span class="p-compare__tag p-compare__tag--after">AFTER</span>
-            <span class="p-compare__handle"></span>
-            <span class="p-compare__hint">← 左右に動かして見くらべる →</span>
+      <article class="p-work" data-reveal>
+        <div class="p-compare" data-compare style="--pos:50%">
+          <div class="p-compare__layer p-compare__layer--before">
+            <!-- <img src="<?php echo $asset; ?>/assets/img/works/kitchen-before.jpg" width="800" height="600" alt="施工前のキッチン" loading="lazy"> -->
+            <p class="p-compare__ph">BEFORE 写真</p>
           </div>
-
-          <div class="p-work__body">
-            <p class="p-work__meta">
-              <?php if ( $cats  && ! is_wp_error( $cats ) )  echo '<span>' . esc_html( $cats[0]->name )  . '</span>'; ?>
-              <?php if ( $areas && ! is_wp_error( $areas ) ) echo '<span>' . esc_html( $areas[0]->name ) . '</span>'; ?>
-            </p>
-            <h3 class="p-work__title"><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h3>
-            <?php if ( $price || $period ) : ?>
-              <p class="p-work__data">
-                <?php if ( $price )  echo '<span>工事費込み ' . esc_html( $price ) . '</span>'; ?>
-                <?php if ( $period ) echo '<span>工期 ' . esc_html( $period ) . '</span>'; ?>
-              </p>
-            <?php endif; ?>
+          <div class="p-compare__layer p-compare__layer--after">
+            <!-- <img src="<?php echo $asset; ?>/assets/img/works/kitchen-after.jpg" width="800" height="600" alt="施工後のキッチン" loading="lazy"> -->
+            <p class="p-compare__ph">AFTER 写真</p>
           </div>
+          <span class="p-compare__tag p-compare__tag--before">BEFORE</span>
+          <span class="p-compare__tag p-compare__tag--after">AFTER</span>
+          <span class="p-compare__handle"></span>
+          <span class="p-compare__hint">← 左右に動かして見くらべる →</span>
+        </div>
+        <div class="p-work__body">
+          <p class="p-work__meta"><span>キッチン</span><span>白山市</span><span>M様邸</span></p>
+          <h3 class="p-work__title"><a href="<?php echo esc_url( home_url( '/works/kitchen/' ) ); ?>">使いにくかった対面キッチンを、片付くキッチンに</a></h3>
+          <p class="p-work__data"><span>工事費込み ●●万円</span><span>工期 3日</span></p>
+        </div>
+      </article>
 
-        </article>
-        <?php endwhile; ?>
-      </div>
-    <?php endif; wp_reset_postdata(); ?>
+      <article class="p-work" data-reveal data-reveal-delay="80">
+        <div class="p-compare" data-compare style="--pos:50%">
+          <div class="p-compare__layer p-compare__layer--before"><p class="p-compare__ph">BEFORE 写真</p></div>
+          <div class="p-compare__layer p-compare__layer--after"><p class="p-compare__ph">AFTER 写真</p></div>
+          <span class="p-compare__tag p-compare__tag--before">BEFORE</span>
+          <span class="p-compare__tag p-compare__tag--after">AFTER</span>
+          <span class="p-compare__handle"></span>
+          <span class="p-compare__hint">← 左右に動かして見くらべる →</span>
+        </div>
+        <div class="p-work__body">
+          <p class="p-work__meta"><span>お風呂</span><span>小松市</span><span>T様邸</span></p>
+          <h3 class="p-work__title"><a href="<?php echo esc_url( home_url( '/works/bathroom/' ) ); ?>">冬に寒かったタイル風呂を、あたたかい断熱浴室へ</a></h3>
+          <p class="p-work__data"><span>工事費込み ●●万円</span><span>工期 5日</span></p>
+        </div>
+      </article>
 
-    <a class="c-more" href="<?php echo esc_url( get_post_type_archive_link( 'ymkrf_works' ) ); ?>">施工事例をもっと見る</a>
+      <article class="p-work" data-reveal data-reveal-delay="160">
+        <div class="p-compare" data-compare style="--pos:50%">
+          <div class="p-compare__layer p-compare__layer--before"><p class="p-compare__ph">BEFORE 写真</p></div>
+          <div class="p-compare__layer p-compare__layer--after"><p class="p-compare__ph">AFTER 写真</p></div>
+          <span class="p-compare__tag p-compare__tag--before">BEFORE</span>
+          <span class="p-compare__tag p-compare__tag--after">AFTER</span>
+          <span class="p-compare__handle"></span>
+          <span class="p-compare__hint">← 左右に動かして見くらべる →</span>
+        </div>
+        <div class="p-work__body">
+          <p class="p-work__meta"><span>エコキュート</span><span>加賀市</span><span>S様邸</span></p>
+          <h3 class="p-work__title"><a href="<?php echo esc_url( home_url( '/works/boiler/' ) ); ?>">故障した給湯器をエコキュートに。補助金12万円を活用</a></h3>
+          <p class="p-work__data"><span>工事費込み ●●万円</span><span>工期 1日</span></p>
+        </div>
+      </article>
+
+    </div>
+
+    <a class="c-more" href="<?php echo esc_url( home_url( '/works/' ) ); ?>">施工事例をもっと見る</a>
   </div>
 </section>
 
-
-<!-- ★2 ==================================================================
-     お客様の声（カスタム投稿タイプ ymkrf_voice）
-     ================================================================== -->
+<!-- ==========================================================
+     お客様の声
+     ========================================================== -->
 <section class="l-section" id="voice">
   <div class="l-wrap">
     <div class="c-head" data-reveal>
@@ -125,49 +617,192 @@ get_header();
       <p class="c-head__lead">工事のあとに、実際にいただいたご感想です。</p>
     </div>
 
-    <?php
-    $voices = new WP_Query( array(
-      'post_type'      => 'ymkrf_voice',
-      'posts_per_page' => 3,
-      'no_found_rows'  => true,
-    ) );
-
-    if ( $voices->have_posts() ) : ?>
-      <div class="p-voice__grid">
-        <?php
-        $i = 0;
-        while ( $voices->have_posts() ) : $voices->the_post();
-          $i++;
-          $who  = get_post_meta( get_the_ID(), '_ymkrf_customer', true );
-          $star = (int) get_post_meta( get_the_ID(), '_ymkrf_star', true );
-          $star = ( $star >= 1 && $star <= 5 ) ? $star : 5;
-          $initial = $who ? mb_substr( wp_strip_all_tags( $who ), 0, 1 ) : '—';
-        ?>
-        <div class="p-voice__card" data-reveal data-reveal-delay="<?php echo esc_attr( ( $i - 1 ) * 80 ); ?>">
-          <p class="p-voice__stars" aria-label="5段階中<?php echo esc_attr( $star ); ?>">
-            <?php echo esc_html( str_repeat( '★', $star ) . str_repeat( '☆', 5 - $star ) ); ?>
-          </p>
-          <p class="p-voice__text"><?php echo esc_html( get_the_excerpt() ); ?></p>
-          <p class="p-voice__who">
-            <span class="p-voice__avatar"><?php echo esc_html( $initial ); ?></span>
-            <?php echo esc_html( $who ); ?>
-          </p>
-        </div>
-        <?php endwhile; ?>
+    <div class="p-voice__grid">
+      <div class="p-voice__card" data-reveal>
+        <p class="p-voice__stars" aria-label="5段階中5">★★★★★</p>
+        <p class="p-voice__text">［お客様アンケートの実際のコメントを掲載］見積りが総額で出てきたので、他社と比べやすかったです。職人さんも毎日きちんと片付けてくれて安心でした。</p>
+        <p class="p-voice__who"><span class="p-voice__avatar">K</span>金沢市／K様（40代）・キッチンリフォーム</p>
       </div>
-    <?php endif; wp_reset_postdata(); ?>
+      <div class="p-voice__card" data-reveal data-reveal-delay="80">
+        <p class="p-voice__stars" aria-label="5段階中5">★★★★★</p>
+        <p class="p-voice__text">［お客様アンケートの実際のコメントを掲載］給湯器が急に壊れて困っていたところ、近くの店舗からすぐ来てくれました。補助金の書類も全部やってもらえて助かりました。</p>
+        <p class="p-voice__who"><span class="p-voice__avatar">N</span>福井市／N様（70代）・給湯器交換</p>
+      </div>
+      <div class="p-voice__card" data-reveal data-reveal-delay="160">
+        <p class="p-voice__stars" aria-label="5段階中5">★★★★★</p>
+        <p class="p-voice__text">［お客様アンケートの実際のコメントを掲載］LINEで写真を送ったら、その日のうちに概算を教えてもらえました。無理に勧められることもなく、気楽に相談できました。</p>
+        <p class="p-voice__who"><span class="p-voice__avatar">Y</span>小松市／Y様（30代）・浴室リフォーム</p>
+      </div>
+    </div>
 
-    <a class="c-more" href="<?php echo esc_url( get_post_type_archive_link( 'ymkrf_voice' ) ); ?>">お客様の声をもっと見る</a>
+    <a class="c-more" href="<?php echo esc_url( home_url( '/voice/' ) ); ?>">お客様の声をもっと見る</a>
   </div>
 </section>
 
+<!-- ==========================================================
+     リフォームの流れ
+     ========================================================== -->
+<section class="l-section l-section--soft">
+  <div class="l-wrap">
+    <div class="c-head" data-reveal>
+      <span class="c-head__en">FLOW</span>
+      <h2 class="c-head__title">ご相談から完成までの流れ</h2>
+      <p class="c-head__lead">まずはLINEかお電話でひとこと。それだけで大丈夫です。</p>
+    </div>
 
-<?php /* ── リフォームの流れ／店舗・エリア／よくある質問 は index.html をそのまま ── */ ?>
+    <ol class="p-flow">
+      <li class="p-flow__item" data-reveal="left">
+        <h3 class="p-flow__title">ご相談<span class="free">無料</span></h3>
+        <p class="p-flow__text">LINE・お電話・ご来店・フォームから。写真を送っていただくと話が早く進みます。</p>
+      </li>
+      <li class="p-flow__item" data-reveal="left" data-reveal-delay="60">
+        <h3 class="p-flow__title">現地調査<span class="free">無料</span></h3>
+        <p class="p-flow__text">ご希望の日時にお伺いし、寸法や配管の状態を確認します。所要時間は30分〜1時間ほどです。</p>
+      </li>
+      <li class="p-flow__item" data-reveal="left" data-reveal-delay="120">
+        <h3 class="p-flow__title">お見積り・ご提案<span class="free">無料</span></h3>
+        <p class="p-flow__text">工事費込みの総額でご提示します。ご納得いただくまで、何度でも調整いたします。</p>
+      </li>
+      <li class="p-flow__item" data-reveal="left" data-reveal-delay="180">
+        <h3 class="p-flow__title">ご契約・工事日の調整</h3>
+        <p class="p-flow__text">補助金をお使いになる場合は、必要書類の準備も当社で進めます。</p>
+      </li>
+      <li class="p-flow__item" data-reveal="left" data-reveal-delay="240">
+        <h3 class="p-flow__title">着工〜完成</h3>
+        <p class="p-flow__text">自社の職人が施工します。毎日の片付けと、ご近所へのごあいさつまで責任を持って行います。</p>
+      </li>
+      <li class="p-flow__item" data-reveal="left" data-reveal-delay="300">
+        <h3 class="p-flow__title">お引き渡し・アフターフォロー</h3>
+        <p class="p-flow__text">お引き渡しのあとも、いちばん近いお店が窓口としてお付き合いします。</p>
+      </li>
+    </ol>
 
+    <a class="c-more" href="<?php echo esc_url( home_url( '/flow/' ) ); ?>">くわしい流れを見る</a>
+  </div>
+</section>
 
-<!-- ★3 ==================================================================
-     お知らせ（通常の投稿）
-     ================================================================== -->
+<!-- ==========================================================
+     店舗・対応エリア
+     ========================================================== -->
+<section class="l-section" id="shops">
+  <div class="l-wrap">
+    <div class="c-head" data-reveal>
+      <span class="c-head__en">SHOPS &amp; AREA</span>
+      <h2 class="c-head__title">石川・福井に<span class="marker">10店舗</span>。<br class="sp-only">だから、すぐ来られます。</h2>
+      <p class="c-head__lead">実物を見て決められるショールームもご用意しています。</p>
+    </div>
+
+    <div class="p-shops__intro" data-reveal>
+      <img src="<?php echo $asset; ?>/assets/img/character/char-truck.webp" width="640" height="359" alt="" loading="lazy">
+      <p><strong>およそ30分以内</strong>で伺える範囲が、<br class="sp-only">ヤマキシの対応エリアです。</p>
+    </div>
+
+    <div class="p-shops__tabs" role="tablist" aria-label="県で絞り込む">
+      <button class="p-shops__tab is-active" type="button" role="tab" aria-selected="true" data-shoptab="ishikawa">石川県（7店舗）</button>
+      <button class="p-shops__tab" type="button" role="tab" aria-selected="false" data-shoptab="fukui">福井県（3店舗）</button>
+    </div>
+
+    <ul class="p-shops__list" data-shoplist="ishikawa">
+      <li><a class="p-shop" href="<?php echo esc_url( home_url( '/shops/tazuruhama/' ) ); ?>">
+        <svg class="p-shop__pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span><span class="p-shop__name">田鶴浜店</span><span class="p-shop__info">石川県七尾市／8:00〜21:00</span></span><span class="p-shop__arrow">›</span></a></li>
+      <li><a class="p-shop" href="<?php echo esc_url( home_url( '/shops/nonoichi/' ) ); ?>">
+        <svg class="p-shop__pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span><span class="p-shop__name">金沢野々市店</span><span class="p-shop__info">石川県野々市市／10:00〜18:00</span></span><span class="p-shop__arrow">›</span></a></li>
+      <li><a class="p-shop" href="<?php echo esc_url( home_url( '/shops/kawakita/' ) ); ?>">
+        <svg class="p-shop__pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span><span class="p-shop__name">川北店</span><span class="p-shop__info">石川県能美郡川北町／8:00〜22:00</span></span><span class="p-shop__arrow">›</span></a></li>
+      <li><a class="p-shop" href="<?php echo esc_url( home_url( '/shops/komathu/' ) ); ?>">
+        <svg class="p-shop__pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span><span class="p-shop__name">小松店</span><span class="p-shop__info">石川県小松市／10:00〜18:00</span></span><span class="p-shop__arrow">›</span></a></li>
+      <li><a class="p-shop" href="<?php echo esc_url( home_url( '/shops/shinkaga/' ) ); ?>">
+        <svg class="p-shop__pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span><span class="p-shop__name">新加賀店</span><span class="p-shop__info">石川県加賀市／8:00〜21:00</span></span><span class="p-shop__arrow">›</span></a></li>
+      <li><a class="p-shop" href="<?php echo esc_url( home_url( '/shops/hakui/' ) ); ?>">
+        <svg class="p-shop__pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span><span class="p-shop__name">羽咋店</span><span class="p-shop__info">石川県羽咋市／10:00〜18:00</span></span><span class="p-shop__arrow">›</span></a></li>
+      <li><a class="p-shop" href="<?php echo esc_url( home_url( '/shops/tagami/' ) ); ?>">
+        <svg class="p-shop__pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span><span class="p-shop__name">金沢田上店</span><span class="p-shop__info">石川県金沢市／10:00〜17:00</span></span><span class="p-shop__arrow">›</span></a></li>
+    </ul>
+
+    <ul class="p-shops__list" data-shoplist="fukui" hidden>
+      <li><a class="p-shop" href="<?php echo esc_url( home_url( '/shops/kahahothu/' ) ); ?>">
+        <svg class="p-shop__pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span><span class="p-shop__name">開発店</span><span class="p-shop__info">福井県／9:00〜19:00</span></span><span class="p-shop__arrow">›</span></a></li>
+      <li><a class="p-shop" href="<?php echo esc_url( home_url( '/shops/kanadu/' ) ); ?>">
+        <svg class="p-shop__pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span><span class="p-shop__name">金津店</span><span class="p-shop__info">福井県あわら市／8:00〜19:00</span></span><span class="p-shop__arrow">›</span></a></li>
+      <li><a class="p-shop" href="<?php echo esc_url( home_url( '/shops/asahi/' ) ); ?>">
+        <svg class="p-shop__pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span><span class="p-shop__name">朝日店</span><span class="p-shop__info">福井県丹生郡／7:00〜21:30</span></span><span class="p-shop__arrow">›</span></a></li>
+    </ul>
+
+    <div class="p-area" data-reveal>
+      <h3 class="p-area__title">対応エリア</h3>
+      <p class="p-area__row"><b>石川県</b>／金沢市・野々市市・白山市・小松市・能美市・加賀市・七尾市・羽咋市・かほく市・川北町・津幡町・内灘町・志賀町・宝達志水町・中能登町・穴水町・能登町</p>
+      <p class="p-area__row"><b>福井県</b>／福井市・あわら市・坂井市・越前市・鯖江市・永平寺町・越前町・丹生郡</p>
+      <p class="p-area__note">※お近くのお店からおよそ30分以内が目安です。上記以外の地域も、まずはご相談ください。<a href="<?php echo esc_url( home_url( '/area/' ) ); ?>">対応エリアのくわしい情報はこちら</a></p>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================
+     よくある質問
+     ========================================================== -->
+<section class="l-section l-section--soft" id="faq">
+  <div class="l-wrap">
+    <div class="c-head" data-reveal>
+      <span class="c-head__en">FAQ</span>
+      <h2 class="c-head__title">よくあるご質問</h2>
+    </div>
+
+    <div class="p-faq">
+      <div class="p-faq__item is-open" data-faq>
+        <button class="p-faq__q" type="button">見積りは無料ですか？</button>
+        <div class="p-faq__a"><div class="p-faq__a-inner">
+          はい、現地調査もお見積りも無料です。LINEで気になる場所の写真を送っていただくだけの概算見積りにも対応しています。お見積りのあとに、しつこく営業することはありません。
+        </div></div>
+      </div>
+      <div class="p-faq__item" data-faq>
+        <button class="p-faq__q" type="button">小さな修理だけでも頼めますか？</button>
+        <div class="p-faq__a"><div class="p-faq__a-inner">
+          水漏れ、建具の調整、コンセントの増設といった小工事だけでも承ります。石川・福井に10店舗ありますので、お近くのお店からすぐに伺えます。
+        </div></div>
+      </div>
+      <div class="p-faq__item" data-faq>
+        <button class="p-faq__q" type="button">補助金は使えますか？</button>
+        <div class="p-faq__a"><div class="p-faq__a-inner">
+          住宅省エネ2026キャンペーンをはじめとする補助制度の対象工事に対応しています。対象になるかの確認から申請書類の準備まで、当社がサポートします。
+        </div></div>
+      </div>
+      <div class="p-faq__item" data-faq>
+        <button class="p-faq__q" type="button">工事はどのくらいの期間かかりますか？</button>
+        <div class="p-faq__a"><div class="p-faq__a-inner">
+          トイレの交換は約半日、ユニットバスは3〜5日、キッチンは2〜4日が目安です。自社の職人が施工するため、日程の調整もスムーズに行えます。
+        </div></div>
+      </div>
+      <div class="p-faq__item" data-faq>
+        <button class="p-faq__q" type="button">支払い方法は選べますか？</button>
+        <div class="p-faq__a"><div class="p-faq__a-inner">
+          現金・お振込のほか、リフォームローンもご利用いただけます。くわしくはお見積りの際にご案内します。
+        </div></div>
+      </div>
+      <div class="p-faq__item" data-faq>
+        <button class="p-faq__q" type="button">工事のあとの保証はありますか？</button>
+        <div class="p-faq__a"><div class="p-faq__a-inner">
+          メーカー保証に加えて、当社の施工保証をご用意しています。内容は工事の種類によって異なりますので、<a href="<?php echo esc_url( home_url( '/warranty/' ) ); ?>">保証について</a>をご覧ください。
+        </div></div>
+      </div>
+    </div>
+
+    <a class="c-more" href="<?php echo esc_url( home_url( '/faq/' ) ); ?>">質問をもっと見る</a>
+  </div>
+</section>
+
+<!-- ==========================================================
+     お知らせ ★WordPressのループで出力する部分
+     ========================================================== -->
 <section class="l-section" id="news">
   <div class="l-wrap">
     <div class="c-head" data-reveal>
@@ -175,41 +810,63 @@ get_header();
       <h2 class="c-head__title">お知らせ・イベント情報</h2>
     </div>
 
-    <?php
-    $news = new WP_Query( array(
-      'post_type'      => 'post',
-      'posts_per_page' => 5,
-      'no_found_rows'  => true,
-    ) );
+    <!-- ▼ ここから WordPress のループ（wp/front-page.php を参照） -->
+    <ul class="p-news" data-reveal>
+      <li class="p-news__item"><a class="p-news__link" href="<?php echo esc_url( home_url( '/news/' ) ); ?>">
+        <time class="p-news__date" datetime="2026-07-11">2026.07.11</time>
+        <span class="p-news__cat">イベント</span>
+        <span class="p-news__title">羽咋店・金沢田上店で大感謝祭を開催します</span>
+      </a></li>
+      <li class="p-news__item"><a class="p-news__link" href="<?php echo esc_url( home_url( '/news/' ) ); ?>">
+        <time class="p-news__date" datetime="2026-06-20">2026.06.20</time>
+        <span class="p-news__cat">補助金</span>
+        <span class="p-news__title">窓リフォーム補助金（最大100万円）2026年度の受付が始まりました</span>
+      </a></li>
+      <li class="p-news__item"><a class="p-news__link" href="<?php echo esc_url( home_url( '/news/' ) ); ?>">
+        <time class="p-news__date" datetime="2026-06-02">2026.06.02</time>
+        <span class="p-news__cat">講座</span>
+        <span class="p-news__title">太陽光・蓄電池 補助金活用講座を小松市民センターで開催</span>
+      </a></li>
+      <li class="p-news__item"><a class="p-news__link" href="<?php echo esc_url( home_url( '/news/' ) ); ?>">
+        <time class="p-news__date" datetime="2026-05-15">2026.05.15</time>
+        <span class="p-news__cat">お知らせ</span>
+        <span class="p-news__title">給湯器の故障が増える季節です。お早めにご相談ください</span>
+      </a></li>
+    </ul>
+    <!-- ▲ ループここまで -->
 
-    if ( $news->have_posts() ) : ?>
-      <ul class="p-news" data-reveal>
-        <?php while ( $news->have_posts() ) : $news->the_post();
-          $cat = get_the_category();
-        ?>
-        <li class="p-news__item">
-          <a class="p-news__link" href="<?php the_permalink(); ?>">
-            <time class="p-news__date" datetime="<?php echo esc_attr( get_the_date( 'Y-m-d' ) ); ?>">
-              <?php echo esc_html( get_the_date( 'Y.m.d' ) ); ?>
-            </time>
-            <?php if ( ! empty( $cat ) ) : ?>
-              <span class="p-news__cat"><?php echo esc_html( $cat[0]->name ); ?></span>
-            <?php endif; ?>
-            <span class="p-news__title"><?php the_title(); ?></span>
-          </a>
-        </li>
-        <?php endwhile; ?>
-      </ul>
-    <?php else : ?>
-      <p style="text-align:center;color:var(--ink-sub)">お知らせはまだありません。</p>
-    <?php endif; wp_reset_postdata(); ?>
-
-    <a class="c-more" href="<?php echo esc_url( get_permalink( get_option( 'page_for_posts' ) ) ); ?>">お知らせ一覧へ</a>
+    <a class="c-more" href="<?php echo esc_url( home_url( '/news/' ) ); ?>">お知らせ一覧へ</a>
   </div>
 </section>
 
+<!-- ==========================================================
+     最終CTA
+     ========================================================== -->
+<section class="l-section p-cta">
+  <div class="l-wrap p-cta__inner">
+    <img class="p-cta__chara c-chara--float" src="<?php echo $asset; ?>/assets/img/character/char-stand.webp" width="503" height="640" alt="" loading="lazy">
+    <h2 class="p-cta__title">まずは<span class="em">「いくらかかるか」</span>だけでも、<br>聞いてみませんか。</h2>
+    <p class="p-cta__text">
+      見積り・現地調査は無料。ご相談だけでもかまいません。<br>
+      石川・福井の10店舗が、お近くから伺います。
+    </p>
 
-<?php /* ── 最終CTA は index.html をそのまま ── */ ?>
+    <div class="p-cta__box">
+      <a class="p-cta__tel" href="tel:0800-777-3331" data-cta="footer_cta">
+        <small>お電話でのご相談（通話無料）</small>
+        <strong>0800-777-3331</strong>
+        <em>受付時間は店舗により異なります</em>
+      </a>
+      <a class="c-btn c-btn--line c-btn--block" href="https://lin.ee/UJZuSTrz" rel="noopener" data-cta="footer_cta">
+        <svg class="c-btn__icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.5 2 2 5.6 2 10.1c0 4 3.6 7.4 8.4 8 .3.1.8.2.9.5.1.3.1.7 0 1l-.1.9c0 .3-.2 1 .9.6 1.1-.5 6-3.5 8.2-6C21.7 13.5 22 11.9 22 10.1 22 5.6 17.5 2 12 2z"/></svg>
+        <span class="c-btn__label">LINEで無料見積り<span class="c-btn__sub">ご相談だけでもOK・24時間受付</span></span>
+      </a>
+      <a class="c-btn c-btn--block" href="<?php echo esc_url( home_url( '/inquiry/webrsv/' ) ); ?>" data-cta="footer_cta">
+        <span class="c-btn__label">来店予約する<span class="c-btn__sub">ネット予約で500円分の特典</span></span>
+      </a>
+    </div>
+  </div>
+</section>
 
 </main>
 
