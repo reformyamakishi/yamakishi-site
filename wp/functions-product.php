@@ -708,6 +708,21 @@ function ymkrf_product_data( $post_id = null ) {
 endif;
 
 /**
+ * カテゴリごとのブランド名。「グレードUP」の見出しなどに使います。
+ * ここに書いていないカテゴリは「〇〇マルシェ」になります。
+ */
+if ( ! function_exists( 'ymkrf_cat_brand' ) ) :
+function ymkrf_cat_brand( $cat ) {
+	if ( ! $cat || is_wp_error( $cat ) ) return '商品';
+	$map = array(
+		'kitchen'  => 'キッチンマルシェ',
+		'bathroom' => 'ユニットバスリフォームパック',
+	);
+	return isset( $map[ $cat->slug ] ) ? $map[ $cat->slug ] : $cat->name . 'マルシェ';
+}
+endif;
+
+/**
  * 同じカテゴリの中で、ひとつ下（安い）・ひとつ上（高い）のグレードを返します。
  * 「グレードを戻す／グレードUP」の表示に使います。入力は不要です。
  */

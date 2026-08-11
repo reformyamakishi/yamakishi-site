@@ -317,7 +317,7 @@ if ( ! empty( $d['images'] ) || $csets || ! empty( $d['handles'] ) ) :
 <!-- =========== 前後の商品（グレード） =========== -->
 <section class="l-section">
   <div class="l-wrap">
-    <h2 class="p-prd__bar"><?php echo esc_html( $cat ? $cat->name : '商品' ); ?>マルシェ</h2>
+    <h2 class="p-prd__bar"><?php echo esc_html( ymkrf_cat_brand( $cat ) ); ?></h2>
     <?php
     /* 左右2枠。上（または下）のグレードが無い商品では、
        枠が片方だけになって寂しいので、代わりに一覧への案内を入れます。 */

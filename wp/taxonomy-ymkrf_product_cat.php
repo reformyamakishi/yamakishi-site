@@ -163,7 +163,7 @@ $intro = array(
 		/* --- 3つのこだわり --- */
 		'points' => array(
 			array( 'chara' => 'char-otoku',     'name' => 'お得',
-			       'text'  => 'お風呂標準工事費・解体撤去費用・土間工事などもコミコミ！' ),
+			       'text'  => 'お風呂標準工事費・解体撤去費用・脱衣場側の内装工事などもコミコミ！' ),
 			array( 'chara' => 'char-hinshitsu', 'name' => '品質',
 			       'text'  => '経験豊富な自社職人を中心に、質の良い丁寧な工事を致します！' ),
 			array( 'chara' => 'char-anshin',    'name' => '安心',
