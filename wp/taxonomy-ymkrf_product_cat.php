@@ -512,7 +512,7 @@ if ( $show_worry ) :
 <!-- =========== 商品一覧 =========== -->
 <section class="l-section" id="products">
   <div class="l-wrap">
-    <h2 class="p-prd__bar"><?php echo esc_html( $name ); ?>マルシェの商品一覧</h2>
+    <h2 class="p-prd__bar"><?php echo esc_html( ymkrf_cat_listtitle( $slug, $name ) ); ?></h2>
 
     <?php if ( $q->have_posts() ) : ?>
 
@@ -568,7 +568,7 @@ if ( $show_worry ) :
      1件も無いときは、このかたまりごと出ません。 -->
 <?php
 if ( function_exists( 'ymkrf_column_section' ) ) {
-	ymkrf_column_section( $slug, $name, 3 );
+	ymkrf_column_section( $slug, ymkrf_cat_label( $slug, $name ), 3 );
 }
 ?>
 
@@ -577,7 +577,7 @@ if ( function_exists( 'ymkrf_column_section' ) ) {
      ここに新しい順で3件出ます。1件も無いときは出ません。 -->
 <?php
 if ( function_exists( 'ymkrf_works_section' ) ) {
-	ymkrf_works_section( $slug, $name, 3 );
+	ymkrf_works_section( $slug, ymkrf_cat_label( $slug, $name ), 3 );
 }
 ?>
 

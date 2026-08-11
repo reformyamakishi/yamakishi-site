@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '37' );
+define( 'YMKRF_SETUP_VER', '40' );
 
 /* キッチンの「ヤマキシ標準工事内容」。
    ホームページの一覧表（7項目）と、番号入りの図（8項目）の
@@ -189,6 +189,7 @@ add_action( 'init', function () {
 		$theme . '/granspa',
 		$theme . '/selevia',
 		$theme . '/sinla',
+		WP_CONTENT_DIR . '/themes/ymkrf/assets/img/works',
 		$dir,                 // 最後の受け皿（wp-content/ymkrf-import）
 	);
 
@@ -701,9 +702,14 @@ add_action( 'init', function () {
 	        この控えが無い＝古い版で登録された商品は、
 	        これまでどおり「空っぽの行があるか」で見分けます。
 	   ------------------------------------------------------------ */
-	$rebuild_keys = array( '_ymkrf_images', '_ymkrf_colors', '_ymkrf_tops', '_ymkrf_sinks', '_ymkrf_handles', '_ymkrf_specs', '_ymkrf_features', '_ymkrf_options' );
+	$rebuild_keys = array( '_ymkrf_images', '_ymkrf_colors', '_ymkrf_tops', '_ymkrf_sinks', '_ymkrf_c4', '_ymkrf_c5', '_ymkrf_c6', '_ymkrf_handles', '_ymkrf_specs', '_ymkrf_features', '_ymkrf_options' );
 
-	foreach ( array( 'rakuera', 'refit', 'sierra-s', 's-class', 'stedia', 'edel', 'classo', 'richelle', 'centro' ) as $slug ) {
+	foreach ( array(
+		/* キッチン */
+		'rakuera', 'refit', 'sierra-s', 's-class', 'stedia', 'edel', 'classo', 'richelle', 'centro',
+		/* ユニットバス */
+		'ofuroa', 'sazana-n', 'lidea-m', 'rakuvia', 'sazana-t', 'lidea-b', 'granspa', 'selevia', 'sinla',
+	) as $slug ) {
 
 		$p = get_page_by_path( $slug, OBJECT, 'ymkrf_product' );
 		if ( ! $p ) continue;
@@ -3666,6 +3672,32 @@ add_action( 'init', function () {
 		}
 	}
 
+
+	/* ------------------------------------------------------------
+	   3-k. 一覧の写真を横幅いっぱいにするため、メイン写真の左右の余白を
+	        切り落としたものに差し替えます（4商品）。
+	   ------------------------------------------------------------ */
+	$retrim = array(
+		'sazana-t' => array( 'sazanat-main.jpg', 'TOTO サザナ Tタイプ 1坪サイズ（ユニットバス）' ),
+		'lidea-b'  => array( 'lideab-main.jpg',  'LIXIL リデア Bタイプ 1坪サイズ（ユニットバス）' ),
+		'granspa'  => array( 'granspa-main.jpg', 'タカラスタンダード グランスパ 1坪サイズ（ユニットバス）' ),
+		'sinla'    => array( 'sinla-main.jpg',   'TOTO シンラ Dタイプ 1坪サイズ（ユニットバス）' ),
+	);
+	foreach ( $retrim as $slug => $info ) {
+		$tp = get_page_by_path( $slug, OBJECT, 'ymkrf_product' );
+		if ( ! $tp || get_post_meta( $tp->ID, '_ymkrf_main_ver', true ) === 'trim' ) continue;
+
+		$old = $img( $info[0] );
+		if ( $old ) wp_delete_attachment( $old, true );
+
+		$new = $img( $info[0], $info[1], true );
+		if ( $new ) {
+			set_post_thumbnail( $tp->ID, $new );
+			update_post_meta( $tp->ID, '_ymkrf_main_ver', 'trim' );
+			$log[] = get_the_title( $tp->ID ) . 'のメイン写真を、余白を切ったものに差し替えました';
+		}
+	}
+
 	/* ------------------------------------------------------------
 	   3-z. 価格の直し
 	        キッチンの標準工事費は、どの機種も一律240,000円（税込）です。
@@ -3810,6 +3842,95 @@ add_action( 'init', function () {
 			$log[] = '施工事例のサンプルを追加：' . $sm['title'];
 		}
 		update_option( 'ymkrf_works_sample', '1' );
+	}
+
+
+	/* ------------------------------------------------------------
+	   3-m. 施工事例の「部位」に、きちんとした名前の項目を用意します。
+	        （文字列だけで登録すると、名前が英語のままになるためです）
+	   ------------------------------------------------------------ */
+	if ( taxonomy_exists( 'ymkrf_works_cat' ) ) {
+		foreach ( array( 'kitchen' => 'キッチン', 'bathroom' => 'お風呂' ) as $ws => $wn ) {
+			if ( ! term_exists( $ws, 'ymkrf_works_cat' ) ) {
+				wp_insert_term( $wn, 'ymkrf_works_cat', array( 'slug' => $ws ) );
+			}
+		}
+	}
+
+	/* ------------------------------------------------------------
+	   3-n. お風呂の施工事例サンプルを3件つくります（見え方の確認用）
+	        本番の記事を入れたら、この3件は削除してください。
+	   ------------------------------------------------------------ */
+	if ( post_type_exists( 'ymkrf_works' ) && get_option( 'ymkrf_works_sample_bath' ) !== '1' ) {
+
+		$bsamples = array(
+			array(
+				'title' => '【サンプル】在来のお風呂を、あたたかいユニットバスに',
+				'slug'  => 'sample-bath-01',
+				'area'  => '野々市市',
+				'price' => '150万円',
+				'days'  => '5日',
+				'img'   => 'works-bath-01.jpg',
+				'text'  => "冬の寒さがお悩みでした。断熱浴槽のユニットバスに入れ替え、浴室の内窓と外壁の補修もあわせて行いました。
+
+※これは表示確認用のサンプル記事です。",
+			),
+			array(
+				'title' => '【サンプル】古くなったユニットバスを、お手入れのラクな仕様に',
+				'slug'  => 'sample-bath-02',
+				'area'  => '加賀市',
+				'price' => '70万円',
+				'days'  => '5日',
+				'img'   => 'works-bath-02.jpg',
+				'text'  => "床の汚れと目地のカビがご負担でした。乾きやすい床と、目地の少ないパネルに替えています。
+
+※これは表示確認用のサンプル記事です。",
+			),
+			array(
+				'title' => '【サンプル】在来浴室からユニットバスへ。洗面脱衣場とトイレも',
+				'slug'  => 'sample-bath-03',
+				'area'  => '福井市',
+				'price' => '164万円',
+				'days'  => '7日',
+				'img'   => 'works-bath-03.jpg',
+				'text'  => "水まわりをまとめてご相談いただきました。お風呂・洗面脱衣場・トイレを一度に工事し、動線も整えています。
+
+※これは表示確認用のサンプル記事です。",
+			),
+		);
+
+		foreach ( $bsamples as $sm ) {
+			if ( get_page_by_path( $sm['slug'], OBJECT, 'ymkrf_works' ) ) continue;
+
+			$wid = wp_insert_post( array(
+				'post_type'    => 'ymkrf_works',
+				'post_status'  => 'publish',
+				'post_title'   => $sm['title'],
+				'post_name'    => $sm['slug'],
+				'post_content' => $sm['text'],
+				'post_excerpt' => mb_substr( strtok( $sm['text'], "\n" ), 0, 80 ),
+			) );
+			if ( ! $wid || is_wp_error( $wid ) ) continue;
+
+			wp_set_object_terms( $wid, 'bathroom', 'ymkrf_works_cat' );
+
+			if ( taxonomy_exists( 'ymkrf_works_area' ) ) {
+				$at = term_exists( $sm['area'], 'ymkrf_works_area' );
+				if ( ! $at ) $at = wp_insert_term( $sm['area'], 'ymkrf_works_area' );
+				if ( ! is_wp_error( $at ) ) {
+					wp_set_object_terms( $wid, (int) $at['term_id'], 'ymkrf_works_area' );
+				}
+			}
+
+			update_post_meta( $wid, '_ymkrf_price',  $sm['price'] );
+			update_post_meta( $wid, '_ymkrf_period', $sm['days'] );
+
+			$mid = $img( $sm['img'] );
+			if ( $mid ) set_post_thumbnail( $wid, $mid );
+
+			$log[] = 'お風呂の施工事例サンプルを追加：' . $sm['title'];
+		}
+		update_option( 'ymkrf_works_sample_bath', '1' );
 	}
 
 	/* ------------------------------------------------------------

@@ -708,6 +708,33 @@ function ymkrf_product_data( $post_id = null ) {
 endif;
 
 /**
+ * カテゴリの呼び名。コラム・施工事例の見出しなどに使います。
+ * 「お風呂」だと硬いので、ページ上では「ユニットバス」と呼びます。
+ */
+if ( ! function_exists( 'ymkrf_cat_label' ) ) :
+function ymkrf_cat_label( $slug, $fallback = '' ) {
+	$map = array(
+		'kitchen'  => 'キッチン',
+		'bathroom' => 'ユニットバス',
+	);
+	return isset( $map[ $slug ] ) ? $map[ $slug ] : $fallback;
+}
+endif;
+
+/**
+ * 商品一覧の見出し。カテゴリごとに呼び方を変えます。
+ */
+if ( ! function_exists( 'ymkrf_cat_listtitle' ) ) :
+function ymkrf_cat_listtitle( $slug, $fallback = '商品' ) {
+	$map = array(
+		'kitchen'  => 'キッチンマルシェの商品一覧',
+		'bathroom' => 'ユニットバス商品一覧',
+	);
+	return isset( $map[ $slug ] ) ? $map[ $slug ] : $fallback . 'の商品一覧';
+}
+endif;
+
+/**
  * カテゴリごとのブランド名。「グレードUP」の見出しなどに使います。
  * ここに書いていないカテゴリは「〇〇マルシェ」になります。
  */
