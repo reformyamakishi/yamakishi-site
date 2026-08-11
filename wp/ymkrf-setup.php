@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '35' );
+define( 'YMKRF_SETUP_VER', '37' );
 
 /* キッチンの「ヤマキシ標準工事内容」。
    ホームページの一覧表（7項目）と、番号入りの図（8項目）の
@@ -184,6 +184,11 @@ add_action( 'init', function () {
 		$theme . '/sazana-n',
 		$theme . '/lidea-m',
 		$theme . '/rakuvia',
+		$theme . '/sazana-t',
+		$theme . '/lidea-b',
+		$theme . '/granspa',
+		$theme . '/selevia',
+		$theme . '/sinla',
 		$dir,                 // 最後の受け皿（wp-content/ymkrf-import）
 	);
 
@@ -191,8 +196,11 @@ add_action( 'init', function () {
 	   「写真が入りきらなかった商品」を確実に見分けるために使います。 */
 	$missing = 0;
 
-	$img = function ( $file, $alt = '' ) use ( $dirs, &$missing ) {
+	/* $force に true を渡すと、覚えている番号を捨てて、もう一度探し直します。
+	   （古い写真を消してから入れ直すときに使います） */
+	$img = function ( $file, $alt = '', $force = false ) use ( $dirs, &$missing ) {
 		static $cache = array();
+		if ( $force ) unset( $cache[ $file ] );
 		if ( isset( $cache[ $file ] ) ) return $cache[ $file ];
 
 		$found = get_posts( array(
@@ -2696,7 +2704,8 @@ add_action( 'init', function () {
 
 		/* ===== Eグレード サザナ Nタイプ（TOTO） ===== */
 		array(
-			'slug'  => 'sazana-n',
+			'slug'   => 'sazana-n',
+			'prefix' => 'sazana',
 			'title' => 'サザナ Nタイプ',
 			'meta'  => array(
 				'_ymkrf_catch'   => '浴槽に身をまかせた瞬間からリラックス。',
@@ -2793,7 +2802,8 @@ add_action( 'init', function () {
 
 		/* ===== Dグレード リデア Mタイプ（LIXIL） ===== */
 		array(
-			'slug'  => 'lidea-m',
+			'slug'   => 'lidea-m',
+			'prefix' => 'lidea',
 			'title' => 'リデア Mタイプ',
 			'meta'  => array(
 				'_ymkrf_catch'   => 'バスルームがいつもキレイで気持ちいい。',
@@ -2902,7 +2912,8 @@ add_action( 'init', function () {
 
 		/* ===== Cグレード ラクヴィア（クリナップ） ===== */
 		array(
-			'slug'  => 'rakuvia',
+			'slug'   => 'rakuvia',
+			'prefix' => 'rakuvia',
 			'title' => 'ラクヴィア',
 			'meta'  => array(
 				'_ymkrf_catch'   => '体の芯まで暖まる、あったかバスルーム。',
@@ -3000,6 +3011,519 @@ add_action( 'init', function () {
 				array( 'opt-handrail',    'I型手すり（600）', '10000', '浴槽横や出入り口に。', '' ),
 			),
 		),
+		array(
+			'slug'   => 'sazana-t',
+			'prefix' => 'sazanat',
+			'title'  => 'サザナ Tタイプ',
+			'meta'   => array(
+				'_ymkrf_catch' => '心地よさにつつまれて、至福のひとときを',
+				'_ymkrf_grade' => 'Bグレード',
+				'_ymkrf_name' => 'サザナ Tタイプ',
+				'_ymkrf_size' => 'Tタイプ 1坪サイズ',
+				'_ymkrf_work' => '370000',
+				'_ymkrf_item' => '828000',
+				'_ymkrf_days' => '5',
+				'_ymkrf_pt1' => 'ほっカラリ床',
+				'_ymkrf_pt2' => '魔法びん浴槽',
+				'_ymkrf_pt3' => 'ずっとあったか',
+				'_ymkrf_caution' => '※写真はイメージです。',
+			),
+			'total'  => 1198000,
+			'maker'  => 'toto',
+			'shops'  => array('hakui', 'kawakita', 'asahi'),
+			'main'   => array( 'main', 'TOTO サザナ Tタイプ 1坪サイズ（ユニットバス）' ),
+			'labels' => array(
+				'_ymkrf_lbl_colors' => '浴槽カラー（全5色）',
+				'_ymkrf_lbl_tops' => 'エプロンカラー（全5色）',
+				'_ymkrf_lbl_sinks' => '壁カラー：アクセントパネル（全22色）',
+				'_ymkrf_lbl_c4' => '壁カラー：周辺パネル（全3色）',
+				'_ymkrf_lbl_c5' => 'フロア：ほっカラリ床（全14色）',
+				'_ymkrf_lbl_c6' => 'カウンター（全3色）',
+			),
+			'sets' => array(
+				'_ymkrf_colors' => array(
+					array( 'tub-white', 'ジュエリーホワイトN' ),
+					array( 'tub-cream', 'ジュエリークリームN' ),
+					array( 'tub-pink', 'ジュエリーピンクN2' ),
+					array( 'tub-aqua', 'ジュエリーアクアN' ),
+					array( 'tub-black', 'ジュエリーブラック' ),
+				),
+				'_ymkrf_tops' => array(
+					array( 'apron-white', 'ジュエリーホワイトN' ),
+					array( 'apron-cream', 'ジュエリークリームN' ),
+					array( 'apron-pink', 'ジュエリーピンクN2' ),
+					array( 'apron-aqua', 'ジュエリーアクアN' ),
+					array( 'apron-black', 'ジュエリーブラック' ),
+				),
+				'_ymkrf_sinks' => array(
+					array( 'ac-timber-green', 'ティンバーグリーン（鏡面）' ),
+					array( 'ac-botanic-glass-green', 'ボタニックグラスグリーン（鏡面）' ),
+					array( 'ac-robust-matt-greige', 'ロブストマットグレージュ（つや消し）' ),
+					array( 'ac-robust-gray', 'ロブストグレー（鏡面）' ),
+					array( 'ac-rifle-white', 'リフルホワイト（鏡面）' ),
+					array( 'ac-rifle-brown', 'リフルブラウン（鏡面）' ),
+					array( 'ac-marquina-gray', 'マルキーナグレー（鏡面）' ),
+					array( 'ac-lutish-pink', 'ルティシュピンク（鏡面）' ),
+					array( 'ac-facet-beige', 'ファセットベージュ（鏡面）' ),
+					array( 'ac-falty-wood', 'ファルティウッド（鏡面）' ),
+					array( 'ac-tarsia-beige', 'タルシアベージュ（鏡面）' ),
+					array( 'ac-nordic-graywood', 'ノルディグレーウッド（鏡面）' ),
+					array( 'ac-versacy-blue', 'ベルセシーブルー（鏡面）' ),
+					array( 'ac-grani-gray', 'グラーニグレー（つや消し）' ),
+					array( 'ac-material-aroma-green', 'マテリアルアロマグリーン（鏡面）' ),
+					array( 'ac-material-aroma-pink', 'マテリアルアロマピンク（鏡面）' ),
+					array( 'ac-prism-blue', 'プリズムブルー（鏡面）' ),
+					array( 'ac-seiran', 'セイラン（鏡面）' ),
+					array( 'ac-clear-lightgray', 'クレアライトグレー（鏡面）' ),
+					array( 'ac-grayish-walnut', 'グレイッシュウォルナット（鏡面）' ),
+					array( 'ac-flore-beige', 'フロールベージュ（つや消し）' ),
+					array( 'ac-savanna-gray', 'サバナグレー（つや消し）' ),
+				),
+				'_ymkrf_c4' => array(
+					array( 'wall-white', 'プリエホワイト' ),
+					array( 'wall-basiswhite', 'ベーシスホワイト' ),
+					array( 'wall-beige', 'プリエベージュ' ),
+				),
+				'_ymkrf_c5' => array(
+					array( 'floor-rug-white', 'ホワイト（ラグ調）' ),
+					array( 'floor-rug-beige', 'ベージュ（ラグ調）' ),
+					array( 'floor-rug-lightgray', 'ライトグレー（ラグ調）' ),
+					array( 'floor-rug-brown', 'ブラウン（ラグ調）' ),
+					array( 'floor-tile-white', 'ホワイト（タイル調）' ),
+					array( 'floor-tile-beige', 'ベージュ（タイル調）' ),
+					array( 'floor-tile-lightgray', 'ライトグレー（タイル調）' ),
+					array( 'floor-tile-paleblue', 'ペールブルー（タイル調）' ),
+					array( 'floor-tile-coral', 'コーラル（タイル調）' ),
+					array( 'floor-tile-lightbrown', 'ライトブラウン（タイル調）' ),
+					array( 'floor-tile-black', 'ブラック（タイル調）' ),
+					array( 'floor-white', 'ホワイト' ),
+					array( 'floor-beige', 'ベージュ' ),
+					array( 'floor-lightgray', 'ライトグレー' ),
+				),
+				'_ymkrf_c6' => array(
+					array( 'counter-white', 'ホワイト' ),
+					array( 'counter-beige', 'ベージュN' ),
+					array( 'counter-black', 'ブラック' ),
+				),
+			),
+			'specs' => array(
+				array( 'spec-fan', '天井換気扇', '' ),
+				array( 'spec-tub', 'ゆるリラ浴槽 お掃除ラクラク人大浴槽', '' ),
+				array( 'spec-mirror', 'お掃除ラクラク鏡 フレーム付縦長ミラー', '' ),
+				array( 'spec-lid', 'ラクかるふろふた（断熱）', '' ),
+				array( 'spec-counter', 'お掃除ラクラクカウンター', '' ),
+				array( 'spec-door', '折戸ホワイト（W800mm）', '' ),
+				array( 'spec-showerbar', 'コンフォートシャワーバー', '' ),
+				array( 'spec-faucet', 'スッキリ棚水栓（棚W300）／コンフォートウエーブシャワー（メタル調）', '' ),
+				array( 'spec-towel', 'タオル掛け（ホワイト）', '' ),
+				array( 'spec-light', '平天井 シーリング照明（LED1灯）', '' ),
+			),
+			'feats' => array(
+				array( '一歩目から“ほっ”。', '「ほっカラリ床」', '入った瞬間から心地よい', 'クッション性にすぐれ、まるで畳のような足触り。ひざをついても痛くありません。', 'point-soft' ),
+				array( '', '', 'ヒヤッとしない、W断熱構造', '床裏からの冷気をシャットアウト。優れた断熱性能で、室温とほぼ同じ温度を実現します。', 'point-warm' ),
+				array( '', '', '翌朝には、カラリ', 'タテヨコに刻まれたパターンで、表面の水を誘導。翌朝にはカラリと乾き、靴下のまま入っても大丈夫です。', '' ),
+				array( 'ずっとあったか。', '「魔法びん浴槽」', '4時間経ってもあたたかい', '湯張りから4時間経っても、湯温の低下は2.5℃以内。時間が経っても、すぐにお風呂に入れます。', 'point-mahobin' ),
+				array( '', '', '残り湯は洗濯にぴったり', '魔法びん浴槽なら翌朝でもぬるま湯の状態。生地を傷めにくく、洗剤の力を引き出すと言われる、洗濯にぴったりの温度です。', 'point-laundry' ),
+			),
+			'opts' => array(
+				array( 'opt-heater', '100V換気暖房乾燥機', '112000', '浴室全体を暖めます。換気・暖房・乾燥・涼風の4つの機能付き。（三乾王 ヒカルリモコン付）', '※工事費込み' ),
+				array( 'opt-wiper', '床ワイパー洗浄（きれい除菌水）', '69000', 'カビ・ピンク汚れの発生を抑え、床まわりのきれいがつづきます。', '' ),
+				array( 'opt-clearkeep', '浴室クリアキープ洗浄（きれい除菌水）', '101000', '拡散されたきれい除菌水の成分が、カビやピンク汚れを抑制します。', '※三乾王または暖房換気扇を同時にお選びください' ),
+				array( 'opt-autowash', 'おそうじ浴槽', '201000', 'スイッチひとつで浴槽を自動洗浄します。', '※ブローバスとの同時選択はできません' ),
+			),
+		),
+		array(
+			'slug'   => 'lidea-b',
+			'prefix' => 'lideab',
+			'title'  => 'リデア Bタイプ',
+			'meta'   => array(
+				'_ymkrf_catch' => 'くつろぎの浴室へエスコート',
+				'_ymkrf_grade' => 'Aグレード',
+				'_ymkrf_name' => 'リデア Bタイプ',
+				'_ymkrf_size' => 'Bタイプ 1坪サイズ',
+				'_ymkrf_work' => '370000',
+				'_ymkrf_item' => '928000',
+				'_ymkrf_days' => '5',
+				'_ymkrf_pt1' => 'うるつや浄水',
+				'_ymkrf_pt2' => 'いつもキレイ',
+				'_ymkrf_pt3' => 'お掃除カンタン',
+				'_ymkrf_caution' => '※画像はイメージです。',
+			),
+			'total'  => 1298000,
+			'maker'  => 'lixil',
+			'shops'  => array('nonoichi'),
+			'main'   => array( 'main', 'LIXIL リデア Bタイプ 1坪サイズ（ユニットバス）' ),
+			'labels' => array(
+				'_ymkrf_lbl_colors' => '浴槽カラー（全3色・人造大理石パールクォーツ浴槽）',
+				'_ymkrf_lbl_tops' => 'エプロンカラー（全6色）',
+				'_ymkrf_lbl_sinks' => '壁カラー：アクセントパネル（プレミアムIクラス 全9色）',
+				'_ymkrf_lbl_c4' => '収納棚：スマートエスコートバー（全3色）',
+				'_ymkrf_lbl_c5' => 'フロア：キレイサーモフロア（全3色）',
+				'_ymkrf_lbl_c6' => 'カウンター（全2色）',
+			),
+			'sets' => array(
+				'_ymkrf_colors' => array(
+					array( 'tub-white', 'ホワイト／CW1' ),
+					array( 'tub-black', 'ブラック／CN1' ),
+					array( 'tub-beige', 'ベージュ／CY1' ),
+				),
+				'_ymkrf_tops' => array(
+					array( 'apron-white', 'ホワイト' ),
+					array( 'apron-pink', 'ピンク' ),
+					array( 'apron-green', 'グリーン' ),
+					array( 'apron-gray', 'グレー' ),
+					array( 'apron-beige', 'ベージュ' ),
+					array( 'apron-black', 'ブラック' ),
+				),
+				'_ymkrf_sinks' => array(
+					array( 'ac-calcatta-gold', 'カルカッタゴールド' ),
+					array( 'ac-flower-garden', 'フラワーガーデン' ),
+					array( 'ac-cuore-poplar', 'クオーレポプラ' ),
+					array( 'ac-roughsawn-wood', 'ラフソーンウッド' ),
+					array( 'ac-stone-border', 'ストーンボーダー' ),
+					array( 'ac-grace-pattern', 'グレースパターン' ),
+					array( 'ac-quercia-taupe', 'クオーチェトープ' ),
+					array( 'ac-paradiso-black', 'パラディソブラック' ),
+					array( 'ac-mani-greige', 'マニグレージュ' ),
+				),
+				'_ymkrf_c4' => array(
+					array( 'bar-white', 'ファブリック調ホワイト' ),
+					array( 'bar-black', 'ファブリック調ブラック' ),
+					array( 'bar-brown', 'レザー調ブラウン' ),
+				),
+				'_ymkrf_c5' => array(
+					array( 'floor-white', 'ホワイト／N86' ),
+					array( 'floor-beige', 'ベージュ／Y71' ),
+					array( 'floor-gray', 'グレー／U61' ),
+				),
+				'_ymkrf_c6' => array(
+					array( 'counter-white', 'ファブリック調ホワイト' ),
+					array( 'counter-black', 'ファブリック調ブラック' ),
+				),
+			),
+			'specs' => array(
+				array( 'spec-atataka', 'あたたかパック', '' ),
+				array( 'spec-tub', 'ミナモ浴槽（人造大理石パールクォーツ浴槽）', '浴槽内握りバーは付いておりません' ),
+				array( 'spec-counter', 'まる洗いカウンター（ワイドタイプ）', '' ),
+				array( 'spec-thermo', 'サーモバスS', '' ),
+				array( 'spec-escortbar', 'スマートエスコートバー メタルシェルフ（洗い場側）', '' ),
+				array( 'spec-door', '折戸ホワイト（W800mm）', '' ),
+				array( 'spec-grip', 'スライドフック付握りバー（メタルタイプ）', '' ),
+				array( 'spec-faucet', 'ワイドレバー水栓 スイッチ付 エコアクアシャワー', '' ),
+				array( 'spec-mirror', 'タテ型ミラー（3080）／握りバーI型 ホワイト600L', '' ),
+				array( 'spec-light', '内組平天井・天井換気扇 パネルダウンライト（2灯）', '' ),
+			),
+			'feats' => array(
+				array( '座ったままで手が届く。', '「スマートエスコートバー」（洗い場側）', '浴槽内の動作を効率的に', '座ったままで水栓やシャンプーに楽に手が届き、バーの好きな位置にシャワーを仮置きできるレイアウト。洗い場から浴槽への移動もエスコートします。', 'point-escort' ),
+				array( '髪や肌へのダメージを抑える。', '「うるつや浄水」', '髪や肌を健やかに保つ', '専用の浄水カートリッジが水道水に含まれる残留塩素を低減して、髪や肌へのダメージを抑えます。※カートリッジは別売りです', 'point-jousui' ),
+				array( '外して洗えて、裏までキレイ。', '「まる洗いカウンター」', '壁掛けできるから、洗い場を広く使える', 'カウンターをワンアクションで折りたたんで、壁に掛けることができます。', 'point-counter' ),
+				array( '', '', '外して丸洗いできる', '洗いにくい壁や床も、ラクな姿勢で洗えます。', 'point-wash' ),
+				array( 'パッとゴミがまとまる。', '「パッとくるりんポイ排水口」', '渦でまとまったゴミをポイっとするだけ', '浴槽の排水を利用してできる「うず」で、ゴミや毛髪をまとめて捨てやすくします。', 'point-drain' ),
+			),
+			'opts' => array(
+				array( 'opt-heater', '100V換気乾燥暖房機', '105000', '浴室全体を暖めます。換気・暖房・乾燥・涼風の4つの機能付き。', '※工事費込み' ),
+				array( 'opt-mirror', 'ワイドミラー', '12000', 'ひろびろとした空間を演出するワイドミラー。汚れをはじく仕様です。', '' ),
+				array( 'opt-slidedoor', '2枚引戸ホワイト（W800×H2000）', '62000', 'お子様や高齢の方にも開閉しやすい2枚引き戸。ブラック・シルバーも同価格です。', '' ),
+				array( 'opt-aquajet', 'アクアジェット（2穴）＋浴槽パン', '194000', 'ジェットの刺激で身体をほぐし、リフレッシュ。低騒音ポンプを採用。', '' ),
+			),
+		),
+		array(
+			'slug'   => 'granspa',
+			'prefix' => 'granspa',
+			'title'  => 'グランスパ',
+			'meta'   => array(
+				'_ymkrf_catch' => 'ホーロが叶える手間いらずの清潔空間。',
+				'_ymkrf_grade' => 'Sグレード',
+				'_ymkrf_name' => 'グランスパ',
+				'_ymkrf_size' => '1坪サイズ',
+				'_ymkrf_work' => '370000',
+				'_ymkrf_item' => '1028000',
+				'_ymkrf_days' => '5',
+				'_ymkrf_pt1' => 'きれいキープ！',
+				'_ymkrf_pt2' => '続くぬくもり',
+				'_ymkrf_pt3' => 'うるぽか',
+				'_ymkrf_caution' => '※画像はイメージです。',
+			),
+			'total'  => 1398000,
+			'maker'  => 'takara',
+			'shops'  => array('nonoichi', 'komathu', 'hakui'),
+			'main'   => array( 'main', 'タカラスタンダード グランスパ 1坪サイズ（ユニットバス）' ),
+			'labels' => array(
+				'_ymkrf_lbl_colors' => '浴槽カラー（全4色）',
+				'_ymkrf_lbl_tops' => 'エプロンカラー（全3色）',
+				'_ymkrf_lbl_sinks' => '壁カラー（ハイクラス全20色・ホーロークリーンパネル）',
+				'_ymkrf_lbl_c5' => 'フロア（ハイクラス全4色・キープクリンフロア）',
+				'_ymkrf_lbl_c6' => 'カウンターカラー（全3色）',
+			),
+			'sets' => array(
+				'_ymkrf_colors' => array(
+					array( 'tub-white', 'WN：クリスタルパールホワイト' ),
+					array( 'tub-lightgray', 'GN：シュガーライトグレー' ),
+					array( 'tub-lightbeige', 'DA：シュガーライトベージュ' ),
+					array( 'tub-black', 'K：シュガーブラック' ),
+				),
+				'_ymkrf_tops' => array(
+					array( 'apron-white', 'W：ホワイト' ),
+					array( 'apron-beige', 'D：ベージュ' ),
+					array( 'apron-black', 'K：ブラック' ),
+				),
+				'_ymkrf_sinks' => array(
+					array( 'wa-terrazzo-white', 'テラゾーホワイト' ),
+					array( 'wa-stucco-gray', 'スタッコグレー' ),
+					array( 'wa-concrete-gray', 'コンクリートグレー' ),
+					array( 'wa-brick-gray', 'ブリックグレー' ),
+					array( 'wa-brick-beige', 'ブリックベージュ' ),
+					array( 'wa-brick-dark', 'ブリックダーク' ),
+					array( 'wa-flowstone-gray', 'フロウストーングレー' ),
+					array( 'wa-flowstone-terracotta', 'フロウストーンテラコッタ' ),
+					array( 'wa-linen-white', 'リネンホワイト' ),
+					array( 'wa-white-ash', 'ホワイトアッシュ' ),
+					array( 'wa-greige-ash', 'グレージュアッシュ' ),
+					array( 'wa-canvas-yellow', 'キャンバスイエロー' ),
+					array( 'wa-walnut-white', 'ウォルナットホワイト' ),
+					array( 'wa-walnut-greige', 'ウォルナットグレージュ' ),
+					array( 'wa-walnut-black', 'ウォルナットブラック' ),
+					array( 'wa-pearl-white', 'パールホワイト' ),
+					array( 'wa-pearl-beige', 'パールベージュ' ),
+					array( 'wa-pearl-black', 'パールブラック' ),
+					array( 'wa-caribbean-blue', 'カリビアンブルー' ),
+					array( 'wa-collage-mix', 'コラージュミックス' ),
+				),
+				'_ymkrf_c5' => array(
+					array( 'floor-white', 'HW：カームホワイト' ),
+					array( 'floor-beige', 'HD：カームベージュ' ),
+					array( 'floor-gray', 'HG：カームグレー' ),
+					array( 'floor-darkgray', 'HC：カームダークグレー' ),
+				),
+				'_ymkrf_c6' => array(
+					array( 'counter-white', 'WA：ホワイト' ),
+					array( 'counter-beige', 'DA：ベージュ' ),
+					array( 'counter-darkgray', 'KA：ダークグレー' ),
+				),
+			),
+			'specs' => array(
+				array( 'spec-fan', '天井換気扇', '' ),
+				array( 'spec-tub', 'ラウンド浴槽（ベンチ付）', '' ),
+				array( 'spec-mirror', 'ロングクリアミラー', '' ),
+				array( 'spec-lid', '断熱風呂ふた／固定式風呂ふたフック', '' ),
+				array( 'spec-counter', '樹脂製ワイドカウンター', '' ),
+				array( 'spec-door', '折戸ホワイト（W800mm）', '' ),
+				array( 'spec-faucet', 'サーモスタット水栓 標準シャワーヘッド 樹脂ホース シルバー', '' ),
+				array( 'spec-rack', 'どこでもラック／タオルハンガーL', '' ),
+				array( 'spec-light', '天井付スクエア照明（電球色／白色）', '' ),
+				array( 'spec-bar', 'シャワーフックスライドバー／ハンドバーI型600（ステンレス）', '' ),
+			),
+			'feats' => array(
+				array( '汚れが落としやすい！', '「ホーロークリーンパネル」', '手間いらずの清潔空間', '長年使ってもお手入れのしやすさは変わりません。汚れを落としやすく、カビをガードし、傷もつきにくいホーローです。', 'point-horo' ),
+				array( '', '', '洗剤なしでらくらくきれい', '水拭きだけで汚れが落ちるので、洗剤を使わずにお掃除できます。', 'point-horo2' ),
+				array( 'キレイをキープ', '「キープクリンフロア」', 'やさしいぬくもり', 'お湯をかけると、磁器タイルはじんわりと温まります。足元を快適に保ちます。', 'point-floor' ),
+				array( '', '', '傷つきにくい！', '硬いブラシで擦っても傷がつきにくい磁器タイルを使用。頑固な汚れもゴシゴシお掃除できます。', 'point-floor2' ),
+				array( '続くぬくもり', '「パーフェクト保温」', '浴室全体を包む保温材を標準装備', '浴室まるごとを保温材で包み込み、あたたかさが長つづきします。', 'point-hoon' ),
+			),
+			'opts' => array(
+				array( 'opt-slidedoor', '片引き戸', '54900', '開閉動作がラクな引き戸タイプ。', '' ),
+				array( 'opt-heater', '100V浴室暖房乾燥機', '75900', '浴室全体を暖めます。換気・暖房・乾燥・涼風の4つの機能付き。', '※工事費込み' ),
+				array( 'opt-ecoshower', 'エコシャワーX', '6500', '流量を抑えた散水と手元止水で、しっかり節水します。', '' ),
+				array( 'opt-urupoka', 'うるぽか湯', '177600', 'マイクロバブルで湯あたりもなめらか。おうちでスパ気分を味わえます。', '' ),
+			),
+		),
+		array(
+			'slug'   => 'selevia',
+			'prefix' => 'selevia',
+			'title'  => 'セレヴィア',
+			'meta'   => array(
+				'_ymkrf_catch' => '体の芯まで暖まる、あったかバスルーム。',
+				'_ymkrf_grade' => 'SSグレード',
+				'_ymkrf_name' => 'セレヴィア',
+				'_ymkrf_size' => '1坪サイズ',
+				'_ymkrf_work' => '370000',
+				'_ymkrf_item' => '1328000',
+				'_ymkrf_days' => '5',
+				'_ymkrf_pt1' => 'まるごと保温',
+				'_ymkrf_pt2' => '室内デザイン',
+				'_ymkrf_pt3' => '足ピタフロア',
+				'_ymkrf_caution' => '※写真はイメージです。写真にはオプションが含まれています。',
+			),
+			'total'  => 1698000,
+			'maker'  => 'cleanup',
+			'shops'  => array(),
+			'main'   => array( 'main', 'クリナップ セレヴィア 1坪サイズ（ユニットバス）' ),
+			'labels' => array(
+				'_ymkrf_lbl_colors' => '浴槽カラー（全5色）',
+				'_ymkrf_lbl_tops' => 'エプロン（全4色）',
+				'_ymkrf_lbl_sinks' => '壁カラー：全面パネル（全12色）',
+				'_ymkrf_lbl_c4' => '天井（全4色）',
+				'_ymkrf_lbl_c5' => 'フロア（全4色）',
+				'_ymkrf_lbl_c6' => 'カウンター（全4色）',
+			),
+			'sets' => array(
+				'_ymkrf_colors' => array(
+					array( 'tub-pearlwhite', 'パールホワイト' ),
+					array( 'tub-forno-white', 'フォルノホワイト' ),
+					array( 'tub-forno-gray', 'フォルノグレー' ),
+					array( 'tub-forno-beige', 'フォルノベージュ' ),
+					array( 'tub-forno-charcoal', 'フォルノチャコール' ),
+				),
+				'_ymkrf_tops' => array(
+					array( 'apron-mediumwood', 'ミディアムウッド' ),
+					array( 'apron-naturalwood', 'ナチュラルウッド' ),
+					array( 'apron-roche-white', 'ロッシュホワイト' ),
+					array( 'apron-pietra-dark', 'ピアトラダーク' ),
+				),
+				'_ymkrf_sinks' => array(
+					array( 'wa-tenderwood-medium', 'テンダーウッドミディアム（WOOD 鏡面仕上げ）' ),
+					array( 'wa-tenderwood-natural', 'テンダーウッドナチュラル（WOOD 鏡面仕上げ）' ),
+					array( 'wa-tenderwood-white', 'テンダーウッドホワイト（WOOD 鏡面仕上げ）' ),
+					array( 'wa-glasstile-white', 'グラスタイルホワイト（TILE 鏡面仕上げ）' ),
+					array( 'wa-glasstile-mint', 'グラスタイルミント（TILE 鏡面仕上げ）' ),
+					array( 'wa-glasstile-cobalt', 'グラスタイルコバルト（TILE 鏡面仕上げ）' ),
+					array( 'wa-darkparlor', 'ダークパーラー（STONE 鏡面仕上げ）' ),
+					array( 'wa-calacatta-white', 'カラカッタホワイト（STONE 鏡面仕上げ）' ),
+					array( 'wa-calm-ice', 'カルムラインアイス（TEXTURE 鏡面仕上げ）' ),
+					array( 'wa-calm-pastel', 'カルムラインパステル（TEXTURE 鏡面仕上げ）' ),
+					array( 'wa-calm-white', 'カルムラインホワイト（TEXTURE 鏡面仕上げ）' ),
+					array( 'wa-calm-gray', 'カルムライングレー（TEXTURE 鏡面仕上げ）' ),
+				),
+				'_ymkrf_c4' => array(
+					array( 'ceil-walnut', 'ウォールナット' ),
+					array( 'ceil-oak', 'オーク' ),
+					array( 'ceil-mortar', 'モルタル' ),
+					array( 'ceil-concrete', 'コンクリート' ),
+				),
+				'_ymkrf_c5' => array(
+					array( 'floor-mediumwood', 'ミディアムウッド' ),
+					array( 'floor-naturalwood', 'ナチュラルウッド' ),
+					array( 'floor-roche-white', 'ロッシュホワイト' ),
+					array( 'floor-pietra-dark', 'ピアトラダーク' ),
+				),
+				'_ymkrf_c6' => array(
+					array( 'counter-mediumwood', 'ミディアムウッド' ),
+					array( 'counter-naturalwood', 'ナチュラルウッド' ),
+					array( 'counter-whitestone', 'ホワイトストーン' ),
+					array( 'counter-darkstone', 'ダークストーン' ),
+				),
+			),
+			'specs' => array(
+				array( 'spec-counter', 'とってもクリンカウンター', '' ),
+				array( 'spec-tub', 'アクリストン保温浴槽（機器タイル・パール調）', '' ),
+				array( 'spec-mirror', 'スクエアミラー 防汚加工・ヒーターなし', '' ),
+				array( 'spec-lid', '断熱組フタ（3点止めフック）', '' ),
+				array( 'spec-bar', 'サポートバー＆シェルフ（浴槽側サポートバーあり）', '' ),
+				array( 'spec-door', '折戸ホワイト（W800mm）', '' ),
+				array( 'spec-haircatcher', 'クリンヘアキャッチャー', '' ),
+				array( 'spec-faucet', '壁出しメッキ水栓 シルクベールシャワー スライドバー付', '' ),
+				array( 'spec-fan', '天井換気扇（ホワイト）', '' ),
+				array( 'spec-light', 'フラット天井 ダウンライト4灯（ホワイト）', '' ),
+			),
+			'feats' => array(
+				array( 'あたたかさが続くから、冬場の入浴も快適。', '「浴室まるごと保温」', '浴室全体を保温材でパック', '入浴後30分経っても、浴室は20度以上。浴室内に暖かさがとどまります。', 'point-hoon' ),
+				array( '', '', '高断熱浴槽', '4時間後も温度低下をわずか2.5℃以内に抑えるので、次の人にも温かくてエコです。', 'point-tub' ),
+				array( '高いコーディネート性。', '「室内デザイン」', '天井からフロアまで統一したコーディネートが可能', '「天井」「浴槽」「フロア」「エプロン」まで、色をそろえてコーディネートできます。', 'point-design' ),
+				array( '滑りにくいから、安心。', '「足ピタフロア」', '滑り止め効果を高めたパターン加工', '水の表面張力のはたらきで足裏を引き寄せます。床の溝までスポンジが届く形状なので、水滴が残りにくく乾きやすいのも特長です。', 'point-floor' ),
+			),
+			'opts' => array(
+				array( 'opt-heater', '100V換気乾燥暖房機', '95000', '浴室全体を暖めます。換気・暖房・乾燥・涼風の4つの機能付き。', '※工事費込み' ),
+				array( 'opt-grip', '浴槽ハンドグリップ（スムーズ浴槽用）', '13000', '2タイプの入浴姿勢で、くつろぎの時を満喫できます。', '' ),
+				array( 'opt-slidedoor', '片引戸（ホワイト）', '76000', '開け閉めがしやすく、スムーズに出入りできます。', '' ),
+				array( 'opt-chair', 'スムーズクッションチェア', '12000', '座っていても疲れにくい高さ。座面が外せて洗えます。', '' ),
+			),
+		),
+		array(
+			'slug'   => 'sinla',
+			'prefix' => 'sinla',
+			'title'  => 'シンラ',
+			'meta'   => array(
+				'_ymkrf_catch' => '上質で心休まる、穏やかな時間をすごす。',
+				'_ymkrf_grade' => 'Premiumグレード',
+				'_ymkrf_name' => 'シンラ',
+				'_ymkrf_size' => 'Dタイプ 1坪サイズ',
+				'_ymkrf_work' => '370000',
+				'_ymkrf_item' => '1628000',
+				'_ymkrf_days' => '5',
+				'_ymkrf_pt1' => '楽湯',
+				'_ymkrf_pt2' => 'リラックス',
+				'_ymkrf_pt3' => '上品で美しい',
+				'_ymkrf_caution' => '※写真はイメージです。',
+			),
+			'total'  => 1998000,
+			'maker'  => 'toto',
+			'shops'  => array('nonoichi'),
+			'main'   => array( 'main', 'TOTO シンラ Dタイプ 1坪サイズ（ユニットバス）' ),
+			'labels' => array(
+				'_ymkrf_lbl_colors' => '浴槽・浴槽エプロンカラー（各全6色）',
+				'_ymkrf_lbl_sinks' => '壁カラー：アクセントパネル（ハイグレードⅡ 全14色）',
+				'_ymkrf_lbl_c5' => '床カラー（全10色）',
+				'_ymkrf_lbl_c6' => 'カウンター（全4色）',
+			),
+			'sets' => array(
+				'_ymkrf_colors' => array(
+					array( 'tub-white', 'エレノアホワイト' ),
+					array( 'tub-ivory', 'エレノアアイボリー' ),
+					array( 'tub-pink', 'エレノアピンク' ),
+					array( 'tub-gray', 'エレノアグレー' ),
+					array( 'tub-brown', 'エレノアブラウン' ),
+					array( 'tub-black', 'エレノアブラック' ),
+				),
+				'_ymkrf_sinks' => array(
+					array( 'ac-sandstone-beige', 'サンドストーンベージュ（ストーン）' ),
+					array( 'ac-ondry-beige', 'オンドリーベージュ（ストーン）' ),
+					array( 'ac-onisiata-gray', 'オニシアータグレー（ストーン）' ),
+					array( 'ac-piaclair-softgray', 'ピアクレアソフトグレー（ストーン）' ),
+					array( 'ac-crafty-black', 'クラフティブラック（ストーン）' ),
+					array( 'ac-empera-black', 'エンペラブラック（ストーン）' ),
+					array( 'ac-confo-walnut', 'コンフォウォルナット（ウッド）' ),
+					array( 'ac-blanche-oak', 'ブランシュオーク（ウッド）' ),
+					array( 'ac-grayish-oak', 'グレイッシュオーク（ウッド）' ),
+					array( 'ac-noir-wood', 'ノワウッド（ウッド）' ),
+					array( 'ac-luce-oak', 'ルーセオーク（ウッド）' ),
+					array( 'ac-magnifique-cherry', 'マニフィークチェリー（ウッド）' ),
+					array( 'ac-perl-gray', 'ペルグレー' ),
+					array( 'ac-beton-white', 'ベトンホワイト' ),
+				),
+				'_ymkrf_c5' => array(
+					array( 'floor-etoffe-white', 'エトフホワイト（布調）' ),
+					array( 'floor-etoffe-beige', 'エトフベージュ（布調）' ),
+					array( 'floor-etoffe-gray', 'エトフグレー（布調）' ),
+					array( 'floor-etoffe-marrone', 'エトフマローネ（布調）' ),
+					array( 'floor-etoffe-black', 'エトフブラック（布調）' ),
+					array( 'floor-cobble-white', 'コブルホワイト（石調）' ),
+					array( 'floor-cobble-beige', 'コブルベージュ（石調）' ),
+					array( 'floor-cobble-gray', 'コブルグレー（石調）' ),
+					array( 'floor-cobble-marrone', 'コブルマローネ（石調）' ),
+					array( 'floor-cobble-black', 'コブルブラック（石調）' ),
+				),
+				'_ymkrf_c6' => array(
+					array( 'counter-white', 'グランツホワイト' ),
+					array( 'counter-beige', 'グランツベージュ' ),
+					array( 'counter-brown', 'グランツブラウン' ),
+					array( 'counter-black', 'グランツブラック' ),
+				),
+			),
+			'specs' => array(
+				array( 'spec-fan', '天井換気扇', '' ),
+				array( 'spec-tub', 'ファーストクラス浴槽 お掃除ラクラク人大浴槽（楽湯装備）', '' ),
+				array( 'spec-mirror', 'お掃除ラクラク鏡 アルミフレーム付縦長ミラー くもり止めヒーター付／ワイヤーシェルフ2段', '' ),
+				array( 'spec-lid', 'ラクかるふろふた（断熱）', '' ),
+				array( 'spec-counter', 'お掃除ラクラクカウンター（床ワイパー洗浄装備）', '' ),
+				array( 'spec-door', '折戸ホワイト（W800mm）', '' ),
+				array( 'spec-bar', 'スライドハンガー付インテリアバー', '' ),
+				array( 'spec-faucet', '2wayタッチ水栓 コンフォートウェーブシャワー3モード（メタル調）', '' ),
+				array( 'spec-towel', 'タオル掛け（メタル調）', '' ),
+				array( 'spec-light', 'ダウンライト（温白色）', '' ),
+			),
+			'feats' => array(
+				array( 'たっぷりのお湯で肩と腰を心地よく刺激', '「楽湯 RAKU-YU」', '幅広で大流量のお湯で温かバスタイム', '気分や好みにあわせて流量を変えられ、広がるお湯に包まれます。', 'point-rakuyu' ),
+				array( '', '', '水流が生み出す適度な刺激', 'ランダムな曲線で円を描くよう噴出された水流が、腰を中心に身体の広い範囲へ、変化に富んだ飽きのない刺激を与えます。', 'point-rakuyu2' ),
+				array( 'リラックスへと導く', '「ファーストクラス浴槽」', '光の加減で表情が変わる、パールのような上品な美しさ', '滑らかな曲面で構成されたヘッドレストと浴槽の形状。一体感あるつながりにこだわりました。', 'point-firstclass' ),
+				array( 'スイッチひとつで洗浄・除菌', '「床ワイパー洗浄（きれい除菌水）」', '見えない汚れ・菌も洗い流す', '①ワイパーのように水道水を散布 ②きれい除菌水で仕上げ完了。最新の床ワイパー洗浄です。', 'point-wiper' ),
+			),
+			'opts' => array(
+				array( 'opt-slidedoor', '2枚引き戸', '97000', '出入り口の開口を広くとることができます。', '' ),
+				array( 'opt-heater', '100V換気暖房乾燥機', '166000', '浴室全体を暖めます。換気・暖房・乾燥・涼風の4つの機能付き。（三乾王 ヒカルリモコン付）', '※工事費込み' ),
+				array( 'opt-autowash', 'おそうじ浴槽', '190000', 'スイッチひとつで浴槽を自動洗浄します。', '※ブローバスとの同時選択はできません' ),
+				array( 'opt-dressheat', '洗面所暖房（AC100V）', '96000', '寒い時期も温風暖房で安心・快適。涼風・ドライヤー機能も付いています。', '' ),
+			),
+		),
 	);
 
 	foreach ( $bath_products as $bp ) {
@@ -3015,7 +3539,7 @@ add_action( 'init', function () {
 		if ( ! $pid || is_wp_error( $pid ) ) continue;
 
 		$m0 = $missing;
-		$pf = $bp['slug'] === 'sazana-n' ? 'sazana' : ( $bp['slug'] === 'lidea-m' ? 'lidea' : 'rakuvia' );
+		$pf = $bp['prefix'];
 
 		/* 画像ファイル名は「接頭辞-用途.jpg」でそろえています */
 		$bimg = function ( $key, $alt = '' ) use ( $img, $pf ) {
@@ -3086,16 +3610,59 @@ add_action( 'init', function () {
 	        黒帯を落としたものに入れ替えます。
 	   ------------------------------------------------------------ */
 	$sz = get_page_by_path( 'sazana-n', OBJECT, 'ymkrf_product' );
-	if ( $sz && get_post_meta( $sz->ID, '_ymkrf_main_ver', true ) !== '2' ) {
+	if ( $sz && get_post_meta( $sz->ID, '_ymkrf_main_ver', true ) !== '3' ) {
 
 		$old = $img( 'sazana-main.jpg' );
 		if ( $old ) wp_delete_attachment( $old, true );
 
-		$new = $img( 'sazana-main.jpg', 'TOTO サザナ Nタイプ 1坪サイズ（ユニットバス）' );
+		$new = $img( 'sazana-main.jpg', 'TOTO サザナ Nタイプ 1坪サイズ（ユニットバス）', true );
 		if ( $new ) {
 			set_post_thumbnail( $sz->ID, $new );
-			update_post_meta( $sz->ID, '_ymkrf_main_ver', '2' );
+			update_post_meta( $sz->ID, '_ymkrf_main_ver', '3' );
 			$log[] = 'サザナNのメイン写真を、黒帯のないものに差し替えました';
+		}
+	}
+
+
+	/* ------------------------------------------------------------
+	   3-j. アイキャッチ（一覧やグレード欄に出る写真）の自動修復
+	        写真を差し替えたときなどに、もとの写真だけ消えて
+	        新しい写真が入らないことがあるため、毎回チェックして直します。
+	   ------------------------------------------------------------ */
+	$main_files = array(
+		'v-style'  => 'main.jpg',
+		'rakuera'  => 'raku-main-product.jpg',
+		'refit'    => 'refit-main.jpg',
+		'sierra-s' => 'sierra-main.jpg',
+		's-class'  => 'sclass-main.jpg',
+		'stedia'   => 'stedia-main.jpg',
+		'edel'     => 'edel-main.jpg',
+		'classo'   => 'classo-main.jpg',
+		'richelle' => 'richelle-main.jpg',
+		'centro'   => 'centro-main.jpg',
+		'ofuroa'   => 'ofuroa-main.jpg',
+		'sazana-n' => 'sazana-main.jpg',
+		'lidea-m'  => 'lidea-main.jpg',
+		'rakuvia'  => 'rakuvia-main.jpg',
+		'sazana-t' => 'sazanat-main.jpg',
+		'lidea-b'  => 'lideab-main.jpg',
+		'granspa'  => 'granspa-main.jpg',
+		'selevia'  => 'selevia-main.jpg',
+		'sinla'    => 'sinla-main.jpg',
+	);
+	foreach ( $main_files as $slug => $file ) {
+		$pp = get_page_by_path( $slug, OBJECT, 'ymkrf_product' );
+		if ( ! $pp ) continue;
+
+		$tid = get_post_thumbnail_id( $pp->ID );
+		/* 番号はあるのに実体が無い（消された）／そもそも番号が無い、のどちらも直します */
+		if ( $tid && get_post( $tid ) && get_attached_file( $tid ) ) continue;
+
+		if ( $tid ) delete_post_thumbnail( $pp->ID );
+		$re = $img( $file, get_the_title( $pp->ID ), true );
+		if ( $re ) {
+			set_post_thumbnail( $pp->ID, $re );
+			$log[] = get_the_title( $pp->ID ) . 'のアイキャッチを入れ直しました';
 		}
 	}
 
