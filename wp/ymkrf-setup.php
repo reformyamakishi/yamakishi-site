@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '30' );
+define( 'YMKRF_SETUP_VER', '32' );
 
 /* キッチンの「ヤマキシ標準工事内容」。
    ホームページの一覧表（7項目）と、番号入りの図（8項目）の
@@ -29,8 +29,7 @@ function ymkrf_kitchen_works() {
 		array( '水道工事',               '給水・給湯・排水の工事です。' ),
 		array( '電気工事',               '設備機器の配線接続等の工事です。' ),
 		array( 'ガス配管変更工事',       'ガスコンロを使うための配管工事です。' ),
-		array( 'キッチンパネル設置工事', 'キッチンパネルの取り付け工事費です。' ),
-		array( 'キッチンパネル部材費',   'キッチンパネル自体の部材費です。' ),
+		array( 'キッチンパネル設置工事', 'キッチンパネル部材費込み施工いたします。' ),
 		array( '下地工事',               '大工工事です。キッチンパネル設置面の補修、補強を行います。' ),
 		array( 'シロッコファン取付工事', 'シロッコファンの取付工事です。' ),
 		array( 'システムキッチン取付設置', '新しいシステムキッチンの取り付け・設置工事です。' ),
@@ -131,6 +130,31 @@ add_action( 'init', function () {
 			if ( ! is_wp_error( $r ) ) $log[] = "{$tax}: {$name}";
 		}
 	}
+
+	/* ------------------------------------------------------------
+	   2-b. キッチン全商品の「ヤマキシ標準工事内容」をそろえます
+	        写真の取り込みより先に済ませます。あとに置くと、
+	        取り込みが長引いたときにここまで届かないことがあるためです。
+	        ホームページの一覧表と番号入りの図の両方に合わせた11項目です。
+	   ------------------------------------------------------------ */
+	$kt2 = get_term_by( 'slug', 'kitchen', 'ymkrf_product_cat' );
+	if ( $kt2 && ! is_wp_error( $kt2 ) && get_option( 'ymkrf_kitchen_works_ver' ) !== '5' ) {
+		$rows = array();
+		foreach ( ymkrf_kitchen_works() as $r ) $rows[] = array( 'name' => $r[0], 'text' => $r[1] );
+
+		$ks2 = get_posts( array(
+			'post_type'      => 'ymkrf_product',
+			'posts_per_page' => -1,
+			'fields'         => 'ids',
+			'tax_query'      => array( array(
+				'taxonomy' => 'ymkrf_product_cat', 'field' => 'term_id', 'terms' => $kt2->term_id,
+			) ),
+		) );
+		foreach ( (array) $ks2 as $kid ) update_post_meta( $kid, '_ymkrf_works', $rows );
+		if ( $ks2 ) $log[] = 'キッチン' . count( $ks2 ) . '件の標準工事内容を11項目にそろえました';
+		update_option( 'ymkrf_kitchen_works_ver', '5' );
+	}
+
 
 	/* ------------------------------------------------------------
 	   2. 写真をメディアに取り込む
@@ -2637,28 +2661,6 @@ add_action( 'init', function () {
 			update_post_meta( $bid, '_ymkrf_img_missing', $missing - $m0 );
 			$log[] = '商品「オフローラ」を登録しました → ' . get_permalink( $bid );
 		}
-	}
-
-	/* ------------------------------------------------------------
-	   3-i. キッチン全商品の「ヤマキシ標準工事内容」をそろえます
-	        ホームページの一覧表と番号入りの図の両方に合わせた11項目です。
-	   ------------------------------------------------------------ */
-	$kt2 = get_term_by( 'slug', 'kitchen', 'ymkrf_product_cat' );
-	if ( $kt2 && ! is_wp_error( $kt2 ) && get_option( 'ymkrf_kitchen_works_ver' ) !== '3' ) {
-		$rows = array();
-		foreach ( ymkrf_kitchen_works() as $r ) $rows[] = array( 'name' => $r[0], 'text' => $r[1] );
-
-		$ks2 = get_posts( array(
-			'post_type'      => 'ymkrf_product',
-			'posts_per_page' => -1,
-			'fields'         => 'ids',
-			'tax_query'      => array( array(
-				'taxonomy' => 'ymkrf_product_cat', 'field' => 'term_id', 'terms' => $kt2->term_id,
-			) ),
-		) );
-		foreach ( (array) $ks2 as $kid ) update_post_meta( $kid, '_ymkrf_works', $rows );
-		if ( $ks2 ) $log[] = 'キッチン' . count( $ks2 ) . '件の標準工事内容を11項目にそろえました';
-		update_option( 'ymkrf_kitchen_works_ver', '3' );
 	}
 
 	/* ------------------------------------------------------------
