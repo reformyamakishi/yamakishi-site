@@ -14,7 +14,31 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '28' );
+define( 'YMKRF_SETUP_VER', '30' );
+
+/* キッチンの「ヤマキシ標準工事内容」。
+   ホームページの一覧表（7項目）と、番号入りの図（8項目）の
+   両方に載っているものを、重複を除いてまとめた11項目です。
+   10商品すべてで同じ内容を使います。 */
+if ( ! function_exists( 'ymkrf_kitchen_works' ) ) :
+function ymkrf_kitchen_works() {
+	return array(
+		array( '既存流し台解体撤去工事', '古いキッチンの撤去にかかる工事です。' ),
+		array( '養生工事',               '床・壁・下地を保護します。' ),
+		array( '産業廃棄物処理運輸工事', '撤去した古いキッチンを廃棄処分するためにかかる費用です。' ),
+		array( '水道工事',               '給水・給湯・排水の工事です。' ),
+		array( '電気工事',               '設備機器の配線接続等の工事です。' ),
+		array( 'ガス配管変更工事',       'ガスコンロを使うための配管工事です。' ),
+		array( 'キッチンパネル設置工事', 'キッチンパネルの取り付け工事費です。' ),
+		array( 'キッチンパネル部材費',   'キッチンパネル自体の部材費です。' ),
+		array( '下地工事',               '大工工事です。キッチンパネル設置面の補修、補強を行います。' ),
+		array( 'シロッコファン取付工事', 'シロッコファンの取付工事です。' ),
+		array( 'システムキッチン取付設置', '新しいシステムキッチンの取り付け・設置工事です。' ),
+	);
+}
+endif;
+
+
 
 /**
  * init（優先度99）に付けているので、管理画面だけでなく
@@ -840,15 +864,7 @@ add_action( 'init', function () {
 			update_post_meta( $post_id, '_ymkrf_options', $rows );
 
 			/* --- ヤマキシ標準工事内容 --- */
-			$works = array(
-				array( '撤去工事',             '古いキッチンの撤去にかかる工事です。' ),
-				array( '廃棄処分',             '撤去した古いキッチンを廃棄処分するためにかかる費用です。' ),
-				array( 'ガス配管変更工事',     'ガスコンロを使うための配管工事です。' ),
-				array( 'キッチンパネル設置工事', 'キッチンパネルの取り付け工事費です。' ),
-				array( 'キッチンパネル部材費', 'キッチンパネル自体の部材費です。' ),
-				array( '下地工事（大工工事）', 'キッチンパネル設置面の補修、補強の工事です。' ),
-				array( 'シロッコファン取付工事', 'シロッコファンの取り付け工事費です。' ),
-			);
+			$works = ymkrf_kitchen_works();
 			$rows = array();
 			foreach ( $works as $r ) $rows[] = array( 'name' => $r[0], 'text' => $r[1] );
 			update_post_meta( $post_id, '_ymkrf_works', $rows );
@@ -2409,9 +2425,9 @@ add_action( 'init', function () {
 	   ------------------------------------------------------------ */
 	/* v27：ポイント・オプションの列名が違っていたので、一度消して作り直します */
 	$old_of = get_page_by_path( 'ofuroa', OBJECT, 'ymkrf_product' );
-	if ( $old_of && get_option( 'ymkrf_ofuroa_fix' ) !== '2' ) {
+	if ( $old_of && get_option( 'ymkrf_ofuroa_fix' ) !== '3' ) {
 		wp_delete_post( $old_of->ID, true );
-		update_option( 'ymkrf_ofuroa_fix', '2' );
+		update_option( 'ymkrf_ofuroa_fix', '3' );
 		$log[] = 'オフローラを作り直しました（標準工事内容の修正）';
 	}
 
@@ -2600,10 +2616,10 @@ add_action( 'init', function () {
 			$works = array(
 				array( '既存ユニットバス解体撤去工事', '古い浴槽の撤去にかかる工事です。' ),
 				array( '産業廃棄物処理運搬工事',       '撤去した浴槽（ユニットバス）などを廃棄処分するためにかかる費用です。' ),
-				array( '水道工事（給水・給湯・排水）', '' ),
-				array( '電気工事（配線）',             '' ),
-				array( '木工事（下地）',               '脱衣所壁下地の工事です。' ),
-				array( 'ユニットバス組立設置',         '' ),
+				array( '水道工事',                     '給水・給湯・排水の工事です。' ),
+				array( '電気工事',                     '配線の工事です。' ),
+				array( '木工事',                       '脱衣所の壁下地をつくる工事です。' ),
+				array( 'ユニットバス組立設置',         '新しいユニットバスの組立・設置工事です。' ),
 				array( '浴室壁面造作・内装工事',       '脱衣場側の壁面を、造作する工事です。その壁面のクロスやサニタリーボードなどの内装も含みます。' ),
 				array( '換気扇取付工事',               '換気扇の取り付け工事です。' ),
 				array( '浴室ドア枠造作工事',           '浴室のドア枠を造作します。' ),
@@ -2621,6 +2637,28 @@ add_action( 'init', function () {
 			update_post_meta( $bid, '_ymkrf_img_missing', $missing - $m0 );
 			$log[] = '商品「オフローラ」を登録しました → ' . get_permalink( $bid );
 		}
+	}
+
+	/* ------------------------------------------------------------
+	   3-i. キッチン全商品の「ヤマキシ標準工事内容」をそろえます
+	        ホームページの一覧表と番号入りの図の両方に合わせた11項目です。
+	   ------------------------------------------------------------ */
+	$kt2 = get_term_by( 'slug', 'kitchen', 'ymkrf_product_cat' );
+	if ( $kt2 && ! is_wp_error( $kt2 ) && get_option( 'ymkrf_kitchen_works_ver' ) !== '3' ) {
+		$rows = array();
+		foreach ( ymkrf_kitchen_works() as $r ) $rows[] = array( 'name' => $r[0], 'text' => $r[1] );
+
+		$ks2 = get_posts( array(
+			'post_type'      => 'ymkrf_product',
+			'posts_per_page' => -1,
+			'fields'         => 'ids',
+			'tax_query'      => array( array(
+				'taxonomy' => 'ymkrf_product_cat', 'field' => 'term_id', 'terms' => $kt2->term_id,
+			) ),
+		) );
+		foreach ( (array) $ks2 as $kid ) update_post_meta( $kid, '_ymkrf_works', $rows );
+		if ( $ks2 ) $log[] = 'キッチン' . count( $ks2 ) . '件の標準工事内容を11項目にそろえました';
+		update_option( 'ymkrf_kitchen_works_ver', '3' );
 	}
 
 	/* ------------------------------------------------------------
