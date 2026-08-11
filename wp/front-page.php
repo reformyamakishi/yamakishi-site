@@ -315,9 +315,9 @@ get_header();
       <div class="p-price__card" data-reveal data-reveal-delay="80">
         <div class="p-price__photo">
           <picture>
-            <source srcset="<?php echo $asset; ?>/assets/img/products/v-style/main.webp" type="image/webp">
-            <img src="<?php echo $asset; ?>/assets/img/products/v-style/main.jpg" width="863" height="784"
-                 alt="システムキッチン V-style（Vスタイル）" loading="lazy" decoding="async">
+            <source srcset="<?php echo $asset; ?>/assets/img/top/price-kitchen.webp" type="image/webp">
+            <img src="<?php echo $asset; ?>/assets/img/top/price-kitchen.jpg" width="1200" height="900"
+                 alt="システムキッチン V-style（Vスタイル）の全体" loading="lazy" decoding="async">
           </picture>
         </div>
         <div class="p-price__body">
@@ -333,7 +333,7 @@ get_header();
         <div class="p-price__photo">
           <picture>
             <source srcset="<?php echo $asset; ?>/assets/img/top/price-bath.webp" type="image/webp">
-            <img src="<?php echo $asset; ?>/assets/img/top/price-bath.jpg" width="1200" height="750"
+            <img src="<?php echo $asset; ?>/assets/img/top/price-bath.jpg" width="1200" height="900"
                  alt="ユニットバス（木目調の壁パネルと大きな窓のある浴室）" loading="lazy" decoding="async">
           </picture>
         </div>
