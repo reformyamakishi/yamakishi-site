@@ -778,6 +778,9 @@
 .p-cat__card:hover{ transform:translateY(-2px); box-shadow:0 10px 24px rgba(0,0,0,.10); }
 .p-cat__cardph{ position:relative; background:#f4f4f4; }
 .p-cat__cardph img{ width:100%; height:auto; aspect-ratio:3/2; object-fit:cover; display:block; }
+/* お風呂の写真は縦長のものが多く、真ん中で切ると浴槽が隠れてしまうので、
+   一覧のカードだけ写真の下側を見せるようにしています。 */
+body.term-bathroom .p-cat__cardph img{ object-position:center bottom; }
 .p-cat__cardgrade{
   position:absolute; left:10px; top:10px; z-index:1;
   background:var(--brand); color:#fff; border-radius:6px; padding:4px 10px;
