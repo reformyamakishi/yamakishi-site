@@ -429,7 +429,7 @@ address{ font-style:normal; }
 /* 写真の縦横比にかかわらず、どのカードも同じ高さになるようにしています。
    写真は枠に対して絶対配置し、はみ出た分は切り取ります。 */
 .p-price__photo{
-  position:relative; aspect-ratio:16/10; overflow:hidden;
+  position:relative; aspect-ratio:4/3; overflow:hidden;
   background:linear-gradient(135deg,#f4efeb,#e5dcd5);
   display:grid; place-items:center; color:#9a8b80; font-size:13px; font-weight:800;
 }
