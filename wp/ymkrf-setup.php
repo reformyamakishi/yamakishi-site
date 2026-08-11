@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '25' );
+define( 'YMKRF_SETUP_VER', '27' );
 
 /**
  * init（優先度99）に付けているので、管理画面だけでなく
@@ -132,6 +132,7 @@ add_action( 'init', function () {
 		$theme . '/richelle',
 		$theme . '/centro',
 		$theme . '/v-style',
+		$theme . '/ofuroa',
 		$dir,                 // 最後の受け皿（wp-content/ymkrf-import）
 	);
 
@@ -2400,6 +2401,224 @@ add_action( 'init', function () {
 		if ( $new && $cur === $old ) {
 			set_post_thumbnail( $rp->ID, $new );
 			$log[] = 'ラクエラのアイキャッチを商品だけの写真に変更しました';
+		}
+	}
+
+	/* ------------------------------------------------------------
+	   3-g. オフローラ（Fグレード・Panasonic）── ユニットバス1本目
+	   ------------------------------------------------------------ */
+	/* v27：ポイント・オプションの列名が違っていたので、一度消して作り直します */
+	$old_of = get_page_by_path( 'ofuroa', OBJECT, 'ymkrf_product' );
+	if ( $old_of && get_option( 'ymkrf_ofuroa_fix' ) !== '1' ) {
+		wp_delete_post( $old_of->ID, true );
+		update_option( 'ymkrf_ofuroa_fix', '1' );
+		$log[] = 'オフローラを作り直しました（ポイント・オプションの列名の修正）';
+	}
+
+	if ( ! get_page_by_path( 'ofuroa', OBJECT, 'ymkrf_product' ) ) {
+
+		$bid = wp_insert_post( array(
+			'post_type'   => 'ymkrf_product',
+			'post_status' => 'publish',
+			'post_title'  => 'オフローラ',
+			'post_name'   => 'ofuroa',
+		) );
+
+		if ( $bid && ! is_wp_error( $bid ) ) {
+
+			$m0 = $missing;
+
+			$f = array(
+				'_ymkrf_catch'   => 'キレイがいつまでもつづく、心地よいくつろぎの空間へ',
+				'_ymkrf_grade'   => 'Fグレード',
+				'_ymkrf_name'    => 'オフローラ',
+				'_ymkrf_size'    => '1616 １坪タイプ',
+				'_ymkrf_work'    => '370000',
+				'_ymkrf_item'    => '478000',
+				'_ymkrf_days'    => '5',
+				'_ymkrf_pt1'     => 'スミピカフロア',
+				'_ymkrf_pt2'     => 'ささっと排水口',
+				'_ymkrf_pt3'     => 'スキットドア',
+				'_ymkrf_caution' => '※写真はイメージです。',
+			);
+			foreach ( $f as $k => $v ) update_post_meta( $bid, $k, $v );
+			update_post_meta( $bid, '_ymkrf_total', 848000 );
+
+			/* カラーの見出し（お風呂用の呼び方に差し替え） */
+			$labels = array(
+				'_ymkrf_lbl_colors' => '浴槽カラー',
+				'_ymkrf_lbl_tops'   => 'エプロンカラー',
+				'_ymkrf_lbl_sinks'  => '壁カラー（アクセントパネル）',
+				'_ymkrf_lbl_c4'     => '壁カラー（周辺パネル）',
+				'_ymkrf_lbl_c5'     => 'フロア（床）',
+				'_ymkrf_lbl_c6'     => 'カウンター',
+			);
+			foreach ( $labels as $k => $v ) update_post_meta( $bid, $k, $v );
+
+			$main = $img( 'ofuroa-main.jpg', 'Panasonic オフローラ 1616 １坪タイプ（ユニットバス）' );
+			if ( $main ) set_post_thumbnail( $bid, $main );
+
+			/* --- 色見本 --- */
+			$sets = array(
+				'_ymkrf_colors' => array(
+					array( 'ofuroa-tub-purewhite.jpg', 'ピュアホワイト' ),
+					array( 'ofuroa-tub-natural.jpg',   'ナチュラル' ),
+				),
+				'_ymkrf_tops' => array(
+					array( 'ofuroa-apron-purewhite.jpg', 'ピュアホワイト' ),
+					array( 'ofuroa-apron-beige.jpg',     'ミディアムベージュ' ),
+					array( 'ofuroa-apron-gray.jpg',      'ミディアムグレー' ),
+				),
+				'_ymkrf_sinks' => array(
+					array( 'ofuroa-accent-navy.jpg',     'ツイルネイビー' ),
+					array( 'ofuroa-accent-bordeaux.jpg', 'ツイルボルドー' ),
+				),
+				'_ymkrf_c4' => array(
+					array( 'ofuroa-panel-parallel.jpg', 'パラレルホワイト' ),
+					array( 'ofuroa-panel-grace.jpg',    'グレイスホワイト' ),
+				),
+				'_ymkrf_c5' => array(
+					array( 'ofuroa-floor-white.jpg', 'ミディアムホワイト' ),
+					array( 'ofuroa-floor-gray.jpg',  'ミディアムグレー' ),
+					array( 'ofuroa-floor-beige.jpg', 'ミディアムベージュ' ),
+				),
+				'_ymkrf_c6' => array(
+					array( 'ofuroa-counter-white.jpg', 'ホワイト' ),
+					array( 'ofuroa-counter-black.jpg', 'ブラック' ),
+				),
+			);
+			foreach ( $sets as $key => $list ) {
+				$rows = array();
+				foreach ( $list as $r ) $rows[] = array( 'img' => $img( $r[0], $r[1] ), 'name' => $r[1] );
+				update_post_meta( $bid, $key, $rows );
+			}
+
+			/* --- 標準仕様 --- */
+			$specs = array(
+				array( '',                          'FRP浴槽',                     '' ),
+				array( 'ofuroa-spec-fan.jpg',       '天井換気扇',                  '' ),
+				array( 'ofuroa-spec-lid.jpg',       '巻きフタ',                    '' ),
+				array( 'ofuroa-spec-mirror.jpg',    'シンプルミラーⅡ／ライトシェルフ2段（ホワイト）', '' ),
+				array( 'ofuroa-spec-counter.jpg',   'オーバルカウンター（W800mm）', '' ),
+				array( 'ofuroa-spec-door.jpg',      '折戸ホワイト',                '' ),
+				array( 'ofuroa-spec-faucet.jpg',    'ライン水栓（ホワイト）／シャワーヘッド', '' ),
+				array( 'ofuroa-spec-hook.jpg',      'シャワーフック（樹脂）',      '' ),
+				array( 'ofuroa-spec-light.jpg',     'フラット天井／サークルLED照明（1灯）', '' ),
+				array( 'ofuroa-spec-bar.jpg',       '握りバーI型600ホワイト／A／タオル掛け', '' ),
+			);
+			$rows = array();
+			foreach ( $specs as $r ) {
+				$rows[] = array(
+					'img'   => $r[0] ? $img( $r[0], $r[1] ) : '',
+					'name'  => $r[1],
+					'model' => $r[2],
+				);
+			}
+			update_post_meta( $bid, '_ymkrf_specs', $rows );
+
+			/* --- おすすめポイント ---
+			   gsub / gttl を入れた行から新しいまとまりが始まります。
+			   空にすると、ひとつ上の行と同じまとまりの Point 2、Point 3 になります。 */
+			$feats = array(
+				array(
+					'gsub' => '汚れが落としやすい。',
+					'gttl' => '「スミピカフロア」「ささっと排水口」',
+					'ttl'  => '床のすみずみまですっきり。',
+					'text' => '床の隅に目地がないので、汚れが落としやすい。'
+					        . 'また、床の隅が立ち上がっているので防水性に優れ、汚れが入りにくく、おそうじラクラクです。',
+					'img'  => 'ofuroa-point-floor.jpg',
+				),
+				array(
+					'gsub' => '', 'gttl' => '',
+					'ttl'  => '排水口のお掃除を簡単に、美しく保ちます。',
+					'text' => '髪の毛が集まりやすく、捨てやすい形状のヘアキャッチャー。',
+					'img'  => 'ofuroa-point-drain.jpg',
+				),
+				array(
+					'gsub' => '足元すっきり、コンパクトなカウンター',
+					'gttl' => '「オーバルカウンター」',
+					'ttl'  => 'お掃除の動線がコンパクト。',
+					'text' => 'カウンターの両脇が空いていて、下もすっきりしているので、手が届きやすく、おそうじラクラク。',
+					'img'  => 'ofuroa-point-counter.jpg',
+				),
+				array(
+					'gsub' => 'お掃除性と換気性能を両立。',
+					'gttl' => '「スリムスキットドア」',
+					'ttl'  => 'パッキンをなくし、換気口を上にして汚れにくく。',
+					'text' => '水のかかりにくいドアの上に換気口を移動。ドア面材まわりのパッキンがなく、カビがはえにくい。',
+					'img'  => 'ofuroa-point-door.jpg',
+				),
+				array(
+					'gsub' => '', 'gttl' => '',
+					'ttl'  => '浴室全体をしっかり換気します。',
+					'text' => '入った空気がドアに沿うように下に流れて、浴室全体を換気します。',
+					'img'  => 'ofuroa-point-air.jpg',
+				),
+			);
+			$rows = array();
+			foreach ( $feats as $r ) {
+				$rows[] = array(
+					'gsub' => $r['gsub'],
+					'gttl' => $r['gttl'],
+					'ttl'  => $r['ttl'],
+					'text' => $r['text'],
+					'note' => '',
+					'img'  => $img( $r['img'], $r['ttl'] ),
+					'img2' => '',
+				);
+			}
+			update_post_meta( $bid, '_ymkrf_features', $rows );
+
+			/* --- おすすめオプション --- */
+			$opts = array(
+				array( 'ofuroa-opt-heater.jpg',   'オートルーバー 暖房換気乾燥機（100V）', '71000',
+				       'ムラ無くすばやく浴室を暖めます。※工事費込み' ),
+				array( 'ofuroa-opt-tub.jpg',      'スゴピカ保温浴槽（浴槽保温あり）', '65000',
+				       '美しいツヤとなめらかさで汚れにくく、「スゴくキレイ」が長持ち。' ),
+				array( 'ofuroa-opt-slidebar.jpg', '握りバー兼用スライドバー', '20000',
+				       'シャワーの位置を、好きな高さにスライドして調整できます。' ),
+				array( 'ofuroa-opt-led.jpg',      'フラットラインLED照明（白色）', '16000',
+				       'ライン状のスマートなフォルムで、バスルームを心地よく照らします。' ),
+				array( 'ofuroa-opt-dressing.jpg', '脱衣場内装パック（1坪）天井・壁クロス張替え＋床クッションフロアー貼り替え', '80000',
+				       '1坪まで' ),
+				array( 'ofuroa-opt-dressing.jpg', '脱衣場内装パック（1坪）壁クロス張替え', '65000',
+				       '1坪まで' ),
+			);
+			$rows = array();
+			foreach ( $opts as $r ) {
+				$rows[] = array(
+					'img'   => $img( $r[0], $r[1] ),
+					'name'  => $r[1],
+					'text'  => $r[3],
+					'price' => $r[2],
+					'note'  => ( $r[1] === 'オートルーバー 暖房換気乾燥機（100V）' ) ? '※工事費込み' : '',
+				);
+			}
+			update_post_meta( $bid, '_ymkrf_options', $rows );
+
+			/* --- ヤマキシ標準工事内容 --- */
+			$works = array(
+				array( '解体撤去工事',     '既存の浴室を解体し、撤去する工事です。' ),
+				array( '廃棄処分',         '解体した既存浴室を廃棄処分するためにかかる費用です。' ),
+				array( '養生工事',         '搬入経路の床・壁・建具を保護します。' ),
+				array( '水道工事',         '給水・給湯・排水の配管工事です。' ),
+				array( '電気工事',         '照明・換気扇などの配線接続工事です。' ),
+				array( '土間コンクリート工事', 'ユニットバスを据える土間をつくる工事です。' ),
+				array( '大工工事',         '開口部の調整や下地の補修・補強を行います。' ),
+				array( 'ユニットバス組立設置', '新しいユニットバスの組立・設置工事です。' ),
+			);
+			$rows = array();
+			foreach ( $works as $r ) $rows[] = array( 'name' => $r[0], 'text' => $r[1] );
+			update_post_meta( $bid, '_ymkrf_works', $rows );
+
+			wp_set_object_terms( $bid, 'bathroom',  'ymkrf_product_cat' );
+			wp_set_object_terms( $bid, 'panasonic', 'ymkrf_maker' );
+			wp_set_object_terms( $bid,
+				array( 'nonoichi', 'komathu', 'hakui', 'shinkaga', 'kawakita', 'kanadu' ),
+				'ymkrf_shop' );
+
+			update_post_meta( $bid, '_ymkrf_img_missing', $missing - $m0 );
+			$log[] = '商品「オフローラ」を登録しました → ' . get_permalink( $bid );
 		}
 	}
 

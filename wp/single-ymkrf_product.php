@@ -143,7 +143,10 @@ $maker = ! empty( $d['makers'] ) ? $d['makers'][0] : null;
   </div>
 </section>
 
-<?php if ( ! empty( $d['images'] ) || ! empty( $d['colors'] ) || ! empty( $d['tops'] ) || ! empty( $d['sinks'] ) || ! empty( $d['handles'] ) ) : ?>
+<?php
+$csets = function_exists( 'ymkrf_colorsets' ) ? ymkrf_colorsets( $d ) : array();
+if ( ! empty( $d['images'] ) || $csets || ! empty( $d['handles'] ) ) :
+?>
 <!-- =========== カラーバリエーション =========== -->
 <section class="l-section l-section--soft">
   <div class="l-wrap">
@@ -159,47 +162,26 @@ $maker = ! empty( $d['makers'] ) ? $d['makers'][0] : null;
             /* 取っ手が1種類しかない商品では「組み合わせ」と書くと事実に合わないので、文を変えます */
             echo ( count( $d['handles'] ) > 1 )
               ? '扉の色と取っ手の組み合わせで、キッチンの雰囲気はぐっと変わります。'
-              : '扉の色で、キッチンの雰囲気はぐっと変わります。';
+              : '色えらびで、お部屋の雰囲気はぐっと変わります。';
           ?></strong><small>※画像はイメージです</small>
         </figcaption>
       </figure>
     <?php endif; ?>
 
-    <?php if ( $d['colors'] ) : ?>
-      <p class="p-prd__sub">扉カラー（全<?php echo count( $d['colors'] ); ?>色）<small class="p-prd__note">※下記カラー以外選択の場合はオプションとなります</small></p>
+    <?php foreach ( $csets as $i => $cs ) : ?>
+      <p class="p-prd__sub"<?php if ( $i ) echo ' style="margin-top:26px"'; ?>>
+        <?php echo esc_html( $cs['label'] ); ?>（全<?php echo count( $cs['rows'] ); ?>色）
+        <?php if ( $cs['note'] ) : ?><small class="p-prd__note"><?php echo esc_html( $cs['note'] ); ?></small><?php endif; ?>
+      </p>
       <div class="p-prd__colors">
-        <?php foreach ( $d['colors'] as $r ) : ?>
+        <?php foreach ( $cs['rows'] as $r ) : ?>
           <figure>
-            <div class="p-prd__swatch"><?php echo ymkrf_img( $r['img'], 'medium', '扉カラー ' . $r['name'] ); ?></div>
+            <div class="p-prd__swatch"><?php echo ymkrf_img( $r['img'], 'medium', $cs['label'] . ' ' . $r['name'] ); ?></div>
             <figcaption><?php echo esc_html( $r['name'] ); ?></figcaption>
           </figure>
         <?php endforeach; ?>
       </div>
-    <?php endif; ?>
-
-    <?php if ( $d['tops'] ) : ?>
-      <p class="p-prd__sub" style="margin-top:26px">天板カラー（全<?php echo count( $d['tops'] ); ?>色）</p>
-      <div class="p-prd__colors">
-        <?php foreach ( $d['tops'] as $r ) : ?>
-          <figure>
-            <div class="p-prd__swatch"><?php echo ymkrf_img( $r['img'], 'medium', '天板カラー ' . $r['name'] ); ?></div>
-            <figcaption><?php echo esc_html( $r['name'] ); ?></figcaption>
-          </figure>
-        <?php endforeach; ?>
-      </div>
-    <?php endif; ?>
-
-    <?php if ( ! empty( $d['sinks'] ) ) : ?>
-      <p class="p-prd__sub" style="margin-top:26px">シンクカラー（全<?php echo count( $d['sinks'] ); ?>色）</p>
-      <div class="p-prd__colors">
-        <?php foreach ( $d['sinks'] as $r ) : ?>
-          <figure>
-            <div class="p-prd__swatch"><?php echo ymkrf_img( $r['img'], 'medium', 'シンクカラー ' . $r['name'] ); ?></div>
-            <figcaption><?php echo esc_html( $r['name'] ); ?></figcaption>
-          </figure>
-        <?php endforeach; ?>
-      </div>
-    <?php endif; ?>
+    <?php endforeach; ?>
 
     <?php if ( $d['handles'] ) : ?>
       <p class="p-prd__sub" style="margin-top:26px">取っ手（全<?php echo count( $d['handles'] ); ?>種）</p>

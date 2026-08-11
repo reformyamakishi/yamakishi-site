@@ -223,6 +223,30 @@ function ymkrf_product_repeaters() {
 				'name' => array( '色の名前', 'text', '例：グラニュールホワイト' ),
 			),
 		),
+		'_ymkrf_c4' => array(
+			'label' => 'カラー枠4',
+			'note'  => 'お風呂など、色の分類が多い商品用の予備枠です。見出しは下の「カラー見出し」で変えられます。',
+			'cols'  => array(
+				'img'  => array( '色見本', 'image' ),
+				'name' => array( '色の名前', 'text' ),
+			),
+		),
+		'_ymkrf_c5' => array(
+			'label' => 'カラー枠5',
+			'note'  => '同上。無ければ空のままでOK。',
+			'cols'  => array(
+				'img'  => array( '色見本', 'image' ),
+				'name' => array( '色の名前', 'text' ),
+			),
+		),
+		'_ymkrf_c6' => array(
+			'label' => 'カラー枠6',
+			'note'  => '同上。無ければ空のままでOK。',
+			'cols'  => array(
+				'img'  => array( '色見本', 'image' ),
+				'name' => array( '色の名前', 'text' ),
+			),
+		),
 		'_ymkrf_handles' => array(
 			'label' => '取っ手',
 			'note'  => 'キッチン以外で使わない場合は、空のままでOK。見出しごと出なくなります。',
@@ -628,9 +652,22 @@ if ( ! function_exists( 'ymkrf_product_data' ) ) :
 function ymkrf_product_data( $post_id = null ) {
 	$post_id = $post_id ?: get_the_ID();
 	$m   = function ( $k ) use ( $post_id ) { return get_post_meta( $post_id, $k, true ); };
-	$rep = function ( $k ) use ( $post_id ) {
+	/* 何行でも増やせる欄。
+	   古い商品や、あとから列が増えた欄でも「Undefined array key」が出ないよう、
+	   定義にある列をすべて空文字で埋めてから返します。 */
+	$defs = function_exists( 'ymkrf_product_repeaters' ) ? ymkrf_product_repeaters() : array();
+	$rep = function ( $k ) use ( $post_id, $defs ) {
 		$v = get_post_meta( $post_id, $k, true );
-		return is_array( $v ) ? $v : array();
+		if ( ! is_array( $v ) ) return array();
+		$cols = isset( $defs[ $k ]['cols'] ) ? array_keys( $defs[ $k ]['cols'] ) : array();
+		if ( ! $cols ) return $v;
+		$blank = array_fill_keys( $cols, '' );
+		$out   = array();
+		foreach ( $v as $row ) {
+			if ( ! is_array( $row ) ) continue;
+			$out[] = array_merge( $blank, $row );
+		}
+		return $out;
 	};
 	$terms = function ( $tax ) use ( $post_id ) {
 		$t = get_the_terms( $post_id, $tax );
@@ -655,6 +692,9 @@ function ymkrf_product_data( $post_id = null ) {
 		'colors'   => $rep( '_ymkrf_colors' ),
 		'tops'     => $rep( '_ymkrf_tops' ),
 		'sinks'    => $rep( '_ymkrf_sinks' ),
+		'c4'       => $rep( '_ymkrf_c4' ),
+		'c5'       => $rep( '_ymkrf_c5' ),
+		'c6'       => $rep( '_ymkrf_c6' ),
 		'handles'  => $rep( '_ymkrf_handles' ),
 		'specs'    => $rep( '_ymkrf_specs' ),
 		'features' => $rep( '_ymkrf_features' ),
@@ -1023,5 +1063,46 @@ function ymkrf_maker_logo( $term, $class = 'p-maker' ) {
 	     . ' alt="' . esc_attr( $name ) . '"'
 	     . ' title="' . esc_attr( $name . 'の製品です' ) . '"'
 	     . ' loading="lazy" decoding="async"></picture></span>';
+}
+endif;
+
+
+/* ============================================================
+   カラーの見出し
+
+   キッチンは「扉カラー／天板カラー／シンクカラー」ですが、
+   お風呂は「浴槽／エプロン／壁パネル …」と呼び方が変わります。
+   商品ごとに `_ymkrf_lbl_<枠>` を入れておけば、その名前で出ます。
+   入れなければキッチンの呼び方のままです。
+   ============================================================ */
+if ( ! function_exists( 'ymkrf_colorsets' ) ) :
+function ymkrf_colorsets( $d, $post_id = 0 ) {
+
+	if ( ! $post_id ) $post_id = get_the_ID();
+
+	$def = array(
+		'colors' => '扉カラー',
+		'tops'   => '天板カラー',
+		'sinks'  => 'シンクカラー',
+		'c4'     => '',
+		'c5'     => '',
+		'c6'     => '',
+	);
+
+	$out = array();
+	foreach ( $def as $key => $label ) {
+		if ( empty( $d[ $key ] ) ) continue;
+		$custom = get_post_meta( $post_id, '_ymkrf_lbl_' . $key, true );
+		$name   = $custom ? $custom : $label;
+		if ( ! $name ) $name = 'カラー';
+		$out[] = array(
+			'key'   => $key,
+			'label' => $name,
+			'rows'  => $d[ $key ],
+			/* 1つめの枠にだけ、オプション扱いの但し書きを出します */
+			'note'  => ( $key === 'colors' ) ? '※下記カラー以外選択の場合はオプションとなります' : '',
+		);
+	}
+	return $out;
 }
 endif;

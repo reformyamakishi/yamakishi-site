@@ -147,6 +147,66 @@ $intro = array(
 		),
 	),
 
+	'bathroom' => array(
+
+		'en'    => 'BATHROOM',
+		'title' => 'お風呂リフォーム',
+		'hero'  => 'assets/img/products/ofuroa/ofuroa-main.jpg',
+		'lead'  => '本体・標準工事費・古いお風呂の解体処分費まで込みのパック価格でご案内します。',
+
+		/* --- ブランド紹介（お風呂は専用のブランド名を付けていません） --- */
+		'brandsub'  => '毎日の入浴が、もっと心地よく',
+		'brand'     => 'ユニットバスリフォームパック',
+		'brandtext' => '在来浴室からの取り替えも承ります。'
+		             . '<br>断熱浴槽・お掃除のしやすさを基準に、選び抜いた機種をご用意しました。',
+
+		/* --- 3つのこだわり --- */
+		'points' => array(
+			array( 'chara' => 'char-otoku',     'name' => 'お得',
+			       'text'  => 'お風呂標準工事費・解体撤去費用・土間工事などもコミコミ！' ),
+			array( 'chara' => 'char-hinshitsu', 'name' => '品質',
+			       'text'  => '経験豊富な自社職人を中心に、質の良い丁寧な工事を致します！' ),
+			array( 'chara' => 'char-anshin',    'name' => '安心',
+			       'text'  => '商品延長10年保証・工事保証5年・24時間365日トラブル対応付き！' ),
+		),
+		'pointnote' => array(
+			'label' => 'お風呂の標準工事費',
+			'price' => 370000,
+			'note'  => 'お風呂の標準工事費は、どの機種も一律同価格です。',
+			'note2' => '※お家の形状により追加がかかる場合は、お見積りの際に詳細をお伝えさせていただきます。',
+			'itemsttl' => 'リフォームヤマキシの|標準工事費にふくまれる工事',
+			'items' => array(
+				array( 'name' => '解体撤去工事',   'icon' => 'hammer',
+				       'sub'  => '既存の浴室を解体し、撤去する工事' ),
+				array( 'name' => '廃棄処分',       'icon' => 'truck',
+				       'sub'  => '解体した既存浴室を廃棄処分するためにかかる費用' ),
+				array( 'name' => '養生工事',       'icon' => 'sheet',
+				       'sub'  => '（搬入経路の床・壁・建具）' ),
+				array( 'name' => '水道工事',       'icon' => 'water',
+				       'sub'  => '（給水・給湯・排水）' ),
+				array( 'name' => '電気工事',       'icon' => 'bolt',
+				       'sub'  => '（照明・換気扇の配線接続等）' ),
+				array( 'name' => '土間コンクリート工事', 'icon' => 'wall',
+				       'sub'  => 'ユニットバスを据える土間をつくる工事' ),
+				array( 'name' => '大工工事',       'icon' => 'saw',
+				       'sub'  => '開口部の調整や下地の補修・補強' ),
+				array( 'name' => 'ユニットバス組立設置', 'icon' => 'kitchen',
+				       'sub'  => '' ),
+			),
+		),
+
+		/* --- お悩み（いまは非表示） --- */
+		'worrytitle' => 'お風呂のお悩み',
+		'worryintro' => 'こんなことで悩んでいませんか？',
+		'worries'    => array(),
+		'worrylead'  => '',
+		'solvesub'   => '実は、そのお悩み',
+		'solvetitle' => '最新のお風呂で解決できます！',
+		'tags'       => array(),
+		'tagnote'    => '',
+		'solutions'  => array(),
+	),
+
 );
 
 $c   = isset( $intro[ $slug ] ) ? $intro[ $slug ] : null;
