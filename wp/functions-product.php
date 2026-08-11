@@ -177,10 +177,12 @@ function ymkrf_product_fields() {
 		'_ymkrf_catch'   => array( 'キャッチコピー',   'text',   '例：キレイと快適が毎日つづく快適キッチン！', '商品名の上に、小さな赤い文字で出ます' ),
 		'_ymkrf_grade'   => array( 'グレード',         'text',   '例：Fグレード', '空欄でもかまいません' ),
 		'_ymkrf_name'    => array( '商品名',           'text',   '例：V-style（Vスタイル）', '空欄なら上のタイトルを使います' ),
-		'_ymkrf_size'    => array( '型（サイズ）',     'text',   '例：I型2550サイズ', '' ),
+		'_ymkrf_size'    => array( '型（サイズ）',     'text',   '例：I型2550サイズ', 'メーカーロゴのとなりに出ます' ),
+		'_ymkrf_sub'     => array( '商品名の横の言葉', 'text',   '例：ハイパーキラミック', '商品名のすぐ横に、小さく出ます（トイレの陶器の種類など）' ),
 		'_ymkrf_work'    => array( '標準工事費（円）', 'number', '例：240000', '数字だけ。カンマや「円」は不要です' ),
 		'_ymkrf_item'    => array( '商品代（円）',     'number', '例：358000', '数字だけ。カンマや「円」は不要です' ),
 		'_ymkrf_days'    => array( '工期（日数）',     'number', '例：3', '数字だけ。「日」は自動で付きます' ),
+		'_ymkrf_daystext'=> array( '工期の書き方',     'text',   '例：半日', '「半日」など、日数で書けないときだけ入れてください。入れると上の日数より優先されます' ),
 		'_ymkrf_pt1'     => array( '特徴 1',           'text',   '例：お手頃価格', '' ),
 		'_ymkrf_pt2'     => array( '特徴 2',           'text',   '例：収納抜群', '' ),
 		'_ymkrf_pt3'     => array( '特徴 3',           'text',   '例：おそうじ楽々', '' ),
@@ -263,6 +265,16 @@ function ymkrf_product_repeaters() {
 				'img'   => array( '写真', 'image' ),
 				'name'  => array( '品名', 'text', '例：ホーロー3口トップコンロ' ),
 				'model' => array( '型番など', 'text', '例：LEEG32T1V' ),
+			),
+		),
+		'_ymkrf_speclist' => array(
+			'label' => '標準仕様（文字だけの一覧）',
+			'note'  => 'トイレのように、写真ではなく機能名を並べる商品で使います。'
+			         . '「分類」に 快適機能 などを入れ、「機能」に1行ずつ書いてください。'
+			         . '上の「標準仕様」に写真を入れている商品は、こちらは空のままでOKです。',
+			'cols'  => array(
+				'ttl'  => array( '分類',   'text', '例：快適機能' ),
+				'body' => array( '機能',   'textarea', "例：\n暖房便座\nスローダウン便座" ),
 			),
 		),
 		'_ymkrf_features' => array(
@@ -682,10 +694,12 @@ function ymkrf_product_data( $post_id = null ) {
 		'grade'    => $m( '_ymkrf_grade' ),
 		'name'     => $m( '_ymkrf_name' ) ?: get_the_title( $post_id ),
 		'size'     => $m( '_ymkrf_size' ),
+		'sub'      => $m( '_ymkrf_sub' ),
 		'work'     => $work,
 		'item'     => $item,
 		'total'    => $work + $item,
 		'days'     => $m( '_ymkrf_days' ),
+		'daystext' => $m( '_ymkrf_daystext' ),
 		'points'   => array_values( array_filter( array( $m('_ymkrf_pt1'), $m('_ymkrf_pt2'), $m('_ymkrf_pt3') ) ) ),
 		'caution'  => $m( '_ymkrf_caution' ),
 		'images'   => $rep( '_ymkrf_images' ),
@@ -697,6 +711,7 @@ function ymkrf_product_data( $post_id = null ) {
 		'c6'       => $rep( '_ymkrf_c6' ),
 		'handles'  => $rep( '_ymkrf_handles' ),
 		'specs'    => $rep( '_ymkrf_specs' ),
+		'speclist' => $rep( '_ymkrf_speclist' ),
 		'features' => $rep( '_ymkrf_features' ),
 		'options'  => $rep( '_ymkrf_options' ),
 		'works'    => $rep( '_ymkrf_works' ),
@@ -716,6 +731,7 @@ function ymkrf_cat_label( $slug, $fallback = '' ) {
 	$map = array(
 		'kitchen'  => 'キッチン',
 		'bathroom' => 'ユニットバス',
+		'toilet'   => 'トイレ',
 	);
 	return isset( $map[ $slug ] ) ? $map[ $slug ] : $fallback;
 }
@@ -729,6 +745,7 @@ function ymkrf_cat_listtitle( $slug, $fallback = '商品' ) {
 	$map = array(
 		'kitchen'  => 'キッチンマルシェの商品一覧',
 		'bathroom' => 'ユニットバス商品一覧',
+		'toilet'   => 'トイレ商品一覧',
 	);
 	return isset( $map[ $slug ] ) ? $map[ $slug ] : $fallback . 'の商品一覧';
 }
@@ -744,6 +761,7 @@ function ymkrf_cat_brand( $cat ) {
 	$map = array(
 		'kitchen'  => 'キッチンマルシェ',
 		'bathroom' => 'ユニットバスリフォームパック',
+		'toilet'   => 'トイレリフォームパック',
 	);
 	return isset( $map[ $cat->slug ] ) ? $map[ $cat->slug ] : $cat->name . 'マルシェ';
 }

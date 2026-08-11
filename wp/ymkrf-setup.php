@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '42' );
+define( 'YMKRF_SETUP_VER', '46' );
 
 /* キッチンの「ヤマキシ標準工事内容」。
    ホームページの一覧表（7項目）と、番号入りの図（8項目）の
@@ -189,6 +189,7 @@ add_action( 'init', function () {
 		$theme . '/granspa',
 		$theme . '/selevia',
 		$theme . '/sinla',
+		$theme . '/amage-z',
 		WP_CONTENT_DIR . '/themes/ymkrf/assets/img/works',
 		$dir,                 // 最後の受け皿（wp-content/ymkrf-import）
 	);
@@ -702,13 +703,15 @@ add_action( 'init', function () {
 	        この控えが無い＝古い版で登録された商品は、
 	        これまでどおり「空っぽの行があるか」で見分けます。
 	   ------------------------------------------------------------ */
-	$rebuild_keys = array( '_ymkrf_images', '_ymkrf_colors', '_ymkrf_tops', '_ymkrf_sinks', '_ymkrf_c4', '_ymkrf_c5', '_ymkrf_c6', '_ymkrf_handles', '_ymkrf_specs', '_ymkrf_features', '_ymkrf_options' );
+	$rebuild_keys = array( '_ymkrf_images', '_ymkrf_colors', '_ymkrf_tops', '_ymkrf_sinks', '_ymkrf_c4', '_ymkrf_c5', '_ymkrf_c6', '_ymkrf_handles', '_ymkrf_specs', '_ymkrf_speclist', '_ymkrf_features', '_ymkrf_options' );
 
 	foreach ( array(
 		/* キッチン */
 		'rakuera', 'refit', 'sierra-s', 's-class', 'stedia', 'edel', 'classo', 'richelle', 'centro',
 		/* ユニットバス */
 		'ofuroa', 'sazana-n', 'lidea-m', 'rakuvia', 'sazana-t', 'lidea-b', 'granspa', 'selevia', 'sinla',
+		/* トイレ */
+		'amage-z',
 	) as $slug ) {
 
 		$p = get_page_by_path( $slug, OBJECT, 'ymkrf_product' );
@@ -4162,6 +4165,211 @@ add_action( 'init', function () {
 		}
 		update_option( 'ymkrf_column_sample', '1' );
 	}
+
+
+
+	/* ------------------------------------------------------------
+	   3-p. トイレ商品
+	        ホームページの内容をそのまま入れています。
+	        標準工事費はどの機種も一律38,000円（税込）、工期は半日です。
+
+	        トイレは「標準仕様」を写真ではなく機能名の一覧で出すため、
+	        _ymkrf_speclist（分類＋機能）を使っています。
+	   ------------------------------------------------------------ */
+
+	/* URLのつづり直し。
+	   最初 amaze-z で登録してしまったので、正しい amage-z に付け替えます。
+	   （すでに amage-z がある場合は何もしません） */
+	$old_amz = get_page_by_path( 'amaze-z', OBJECT, 'ymkrf_product' );
+	if ( $old_amz && ! get_page_by_path( 'amage-z', OBJECT, 'ymkrf_product' ) ) {
+		wp_update_post( array( 'ID' => $old_amz->ID, 'post_name' => 'amage-z' ) );
+		$log[] = 'アメージュZのURLを amaze-z → amage-z に直しました';
+	}
+
+	/* 標準仕様（文字だけの一覧）を入れ直します。
+	   最初に入れたときの表示処理に不具合があり、機能名が途中で切れていたためです。
+	   数字を上げると、もう一度だけ入れ直します。 */
+	$sl_fix = array(
+		'amage-z' => array(
+			array( '快適機能',   "暖房便座\nスローダウン便座\n暖房便座コード内蔵\n点字対応" ),
+			array( '洗浄機能',   "おしり泡ジェット洗浄（泡沫）\nソフトビデ洗浄（泡沫）" ),
+			array( '省エネ機能', "超節水ECO５\nワンタッチ節電（8h）" ),
+			array( '清潔機能',   "パワーストリーム洗浄\n本体スライド着脱\n女性専用レディスノズル\nノズルそうじ\nノズルオートクリーニング\nノズル先端着脱\nキレイ便座\n便フタワンタッチ着脱" ),
+		),
+	);
+	foreach ( $sl_fix as $ss => $groups ) {
+		$sp = get_page_by_path( $ss, OBJECT, 'ymkrf_product' );
+		if ( ! $sp ) continue;
+		if ( get_post_meta( $sp->ID, '_ymkrf_speclist_ver', true ) === '2' ) continue;
+
+		$rows = array();
+		foreach ( $groups as $g ) $rows[] = array( 'ttl' => $g[0], 'body' => $g[1] );
+		update_post_meta( $sp->ID, '_ymkrf_speclist', $rows );
+		update_post_meta( $sp->ID, '_ymkrf_speclist_ver', '2' );
+		$log[] = get_the_title( $sp->ID ) . 'の標準仕様を入れ直しました';
+	}
+
+	/* 陶器の種類は商品名の横、便座はメーカーロゴの横に分けて出します。
+	   先に登録済みの商品にも当てます。 */
+	$fix_sub = array(
+		'amage-z' => array( 'ハイパーキラミック', 'シャワートイレRG10H' ),
+	);
+	foreach ( $fix_sub as $fs => $v ) {
+		$fp = get_page_by_path( $fs, OBJECT, 'ymkrf_product' );
+		if ( ! $fp ) continue;
+		if ( get_post_meta( $fp->ID, '_ymkrf_sub', true ) !== '' ) continue;
+		update_post_meta( $fp->ID, '_ymkrf_sub',  $v[0] );
+		update_post_meta( $fp->ID, '_ymkrf_size', $v[1] );
+		$log[] = get_the_title( $fp->ID ) . 'の陶器の種類を、商品名の横に移しました';
+	}
+
+	/* トイレの「ヤマキシ標準工事内容」（3項目）は全機種共通です */
+	$toilet_works = array(
+		array( '既存トイレ解体撤去工事', '古い便器・便座の取り外しと撤去にかかる工事です。' ),
+		array( '水道工事',               '給水・排水の工事です。' ),
+		array( 'トイレ設置工事',         '新しい便器・便座の取り付け工事です。' ),
+	);
+
+	$toilet_products = array(
+
+		/* ===== Iグレード アメージュZ（LIXIL） ===== */
+		array(
+			'slug'   => 'amage-z',
+			'prefix' => 'amzi',
+			'title'  => 'アメージュZ',
+			'meta'   => array(
+				'_ymkrf_catch'    => 'お掃除ラクラクで、エコロジーな超節水タイプ。',
+				'_ymkrf_grade'    => 'Iグレード',
+				'_ymkrf_name'     => 'アメージュZ',
+				'_ymkrf_size'     => 'シャワートイレRG10H',
+				'_ymkrf_sub'      => 'ハイパーキラミック',
+				'_ymkrf_work'     => '38000',
+				'_ymkrf_item'     => '91800',
+				'_ymkrf_days'     => '',
+				'_ymkrf_daystext' => '半日',
+				'_ymkrf_pt1'      => '節水',
+				'_ymkrf_pt2'      => '足元スリム',
+				'_ymkrf_pt3'      => 'お掃除ラクラク',
+				'_ymkrf_caution'  => '※写真はイメージになります。本体及び便座のみとなります。本体：アメージュZ（ハイパーキラミック）／便座：シャワートイレRG10H',
+			),
+			'total'  => 129800,
+			'maker'  => 'lixil',
+			'shops'  => array( 'nonoichi', 'hakui', 'komathu', 'kawakita', 'kanadu' ),
+			'main'   => array( 'main', 'LIXIL アメージュZ（ハイパーキラミック／シャワートイレRG10H）' ),
+			'labels' => array(
+				'_ymkrf_lbl_colors' => '便器カラー（全2色）',
+			),
+			'sets' => array(
+				'_ymkrf_colors' => array(
+					array( 'color-purewhite', 'ピュアホワイト' ),
+					array( 'color-offwhite',  'オフホワイト' ),
+				),
+			),
+			'speclist' => array(
+				array( '快適機能', "暖房便座\nスローダウン便座\n暖房便座コード内蔵\n点字対応" ),
+				array( '洗浄機能', "おしり泡ジェット洗浄（泡沫）\nソフトビデ洗浄（泡沫）" ),
+				array( '省エネ機能', "超節水ECO５\nワンタッチ節電（8h）" ),
+				array( '清潔機能', "パワーストリーム洗浄\n本体スライド着脱\n女性専用レディスノズル\nノズルそうじ\nノズルオートクリーニング\nノズル先端着脱\nキレイ便座\n便フタワンタッチ着脱" ),
+			),
+			'feats' => array(
+				array( '節水しながら全面キレイ', '「パワーストリーム洗浄」',
+				       '少ない水でしっかりと鉢を洗浄。',
+				       '強力な水流が便器鉢内のすみずみまで回り、少ない水でもしっかり汚れを洗い流します。', 'point-stream' ),
+				array( 'お掃除らくらく！', '「フチレス形状」・「キレイ便座」',
+				       'サッとひと拭き「フチレス形状」',
+				       '奥も手前も便器のフチを丸ごとなくし、サッとひと拭き、お掃除ラクラクです。', 'point-rimless' ),
+				array( '', '',
+				       'お掃除ラクラク「キレイ便座」',
+				       "汚れが入りやすい継ぎ目をなくしました。さらに便座裏は防汚素材なのでお掃除ラクラク。\n（左：従来／右：キレイ便座）", 'point-seat' ),
+				array( 'ノズルも清潔・キレイ。', '「レディスノズル」',
+				       'ノズルが別々、だから清潔で安心！',
+				       'おしり洗浄用ノズルとは別に、女性にやさしいビデ洗浄用ノズルを搭載しています。', 'point-nozzle' ),
+				array( '足元スリム', 'シャープなフォルム',
+				       '汚れが拭きやすい',
+				       'シャープで足元スリムなフォルムは、汚れも拭きやすく、お手入れ簡単です。', 'point-slim' ),
+			),
+			'opts' => array(
+				array( 'opt-rwa30', 'シャワートイレ（CW-RWA30HQ）', '70000',
+				       '★フルオート便座。フルオート便器洗浄。アクアセラミック仕様。', '' ),
+			),
+		),
+
+	);
+
+	foreach ( $toilet_products as $tp2 ) {
+
+		if ( get_page_by_path( $tp2['slug'], OBJECT, 'ymkrf_product' ) ) continue;
+
+		$pid = wp_insert_post( array(
+			'post_type'   => 'ymkrf_product',
+			'post_status' => 'publish',
+			'post_title'  => $tp2['title'],
+			'post_name'   => $tp2['slug'],
+		) );
+		if ( ! $pid || is_wp_error( $pid ) ) continue;
+
+		$m0 = $missing;
+		$pf = $tp2['prefix'];
+
+		$timg = function ( $key, $alt = '' ) use ( $img, $pf ) {
+			return $key ? $img( $pf . '-' . $key . '.jpg', $alt ) : '';
+		};
+
+		foreach ( $tp2['meta'] as $k => $v )   update_post_meta( $pid, $k, $v );
+		foreach ( $tp2['labels'] as $k => $v ) update_post_meta( $pid, $k, $v );
+		update_post_meta( $pid, '_ymkrf_total', $tp2['total'] );
+
+		$main = $timg( $tp2['main'][0], $tp2['main'][1] );
+		if ( $main ) set_post_thumbnail( $pid, $main );
+
+		/* --- カラーバリエーション --- */
+		foreach ( $tp2['sets'] as $key => $list ) {
+			$rows = array();
+			foreach ( $list as $r ) $rows[] = array( 'img' => $timg( $r[0], $r[1] ), 'name' => $r[1] );
+			update_post_meta( $pid, $key, $rows );
+		}
+
+		/* --- 標準仕様（文字だけの一覧）--- */
+		$rows = array();
+		foreach ( $tp2['speclist'] as $r ) $rows[] = array( 'ttl' => $r[0], 'body' => $r[1] );
+		update_post_meta( $pid, '_ymkrf_speclist', $rows );
+
+		/* --- おすすめポイント --- */
+		$rows = array();
+		foreach ( $tp2['feats'] as $r ) {
+			$rows[] = array(
+				'gsub' => $r[0], 'gttl' => $r[1], 'ttl' => $r[2], 'text' => $r[3],
+				'note' => '', 'img' => $timg( $r[4], $r[2] ), 'img2' => '',
+			);
+		}
+		update_post_meta( $pid, '_ymkrf_features', $rows );
+
+		/* --- おすすめオプション --- */
+		$rows = array();
+		foreach ( $tp2['opts'] as $r ) {
+			$rows[] = array(
+				'img'   => $timg( $r[0], $r[1] ),
+				'name'  => $r[1],
+				'text'  => $r[3],
+				'price' => $r[2],
+				'note'  => $r[4],
+			);
+		}
+		update_post_meta( $pid, '_ymkrf_options', $rows );
+
+		/* --- ヤマキシ標準工事内容（トイレ・3項目）--- */
+		$rows = array();
+		foreach ( $toilet_works as $r ) $rows[] = array( 'name' => $r[0], 'text' => $r[1] );
+		update_post_meta( $pid, '_ymkrf_works', $rows );
+
+		wp_set_object_terms( $pid, 'toilet', 'ymkrf_product_cat' );
+		wp_set_object_terms( $pid, $tp2['maker'], 'ymkrf_maker' );
+		if ( $tp2['shops'] ) wp_set_object_terms( $pid, $tp2['shops'], 'ymkrf_shop' );
+
+		update_post_meta( $pid, '_ymkrf_img_missing', $missing - $m0 );
+		$log[] = '商品「' . $tp2['title'] . '」を登録しました → ' . get_permalink( $pid );
+	}
+
 
 	/* ------------------------------------------------------------
 	   4. URLの設定を更新して、終了を記録

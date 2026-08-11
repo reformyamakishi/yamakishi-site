@@ -212,6 +212,56 @@ $intro = array(
 		'solutions'  => array(),
 	),
 
+	'toilet' => array(
+
+		'en'    => 'TOILET',
+		'title' => 'トイレリフォーム',
+		'hero'  => 'assets/img/products/head-toilet.jpg',
+		'lead'  => '便器・便座・標準工事費・古いトイレの解体処分費まで込みのパック価格でご案内します。',
+
+		/* --- ブランド紹介 --- */
+		'brandsub'  => '毎日使う場所だから、清潔に、気持ちよく',
+		'brand'     => 'トイレリフォームパック',
+		'brandtext' => '半日で入れ替えができます。'
+		             . '<br>お掃除のしやすさと節水を基準に、選び抜いた機種をご用意しました。',
+
+		/* --- 3つのこだわり --- */
+		'points' => array(
+			array( 'chara' => 'char-otoku',     'name' => 'お得',
+			       'text'  => 'トイレ標準工事費・古い便器の解体撤去費用もコミコミ！' ),
+			array( 'chara' => 'char-hinshitsu', 'name' => '品質',
+			       'text'  => '経験豊富な自社職人を中心に、質の良い丁寧な工事を致します！' ),
+			array( 'chara' => 'char-anshin',    'name' => '安心',
+			       'text'  => '商品延長10年保証・工事保証5年・24時間365日トラブル対応付き！' ),
+		),
+		'pointnote' => array(
+			'label' => 'トイレの標準工事費',
+			'price' => 38000,
+			'note'  => 'トイレの標準工事費は、どの機種も一律同価格です。',
+			'note2' => '※お家の形状により追加がかかる場合は、お見積りの際に詳細をお伝えさせていただきます。',
+			'itemsttl' => 'リフォームヤマキシの|標準工事費にふくまれる工事',
+			'items' => array(
+				array( 'name' => '既存トイレ解体撤去工事', 'icon' => 'hammer',
+				       'sub'  => '古い便器・便座の取り外しと撤去にかかる工事' ),
+				array( 'name' => '水道工事',   'icon' => 'water',
+				       'sub'  => '給水・排水' ),
+				array( 'name' => 'トイレ設置工事', 'icon' => 'toilet',
+				       'sub'  => '新しい便器・便座の取り付け' ),
+			),
+		),
+
+		/* --- お悩み（いまは非表示） --- */
+		'worrytitle' => 'トイレのお悩み',
+		'worryintro' => 'こんなことで悩んでいませんか？',
+		'worries'    => array(),
+		'worrylead'  => '',
+		'solvesub'   => '実は、そのお悩み',
+		'solvetitle' => '最新のトイレで解決できます！',
+		'tags'       => array(),
+		'tagnote'    => '',
+		'solutions'  => array(),
+	),
+
 );
 
 $c   = isset( $intro[ $slug ] ) ? $intro[ $slug ] : null;
@@ -285,6 +335,8 @@ if ( ! function_exists( 'ymkrf_work_icon' ) ) {
 			          . '<path d="M6.5 19l-1 2M18 19l1 2"/>',
 			'door'   => '<rect x="5" y="3" width="14" height="18" rx="1.5"/>'
 			          . '<path d="M3 21h18"/><circle cx="15.4" cy="12" r="1"/>',
+			'toilet' => '<path d="M5 4h4v5h9v3.2a6.8 6.8 0 0 1-6.8 6.8H11A6 6 0 0 1 5 13z"/>'
+			          . '<path d="M9 19l-1 2M15.5 19l1 2"/><path d="M5 9h4"/>',
 		);
 		if ( empty( $d[ $key ] ) ) return '';
 		return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" '
@@ -539,11 +591,13 @@ if ( $show_worry ) :
               <?php endif; ?>
             </div>
             <div class="p-cat__cardbody">
-              <h3 class="p-cat__cardname"><?php echo esc_html( $d['name'] ); ?></h3>
+              <h3 class="p-cat__cardname"><?php echo esc_html( $d['name'] ); ?><?php
+                if ( $d['sub'] ) echo '<span class="p-cat__cardsub">' . esc_html( $d['sub'] ) . '</span>'; ?></h3>
               <p class="p-cat__cardmeta">
                 <?php if ( $mt ) echo ymkrf_maker_logo( $mt, 'p-maker' ); /* phpcs:ignore */ ?>
                 <?php if ( $d['size'] ) : ?><span><?php echo esc_html( $d['size'] ); ?></span><?php endif; ?>
-                <?php if ( $d['days'] ) : ?><span>工期<?php echo esc_html( $d['days'] ); ?>日</span><?php endif; ?>
+                <?php if ( $d['daystext'] ) : ?><span>工期<?php echo esc_html( $d['daystext'] ); ?></span>
+                <?php elseif ( $d['days'] ) : ?><span>工期<?php echo esc_html( $d['days'] ); ?>日</span><?php endif; ?>
               </p>
               <?php if ( $d['total'] ) : ?>
                 <p class="p-cat__cardprice">

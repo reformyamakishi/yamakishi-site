@@ -17,6 +17,14 @@
   margin-top:6px; font-size:clamp(22px,5.4vw,36px); font-weight:900; line-height:1.4;
 }
 .p-prd__grade{ color:var(--brand); }
+/* 商品名のすぐ横に出す言葉（トイレの陶器の種類など）。
+   商品名より一段小さくして、名前とまぎれないようにしています。
+   ※下のほうにある .p-prd__sub（カラーの小見出し）とは別ものです。 */
+.p-prd__namesub{
+  display:inline-block; margin-left:.5em;
+  font-size:clamp(13px,3.2vw,17px); font-weight:800; color:var(--ink-sub);
+  vertical-align:baseline;
+}
 .p-prd__meta{ display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; align-items:center; }
 .p-prd__maker{
   background:#0b4da2; color:#fff; font-size:13px; font-weight:900;
@@ -297,6 +305,35 @@
 .p-prd__spec .ph:has(img){ background:#fff; }
 .p-prd__spec figcaption{ padding:12px 12px 14px; font-size:13.5px; font-weight:800; line-height:1.6; }
 .p-prd__spec small{ display:block; margin-top:3px; color:var(--ink-light); font-weight:700; font-size:12px; }
+
+/* 標準仕様を、写真ではなく文字だけで並べるとき（トイレなど）。
+   「快適機能」「洗浄機能」…のまとまりごとにカードにして、
+   中の機能名はタグのように並べます。数が多くても読みやすくなります。 */
+.p-prd__speclist{ display:grid; gap:14px; }
+.p-prd__specgrp{
+  background:#fff; border:2px solid var(--border); border-radius:var(--radius);
+  padding:16px 16px 18px;
+}
+.p-prd__specttl{
+  display:inline-block; font-size:14.5px; font-weight:900; color:var(--brand);
+  border-bottom:3px solid var(--brand-tint2); padding-bottom:4px; margin-bottom:12px;
+}
+.p-prd__speclis{
+  list-style:none; margin:0; padding:0;
+  display:flex; flex-wrap:wrap; gap:8px;
+}
+.p-prd__speclis li{
+  background:var(--bg-gray); border-radius:999px;
+  padding:6px 13px; font-size:13px; font-weight:800; line-height:1.5;
+}
+.p-prd__speclis li::before{ content:"✓"; color:var(--brand); margin-right:5px; font-weight:900; }
+
+@media (min-width:768px){
+  .p-prd__speclist{ grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+  .p-prd__specgrp{ padding:20px 20px 22px; }
+  .p-prd__specttl{ font-size:16px; }
+  .p-prd__speclis li{ font-size:13.5px; }
+}
 
 /* --------------------------------------------------------------------------
    6. おすすめポイント
@@ -777,7 +814,11 @@
 }
 .p-cat__card:hover{ transform:translateY(-2px); box-shadow:0 10px 24px rgba(0,0,0,.10); }
 .p-cat__cardph{ position:relative; background:#f4f4f4; }
-.p-cat__cardph img{ width:100%; height:auto; aspect-ratio:3/2; object-fit:cover; display:block; }
+/* 写真の高さ。3:2 だと文字のほうが重く見えたので、少しだけ縦を出しています。 */
+.p-cat__cardph img{ width:100%; height:auto; aspect-ratio:7/5; object-fit:cover; display:block; }
+/* トイレは白背景の商品写真なので、切らずに全体を見せます。
+   足りない高さは白でうめます。 */
+body.term-toilet .p-cat__cardph img{ object-fit:contain; background:#fff; }
 /* お風呂の写真は縦長のものが多く、真ん中で切ると浴槽が隠れてしまうので、
    一覧のカードだけ写真の下側を見せるようにしています。 */
 body.term-bathroom .p-cat__cardph img{ object-position:center bottom; }
@@ -791,6 +832,11 @@ body.term-bathroom .p-cat__cardph img{ object-position:center bottom; }
 .p-cat__cardbody{ padding:16px 16px 18px; display:flex; flex-direction:column; }
 .p-cat__cardname{
   font-size:clamp(17px,4.6vw,20px); font-weight:900; letter-spacing:.02em; color:var(--ink);
+}
+/* 一覧カードでも、商品名の横に小さく出します */
+.p-cat__cardsub{
+  display:inline-block; margin-left:.45em;
+  font-size:clamp(11.5px,3vw,13px); font-weight:800; color:var(--ink-sub);
 }
 .p-cat__cardmeta{
   margin-top:6px; display:flex; flex-wrap:wrap; gap:6px;

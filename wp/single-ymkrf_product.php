@@ -61,15 +61,21 @@ $maker = ! empty( $d['makers'] ) ? $d['makers'][0] : null;
     <h1 class="p-prd__title">
       <?php if ( $d['grade'] ) : ?><span class="p-prd__grade">【<?php echo esc_html( $d['grade'] ); ?>】</span><?php endif; ?>
       <?php echo esc_html( $d['name'] ); ?>
+      <?php if ( $d['sub'] ) : ?><span class="p-prd__namesub"><?php echo esc_html( $d['sub'] ); ?></span><?php endif; ?>
     </h1>
 
     <div class="p-prd__meta">
       <?php if ( $maker ) echo ymkrf_maker_logo( $maker, 'p-prd__makerlogo' ); /* phpcs:ignore */ ?>
       <?php if ( $d['size'] ) : ?><span class="p-prd__size"><?php echo esc_html( $d['size'] ); ?></span><?php endif; ?>
-      <?php if ( $d['days'] ) : ?>
+      <?php if ( $d['daystext'] || $d['days'] ) : ?>
         <span class="p-prd__days">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-          <span class="lbl">工期</span><span class="num"><?php echo esc_html( $d['days'] ); ?></span><span class="unit">日</span>
+          <span class="lbl">工期</span>
+          <?php if ( $d['daystext'] ) : /* 「半日」など、日数で書けないとき */ ?>
+            <span class="num"><?php echo esc_html( $d['daystext'] ); ?></span>
+          <?php else : ?>
+            <span class="num"><?php echo esc_html( $d['days'] ); ?></span><span class="unit">日</span>
+          <?php endif; ?>
         </span>
       <?php endif; ?>
     </div>
@@ -200,21 +206,57 @@ if ( ! empty( $d['images'] ) || $csets || ! empty( $d['handles'] ) ) :
 </section>
 <?php endif; ?>
 
-<?php if ( $d['specs'] ) : ?>
-<!-- =========== 標準仕様 =========== -->
+<?php if ( $d['specs'] || $d['speclist'] ) : ?>
+<!-- =========== 標準仕様 ===========
+     写真つきの一覧（キッチン・お風呂）と、
+     文字だけの一覧（トイレなど）の両方に対応しています。 -->
 <section class="l-section">
   <div class="l-wrap">
     <h2 class="p-prd__bar">標準仕様</h2>
-    <div class="p-prd__specs">
-      <?php foreach ( $d['specs'] as $r ) : ?>
-        <figure class="p-prd__spec">
-          <div class="ph"><?php echo ymkrf_img( $r['img'], 'medium', $r['name'] ); ?></div>
-          <figcaption><?php echo esc_html( $r['name'] );
-            if ( $r['model'] ) echo '<small>' . esc_html( $r['model'] ) . '</small>';
-          ?></figcaption>
-        </figure>
-      <?php endforeach; ?>
-    </div>
+
+    <?php if ( $d['specs'] ) : ?>
+      <div class="p-prd__specs">
+        <?php foreach ( $d['specs'] as $r ) : ?>
+          <figure class="p-prd__spec">
+            <div class="ph"><?php echo ymkrf_img( $r['img'], 'medium', $r['name'] ); ?></div>
+            <figcaption><?php echo esc_html( $r['name'] );
+              if ( $r['model'] ) echo '<small>' . esc_html( $r['model'] ) . '</small>';
+            ?></figcaption>
+          </figure>
+        <?php endforeach; ?>
+      </div>
+    <?php endif; ?>
+
+    <?php if ( $d['speclist'] ) : ?>
+      <div class="p-prd__speclist">
+        <?php foreach ( $d['speclist'] as $r ) :
+          /* 「機能」の欄は1行に1つ書きます。頭の「・」は付いていても外します。 */
+          $items = array();
+          foreach ( preg_split( '/\r\n|\r|\n/', (string) $r['body'] ) as $line ) {
+            /* 頭の「・」や「-」を外します。
+               ltrim() は文字ではなくバイト単位で削るため、
+               「パ」「ソ」などの日本語を壊してしまいます。
+               ここは必ず /u 付きの正規表現で外してください。 */
+            $line = preg_replace( '/^[\s・･\-–—]+/u', '', trim( $line ) );
+            $line = trim( (string) $line );
+            if ( $line !== '' ) $items[] = $line;
+          }
+          if ( ! $items ) continue;
+        ?>
+          <div class="p-prd__specgrp">
+            <?php if ( $r['ttl'] ) : ?>
+              <h3 class="p-prd__specttl"><?php echo esc_html( $r['ttl'] ); ?></h3>
+            <?php endif; ?>
+            <ul class="p-prd__speclis">
+              <?php foreach ( $items as $it ) : ?>
+                <li><?php echo esc_html( $it ); ?></li>
+              <?php endforeach; ?>
+            </ul>
+          </div>
+        <?php endforeach; ?>
+      </div>
+    <?php endif; ?>
+
   </div>
 </section>
 <?php endif; ?>
