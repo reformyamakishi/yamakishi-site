@@ -176,22 +176,24 @@ $intro = array(
 			'note2' => '※お家の形状により追加がかかる場合は、お見積りの際に詳細をお伝えさせていただきます。',
 			'itemsttl' => 'リフォームヤマキシの|標準工事費にふくまれる工事',
 			'items' => array(
-				array( 'name' => '解体撤去工事',   'icon' => 'hammer',
-				       'sub'  => '既存の浴室を解体し、撤去する工事' ),
-				array( 'name' => '廃棄処分',       'icon' => 'truck',
-				       'sub'  => '解体した既存浴室を廃棄処分するためにかかる費用' ),
-				array( 'name' => '養生工事',       'icon' => 'sheet',
-				       'sub'  => '（搬入経路の床・壁・建具）' ),
+				array( 'name' => '既存ユニットバス解体撤去工事', 'icon' => 'hammer',
+				       'sub'  => '古い浴槽（ユニットバス）の撤去にかかる工事' ),
+				array( 'name' => '産業廃棄物処理運搬工事', 'icon' => 'truck',
+				       'sub'  => '撤去した浴槽などを廃棄処分するためにかかる費用' ),
 				array( 'name' => '水道工事',       'icon' => 'water',
 				       'sub'  => '（給水・給湯・排水）' ),
 				array( 'name' => '電気工事',       'icon' => 'bolt',
-				       'sub'  => '（照明・換気扇の配線接続等）' ),
-				array( 'name' => '土間コンクリート工事', 'icon' => 'wall',
-				       'sub'  => 'ユニットバスを据える土間をつくる工事' ),
-				array( 'name' => '大工工事',       'icon' => 'saw',
-				       'sub'  => '開口部の調整や下地の補修・補強' ),
-				array( 'name' => 'ユニットバス組立設置', 'icon' => 'kitchen',
+				       'sub'  => '（配線）' ),
+				array( 'name' => '木工事（下地）', 'icon' => 'saw',
+				       'sub'  => '脱衣所壁下地' ),
+				array( 'name' => 'ユニットバス組立設置', 'icon' => 'bath',
 				       'sub'  => '' ),
+				array( 'name' => '浴室壁面造作・内装工事', 'icon' => 'wall',
+				       'sub'  => '脱衣場側の壁面の造作と、クロス・サニタリーボードなどの内装' ),
+				array( 'name' => '換気扇取付工事', 'icon' => 'fan',
+				       'sub'  => '換気扇の取り付け工事' ),
+				array( 'name' => '浴室ドア枠造作工事', 'icon' => 'door',
+				       'sub'  => '浴室のドア枠を造作します' ),
 			),
 		),
 
@@ -275,6 +277,11 @@ if ( ! function_exists( 'ymkrf_work_icon' ) ) {
 			'fan'    => '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.2"/>'
 			          . '<path d="M12 9.8c1.6-2.6 4.4-3.6 5.4-2.6s0 3.8-2.6 5.4"/>'
 			          . '<path d="M12 14.2c-1.6 2.6-4.4 3.6-5.4 2.6s0-3.8 2.6-5.4"/>',
+			'bath'   => '<path d="M4 11h17v3.5a4.5 4.5 0 0 1-4.5 4.5h-8A4.5 4.5 0 0 1 4 14.5z"/>'
+			          . '<path d="M4 11V6.2A2.2 2.2 0 0 1 6.2 4c1 0 1.8.6 2.1 1.5"/>'
+			          . '<path d="M6.5 19l-1 2M18 19l1 2"/>',
+			'door'   => '<rect x="5" y="3" width="14" height="18" rx="1.5"/>'
+			          . '<path d="M3 21h18"/><circle cx="15.4" cy="12" r="1"/>',
 		);
 		if ( empty( $d[ $key ] ) ) return '';
 		return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" '

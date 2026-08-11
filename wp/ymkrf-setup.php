@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '27' );
+define( 'YMKRF_SETUP_VER', '28' );
 
 /**
  * init（優先度99）に付けているので、管理画面だけでなく
@@ -2409,10 +2409,10 @@ add_action( 'init', function () {
 	   ------------------------------------------------------------ */
 	/* v27：ポイント・オプションの列名が違っていたので、一度消して作り直します */
 	$old_of = get_page_by_path( 'ofuroa', OBJECT, 'ymkrf_product' );
-	if ( $old_of && get_option( 'ymkrf_ofuroa_fix' ) !== '1' ) {
+	if ( $old_of && get_option( 'ymkrf_ofuroa_fix' ) !== '2' ) {
 		wp_delete_post( $old_of->ID, true );
-		update_option( 'ymkrf_ofuroa_fix', '1' );
-		$log[] = 'オフローラを作り直しました（ポイント・オプションの列名の修正）';
+		update_option( 'ymkrf_ofuroa_fix', '2' );
+		$log[] = 'オフローラを作り直しました（標準工事内容の修正）';
 	}
 
 	if ( ! get_page_by_path( 'ofuroa', OBJECT, 'ymkrf_product' ) ) {
@@ -2596,16 +2596,17 @@ add_action( 'init', function () {
 			}
 			update_post_meta( $bid, '_ymkrf_options', $rows );
 
-			/* --- ヤマキシ標準工事内容 --- */
+			/* --- ヤマキシ標準工事内容（お風呂）--- */
 			$works = array(
-				array( '解体撤去工事',     '既存の浴室を解体し、撤去する工事です。' ),
-				array( '廃棄処分',         '解体した既存浴室を廃棄処分するためにかかる費用です。' ),
-				array( '養生工事',         '搬入経路の床・壁・建具を保護します。' ),
-				array( '水道工事',         '給水・給湯・排水の配管工事です。' ),
-				array( '電気工事',         '照明・換気扇などの配線接続工事です。' ),
-				array( '土間コンクリート工事', 'ユニットバスを据える土間をつくる工事です。' ),
-				array( '大工工事',         '開口部の調整や下地の補修・補強を行います。' ),
-				array( 'ユニットバス組立設置', '新しいユニットバスの組立・設置工事です。' ),
+				array( '既存ユニットバス解体撤去工事', '古い浴槽の撤去にかかる工事です。' ),
+				array( '産業廃棄物処理運搬工事',       '撤去した浴槽（ユニットバス）などを廃棄処分するためにかかる費用です。' ),
+				array( '水道工事（給水・給湯・排水）', '' ),
+				array( '電気工事（配線）',             '' ),
+				array( '木工事（下地）',               '脱衣所壁下地の工事です。' ),
+				array( 'ユニットバス組立設置',         '' ),
+				array( '浴室壁面造作・内装工事',       '脱衣場側の壁面を、造作する工事です。その壁面のクロスやサニタリーボードなどの内装も含みます。' ),
+				array( '換気扇取付工事',               '換気扇の取り付け工事です。' ),
+				array( '浴室ドア枠造作工事',           '浴室のドア枠を造作します。' ),
 			);
 			$rows = array();
 			foreach ( $works as $r ) $rows[] = array( 'name' => $r[0], 'text' => $r[1] );
