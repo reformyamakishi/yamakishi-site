@@ -442,7 +442,13 @@ address{ font-style:normal; }
 .p-price__desc{ font-size:14px; color:var(--ink-sub); margin:8px 0 14px; flex:1; }
 .p-price__yen{ display:flex; align-items:baseline; flex-wrap:wrap; gap:4px; color:var(--brand); font-weight:900; line-height:1.05; }
 .p-price__yen .lbl{ font-size:13px; color:var(--ink); background:var(--brand-tint); padding:3px 9px; border-radius:6px; }
-.p-price__yen .num{ font-size:38px; letter-spacing:-.02em; }
+.p-price__yen .num{
+  font-size:38px; letter-spacing:-.02em;
+  /* 金額は黄色のマーカーを引いて目立たせます */
+  padding:0 5px;
+  background:linear-gradient(transparent 55%, #ffe95c 55%);
+  -webkit-box-decoration-break:clone; box-decoration-break:clone;
+}
 .p-price__yen .unit{ font-size:15px; }
 .p-price__inc{ font-size:12.5px; color:var(--ink-sub); margin:8px 0 16px; }
 .p-price__link{
@@ -459,6 +465,9 @@ address{ font-style:normal; }
 .p-price__yen .chal{
   font-size:clamp(19px,4.4vw,24px); font-weight:900; color:var(--brand);
   line-height:1.3; letter-spacing:-.01em;
+  padding:0 5px;
+  background:linear-gradient(transparent 66%, #ffe95c 66%);
+  -webkit-box-decoration-break:clone; box-decoration-break:clone;
 }
 
 @media (min-width:768px){  .p-price__grid{ grid-template-columns:repeat(2,1fr); } }
