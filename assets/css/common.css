@@ -426,11 +426,17 @@ address{ font-style:normal; }
   background:var(--brand); color:#fff; text-align:center;
   font-size:13px; font-weight:900; padding:7px; letter-spacing:.04em;
 }
+/* 写真の縦横比にかかわらず、どのカードも同じ高さになるようにしています。
+   写真は枠に対して絶対配置し、はみ出た分は切り取ります。 */
 .p-price__photo{
-  aspect-ratio:16/10; background:linear-gradient(135deg,#f4efeb,#e5dcd5);
+  position:relative; aspect-ratio:16/10; overflow:hidden;
+  background:linear-gradient(135deg,#f4efeb,#e5dcd5);
   display:grid; place-items:center; color:#9a8b80; font-size:13px; font-weight:800;
 }
-.p-price__photo img{ width:100%; height:100%; object-fit:cover; }
+.p-price__photo picture,
+.p-price__photo img{
+  position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block;
+}
 .p-price__body{ display:flex; flex-direction:column; flex:1; padding:18px; }
 .p-price__name{ font-size:19px; font-weight:900; }
 .p-price__desc{ font-size:14px; color:var(--ink-sub); margin:8px 0 14px; flex:1; }
