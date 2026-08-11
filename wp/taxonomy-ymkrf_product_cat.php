@@ -151,7 +151,10 @@ $intro = array(
 
 		'en'    => 'BATHROOM',
 		'title' => 'お風呂リフォーム',
-		'hero'  => 'assets/img/products/ofuroa/ofuroa-main.jpg',
+		/* 見出しの写真。あたたかい床と足もとの写真です。
+		   横長の帯に敷くため、写真の上（壁・ドアの部分）を落として、
+		   左右は床の柄をのばして幅いっぱいにしてあります。 */
+		'hero'  => 'assets/img/products/head-bathroom.jpg',
 		'lead'  => '本体・標準工事費・古いお風呂の解体処分費まで込みのパック価格でご案内します。',
 
 		/* --- ブランド紹介（お風呂は専用のブランド名を付けていません） --- */
