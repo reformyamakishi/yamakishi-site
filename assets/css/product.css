@@ -282,12 +282,19 @@
 .p-prd__spec{
   background:#fff; border:2px solid var(--border); border-radius:var(--radius); overflow:hidden;
 }
+/* 写真を絶対配置にしているのは、縦に細長い写真が入ったときに
+   枠（4:3）が伸びてしまい、行ごとに高さがバラバラになるのを防ぐためです。 */
 .p-prd__spec .ph{
-  aspect-ratio:4/3; background:var(--bg-gray); display:grid; place-items:center;
+  position:relative; aspect-ratio:4/3; overflow:hidden;
+  background:var(--bg-gray); display:grid; place-items:center;
   color:#a08b80; font-size:12px; font-weight:800; text-align:center; padding:10px;
 }
-.p-prd__spec .ph img{ width:100%; height:100%; object-fit:contain; }
-.p-prd__spec .ph:has(img){ background:#fff; padding:6px; }
+.p-prd__spec .ph img{
+  position:absolute; inset:6px;
+  width:calc(100% - 12px); height:calc(100% - 12px);
+  object-fit:contain;
+}
+.p-prd__spec .ph:has(img){ background:#fff; }
 .p-prd__spec figcaption{ padding:12px 12px 14px; font-size:13.5px; font-weight:800; line-height:1.6; }
 .p-prd__spec small{ display:block; margin-top:3px; color:var(--ink-light); font-weight:700; font-size:12px; }
 
@@ -362,11 +369,16 @@
   background:#fff; border:1px solid var(--border); border-radius:12px; padding:12px;
 }
 .p-prd__opt .ph{
-  aspect-ratio:1/1; background:var(--bg-gray); border-radius:8px;
+  position:relative; aspect-ratio:1/1; overflow:hidden;
+  background:var(--bg-gray); border-radius:8px;
   display:grid; place-items:center; color:#a08b80; font-size:10px; font-weight:800;
 }
-.p-prd__opt .ph img{ width:100%; height:100%; object-fit:contain; border-radius:8px; }
-.p-prd__opt .ph:has(img){ background:#fff; border:1px solid var(--border); padding:3px; }
+.p-prd__opt .ph img{
+  position:absolute; inset:3px;
+  width:calc(100% - 6px); height:calc(100% - 6px);
+  object-fit:contain; border-radius:8px;
+}
+.p-prd__opt .ph:has(img){ background:#fff; border:1px solid var(--border); }
 .p-prd__opt h3{ font-size:13.8px; font-weight:900; color:var(--brand-dark); line-height:1.5; }
 .p-prd__opt p{ margin-top:4px; font-size:12.3px; line-height:1.7; color:var(--ink-sub); }
 /* 金額は必ず赤（#fe3301）。
@@ -441,8 +453,14 @@
 }
 .p-prd__navcard:hover{ border-color:var(--brand); transform:translateY(-3px); }
 .p-prd__navcard .ph{
-  aspect-ratio:4/3; background:var(--bg-gray); border-radius:6px;
+  position:relative; aspect-ratio:4/3; overflow:hidden;
+  background:var(--bg-gray); border-radius:6px;
   display:grid; place-items:center; color:#a08b80; font-size:10.5px; font-weight:800;
+}
+/* 写真は枠の横幅いっぱいに広げ、はみ出た分は切り取ります */
+.p-prd__navcard .ph img{
+  position:absolute; inset:0; width:100%; height:100%;
+  object-fit:cover; border-radius:6px;
 }
 /* 一覧へのカードは写真が無いので、写真枠ごと省いて文字を中央に。
    ↑の .ph より後ろに置く必要があります（同じ強さなので、後に書いたほうが勝ちます）。 */

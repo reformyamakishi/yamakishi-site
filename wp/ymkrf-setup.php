@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '34' );
+define( 'YMKRF_SETUP_VER', '35' );
 
 /* キッチンの「ヤマキシ標準工事内容」。
    ホームページの一覧表（7項目）と、番号入りの図（8項目）の
@@ -3077,6 +3077,26 @@ add_action( 'init', function () {
 
 		update_post_meta( $pid, '_ymkrf_img_missing', $missing - $m0 );
 		$log[] = '商品「' . $bp['title'] . '」を登録しました → ' . get_permalink( $pid );
+	}
+
+
+	/* ------------------------------------------------------------
+	   3-i. サザナNのメイン写真を差し替え
+	        取り込んだ元の写真に左右の黒帯が入っていたため、
+	        黒帯を落としたものに入れ替えます。
+	   ------------------------------------------------------------ */
+	$sz = get_page_by_path( 'sazana-n', OBJECT, 'ymkrf_product' );
+	if ( $sz && get_post_meta( $sz->ID, '_ymkrf_main_ver', true ) !== '2' ) {
+
+		$old = $img( 'sazana-main.jpg' );
+		if ( $old ) wp_delete_attachment( $old, true );
+
+		$new = $img( 'sazana-main.jpg', 'TOTO サザナ Nタイプ 1坪サイズ（ユニットバス）' );
+		if ( $new ) {
+			set_post_thumbnail( $sz->ID, $new );
+			update_post_meta( $sz->ID, '_ymkrf_main_ver', '2' );
+			$log[] = 'サザナNのメイン写真を、黒帯のないものに差し替えました';
+		}
 	}
 
 	/* ------------------------------------------------------------

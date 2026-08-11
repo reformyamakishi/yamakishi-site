@@ -294,7 +294,7 @@ get_header();
   <div class="l-wrap">
     <div class="c-head" data-reveal>
       <span class="c-head__en">PACK PRICE</span>
-      <h2 class="c-head__title">「結局いくら？」に<span class="marker">先に</span>お答えします</h2>
+      <h2 class="c-head__title">「結局いくら？」に<span class="marker">先にお答えします</span></h2>
       <p class="c-head__lead">本体・工事費・古い設備の処分費まで込みのパック価格。あとからの追加請求はありません。</p>
     </div>
 
