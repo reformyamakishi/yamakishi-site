@@ -398,7 +398,13 @@ get_header();
       </div>
 
       <div class="p-price__card" data-reveal data-reveal-delay="160">
-        <div class="p-price__photo">［写真］外壁塗装</div>
+        <div class="p-price__photo">
+          <picture>
+            <source srcset="<?php echo $asset; ?>/assets/img/top/price-paint.webp" type="image/webp">
+            <img src="<?php echo $asset; ?>/assets/img/top/price-paint.jpg" width="1200" height="900"
+                 alt="外壁塗装（職人が住宅の外壁を刷毛で塗装しているところ）" loading="lazy" decoding="async">
+          </picture>
+        </div>
         <div class="p-price__body">
           <h3 class="p-price__name">外壁塗装</h3>
           <p class="p-price__desc">北陸の雪と雨に耐える塗料選びから。専門サイトもご用意しています。</p>
