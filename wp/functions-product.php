@@ -1106,3 +1106,85 @@ function ymkrf_colorsets( $d, $post_id = 0 ) {
 	return $out;
 }
 endif;
+
+
+/* ============================================================
+   キッチンの「ヤマキシ標準工事内容」をそろえます
+
+   ここに置いているのは、mu-plugin（ymkrf-setup.php）の中に入れると
+   写真の取り込みなど重い処理と同じ流れに乗ってしまい、
+   途中で止まったときに実行されないことがあるためです。
+   このファイルはどのページを開いても必ず読み込まれます。
+
+   内容を変えたいときは、下の配列と `ymkrf_works_ver` の番号を
+   ひとつ上げてください。次にページを開いたとき1度だけ走ります。
+   ============================================================ */
+add_action( 'init', function () {
+
+	$ver = '2026-08-11a';
+	if ( get_option( 'ymkrf_works_ver' ) === $ver ) return;
+	if ( ! post_type_exists( 'ymkrf_product' ) ) return;
+	if ( ! taxonomy_exists( 'ymkrf_product_cat' ) ) return;
+
+	$sets = array(
+		'kitchen' => array(
+			array( '既存流し台解体撤去工事', '古いキッチンの撤去にかかる工事です。' ),
+			array( '養生工事',               '床・壁・下地を保護します。' ),
+			array( '産業廃棄物処理運輸工事', '撤去した古いキッチンを廃棄処分するためにかかる費用です。' ),
+			array( '水道工事',               '給水・給湯・排水の工事です。' ),
+			array( '電気工事',               '設備機器の配線接続等の工事です。' ),
+			array( 'ガス配管変更工事',       'ガスコンロを使うための配管工事です。' ),
+			array( 'キッチンパネル設置工事', 'キッチンパネル部材費込み施工いたします。' ),
+			array( '下地工事',               '大工工事です。キッチンパネル設置面の補修、補強を行います。' ),
+			array( 'シロッコファン取付工事', 'シロッコファンの取付工事です。' ),
+			array( 'システムキッチン取付設置', '新しいシステムキッチンの取り付け・設置工事です。' ),
+		),
+		'bathroom' => array(
+			array( '既存ユニットバス解体撤去工事', '古い浴槽の撤去にかかる工事です。' ),
+			array( '産業廃棄物処理運搬工事',       '撤去した浴槽（ユニットバス）などを廃棄処分するためにかかる費用です。' ),
+			array( '水道工事',                     '給水・給湯・排水の工事です。' ),
+			array( '電気工事',                     '配線の工事です。' ),
+			array( '木工事',                       '脱衣所の壁下地をつくる工事です。' ),
+			array( 'ユニットバス組立設置',         '新しいユニットバスの組立・設置工事です。' ),
+			array( '浴室壁面造作・内装工事',       '脱衣場側の壁面を、造作する工事です。その壁面のクロスやサニタリーボードなどの内装も含みます。' ),
+			array( '換気扇取付工事',               '換気扇の取り付け工事です。' ),
+			array( '浴室ドア枠造作工事',           '浴室のドア枠を造作します。' ),
+		),
+	);
+
+	$done = 0;
+	foreach ( $sets as $catslug => $list ) {
+
+		$term = get_term_by( 'slug', $catslug, 'ymkrf_product_cat' );
+		if ( ! $term || is_wp_error( $term ) ) continue;
+
+		$rows = array();
+		foreach ( $list as $r ) $rows[] = array( 'name' => $r[0], 'text' => $r[1] );
+
+		$ids = get_posts( array(
+			'post_type'      => 'ymkrf_product',
+			'posts_per_page' => -1,
+			'post_status'    => 'any',
+			'fields'         => 'ids',
+			'tax_query'      => array( array(
+				'taxonomy' => 'ymkrf_product_cat', 'field' => 'term_id', 'terms' => $term->term_id,
+			) ),
+		) );
+		foreach ( (array) $ids as $id ) {
+			update_post_meta( $id, '_ymkrf_works', $rows );
+			$done++;
+		}
+	}
+
+	update_option( 'ymkrf_works_ver', $ver );
+	update_option( 'ymkrf_works_ver_log', sprintf( '%s に %d 件を更新', current_time( 'Y-m-d H:i' ), $done ) );
+}, 20 );
+
+
+/* 管理画面の上に、上の更新結果を1度だけ出します（確認用） */
+add_action( 'admin_notices', function () {
+	$log = get_option( 'ymkrf_works_ver_log' );
+	if ( ! $log ) return;
+	delete_option( 'ymkrf_works_ver_log' );
+	echo '<div class="notice notice-success is-dismissible"><p>ヤマキシ標準工事内容：' . esc_html( $log ) . '</p></div>';
+} );
