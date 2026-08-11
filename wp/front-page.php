@@ -347,7 +347,13 @@ get_header();
       </div>
 
       <div class="p-price__card" data-reveal>
-        <div class="p-price__photo">［写真］トイレ</div>
+        <div class="p-price__photo">
+          <picture>
+            <source srcset="<?php echo $asset; ?>/assets/img/top/price-toilet.webp" type="image/webp">
+            <img src="<?php echo $asset; ?>/assets/img/top/price-toilet.jpg" width="1200" height="900"
+                 alt="トイレ（タンクレストイレと手洗いカウンターのある明るいトイレ）" loading="lazy" decoding="async">
+          </picture>
+        </div>
         <div class="p-price__body">
           <h3 class="p-price__name">トイレ</h3>
           <p class="p-price__desc">最短半日で交換完了。お掃除がラクな最新モデルにも対応します。</p>
@@ -358,7 +364,13 @@ get_header();
       </div>
 
       <div class="p-price__card" data-reveal data-reveal-delay="80">
-        <div class="p-price__photo">［写真］洗面化粧台</div>
+        <div class="p-price__photo">
+          <picture>
+            <source srcset="<?php echo $asset; ?>/assets/img/top/price-washstand.webp" type="image/webp">
+            <img src="<?php echo $asset; ?>/assets/img/top/price-washstand.jpg" width="1200" height="900"
+                 alt="洗面化粧台（三面鏡と木目調キャビネットの洗面台）" loading="lazy" decoding="async">
+          </picture>
+        </div>
         <div class="p-price__body">
           <h3 class="p-price__name">洗面化粧台</h3>
           <p class="p-price__desc">朝の身支度がしやすく。収納が増えて、掃除もラクになります。</p>
@@ -369,7 +381,13 @@ get_header();
       </div>
 
       <div class="p-price__card" data-reveal data-reveal-delay="80">
-        <div class="p-price__photo">［写真］エコキュート</div>
+        <div class="p-price__photo">
+          <picture>
+            <source srcset="<?php echo $asset; ?>/assets/img/top/price-ecocute.webp" type="image/webp">
+            <img src="<?php echo $asset; ?>/assets/img/top/price-ecocute.jpg" width="1200" height="900"
+                 alt="エコキュート（貯湯タンクとヒートポンプユニットの屋外設置例）" loading="lazy" decoding="async">
+          </picture>
+        </div>
         <div class="p-price__body">
           <h3 class="p-price__name">給湯器・エコキュート</h3>
           <p class="p-price__desc">お湯が出ない、というときもすぐお伺いします。夜間・休日のトラブルにも対応。</p>
