@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '68' );
+define( 'YMKRF_SETUP_VER', '70' );
 
 /* キッチンの「ヤマキシ標準工事内容」。
    ホームページの一覧表（7項目）と、番号入りの図（8項目）の
@@ -207,6 +207,7 @@ add_action( 'init', function () {
 		$theme . '/d7',
 		$theme . '/bga',
 		$theme . '/rakutowa',
+		$theme . '/j1',
 		WP_CONTENT_DIR . '/themes/ymkrf/assets/img/works',
 		$dir,                 // 最後の受け皿（wp-content/ymkrf-import）
 	);
@@ -732,7 +733,7 @@ add_action( 'init', function () {
 		'pleas-ls', 'alauno-s160', 'alauno-s160-counter', 'gga3', 'gga1-counter',
 		'satis-s', 'satis-s-counter', 'neorest-rs3', 'neorest-rs3-counter',
 		/* 洗面化粧台 */
-		'v1', 'd7', 'bga', 'rakutowa',
+		'v1', 'd7', 'bga', 'rakutowa', 'j1',
 	) as $slug ) {
 
 		$p = get_page_by_path( $slug, OBJECT, 'ymkrf_product' );
@@ -3742,6 +3743,7 @@ add_action( 'init', function () {
 		'd7'                  => 'd7-main.jpg',
 		'bga'                 => 'bga-main.jpg',
 		'rakutowa'            => 'rakutowa-main.jpg',
+		'j1'                  => 'j1-main.jpg',
 	);
 	foreach ( $main_files as $slug => $file ) {
 		$pp = get_page_by_path( $slug, OBJECT, 'ymkrf_product' );
@@ -5892,6 +5894,61 @@ TOTOのセフィオンテクト、LIXILのアクアセラミック、Panasonic�
 			),
 		),
 
+		/* ===== Fグレード J1（LIXIL） ===== */
+		array(
+			'slug' => 'j1', 'prefix' => 'j1', 'title' => 'J1',
+			'meta' => array(
+				'_ymkrf_catch' => 'スクエアなフォルムで洗練された洗面化粧台。',
+				'_ymkrf_grade' => 'Fグレード', '_ymkrf_name' => 'J1',
+				'_ymkrf_size'  => '間口75cm',
+				'_ymkrf_work'  => '24200', '_ymkrf_item' => '125600',
+				'_ymkrf_days'  => '', '_ymkrf_daystext' => '最短当日',
+				'_ymkrf_pt1'   => '広々ボウル', '_ymkrf_pt2' => 'お掃除カンタン', '_ymkrf_pt3' => 'ストレスフリー',
+				'_ymkrf_caution' => '※写真はイメージです。',
+				'_ymkrf_note_colors' => 'none',
+			),
+			'total' => 149800, 'maker' => 'lixil',
+			'shops' => array( 'nonoichi', 'komathu', 'hakui' ),
+			'main'  => array( 'main', 'LIXIL J1 洗面化粧台 間口75cm' ),
+			'labels' => array( '_ymkrf_lbl_colors' => '扉カラー' ),
+			'sets' => array(
+				'_ymkrf_colors' => array(
+					array( 'door-criepale',   'クリエペール' ),
+					array( 'door-criedark',   'クリエダーク' ),
+					array( 'door-urbanblue',  'アーバンブルー' ),
+					array( 'door-criemocha',  'クリエモカ' ),
+					array( 'door-lightbeige', 'ライトベージュ' ),
+					array( 'door-glosswhite', 'グロスホワイト' ),
+				),
+			),
+			'specs' => array(
+				array( 'spec-mirror',  '3面鏡ミラーキャビネット 全収納', 'LED照明（消費電力9.8W）／コンセント2個／くもり止めコートあり（中央鏡）' ),
+				array( 'spec-bowl',    '人造大理石ボウル',               'ポリエステル系／ボウル容量11リットル' ),
+				array( 'spec-faucet',  'シングルレバー洗髪シャワー水栓', 'ホース収納式／リフトアップ付／整流吐水切替付／エコハンドル' ),
+				array( 'spec-cabinet', '引出タイプキャビネット',         '取り出したい物が見つけやすい引出収納' ),
+			),
+			'feats' => array(
+				array( 'お掃除ラクラク、アイデアいっぱい。', '「洗面器一体カウンター」', '小物を置けるドライスペース',
+				       '水栓取付面を一段低くすることで、サイドをドライスペースとして活用できます。', 'point-dry' ),
+				array( '', '', 'やわらかな手のひらカーブ',
+				       '手になじむやわらかなカーブ。より安心でラクに使えます。', 'point-curve' ),
+				array( '', '', 'ボウルを広くする右奥の排水口',
+				       '見た目もスッキリ、広く使えます。', 'point-drainpos' ),
+				array( '排水口のお掃除簡単', '「新てまなし排水口」', '排水口の中までスポンジでサッとお掃除できます',
+				       '排水口の中まで手を入れずに、スポンジでサッとお掃除できます。', 'point-drain', '', '', '1' ),
+				array( 'ストレスフリー、電力フリー', '「くもり止めコート」', '消費電力ゼロでつかえる。',
+				       '電気を使わず表面コーティングでくもりを抑えるので、待ち時間が無く消し忘れもありません。', 'point-kumori', '', '', '1' ),
+			),
+			'opts' => array(
+				array( 'opt-base900',       'ベースキャビネット 間口900mm',        '7720',  'ベースキャビネットの間口を900mmに変更できます。', '' ),
+				array( 'opt-mirror900',     'ミラーキャビネット 間口900mm',        '15290', 'ミラーキャビネットの間口を900mmに変更できます。', '' ),
+				array( 'opt-slimled',       '3面鏡 スリムLED 間口750mm',           '6820',  'すっきりしたデザインの薄型LED照明タイプ。', '' ),
+				array( 'opt-smartpocket',   '3面鏡 スマートポケット付LED 間口750mm', '13530', '', '' ),
+				array( 'opt-interior-full', '脱衣場内装パック（1坪）',              '80000', '天井・壁クロス張替え＋床クッションフロアー貼り替え（1坪まで）。', '' ),
+				array( 'opt-interior-wall', '脱衣場内装パック（1坪／壁のみ）',      '65000', '壁クロス張替え（1坪まで）。', '' ),
+			),
+		),
+
 	);
 
 	foreach ( $lav_products as $lp ) {
@@ -5980,6 +6037,20 @@ TOTOのセフィオンテクト、LIXILのアクアセラミック、Panasonic�
 
 		update_post_meta( $pid, '_ymkrf_img_missing', $missing - $m0 );
 		$log[] = '商品「' . $lp['title'] . '」を登録しました → ' . get_permalink( $pid );
+	}
+
+	/* 登録できなかった商品があれば、管理画面のお知らせに出します。
+	   （何が入っていないのか、ひと目で分かるようにするためです） */
+	$lav_missing = array();
+	foreach ( $lav_products as $lpx ) {
+		if ( ! get_page_by_path( $lpx['slug'], OBJECT, 'ymkrf_product' ) ) {
+			$lav_missing[] = $lpx['title'] . '（' . $lpx['slug'] . '）';
+		}
+	}
+	if ( $lav_missing ) {
+		$log[] = '★洗面化粧台で登録できなかった商品：' . implode( '／', $lav_missing );
+	} else {
+		$log[] = '洗面化粧台は' . count( $lav_products ) . '機種すべて登録ずみです';
 	}
 
 	/* 洗面化粧台は、どの機種も工期「最短当日」です。
