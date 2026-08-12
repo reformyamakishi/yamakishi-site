@@ -19,8 +19,77 @@
     initSmoothScroll();
     initCvTracking();
     initCurrentNav();
+    initCompare();
     document.documentElement.classList.add('is-loaded');
   });
+
+  /* ------------------------------------------------------------------
+     施工事例の Before / After 比較スライダー
+
+     ★もとは home.js（トップページ専用）にありましたが、
+       商品ページ・商品一覧ページでも同じ形で施工事例を出すため、
+       全ページ共通のこちらへ移しました。
+       （home.js からは削除してあります。二重に動かさないでください）
+     ------------------------------------------------------------------ */
+  function initCompare() {
+    document.querySelectorAll('[data-compare]').forEach(function (box) {
+      var pos = 50;
+      var dragging = false;
+
+      function set(x) {
+        var r = box.getBoundingClientRect();
+        pos = Math.min(100, Math.max(0, ((x - r.left) / r.width) * 100));
+        box.style.setProperty('--pos', pos + '%');
+        box.classList.add('is-touched');
+      }
+
+      /* ポインタ操作（マウス・タッチ共通） */
+      box.addEventListener('pointerdown', function (e) {
+        dragging = true;
+        set(e.clientX);
+        try { box.setPointerCapture(e.pointerId); } catch (err) { /* 非対応環境は無視 */ }
+      });
+      box.addEventListener('pointermove', function (e) {
+        if (dragging) set(e.clientX);
+      });
+      box.addEventListener('pointerup',     function () { dragging = false; });
+      box.addEventListener('pointercancel', function () { dragging = false; });
+
+      /* キーボード操作 */
+      box.setAttribute('tabindex', '0');
+      box.setAttribute('role', 'slider');
+      box.setAttribute('aria-label', '施工前と施工後の写真を比べる');
+      box.setAttribute('aria-valuemin', '0');
+      box.setAttribute('aria-valuemax', '100');
+      box.addEventListener('keydown', function (e) {
+        if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+        e.preventDefault();
+        pos = Math.min(100, Math.max(0, pos + (e.key === 'ArrowRight' ? 5 : -5)));
+        box.style.setProperty('--pos', pos + '%');
+        box.setAttribute('aria-valuenow', Math.round(pos));
+        box.classList.add('is-touched');
+      });
+
+      /* 画面に入ったら一度だけ動かして「動かせる」と気づいてもらう */
+      if (!reduceMotion && 'IntersectionObserver' in window) {
+        var io = new IntersectionObserver(function (en) {
+          if (!en[0].isIntersecting) return;
+          io.disconnect();
+          var t0 = performance.now();
+          (function tick(now) {
+            var p = Math.min((now - t0) / 1600, 1);
+            var v = 50 + Math.sin(p * Math.PI * 2) * 22;
+            if (!box.classList.contains('is-touched')) {
+              box.style.setProperty('--pos', v + '%');
+              if (p < 1) requestAnimationFrame(tick);
+              else box.style.setProperty('--pos', '50%');
+            }
+          })(t0);
+        }, { threshold: 0.5 });
+        io.observe(box);
+      }
+    });
+  }
 
   /* ------------------------------------------------------------------
      ヘッダーの実高さを CSS 変数に反映（アンカーのズレ防止）

@@ -31,7 +31,8 @@ while ( have_posts() ) : the_post();
 
 $d     = ymkrf_product_data();
 $sib   = ymkrf_product_siblings();
-$works = ymkrf_product_works( get_the_ID(), 3 );
+/* 施工事例は下のほうで ymkrf_works_section() が自分で取り出すので、
+   ここでは取り出していません（トップページと同じ形にそろえたため）。 */
 $cat   = ! empty( $d['cats'] ) ? $d['cats'][0] : null;
 $maker = ! empty( $d['makers'] ) ? $d['makers'][0] : null;
 
@@ -436,39 +437,16 @@ if ( ! empty( $pn['items'] ) ) :
 </section>
 <?php endif; ?>
 
-<?php if ( $works ) : ?>
-<!-- =========== 施工事例（自動） =========== -->
-<section class="l-section l-section--soft">
-  <div class="l-wrap">
-    <h2 class="p-prd__bar"><?php echo esc_html( $cat ? $cat->name : '' ); ?>の施工事例</h2>
-    <div class="p-cards">
-      <?php foreach ( $works as $wid ) : ?>
-        <article class="p-card">
-          <a class="p-card__photo" href="<?php echo esc_url( get_permalink( $wid ) ); ?>">
-            <?php echo has_post_thumbnail( $wid ) ? get_the_post_thumbnail( $wid, 'medium_large' ) : ''; ?>
-          </a>
-          <div class="p-card__body">
-            <p class="p-card__meta"><?php
-              $ts = get_the_terms( $wid, 'ymkrf_works_cat' );
-              $as = get_the_terms( $wid, 'ymkrf_works_area' );
-              foreach ( array( $ts, $as ) as $group ) {
-                if ( $group && ! is_wp_error( $group ) ) {
-                  foreach ( $group as $t ) echo '<span>' . esc_html( $t->name ) . '</span>';
-                }
-              }
-            ?></p>
-            <h3 class="p-card__title"><a href="<?php echo esc_url( get_permalink( $wid ) ); ?>"><?php echo esc_html( get_the_title( $wid ) ); ?></a></h3>
-            <p><?php echo esc_html( get_the_excerpt( $wid ) ); ?></p>
-          </div>
-        </article>
-      <?php endforeach; ?>
-    </div>
-    <p style="text-align:center;margin-top:20px">
-      <a class="c-btn c-btn--ghost" href="<?php echo esc_url( home_url( '/works/' ) ); ?>">施工事例をもっと見る</a>
-    </p>
-  </div>
-</section>
-<?php endif; ?>
+<!-- =========== 施工事例（自動） ===========
+     トップページの施工事例とまったく同じ形（Before / After 比較スライダー）です。
+     中身は inc/functions-product.php の ymkrf_works_card() が作っています。
+     ここを直したいときは、商品一覧ページ・トップページと共通なので
+     ymkrf_works_card() のほうを直してください。 -->
+<?php
+if ( $cat && function_exists( 'ymkrf_works_section' ) ) {
+	ymkrf_works_section( $cat->slug, ymkrf_cat_label( $cat->slug, $cat->name ), 3 );
+}
+?>
 
 <!-- =========== 最後のご案内 =========== -->
 <section class="l-section">

@@ -1124,35 +1124,71 @@ function ymkrf_works_query( $slug = '', $number = 3 ) {
 endif;
 
 
-/* 施工事例のカード1枚分 */
+/* 施工事例のカード1枚分
+
+   ★トップページの施工事例とまったく同じ形（Before / After 比較スライダー）です。
+     見た目の指定は common.css の「施工事例」、
+     左右に動かす動きは common.js の initCompare が受け持ちます。
+
+   ・Before写真 … 施工事例の編集画面（右側「施工データ」）の
+                  「Before画像」で選びます。
+   ・After写真  … アイキャッチ画像をそのまま使います。
+   ・Before写真が未登録のときは、スライダーではなく
+     アイキャッチ画像だけを同じ枠で出します（形はそろいます）。
+*/
 if ( ! function_exists( 'ymkrf_works_card' ) ) :
 function ymkrf_works_card() {
-	$area   = get_the_terms( get_the_ID(), 'ymkrf_works_area' );
+
+	$id     = get_the_ID();
+	$area   = get_the_terms( $id, 'ymkrf_works_area' );
 	$area   = ( $area && ! is_wp_error( $area ) ) ? $area[0]->name : '';
-	$part   = get_the_terms( get_the_ID(), 'ymkrf_works_cat' );
+	$part   = get_the_terms( $id, 'ymkrf_works_cat' );
 	$part   = ( $part && ! is_wp_error( $part ) ) ? $part[0]->name : '';
-	$price  = get_post_meta( get_the_ID(), '_ymkrf_price', true );
-	$period = get_post_meta( get_the_ID(), '_ymkrf_period', true );
+	$price  = get_post_meta( $id, '_ymkrf_price', true );
+	$period = get_post_meta( $id, '_ymkrf_period', true );
+
+	$before = (int) get_post_meta( $id, '_ymkrf_before_img', true );
+	$bimg   = $before ? wp_get_attachment_image( $before, 'medium_large', false, array( 'loading' => 'lazy', 'alt' => '施工前' ) ) : '';
+	$aimg   = has_post_thumbnail( $id ) ? get_the_post_thumbnail( $id, 'medium_large', array( 'loading' => 'lazy', 'alt' => '施工後' ) ) : '';
+	$link   = get_permalink( $id );
 	?>
-	<a class="p-col__card" href="<?php the_permalink(); ?>">
-		<div class="p-col__ph">
-			<?php if ( has_post_thumbnail() ) : ?>
-				<?php the_post_thumbnail( 'medium_large', array( 'loading' => 'lazy', 'alt' => '' ) ); ?>
-			<?php endif; ?>
-			<?php if ( $part ) : ?><span class="p-col__tag"><?php echo esc_html( $part ); ?></span><?php endif; ?>
-		</div>
-		<div class="p-col__body">
-			<?php if ( $area ) : ?><p class="p-col__date"><?php echo esc_html( $area ); ?></p><?php endif; ?>
-			<h3 class="p-col__title"><?php the_title(); ?></h3>
-			<?php if ( $price || $period ) : ?>
-				<p class="p-col__spec">
-					<?php if ( $price ) : ?><span><em>工事費</em><?php echo esc_html( $price ); ?></span><?php endif; ?>
-					<?php if ( $period ) : ?><span><em>工期</em><?php echo esc_html( $period ); ?></span><?php endif; ?>
+	<article class="p-work">
+
+		<?php if ( $bimg && $aimg ) : /* --- 2枚そろっているとき：比較スライダー --- */ ?>
+			<div class="p-compare" data-compare style="--pos:50%">
+				<div class="p-compare__layer p-compare__layer--before"><?php echo $bimg; /* phpcs:ignore */ ?></div>
+				<div class="p-compare__layer p-compare__layer--after"><?php echo $aimg; /* phpcs:ignore */ ?></div>
+				<span class="p-compare__tag p-compare__tag--before">BEFORE</span>
+				<span class="p-compare__tag p-compare__tag--after">AFTER</span>
+				<span class="p-compare__handle"></span>
+				<span class="p-compare__hint">← 左右に動かして見くらべる →</span>
+			</div>
+
+		<?php elseif ( $aimg ) : /* --- 施工後だけのとき --- */ ?>
+			<a class="p-work__ph" href="<?php echo esc_url( $link ); ?>">
+				<?php echo $aimg; /* phpcs:ignore */ ?>
+				<span class="p-compare__tag p-compare__tag--after">AFTER</span>
+			</a>
+
+		<?php endif; ?>
+
+		<div class="p-work__body">
+			<?php if ( $part || $area ) : ?>
+				<p class="p-work__meta">
+					<?php if ( $part ) : ?><span><?php echo esc_html( $part ); ?></span><?php endif; ?>
+					<?php if ( $area ) : ?><span><?php echo esc_html( $area ); ?></span><?php endif; ?>
 				</p>
 			<?php endif; ?>
-			<span class="p-col__more">事例を見る</span>
+			<h3 class="p-work__title"><a href="<?php echo esc_url( $link ); ?>"><?php the_title(); ?></a></h3>
+			<?php if ( $price || $period ) : ?>
+				<p class="p-work__data">
+					<?php if ( $price ) : ?><span>工事費込み <?php echo esc_html( $price ); ?></span><?php endif; ?>
+					<?php if ( $period ) : ?><span>工期 <?php echo esc_html( $period ); ?></span><?php endif; ?>
+				</p>
+			<?php endif; ?>
 		</div>
-	</a>
+
+	</article>
 	<?php
 }
 endif;
@@ -1202,15 +1238,13 @@ function ymkrf_works_section( $slug, $catname, $number = 3 ) {
 	<section class="l-section" id="works">
 		<div class="l-wrap">
 			<h2 class="p-prd__bar"><?php echo esc_html( $catname ); ?>の施工事例</h2>
-			<div class="p-col__cards">
+			<div class="p-works__grid">
 				<?php while ( $q->have_posts() ) : $q->the_post(); ymkrf_works_card(); endwhile; ?>
 			</div>
 			<?php if ( $more ) : ?>
-				<p class="p-col__allwrap">
-					<a class="p-col__all" href="<?php echo esc_url( $more ); ?>">
-						<?php echo esc_html( $catname ); ?>の施工事例をもっと見る
-					</a>
-				</p>
+				<a class="c-more" href="<?php echo esc_url( $more ); ?>">
+					<?php echo esc_html( $catname ); ?>の施工事例をもっと見る
+				</a>
 			<?php endif; ?>
 		</div>
 	</section>

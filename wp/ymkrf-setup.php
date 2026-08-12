@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '50' );
+define( 'YMKRF_SETUP_VER', '51' );
 
 /* キッチンの「ヤマキシ標準工事内容」。
    ホームページの一覧表（7項目）と、番号入りの図（8項目）の
@@ -196,6 +196,7 @@ add_action( 'init', function () {
 		$theme . '/amage-z-premium',
 		$theme . '/pleas-ls',
 		$theme . '/alauno-s160',
+		$theme . '/alauno-s160-counter',
 		$theme . '/gga3',
 		$theme . '/gga1-counter',
 		$theme . '/satis-s',
@@ -724,7 +725,7 @@ add_action( 'init', function () {
 		'ofuroa', 'sazana-n', 'lidea-m', 'rakuvia', 'sazana-t', 'lidea-b', 'granspa', 'selevia', 'sinla',
 		/* トイレ */
 		'amage-z', 'amage-z-aqua', 'purerest-qr', 'alauno-vs5', 'amage-z-premium',
-		'pleas-ls', 'alauno-s160', 'gga3', 'gga1-counter',
+		'pleas-ls', 'alauno-s160', 'alauno-s160-counter', 'gga3', 'gga1-counter',
 		'satis-s', 'satis-s-counter', 'neorest-rs3', 'neorest-rs3-counter',
 	) as $slug ) {
 
@@ -3723,6 +3724,7 @@ add_action( 'init', function () {
 		'amage-z-premium' => 'amze-main.jpg',
 		'pleas-ls'            => 'pleas-main.jpg',
 		'alauno-s160'         => 's160-main.jpg',
+		'alauno-s160-counter' => 's160c-main.jpg',
 		'gga3'                => 'gga3-main.jpg',
 		'gga1-counter'        => 'gga1-main.jpg',
 		'satis-s'             => 'satis-main.jpg',
@@ -4806,6 +4808,53 @@ add_action( 'init', function () {
 				array( 'opt-handrail', '木製手すり I型（φ32×616mm）', '13500', '立ち上がり時に便利な手すりです。', '' ),
 				array( 'opt-mirror', '化粧鏡（300×800）', '16200', 'ベーシックなタイプの鏡です。', '' ),
 				array( 'opt-gg3', 'GG3グレードに変更', '45500', 'オート開閉／リモコン便座／便ふた開閉／温風乾燥。', '' ),
+			),
+		),
+
+		/* ===== Aグレード アラウーノS160タイプ１K【手洗いカウンター付】（Panasonic） ===== */
+		array(
+			'slug'   => 'alauno-s160-counter', 'prefix' => 's160c', 'title' => 'アラウーノS160タイプ１K【手洗いカウンター付】',
+			'meta'   => array(
+				'_ymkrf_catch' => 'シンプルさが好評の全自動おそうじトイレ。',
+				'_ymkrf_grade' => 'Aグレード', '_ymkrf_name' => 'アラウーノS160タイプ１K', '_ymkrf_sub' => '【手洗いカウンター付】',
+				'_ymkrf_work' => '53000', '_ymkrf_item' => '386800',
+				'_ymkrf_days' => '', '_ymkrf_daystext' => '半日',
+				'_ymkrf_pt1' => '泡のパワー', '_ymkrf_pt2' => 'スキマレス設計', '_ymkrf_pt3' => 'スリム形状',
+				'_ymkrf_caution' => '※写真はオプションを含んだイメージ画像となります。',
+				'_ymkrf_note_colors' => 'none',
+			),
+			'total' => 439800, 'maker' => 'panasonic',
+			'shops' => array( 'hakui', 'kanadu' ),
+			'main'  => array( 'main', 'Panasonic アラウーノS160 タイプ１K 手洗いカウンター付（トイレ）' ),
+			'labels' => array( '_ymkrf_lbl_colors' => '便器カラー' ),
+			'sets' => array( '_ymkrf_colors' => array( array( 'color-white', 'ホワイト' ) ) ),
+			'speclist' => array(
+				array( '快適機能', "オート開閉（便ふた）\n電動開閉（便座・便ふた）\nオート脱臭\n暖房便座\nリモコン\nオート洗浄\nアラウーノアプリ対応\n低水圧対応\n停電対応（電池式）\n停電対応（手動）\nチャイルドロック" ),
+				array( '洗浄機能', "おしり洗浄\nビデ洗浄\nおしりリズム洗浄\nビデリズム洗浄" ),
+				array( '省エネ機能', "エコモード\n4・6・8時間切タイマー" ),
+				array( '清潔機能', "スゴピカ素材（有機ガラス系）\nひとふき形状\n水位調節\n自動おそうじ機能\nトリプル汚れガード（ハネガード便座連動）\nスキマレス設計\nステンレスノズル\nクローズ洗浄モード\nノズル位置調整機能" ),
+			),
+			'feats' => array(
+				array( '泡で受け止めて、泡で洗う。', '「激落ちバブル」「スパイラル水流」', '流すたびに「泡」と「水流」でしっかりお掃除！',
+				       'ミリバブル（直径約5mm）で大きな汚れを強力に除去し、次に微細なマイクロバブル（直径約60μm）で小さな汚れを除去します。', 'point-bubble' ),
+				array( '', '', 'お手入れがラクなスキマレス設計',
+				       "継ぎ目がほとんどなく、お手入れがラクなスキマレス設計です。\n（左：従来商品／右：スキマレス設計）", 'point-sukimaless', '※パナソニックHPより' ),
+				array( '便ふたを閉じてから流す', '「クローズ洗浄モード」', '衛生面が気になる方におすすめ',
+				       '立ち上がると、便ふたが閉まって洗浄します。立ったまま用を足した場合は、洗浄ボタンを押すと便ふたが閉まって流れます。', 'point-close' ),
+				array( '便利と健康をサポート！', 'アラウーノアプリ対応', '日々のお通じの記録ができ、体調管理にお役立ち',
+				       '『お通じモニタ』『みまもりモニタ』『わたし好み登録』。スマートフォンとの連携でここまで便利になります。', 'point-app' ),
+				array( 'トビハネヨゴレを泡でおさえる。', '「トリプル汚れガード」', 'ハネガード・タレガード・モレガード',
+				       "泡のクッションで受け止める「ハネガード」、フチの立ち上がりで垂れ出しにくい「タレガード」、便座と便器の合わせでせき止める「モレガード」。",
+				       'point-guard', '※男性の立ったままの小用を想定した機能です。角度や勢いによって外に漏れる場合があります。' ),
+				array( 'カウンター付き手洗い', '「手洗いユニット」', '汚れがつきにくい！',
+				       '便器と同様、水アカをはじく新素材。排水口も一体成形でお手入れが楽です。',
+				       'point-hand', '', 'point-hand2' ),
+			),
+			'opts' => array(
+				array( 'opt-towelring', 'タオルリング', '3600', 'アラウーノの四角丸形状を採用したデザイン。', '' ),
+				array( 'opt-paper', '紙巻器', '4400', '1連タイプの紙巻器です。', '' ),
+				array( 'opt-remote', 'スティックリモコン', '8300', 'スタイリッシュなスティックリモコンです。', '※色はホワイトまたはブラック' ),
+				array( 'opt-handrail', '手すり I型', '7400', '立ち上がり時に便利な手すり。', '' ),
 			),
 		),
 

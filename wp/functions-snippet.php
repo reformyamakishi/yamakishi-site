@@ -28,7 +28,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '1.0.0' );   // ファイル更新時はここを上げるとキャッシュが切れます
+if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '1.0.1' );   // ファイル更新時はここを上げるとキャッシュが切れます
 
 /* ============================================================
    1. CSS / JS の読み込み
@@ -115,10 +115,10 @@ add_action( 'add_meta_boxes', function () {
 	add_meta_box( 'ymkrf_works_box', '施工データ', function ( $post ) {
 		wp_nonce_field( 'ymkrf_meta_save', 'ymkrf_meta_nonce' );
 		ymkrf_meta_fields( $post->ID, array(
-			'_ymkrf_price'      => array( '工事費（例：128万円）', 'text' ),
-			'_ymkrf_period'     => array( '工期（例：3日）', 'text' ),
-			'_ymkrf_before_img' => array( 'Before画像の添付ファイルID', 'number' ),
+			'_ymkrf_price'  => array( '工事費（例：128万円）', 'text' ),
+			'_ymkrf_period' => array( '工期（例：3日）', 'text' ),
 		) );
+		ymkrf_works_before_field( $post->ID );
 	}, 'ymkrf_works', 'side' );
 
 	add_meta_box( 'ymkrf_voice_box', 'お客様情報', function ( $post ) {
@@ -143,9 +143,75 @@ function ymkrf_meta_fields( $post_id, $fields ) {
 }
 endif;
 
+/* ------------------------------------------------------------
+   Before写真をえらぶ欄（施工事例の編集画面・右側）
+
+   施工事例のカードは、
+     ・Before … ここでえらんだ写真
+     ・After  … アイキャッチ画像
+   の2枚で、トップページと同じ「左右に動かして見くらべる」表示になります。
+   Before写真を入れないときは、アイキャッチ画像だけが出ます。
+   ------------------------------------------------------------ */
+if ( ! function_exists( 'ymkrf_works_before_field' ) ) :
+function ymkrf_works_before_field( $post_id ) {
+
+	$bid = (int) get_post_meta( $post_id, '_ymkrf_before_img', true );
+	$src = $bid ? wp_get_attachment_image_url( $bid, 'medium' ) : '';
+	?>
+	<p style="font-weight:600;margin-bottom:4px">Before写真（施工前）</p>
+	<div id="ymkrf-before-box" style="margin-bottom:6px">
+		<img id="ymkrf-before-prev" src="<?php echo esc_url( $src ); ?>"
+		     style="max-width:100%;height:auto;border-radius:6px;<?php echo $src ? '' : 'display:none'; ?>">
+	</div>
+	<input type="hidden" id="_ymkrf_before_img" name="_ymkrf_before_img" value="<?php echo esc_attr( $bid ); ?>">
+	<p>
+		<button type="button" class="button" id="ymkrf-before-pick">写真をえらぶ</button>
+		<button type="button" class="button" id="ymkrf-before-clear">はずす</button>
+	</p>
+	<p class="description">
+		入れておくと、トップページと同じ「左右に動かして見くらべる」表示になります。<br>
+		入れないときは、アイキャッチ画像だけが出ます。
+	</p>
+	<script>
+	jQuery(function ($) {
+		var frame;
+		$('#ymkrf-before-pick').on('click', function (e) {
+			e.preventDefault();
+			if (frame) { frame.open(); return; }
+			frame = wp.media({ title: 'Before写真をえらぶ', library: { type: 'image' }, multiple: false });
+			frame.on('select', function () {
+				var a = frame.state().get('selection').first().toJSON();
+				$('#_ymkrf_before_img').val(a.id);
+				var u = (a.sizes && a.sizes.medium) ? a.sizes.medium.url : a.url;
+				$('#ymkrf-before-prev').attr('src', u).show();
+			});
+			frame.open();
+		});
+		$('#ymkrf-before-clear').on('click', function (e) {
+			e.preventDefault();
+			$('#_ymkrf_before_img').val('');
+			$('#ymkrf-before-prev').attr('src', '').hide();
+		});
+	});
+	</script>
+	<?php
+}
+endif;
+
+/* 施工事例・お客様の声の編集画面で、写真をえらぶ画面を使えるようにします */
+add_action( 'admin_enqueue_scripts', function ( $hook ) {
+	global $post_type;
+	if ( in_array( $post_type, array( 'ymkrf_works', 'ymkrf_voice' ), true )
+	     && in_array( $hook, array( 'post.php', 'post-new.php' ), true ) ) {
+		wp_enqueue_media();
+	}
+} );
+
 add_action( 'save_post', function ( $post_id ) {
+	/* ★以前ここが 'ymk_meta_save' になっていて、上の欄（工事費・工期・Before写真）が
+	     まったく保存できていませんでした。'ymkrf_meta_save' が正しい合言葉です。 */
 	if ( ! isset( $_POST['ymkrf_meta_nonce'] ) ||
-	     ! wp_verify_nonce( sanitize_key( $_POST['ymkrf_meta_nonce'] ), 'ymk_meta_save' ) ) return;
+	     ! wp_verify_nonce( sanitize_key( $_POST['ymkrf_meta_nonce'] ), 'ymkrf_meta_save' ) ) return;
 	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
 	if ( ! current_user_can( 'edit_post', $post_id ) ) return;
 

@@ -248,9 +248,12 @@
   text-align:center; font-size:13px; font-weight:900; letter-spacing:.04em;
   color:var(--ink);
 }
+ /* ★写真のまわりの白い下じきと外線は付けません。
+      商品によって写真の背景（白・ベージュ・実景）がまちまちで、
+      枠を付けると「はみ出した」ように見えてしまうためです。
+      もともと白背景の写真は、そのままページの地色になじみます。 */
 .p-prd__swatch{
-  aspect-ratio:3/2; border-radius:10px; border:1px solid var(--border);
-  box-shadow:var(--shadow);
+  aspect-ratio:3/2; border-radius:10px;
 }
 /* 扉カラーと同じ組み方（フレックス）にして、大きさをそろえています。
    グリッドの auto-fit だと、取っ手が1種類の商品でその1枚が
@@ -260,8 +263,8 @@
 }
 .p-prd__handles > figure{ width:calc(50% - 7px); }
 .p-prd__handles figure{
-  background:#fff; border:1px solid var(--border); border-radius:10px;
-  padding:14px 12px; text-align:center;
+  border-radius:10px;
+  padding:14px 12px 0; text-align:center;
 }
 .p-prd__handles .ph{
   height:96px; display:grid; place-items:center; color:var(--ink-light);
@@ -270,9 +273,9 @@
 .p-prd__handles .ph img{ width:100%; height:100%; object-fit:contain; }
 .p-prd__colors .p-prd__swatch{ overflow:hidden; }
 .p-prd__colors .p-prd__swatch img{ width:100%; height:100%; object-fit:cover; display:block; }
-/* 写真と名前のあいだに点線を入れて、カードの中を上下に区切ります */
+/* 枠を外したので、写真と名前を区切る点線もやめました */
 .p-prd__handles figcaption{
-  margin-top:10px; padding-top:9px; border-top:1px dashed var(--border);
+  margin-top:10px;
   font-size:12.5px; font-weight:900; letter-spacing:.02em; color:var(--ink);
 }
 /* 取っ手の型番。写真から文字が消えたので、名前の下に小さな札で添えます */
@@ -287,23 +290,27 @@
    5. 標準仕様
    -------------------------------------------------------------------------- */
 .p-prd__specs{ display:grid; grid-template-columns:repeat(2,1fr); gap:14px; }
+/* ★白い下じきと外線は付けません。写真と名前だけで見せます。
+      写真の背景は商品ごとにまちまち（白・グレー・実景）なので、
+      枠を付けるとかえって不ぞろいに見えてしまうためです。 */
 .p-prd__spec{
-  background:#fff; border:2px solid var(--border); border-radius:var(--radius); overflow:hidden;
+  background:none; border:0; border-radius:var(--radius);
 }
 /* 写真を絶対配置にしているのは、縦に細長い写真が入ったときに
    枠（4:3）が伸びてしまい、行ごとに高さがバラバラになるのを防ぐためです。 */
 .p-prd__spec .ph{
-  position:relative; aspect-ratio:4/3; overflow:hidden;
+  position:relative; aspect-ratio:4/3; overflow:hidden; border-radius:var(--radius);
   background:var(--bg-gray); display:grid; place-items:center;
   color:#a08b80; font-size:12px; font-weight:800; text-align:center; padding:10px;
 }
 .p-prd__spec .ph img{
-  position:absolute; inset:6px;
-  width:calc(100% - 12px); height:calc(100% - 12px);
+  position:absolute; inset:0;
+  width:100%; height:100%;
   object-fit:contain;
 }
-.p-prd__spec .ph:has(img){ background:#fff; }
-.p-prd__spec figcaption{ padding:12px 12px 14px; font-size:13.5px; font-weight:800; line-height:1.6; }
+/* 写真が入ったら、下じきの色は付けません */
+.p-prd__spec .ph:has(img){ background:none; }
+.p-prd__spec figcaption{ padding:10px 2px 0; font-size:13.5px; font-weight:800; line-height:1.6; }
 .p-prd__spec small{ display:block; margin-top:3px; color:var(--ink-light); font-weight:700; font-size:12px; }
 
 /* 標準仕様を、写真ではなく文字だけで並べるとき（トイレなど）。
@@ -376,8 +383,10 @@
 }
 .p-prd__pfig img{ width:100%; height:100%; object-fit:cover; border-radius:var(--radius); }
 /* 写真が入っている図版は、切れないように高さを可変にする */
+ /* 写真が入っている図版は、切れないように高さを可変にします。
+      下じきの白も外線も付けません（写真そのものを見せます）。 */
 .p-prd__pfig--img{
-  aspect-ratio:auto; background:#fff; border:1px solid var(--border); padding:14px;
+  aspect-ratio:auto; background:none; padding:0;
   display:flex; flex-wrap:wrap; justify-content:center; gap:14px;
 }
 .p-prd__pfig--img img{
@@ -415,7 +424,8 @@
   width:calc(100% - 6px); height:calc(100% - 6px);
   object-fit:contain; border-radius:8px;
 }
-.p-prd__opt .ph:has(img){ background:#fff; border:1px solid var(--border); }
+/* 写真が入ったら、下じきの灰色も外線も消して写真だけにします */
+.p-prd__opt .ph:has(img){ background:none; }
 .p-prd__opt h3{ font-size:13.8px; font-weight:900; color:var(--brand-dark); line-height:1.5; }
 .p-prd__opt p{ margin-top:4px; font-size:12.3px; line-height:1.7; color:var(--ink-sub); }
 /* 金額は必ず赤（#fe3301）。
@@ -810,6 +820,28 @@
   text-align:center; font-size:clamp(12.5px,3.4vw,14.5px); line-height:1.9; color:var(--ink-sub);
   margin-bottom:18px; text-wrap:pretty;
 }
+/* 一覧の中の小見出し（トイレの「手洗いカウンターなし／付き」など）
+   ★2つめ以降は上に大きめの余白をあけて、まとまりを分かりやすくしています */
+.p-cat__group{
+  margin:0 0 14px; padding:0 0 10px;
+  border-bottom:2px solid var(--brand-tint2);
+}
+.p-cat__cards + .p-cat__group{ margin-top:40px; }
+.p-cat__groupttl{
+  display:flex; align-items:center; gap:9px;
+  font-size:clamp(16px,4.4vw,21px); font-weight:900; color:var(--ink); letter-spacing:.02em; line-height:1.4;
+  margin:0;
+}
+.p-cat__groupttl::before{
+  content:""; flex:none; width:6px; height:1.05em; border-radius:3px; background:var(--brand);
+}
+.p-cat__groupsub{
+  margin:7px 0 0; font-size:clamp(11.5px,3.1vw,13.5px); line-height:1.75; color:var(--ink-sub); text-wrap:pretty;
+}
+@media (min-width:768px){
+  .p-cat__cards + .p-cat__group{ margin-top:52px; }
+}
+
 .p-cat__cards{ display:grid; gap:14px; grid-template-columns:1fr; }
 .p-cat__card{
   display:grid; grid-template-columns:1fr; grid-template-rows:auto 1fr;
@@ -821,9 +853,11 @@
 .p-cat__cardph{ position:relative; background:#f4f4f4; }
 /* 写真の高さ。3:2 だと文字のほうが重く見えたので、少しだけ縦を出しています。 */
 .p-cat__cardph img{ width:100%; height:auto; aspect-ratio:7/5; object-fit:cover; display:block; }
-/* トイレは白背景の商品写真なので、切らずに全体を見せます。
-   足りない高さは白でうめます。 */
-body.term-toilet .p-cat__cardph img{ object-fit:contain; background:#fff; }
+/* トイレも、キッチン・お風呂と同じように枠いっぱいに表示します。
+   白背景の商品写真はまわりに余白があるので、切っても欠けません。
+   （contain にすると、手洗いカウンター付きの写真の上下に
+     白い帯ができてしまうため、cover に戻しました） */
+body.term-toilet .p-cat__cardph img{ background:#fff; }
 /* お風呂の写真は縦長のものが多く、真ん中で切ると浴槽が隠れてしまうので、
    一覧のカードだけ写真の下側を見せるようにしています。 */
 body.term-bathroom .p-cat__cardph img{ object-position:center bottom; }

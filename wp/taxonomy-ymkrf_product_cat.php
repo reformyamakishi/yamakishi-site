@@ -225,6 +225,53 @@ if ( ! $q->have_posts() ) {
 	) );
 }
 
+/* ============================================================
+   一覧のグループ分け
+
+   トイレだけは「手洗いカウンターなし」と「手洗いカウンター付き」で
+   まとまりを分けて出します（標準工事費が 38,000円／53,000円 と
+   ちがうため、まぜて並べるとお客様が比べにくいからです）。
+   ほかの分類は、これまでどおり1つのまとまりのままです。
+
+   ★グループを増やしたいときは、下の $groups に
+     array( 'ttl' => '見出し', 'sub' => '説明', 'posts' => 商品の配列 )
+     を足してください。
+   ============================================================ */
+$groups = array();
+
+if ( $slug === 'toilet' ) {
+
+	$g_plain = array();
+	$g_count = array();
+
+	foreach ( $q->posts as $_p ) {
+		/* 「商品名の横の言葉」か商品名に「カウンター」が入っていれば、
+		   手洗いカウンター付きとみなします。 */
+		$_sub = (string) get_post_meta( $_p->ID, '_ymkrf_sub', true );
+		if ( strpos( $_sub, 'カウンター' ) !== false || strpos( $_p->post_title, 'カウンター' ) !== false ) {
+			$g_count[] = $_p;
+		} else {
+			$g_plain[] = $_p;
+		}
+	}
+
+	if ( $g_plain ) $groups[] = array(
+		'ttl'   => '手洗いカウンターなし',
+		'sub'   => '便器・便座の交換のみ。標準工事費 38,000円（税込）込みの価格です。',
+		'posts' => $g_plain,
+	);
+	if ( $g_count ) $groups[] = array(
+		'ttl'   => '手洗いカウンター付き',
+		'sub'   => '手洗い器とカウンターも一緒に。標準工事費 53,000円（税込）込みの価格です。',
+		'posts' => $g_count,
+	);
+}
+
+/* トイレ以外、または上でうまく分けられなかったときは、まとめて1つに */
+if ( ! $groups ) {
+	$groups[] = array( 'ttl' => '', 'sub' => '', 'posts' => $q->posts );
+}
+
 /* 商品代のいちばん安い金額（「商品代＋工事費」の説明に使います） */
 $minitem = 0;
 foreach ( $q->posts as $_p ) {
@@ -466,8 +513,17 @@ if ( ! empty( $pn['items'] ) ) :
         安い順に並べています。
       </p>
 
+      <?php global $post; foreach ( $groups as $g ) : if ( ! $g['posts'] ) continue; ?>
+
+      <?php if ( $g['ttl'] ) : ?>
+        <div class="p-cat__group">
+          <h3 class="p-cat__groupttl"><?php echo esc_html( $g['ttl'] ); ?></h3>
+          <?php if ( $g['sub'] ) : ?><p class="p-cat__groupsub"><?php echo esc_html( $g['sub'] ); ?></p><?php endif; ?>
+        </div>
+      <?php endif; ?>
+
       <div class="p-cat__cards">
-        <?php while ( $q->have_posts() ) : $q->the_post();
+        <?php foreach ( $g['posts'] as $post ) : setup_postdata( $post );
           $d  = ymkrf_product_data();
           $mt = ! empty( $d['makers'] ) ? $d['makers'][0] : null;
         ?>
@@ -503,8 +559,10 @@ if ( ! empty( $pn['items'] ) ) :
               <span class="p-cat__cardlink">くわしく見る</span>
             </div>
           </a>
-        <?php endwhile; wp_reset_postdata(); ?>
+        <?php endforeach; ?>
       </div>
+
+      <?php endforeach; wp_reset_postdata(); ?>
 
     <?php else : ?>
       <p>この分類には、まだ商品が登録されていません。</p>
