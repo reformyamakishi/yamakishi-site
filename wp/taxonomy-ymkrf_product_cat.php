@@ -485,9 +485,10 @@ if ( ! empty( $pn['items'] ) ) :
                 if ( $d['sub'] ) echo '<span class="p-cat__cardsub">' . esc_html( $d['sub'] ) . '</span>'; ?></h3>
               <p class="p-cat__cardmeta">
                 <?php if ( $mt ) echo ymkrf_maker_logo( $mt, 'p-maker' ); /* phpcs:ignore */ ?>
-                <?php if ( $d['size'] ) : ?><span><?php echo esc_html( $d['size'] ); ?></span><?php endif; ?>
-                <?php if ( $d['daystext'] ) : ?><span>工期<?php echo esc_html( $d['daystext'] ); ?></span>
-                <?php elseif ( $d['days'] ) : ?><span>工期<?php echo esc_html( $d['days'] ); ?>日</span><?php endif; ?>
+                <?php /* 工期は、どの商品でも同じ位置（メーカーの右）に出します */ ?>
+                <?php if ( $d['daystext'] ) : ?><span class="p-cat__carddays">工期<?php echo esc_html( $d['daystext'] ); ?></span>
+                <?php elseif ( $d['days'] ) : ?><span class="p-cat__carddays">工期<?php echo esc_html( $d['days'] ); ?>日</span><?php endif; ?>
+                <?php if ( $d['size'] ) : ?><span class="p-cat__cardsize"><?php echo esc_html( $d['size'] ); ?></span><?php endif; ?>
               </p>
               <?php if ( $d['total'] ) : ?>
                 <p class="p-cat__cardprice">
