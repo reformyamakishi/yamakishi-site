@@ -457,6 +457,12 @@ address{ font-style:normal; }
   border-radius:999px; font-size:15px; font-weight:900; text-decoration:none; transition:background .18s;
 }
 .p-price__link:hover{ background:var(--brand-tint2); }
+/* カードのどこを押してもリンク先へ行けるようにします。
+   写真や商品名を押しても「プランを見る」と同じページが開きます。
+   （リンクの中にリンクは入れられないので、透明な板をカード全体にかぶせています） */
+.p-price__link::before{
+  content:""; position:absolute; inset:0; z-index:1;
+}
 .p-price__link::after{ content:""; width:7px; height:7px; border-right:2.5px solid currentColor; border-bottom:2.5px solid currentColor; transform:rotate(-45deg); }
 
 /* 「地域最安値に挑戦中！」の表示。金額の数字と同じ高さを保ちつつ、

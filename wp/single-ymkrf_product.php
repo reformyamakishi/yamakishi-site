@@ -330,27 +330,45 @@ if ( ! empty( $d['images'] ) || $csets || ! empty( $d['handles'] ) ) :
 </section>
 <?php endif; ?>
 
-<?php if ( $d['works'] ) : ?>
-<!-- =========== 標準工事費込み =========== -->
+<!-- =========== 標準工事費込み ===========
+     一覧ページと同じ「標準工事費にふくまれる工事」のカードを出します。
+     中身は inc/functions-product.php の ymkrf_pointnote() にあるので、
+     直すときはそこ1か所を直せば一覧ページにも同じように効きます。 -->
+<?php
+$pn = $cat ? ymkrf_pointnote( $cat->slug ) : array();
+if ( ! empty( $pn['items'] ) ) :
+	$cname = $cat ? $cat->name : '';
+	if ( empty( $pn['note'] ) )     $pn['note']     = $cname . 'の標準工事費は、どの機種も一律同価格です。';
+	if ( empty( $pn['itemsttl'] ) ) $pn['itemsttl'] = 'リフォームヤマキシの|標準工事費にふくまれる工事';
+?>
 <section class="l-section l-section--soft">
   <div class="l-wrap">
-    <h2 class="p-prd__bar">ヤマキシリフォームパックは安心の標準工事費込！</h2>
-    <div class="p-prd__pack">
-      <div class="p-prd__packlead">
-        <h3><?php echo esc_html( $cat ? $cat->name : '' ); ?>標準工事のポイント！</h3>
-        <p>標準工事費込みで価格を比較する際は、<b>どこまで工事が含まれているかをしっかり確認しましょう。</b></p>
-      </div>
-      <p class="p-prd__packnote">※会社によって「標準工事」の内容は違います！</p>
-      <p class="p-prd__packttl">ヤマキシ標準工事内容</p>
-      <ul class="p-prd__packlist">
-        <?php foreach ( $d['works'] as $r ) : ?>
-          <li>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12.5l5.5 5.5L20 6.5"/></svg>
-            <div><b><?php echo esc_html( $r['name'] ); ?></b><span><?php echo esc_html( $r['text'] ); ?></span></div>
+    <div class="p-cat__calc p-cat__calc--steps">
+      <p class="p-cat__stepsttl"><span><?php
+        /* 「|」を、スマホだけで効く改行に置きかえます */
+        echo str_replace( '|', '<br class="xs-only">', esc_html( $pn['itemsttl'] ) );
+      ?></span></p>
+      <ol class="p-cat__steps">
+        <?php foreach ( $pn['items'] as $i => $w ) : ?>
+          <li class="p-cat__step">
+            <span class="p-cat__stepnum"><?php echo (int) ( $i + 1 ); ?></span>
+            <span class="p-cat__stepicon"><?php echo ymkrf_work_icon( $w['icon'] ); /* phpcs:ignore */ ?></span>
+            <span class="p-cat__stepname"><?php echo esc_html( $w['name'] ); ?></span>
+            <?php if ( ! empty( $w['sub'] ) ) : ?>
+              <span class="p-cat__stepsub"><?php echo esc_html( $w['sub'] ); ?></span>
+            <?php endif; ?>
           </li>
         <?php endforeach; ?>
-      </ul>
+      </ol>
+
+      <?php if ( ! empty( $pn['note'] ) ) : ?>
+        <p class="p-cat__calcnote"><?php echo esc_html( $pn['note'] ); ?></p>
+      <?php endif; ?>
+      <?php if ( ! empty( $pn['note2'] ) ) : ?>
+        <p class="p-cat__calcnote2"><?php echo esc_html( $pn['note2'] ); ?></p>
+      <?php endif; ?>
     </div>
+
   </div>
 </section>
 <?php endif; ?>
