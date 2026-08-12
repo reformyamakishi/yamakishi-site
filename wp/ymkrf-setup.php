@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '49' );
+define( 'YMKRF_SETUP_VER', '50' );
 
 /* キッチンの「ヤマキシ標準工事内容」。
    ホームページの一覧表（7項目）と、番号入りの図（8項目）の
@@ -194,6 +194,14 @@ add_action( 'init', function () {
 		$theme . '/purerest-qr',
 		$theme . '/alauno-vs5',
 		$theme . '/amage-z-premium',
+		$theme . '/pleas-ls',
+		$theme . '/alauno-s160',
+		$theme . '/gga3',
+		$theme . '/gga1-counter',
+		$theme . '/satis-s',
+		$theme . '/satis-s-counter',
+		$theme . '/neorest-rs3',
+		$theme . '/neorest-rs3-counter',
 		WP_CONTENT_DIR . '/themes/ymkrf/assets/img/works',
 		$dir,                 // 最後の受け皿（wp-content/ymkrf-import）
 	);
@@ -716,6 +724,8 @@ add_action( 'init', function () {
 		'ofuroa', 'sazana-n', 'lidea-m', 'rakuvia', 'sazana-t', 'lidea-b', 'granspa', 'selevia', 'sinla',
 		/* トイレ */
 		'amage-z', 'amage-z-aqua', 'purerest-qr', 'alauno-vs5', 'amage-z-premium',
+		'pleas-ls', 'alauno-s160', 'gga3', 'gga1-counter',
+		'satis-s', 'satis-s-counter', 'neorest-rs3', 'neorest-rs3-counter',
 	) as $slug ) {
 
 		$p = get_page_by_path( $slug, OBJECT, 'ymkrf_product' );
@@ -3711,6 +3721,14 @@ add_action( 'init', function () {
 		'purerest-qr'     => 'qr-main.jpg',
 		'alauno-vs5'      => 'vs5-main.jpg',
 		'amage-z-premium' => 'amze-main.jpg',
+		'pleas-ls'            => 'pleas-main.jpg',
+		'alauno-s160'         => 's160-main.jpg',
+		'gga3'                => 'gga3-main.jpg',
+		'gga1-counter'        => 'gga1-main.jpg',
+		'satis-s'             => 'satis-main.jpg',
+		'satis-s-counter'     => 'satisc-main.jpg',
+		'neorest-rs3'         => 'rs3-main.jpg',
+		'neorest-rs3-counter' => 'rs3c-main.jpg',
 	);
 	foreach ( $main_files as $slug => $file ) {
 		$pp = get_page_by_path( $slug, OBJECT, 'ymkrf_product' );
@@ -4618,6 +4636,381 @@ add_action( 'init', function () {
 			'opts' => array(),
 		),
 
+		/* ===== Dグレード プレアスLS（LIXIL） ===== */
+		array(
+			'slug'   => 'pleas-ls', 'prefix' => 'pleas', 'title' => 'プレアスLS',
+			'meta'   => array(
+				'_ymkrf_catch' => 'お掃除ラクラクで、エコロジーな超節水タイプ。',
+				'_ymkrf_grade' => 'Dグレード', '_ymkrf_name' => 'プレアスLS',
+				'_ymkrf_sub' => 'CLR4Aグレード', '_ymkrf_size' => '',
+				'_ymkrf_work' => '38000', '_ymkrf_item' => '181800',
+				'_ymkrf_days' => '', '_ymkrf_daystext' => '半日',
+				'_ymkrf_pt1' => '汚れにくい', '_ymkrf_pt2' => 'エコ', '_ymkrf_pt3' => 'お掃除ラクラク',
+				'_ymkrf_caution' => '※写真はイメージです。',
+				'_ymkrf_note_colors' => 'none',
+			),
+			'total' => 219800, 'maker' => 'lixil',
+			'shops' => array( 'nonoichi', 'komathu', 'shinkaga' ),
+			'main'  => array( 'main', 'LIXIL プレアスLS（トイレ）' ),
+			'labels' => array( '_ymkrf_lbl_colors' => '便器カラー' ),
+			'sets' => array( '_ymkrf_colors' => array(
+				array( 'color-purewhite', 'ピュアホワイト（BW1）' ),
+				array( 'color-offwhite',  'オフホワイト（BN8）' ),
+				array( 'color-pink',      'ピンク（LR8）' ),
+				array( 'color-bluegray',  'ブルーグレー（BB7）' ),
+			) ),
+			'speclist' => array(
+				array( '快適機能', "フルオート便器洗浄\nＷパワー脱臭\nターボ脱臭\n暖房便座\nスローダウン便座\n便座ヒーターオートＯＦＦ\n着座センサー\nリモコン\n点字対応" ),
+				array( '洗浄機能', "おしり洗浄（泡ジェット洗浄）\nビデ洗浄（泡沫ソフト）\nおしりワイド洗浄\nおしりマッサージ洗浄\nワイドビデ洗浄\nノズル位置調節" ),
+				array( '省エネ機能', "超節水ＥＣＯ５\nスーパー節電\nワンタッチ節電（8h）\n電源スイッチ" ),
+				array( '清潔機能', "アクアセラミック\n鉢内除菌\nパワーストリーム洗浄\nお掃除リフトアップ（手動）\n女性専用レディスノズル\nスッキリノズルシャッター\nノズルそうじ\nノズルオートクリーニング\nノズル先端着脱\nキレイ便座\n便フタワンタッチ着脱\n抗菌樹脂" ),
+			),
+			'feats' => array(
+				array( '汚れがつかない衛生陶器に最適な新素材', '「アクアセラミック」', '汚れが洗浄ごとにつるんと落ちます！',
+				       '便器鉢内に付いた汚れが、トイレを洗浄すると、つるんと落ちます。', 'point-aqua' ),
+				array( '', '', '簡単お掃除で新品のようなツルツルが長続き。', '', 'point-aqua2' ),
+				array( '見た目もスッキリ', '「コンパクトなフォルム」', '狭いトイレ空間にも納まりやすい',
+				       '奥行を抑えたコンパクトな形なので、狭いトイレ空間にも納まりやすくなっています。', 'point-compact' ),
+				array( 'トイレまるごと除菌！', '「鉢内除菌」', 'プラズマクラスターイオンで除菌・消臭',
+				       '水のかからない便座裏や便器内のすみずみまで行き渡り、除菌します。', 'point-jokin',
+				       '※プラズマクラスター、Plasmaclusterは、シャープ株式会社の商標です' ),
+			),
+			'opts' => array(
+				array( 'opt-towelring', 'タオルリング', '3300', 'スタンダードなタオルリングです。', '' ),
+				array( 'opt-paper', 'ワンタッチ式紙巻器（CF-AA22H/WA）', '3200', '片手で簡単にペーパーの交換ができるワンタッチ式。', '' ),
+				array( 'opt-grade5', '便器5グレード', '15000', '温風乾燥付き。', '' ),
+				array( 'opt-grade6', '便器6グレード', '82000', 'フルオート便座、温風乾燥付き。', '' ),
+			),
+		),
+
+		/* ===== Cグレード アラウーノS160タイプ１K（Panasonic） ===== */
+		array(
+			'slug'   => 'alauno-s160', 'prefix' => 's160', 'title' => 'アラウーノS160タイプ１K',
+			'meta'   => array(
+				'_ymkrf_catch' => 'シンプルさが好評の全自動おそうじトイレ。',
+				'_ymkrf_grade' => 'Cグレード', '_ymkrf_name' => 'アラウーノS160タイプ１K',
+				'_ymkrf_work' => '38000', '_ymkrf_item' => '211800',
+				'_ymkrf_days' => '', '_ymkrf_daystext' => '半日',
+				'_ymkrf_pt1' => '泡のパワー', '_ymkrf_pt2' => 'スキマレス設計', '_ymkrf_pt3' => 'スリム形状',
+				'_ymkrf_caution' => '※写真はイメージです。',
+				'_ymkrf_note_colors' => 'none',
+			),
+			'total' => 249800, 'maker' => 'panasonic',
+			'shops' => array( 'komathu', 'nonoichi' ),
+			'main'  => array( 'main', 'Panasonic アラウーノS160 タイプ１K（トイレ）' ),
+			'labels' => array( '_ymkrf_lbl_colors' => '便器カラー' ),
+			'sets' => array( '_ymkrf_colors' => array( array( 'color-white', 'ホワイト' ) ) ),
+			'speclist' => array(
+				array( '快適機能', "オート開閉（便ふた）\n電動開閉（便座・便ふた）\nオート脱臭\n暖房便座\nリモコン\nオート洗浄\nアラウーノアプリ対応\n低水圧対応\n停電対応（電池式）\n停電対応（手動）\nチャイルドロック" ),
+				array( '洗浄機能', "おしり洗浄\nビデ洗浄\nおしりリズム洗浄\nビデリズム洗浄" ),
+				array( '省エネ機能', "エコモード\n4・6・8時間切タイマー" ),
+				array( '清潔機能', "スゴピカ素材（有機ガラス系）\nひとふき形状\n水位調節\n自動おそうじ機能\nトリプル汚れガード（ハネガード便座連動）\nスキマレス設計\nステンレスノズル\nクローズ洗浄モード\nノズル位置調整機能" ),
+			),
+			'feats' => array(
+				array( '泡で受け止めて、泡で洗う。', '「激落ちバブル」「スパイラル水流」', '流すたびに「泡」と「水流」でしっかりお掃除！',
+				       'ミリバブル（直径約5mm）で大きな汚れを強力に除去し、次に微細なマイクロバブル（直径約60μm）で小さな汚れを除去します。', 'point-bubble' ),
+				array( '', '', 'お手入れがラクなスキマレス設計',
+				       "継ぎ目がほとんどなく、お手入れがラクなスキマレス設計です。\n（左：従来商品／右：スキマレス設計）", 'point-sukimaless', '※パナソニックHPより' ),
+				array( '便ふたを閉じてから流す', '「クローズ洗浄モード」', '衛生面が気になる方におすすめ',
+				       '立ち上がると、便ふたが閉まって洗浄します。立ったまま用を足した場合は、洗浄ボタンを押すと便ふたが閉まって流れます。', 'point-close' ),
+				array( '便利と健康をサポート！', 'アラウーノアプリ対応', '日々のお通じの記録ができ、体調管理にお役立ち',
+				       '『お通じモニタ』『みまもりモニタ』『わたし好み登録』。スマートフォンとの連携でここまで便利になります。', 'point-app' ),
+				array( 'トビハネヨゴレを泡でおさえる。', '「トリプル汚れガード」', 'ハネガード・タレガード・モレガード',
+				       "泡のクッションで受け止める「ハネガード」、フチの立ち上がりで垂れ出しにくい「タレガード」、便座と便器の合わせでせき止める「モレガード」。",
+				       'point-guard', '※男性の立ったままの小用を想定した機能です。角度や勢いによって外に漏れる場合があります。' ),
+			),
+			'opts' => array(
+				array( 'opt-towelring', 'タオルリング', '3600', 'アラウーノの四角丸形状を採用したデザイン。', '' ),
+				array( 'opt-paper', '紙巻器', '4400', '1連タイプの紙巻器です。', '' ),
+				array( 'opt-remote', 'スティックリモコン', '8300', 'スタイリッシュなスティックリモコンです。', '※色はホワイトまたはブラック' ),
+				array( 'opt-handrail', '手すり I型', '7400', '立ち上がり時に便利な手すり。', '' ),
+			),
+		),
+
+		/* ===== Bグレード GGA3（TOTO） ===== */
+		array(
+			'slug'   => 'gga3', 'prefix' => 'gga3', 'title' => 'GGA3',
+			'meta'   => array(
+				'_ymkrf_catch' => 'シンプルな機能とローシルエットデザイン。',
+				'_ymkrf_grade' => 'Bグレード', '_ymkrf_name' => 'GGA3',
+				'_ymkrf_work' => '38000', '_ymkrf_item' => '251800',
+				'_ymkrf_days' => '', '_ymkrf_daystext' => '半日',
+				'_ymkrf_pt1' => 'ローシルエット', '_ymkrf_pt2' => 'ノズルきれい', '_ymkrf_pt3' => '環境にやさしい',
+				'_ymkrf_caution' => '※写真はイメージです。',
+				'_ymkrf_note_colors' => 'none',
+			),
+			'total' => 289800, 'maker' => 'toto', 'shops' => array(),
+			'main'  => array( 'main', 'TOTO GGA3（トイレ）' ),
+			'labels' => array( '_ymkrf_lbl_colors' => '便器カラー' ),
+			'sets' => array( '_ymkrf_colors' => array(
+				array( 'color-white', 'ホワイト' ),
+				array( 'color-ivory', 'パステルアイボリー' ),
+			) ),
+			'speclist' => array(
+				array( '快適機能', "オート便器洗浄\nオート開閉\nリモコン便座・便フタ開閉\n温風乾燥\nオートパワー脱臭・脱臭\nリモコン便器洗浄（大・小）\n着座センサー\nリモコン\n停電時安心設計\n便座・便ふたソフト閉止" ),
+				array( '洗浄機能', "おしり洗浄\nやわらか洗浄\nビデ洗浄\nムーブ洗浄\n水勢調節\n洗浄位置調節" ),
+				array( '省エネ機能', "ダブル保温便座\nタイマー節電\nおまかせ節電" ),
+				array( '清潔機能', "ノズルきれい\nセルフクリーニング\nプレミスト\nクリーン便座（継ぎ目なし）\nクリーンノズル\nクリーンケース\n抗菌\nお掃除リフト\n便ふた着脱\nノズルそうじ\nセフィオンテクト\nフチなし形状" ),
+			),
+			'feats' => array(
+				array( 'GGAが提案する、', '３つの特長。', 'ノズルきれい',
+				       '「きれい除菌水」でノズルの内側も外側も自動で洗浄・除菌。使用していない時も定期的に洗浄し、キレイが長持ちします。', 'point-nozzle' ),
+				array( '', '', 'セフィオンテクト',
+				       '約1200℃で焼き上げた、ナノレベルに滑らかな陶器表面だから、汚れがツルっと落ちてずっときれいが続きます。', 'point-cefiontect' ),
+				array( '', '', 'トルネード洗浄',
+				       '渦を巻くようなトルネード洗浄が、少ない水で、汚れをしっかり洗い流します。', 'point-tornado' ),
+				array( 'エコロジーでエコノミー。', '「4.8L洗浄で超節水！」', '従来の1/3の水で洗浄',
+				       '1回あたり13L必要だった15年前の便器と比べて、大幅な節水を実現しました。毎日普通に使っているだけで、いつの間にか大きな節約効果があります。', 'point-eco' ),
+			),
+			'opts' => array(
+				array( 'opt-towelbar', 'タオル掛け（YT408S4R）', '7900', 'スタンダードなタオル掛けです。', '' ),
+				array( 'opt-handrail', '木製手すり I型（φ32×616mm）', '13500', '立ち上がり時に便利な手すりです。', '' ),
+				array( 'opt-mirror', '化粧鏡（300×800）', '16200', 'ベーシックなタイプの鏡です。', '' ),
+				array( 'opt-gg3800', 'GG3-800グレードに変更', '-900', "オート開閉／オートECO小／温風便座／リモコン便座便ふた開閉。", '' ),
+			),
+		),
+
+		/* ===== Bグレード GGA1【手洗いカウンター付】（TOTO） ===== */
+		array(
+			'slug'   => 'gga1-counter', 'prefix' => 'gga1', 'title' => 'GGA1【手洗いカウンター付】',
+			'meta'   => array(
+				'_ymkrf_catch' => 'シンプルな機能とローシルエットデザイン。',
+				'_ymkrf_grade' => 'Bグレード', '_ymkrf_name' => 'GGA1', '_ymkrf_sub' => '【手洗いカウンター付】',
+				'_ymkrf_work' => '53000', '_ymkrf_item' => '336800',
+				'_ymkrf_days' => '', '_ymkrf_daystext' => '半日',
+				'_ymkrf_pt1' => 'ローシルエット', '_ymkrf_pt2' => 'ノズルきれい', '_ymkrf_pt3' => '環境にやさしい',
+				'_ymkrf_caution' => '※写真はオプションを含んだイメージ画像となります。',
+				'_ymkrf_note_colors' => 'none',
+			),
+			'total' => 389800, 'maker' => 'toto', 'shops' => array(),
+			'main'  => array( 'main', 'TOTO GGA1 手洗いカウンター付（トイレ）' ),
+			'labels' => array( '_ymkrf_lbl_colors' => '便器カラー' ),
+			'sets' => array( '_ymkrf_colors' => array( array( 'color-white', 'ホワイト' ) ) ),
+			'speclist' => array(
+				array( '快適機能', "オート便器洗浄\nオートパワー脱臭\n脱臭\nリモコン便器洗浄\n着座センサー\nリモコン\n停電時安心設計\n便座・便ふたソフト閉止" ),
+				array( '洗浄機能', "おしり洗浄\nやわらか洗浄\nビデ洗浄\nムーブ洗浄\n水勢調節\n洗浄位置調節" ),
+				array( '省エネ機能', "ダブル保温便座\nタイマー節電\nおまかせ節電" ),
+				array( '清潔機能', "ノズルきれい\nセルフクリーニング\nプレミスト\nクリーン便座（継ぎ目なし）\nクリーンノズル\nクリーンケース\n抗菌\nお掃除リフト\n便ふた着脱\nノズルそうじ\nセフィオンテクト\nフチなし形状" ),
+			),
+			'feats' => array(
+				array( '空間の可能性を広げる', '「ローシルエット」', 'ローシルエット',
+				       'ローシルエットな形状と、上面に平面部があることで、トイレ空間に余裕が生まれます。', 'point-lowsilhouette' ),
+				array( '', '', 'クリーンなデザイン', '直線的な造形と、凹凸の少ないクリーンなデザイン。', 'point-design' ),
+				array( 'エコロジーでエコノミー。', '「4.8L洗浄で超節水！」', '従来の1/3の水で洗浄',
+				       '1回あたり13L必要だった15年前の便器と比べて、大幅な節水を実現しました。毎日普通に使っているだけで、いつの間にか大きな節約効果があります。', 'point-eco' ),
+				array( 'ノズルを除菌', '「ノズルきれい」', '使うたびに自動で洗浄',
+				       '使用後に「きれい除菌水」でノズルを自動洗浄します。', 'point-nozzle' ),
+			),
+			'opts' => array(
+				array( 'opt-towelbar', 'タオル掛け（YT408S4R）', '7900', 'スタンダードなタオル掛けです。', '' ),
+				array( 'opt-handrail', '木製手すり I型（φ32×616mm）', '13500', '立ち上がり時に便利な手すりです。', '' ),
+				array( 'opt-mirror', '化粧鏡（300×800）', '16200', 'ベーシックなタイプの鏡です。', '' ),
+				array( 'opt-gg3', 'GG3グレードに変更', '45500', 'オート開閉／リモコン便座／便ふた開閉／温風乾燥。', '' ),
+			),
+		),
+
+		/* ===== Sグレード サティスS（LIXIL） ===== */
+		array(
+			'slug'   => 'satis-s', 'prefix' => 'satis', 'title' => 'サティスS',
+			'meta'   => array(
+				'_ymkrf_catch' => 'お掃除ラクラクで、エコロジーな超節水タイプ。',
+				'_ymkrf_grade' => 'Sグレード', '_ymkrf_name' => 'サティスS', '_ymkrf_sub' => 'SR6グレード',
+				'_ymkrf_work' => '38000', '_ymkrf_item' => '301800',
+				'_ymkrf_days' => '', '_ymkrf_daystext' => '半日',
+				'_ymkrf_pt1' => '汚れにくい', '_ymkrf_pt2' => 'エコ', '_ymkrf_pt3' => 'お掃除ラクラク',
+				'_ymkrf_caution' => '※写真はイメージです。',
+				'_ymkrf_note_colors' => 'none',
+			),
+			'total' => 339800, 'maker' => 'lixil',
+			'shops' => array( 'nonoichi', 'hakui', 'kawakita', 'shinkaga', 'kanadu' ),
+			'main'  => array( 'main', 'LIXIL サティスS（トイレ）' ),
+			'images' => array( array( 'lineup', 'サティスSの4色そろい踏み' ) ),
+			'labels' => array( '_ymkrf_lbl_colors' => '便器カラー' ),
+			'sets' => array( '_ymkrf_colors' => array(
+				array( 'color-purewhite', 'ピュアホワイト（BW1）' ),
+				array( 'color-offwhite',  'オフホワイト（BN8）' ),
+				array( 'color-pink',      'ピンク（LR8）' ),
+				array( 'color-bluegray',  'ブルーグレー（BB7）' ),
+			) ),
+			'speclist' => array(
+				array( '快適機能', "フルオート便器洗浄\nフルオート便座\nほのかライト\nＷパワー脱臭\n温風乾燥\n暖房便座\nスローダウン便座\n便座ヒーターオートＯＦＦ\n着座センサー\nリモコン（設定リモコン対応）\nスマートフォンリモコン\nスマートフォン対応\n点字対応" ),
+				array( '洗浄機能', "おしり洗浄（パワフル・マイルド）\nビデ洗浄\nおしりワイド洗浄\nおしりターボ洗浄\nスーパーワイドビデ洗浄\nノズル位置調節" ),
+				array( '省エネ機能', "超節水ＥＣＯ５\nスーパー節電\nワンタッチ節電（8h）\n電源スイッチ" ),
+				array( '清潔機能', "アクアセラミック\n鉢内除菌\nパワーストリーム洗浄\nお掃除リフトアップ\n女性専用レディスノズル\nスッキリノズルシャッター\nノズルお掃除モード\nノズルそうじ\nノズルオートクリーニング\nノズル先端着脱\nキレイ便座\n便フタワンタッチ着脱\n抗菌樹脂" ),
+			),
+			'feats' => array(
+				array( '汚れがつかない衛生陶器に最適な新素材', '「アクアセラミック」', '汚れが洗浄ごとにつるんと落ちます！',
+				       '便器鉢内に付いた汚れが、トイレを洗浄すると、つるんと落ちます。', 'point-aqua' ),
+				array( '', '', '簡単お掃除で新品のようなツルツルが長続き。', '', 'point-aqua2' ),
+				array( 'お掃除ラクラク', '「キレイ便座」', '汚れが入りやすいつぎ目をなくしました！',
+				       'つぎ目がないのでサッとひと拭き！さらに便座裏は防汚素材で、汚れてもサッとひと拭き、お掃除ラクラク。', 'point-seat' ),
+				array( 'さらに快適に。', '「便フタ閉後洗浄モード」', '衛生的で清掃性も向上。',
+				       '便座から立ち上がると自動で便フタが閉まり、便器洗浄します。', 'point-autoclose' ),
+			),
+			'opts' => array(
+				array( 'opt-towelring', 'タオルリング', '3300', 'スタンダードなタオルリングです。', '' ),
+				array( 'opt-paper', '紙巻器', '3200', '1連タイプ。', '' ),
+				array( 'opt-remote', 'スマートリモコン', '9800', 'スタイリッシュなリモコンです。', '' ),
+				array( 'opt-booster', '機能部ＳＲ６ ブースター付', '34100', '水圧が低い環境下でも安心して設置できます。', '' ),
+			),
+		),
+
+		/* ===== Sグレード サティスS【手洗いカウンター付】（LIXIL） ===== */
+		array(
+			'slug'   => 'satis-s-counter', 'prefix' => 'satisc', 'title' => 'サティスS【手洗いカウンター付】',
+			'meta'   => array(
+				'_ymkrf_catch' => 'お掃除ラクラクで、エコロジーな超節水タイプ。',
+				'_ymkrf_grade' => 'Sグレード', '_ymkrf_name' => 'サティスS', '_ymkrf_sub' => '【手洗いカウンター付】',
+				'_ymkrf_work' => '53000', '_ymkrf_item' => '446800',
+				'_ymkrf_days' => '', '_ymkrf_daystext' => '半日',
+				'_ymkrf_pt1' => '汚れにくい', '_ymkrf_pt2' => 'エコ', '_ymkrf_pt3' => 'お掃除ラクラク',
+				'_ymkrf_caution' => '※画像はイメージです。',
+				'_ymkrf_note_colors' => 'none',
+			),
+			'total' => 499800, 'maker' => 'lixil',
+			'shops' => array( 'nonoichi', 'komathu', 'hakui' ),
+			'main'  => array( 'main', 'LIXIL サティスS 手洗いカウンター付（トイレ）' ),
+			'labels' => array( '_ymkrf_lbl_colors' => '便器カラー', '_ymkrf_lbl_tops' => 'キャビネットカラー' ),
+			'sets' => array(
+				'_ymkrf_colors' => array(
+					array( 'color-purewhite', 'ピュアホワイト' ),
+					array( 'color-offwhite',  'オフホワイト' ),
+				),
+				'_ymkrf_tops' => array(
+					array( 'cab-mocha', 'クリエモカ' ),
+					array( 'cab-pale',  'クリエペール' ),
+				),
+			),
+			'speclist' => array(
+				array( '快適機能', "フルオート便器洗浄\nフルオート便座\nほのかライト\nＷパワー脱臭\n温風乾燥\n暖房便座\nスローダウン便座\n便座ヒーターオートＯＦＦ\n着座センサー\nリモコン（設定リモコン対応）\nスマートフォンリモコン\nスマートフォン対応\n点字対応" ),
+				array( '洗浄機能', "おしり洗浄（パワフル・マイルド）\nビデ洗浄\nおしりワイド洗浄\nおしりターボ洗浄\nスーパーワイドビデ洗浄\nノズル位置調節" ),
+				array( '省エネ機能', "超節水ＥＣＯ５\nスーパー節電\nワンタッチ節電（8h）\n電源スイッチ" ),
+				array( '清潔機能', "アクアセラミック\n鉢内除菌\nパワーストリーム洗浄\nお掃除リフトアップ\n女性専用レディスノズル\nスッキリノズルシャッター\nノズルお掃除モード\nノズルそうじ\nノズルオートクリーニング\nノズル先端着脱\nキレイ便座\n便フタワンタッチ着脱\n抗菌樹脂" ),
+			),
+			'feats' => array(
+				array( '汚れがつかない衛生陶器に最適な新素材', '「アクアセラミック」', '汚れが洗浄ごとにつるんと落ちます！',
+				       '便器鉢内に付いた汚れが、トイレを洗浄すると、つるんと落ちます。', 'point-aqua' ),
+				array( '', '', '簡単お掃除で新品のようなツルツルが長続き。', '', 'point-aqua2' ),
+				array( 'お掃除ラクラク', '「キレイ便座」', '汚れが入りやすいつぎ目をなくしました！',
+				       'つぎ目がないのでサッとひと拭き！さらに便座裏は防汚素材で、汚れてもサッとひと拭き、お掃除ラクラク。', 'point-seat' ),
+				array( 'さらに快適に。', '「便フタ閉後洗浄モード」', '衛生的で清掃性も向上。',
+				       '便座から立ち上がると自動で便フタが閉まり、便器洗浄します。', 'point-autoclose' ),
+			),
+			'opts' => array(
+				array( 'opt-counterl', '手洗いカウンターＬ型', '21000', '長さ1,400mmハンドル水栓。配管・コード類を隠せます。', '' ),
+				array( 'opt-corner', 'コーナー手洗い付に変更', '-62000', '狭小スペースに最適。', '' ),
+				array( 'opt-paper', '紙巻器（CF-AA22H）', '2800', '１連タイプ。', '' ),
+			),
+		),
+
+		/* ===== プレミアム ネオレストRS3（TOTO） ===== */
+		array(
+			'slug'   => 'neorest-rs3', 'prefix' => 'rs3', 'title' => 'ネオレストRS3',
+			'meta'   => array(
+				'_ymkrf_catch' => 'すっきりとしたレストルーム空間を実現。',
+				'_ymkrf_grade' => 'プレミアム', '_ymkrf_name' => 'ネオレストRS3',
+				'_ymkrf_work' => '38000', '_ymkrf_item' => '341800',
+				'_ymkrf_days' => '', '_ymkrf_daystext' => '半日',
+				'_ymkrf_pt1' => 'きれい除菌水', '_ymkrf_pt2' => '上質な洗い心地', '_ymkrf_pt3' => '環境にやさしい',
+				'_ymkrf_caution' => '※写真はイメージです。',
+				'_ymkrf_note_colors' => 'none',
+			),
+			'total' => 379800, 'maker' => 'toto',
+			'shops' => array( 'nonoichi', 'hakui', 'shinkaga', 'kanadu' ),
+			'main'  => array( 'main', 'TOTO ネオレストRS3（トイレ）' ),
+			'labels' => array( '_ymkrf_lbl_colors' => '便器カラー' ),
+			'sets' => array( '_ymkrf_colors' => array(
+				array( 'color-white',     'ホワイト' ),
+				array( 'color-ivory',     'パステルアイボリー' ),
+				array( 'color-pink',      'パステルピンク' ),
+				array( 'color-whitegray', 'ホワイトグレー' ),
+			) ),
+			'speclist' => array(
+				array( '快適機能', "オート開閉\n温風乾燥\nやわらかライト\nリモコン便座・便ふた開閉\nオート便器洗浄（大・小）\nオートパワー脱臭\n脱臭\nリモコン便器洗浄（大・小）\n水面下げる\n着座センサー\nリモコン\n個人設定" ),
+				array( '洗浄機能', "おしり洗浄\nやわらか洗浄\nビデ洗浄\nムーブ洗浄\nマッサージ洗浄\n水勢調節\n洗浄位置調節" ),
+				array( '省エネ機能', "タイマー節電\nスーパーおまかせ節電\nおまかせ節電" ),
+				array( '清潔機能', "便器きれい\nお掃除ミスト\nノズルきれい\nセルフクリーニング\nプレミスト\nクリーン便座（継ぎ目なし）\nクリーンノズル\nクリーンケース\n抗菌\nお掃除リフト\n便ふた着脱\n便器そうじ\nノズルそうじ" ),
+			),
+			'feats' => array(
+				array( '便器とノズルを自動で除菌。', '「きれい除菌水」トイレ！', '便器きれい！',
+				       '使用前に「きれい除菌水」ミストを自動で吹きかけ、汚れをつきにくくします。', 'point-bowl' ),
+				array( '', '', 'ノズルきれい！', '「きれい除菌水」でノズルを自動洗浄。キレイが長持ちします。', 'point-nozzle' ),
+				array( '', '', '環境にやさしい！',
+				       '薬品や薬剤を使わず、水道水から電気分解で作られる除菌成分。環境にやさしいのが特長です。', 'point-eco' ),
+				array( 'エコロジーでエコノミー。', '「3.8L洗浄で超節水！」', '1回あたりの洗浄水量を大幅に節水',
+				       "ネオレストは1回あたりの洗浄水量に対し、大幅な節水を実現しました。\nRS（床排水）：大3.8L・小3.0L／回　RS（壁排水）：大4.8L・小3.4L／回", 'point-water',
+				       '※試算条件（2019年12月現在）：家族4人／水道料金265円（税込）/㎥・消費税率10％で試算' ),
+				array( '心地よく使えるオート機能。', '「オート開閉」', '人に合わせて、ふたが自動で開閉。',
+				       '人の動きを検知して、便ふたが自動で開閉します。閉め忘れがないので節電効果も。', 'point-autoopen' ),
+			),
+			'opts' => array(
+				array( 'opt-towelring', 'タオルリング（YT51R）', '3200', 'ブラケット：抗菌樹脂製／リング：ステンレス製。', '' ),
+				array( 'opt-handrail', '木製手すり I型（YHB603）', '13500', '立ち上がり時に便利な手すりです。', '' ),
+				array( 'opt-paper', '紙巻器（YH51R）', '3200', '1連タイプ。', '' ),
+				array( 'opt-as1', 'AS1タイプ便器に変更', '20200', '瞬間暖房、室内暖房、においきれい機能搭載。', '' ),
+			),
+		),
+
+		/* ===== プレミアム ネオレストRS3【手洗いカウンター付】（TOTO） ===== */
+		array(
+			'slug'   => 'neorest-rs3-counter', 'prefix' => 'rs3c', 'title' => 'ネオレストRS3【手洗いカウンター付】',
+			'meta'   => array(
+				'_ymkrf_catch' => '便器とノズルを自動で除菌。キレイ除菌水トイレ！',
+				'_ymkrf_grade' => 'プレミアム', '_ymkrf_name' => 'ネオレストRS3', '_ymkrf_sub' => '【手洗いカウンター付】',
+				'_ymkrf_work' => '53000', '_ymkrf_item' => '526800',
+				'_ymkrf_days' => '', '_ymkrf_daystext' => '半日',
+				'_ymkrf_pt1' => '便座きれい', '_ymkrf_pt2' => 'ノズルきれい', '_ymkrf_pt3' => '環境にやさしい',
+				'_ymkrf_caution' => '※写真はイメージです。',
+				'_ymkrf_note_colors' => '※手洗いカラーは便器カラーと同色になります',
+			),
+			'total' => 579800, 'maker' => 'toto',
+			'shops' => array( 'nonoichi', 'komathu', 'hakui' ),
+			'main'  => array( 'main', 'TOTO ネオレストRS3 手洗いカウンター付（トイレ）' ),
+			'labels' => array(
+				'_ymkrf_lbl_colors' => '便器カラー',
+				'_ymkrf_lbl_tops'   => 'カウンターカラー',
+				'_ymkrf_lbl_sinks'  => '手洗いキャビネットカラー',
+			),
+			'sets' => array(
+				'_ymkrf_colors' => array(
+					array( 'color-white', 'ホワイト' ),
+					array( 'color-ivory', 'パステルアイボリー' ),
+				),
+				'_ymkrf_tops' => array(
+					array( 'counter-white',     'ホワイト' ),
+					array( 'counter-lightwood', 'ライトウッドN' ),
+					array( 'counter-darkbrown', 'ダルブラウン' ),
+				),
+				'_ymkrf_sinks' => array(
+					array( 'cab-white',     'ホワイト' ),
+					array( 'cab-lightwood', 'ライトウッドN' ),
+					array( 'cab-darkbrown', 'ダルブラウン' ),
+				),
+			),
+			'speclist' => array(
+				array( '快適機能', "オート開閉\n温風乾燥\nやわらかライト\nオート便器洗浄（大・小）\nオートパワー脱臭\n脱臭\nリモコン便座（大・小）\n水面下げる\n着座センサー\nリモコン\n個人設定" ),
+				array( '洗浄機能', "おしり洗浄\nやわらか洗浄\nビデ洗浄\nムーブ洗浄\nマッサージ洗浄\n水勢調節\n洗浄位置調節" ),
+				array( '省エネ機能', "タイマー節電\nスーパーおまかせ節電\nおまかせ節電" ),
+				array( '清潔機能', "便器きれい\nお掃除ミスト\nノズルきれい\nセルフクリーニング\nプレミスト\nクリーン便座（継ぎ目なし）\nクリーンノズル\nクリーンケース\n抗菌\nお掃除リフト\n便ふた着脱\n便器そうじ\nノズルそうじ" ),
+			),
+			'feats' => array(
+				array( '便器とノズルを自動で除菌。', '「きれい除菌水」トイレ！', '便器きれい！／ノズルきれい！',
+				       "使用前に「きれい除菌水」ミストを自動で吹きかけ、汚れをつきにくくします。\n「きれい除菌水」でノズルを自動洗浄。キレイが長持ちします。", 'point-jokin' ),
+				array( '', '', '環境にやさしい！',
+				       '薬品や薬剤を使わず、水道水から電気分解で作られる除菌成分。環境にやさしいのが特長です。', 'point-eco' ),
+				array( 'エコロジーでエコノミー。', '「3.8L洗浄で超節水！」', '1回あたりの洗浄水量を大幅に節水',
+				       'ネオレストは1回あたりの洗浄水量に対し、大幅な節水を実現しました。', 'point-water' ),
+				array( '心地よく使えるオート機能。', '「オート開閉」', '人に合わせて、ふたが自動で開閉。',
+				       '人の動きを検知して便ふたが自動で開閉します。閉め忘れがないので節電効果も。', 'point-autoopen' ),
+			),
+			'opts' => array(
+				array( 'opt-vessel', 'ベッセル角型手洗器 自動水栓', '66400', '人気のベッセルタイプの手洗い器。', '' ),
+				array( 'opt-handrail', '木製手すり I型', '14700', '立ち上がり時に便利な手すりです。', '' ),
+				array( 'opt-autofaucet', '手洗い自動水栓', '34800', '手をかざすだけで、水が出ます。', '※写真はイメージです' ),
+				array( 'opt-as2', 'AS2タイプ便器に変更', '68600', '瞬間暖房、室内暖房、においきれい機能搭載。', '' ),
+			),
+		),
+
 	);
 
 	foreach ( $toilet_products as $tp2 ) {
@@ -4645,6 +5038,13 @@ add_action( 'init', function () {
 
 		$main = $timg( $tp2['main'][0], $tp2['main'][1] );
 		if ( $main ) set_post_thumbnail( $pid, $main );
+
+		/* --- カラーの上に出す写真（あれば） --- */
+		if ( ! empty( $tp2['images'] ) ) {
+			$rows = array();
+			foreach ( $tp2['images'] as $r ) $rows[] = array( 'img' => $timg( $r[0], $r[1] ), 'alt' => $r[1] );
+			update_post_meta( $pid, '_ymkrf_images', $rows );
+		}
 
 		/* --- カラーバリエーション --- */
 		foreach ( $tp2['sets'] as $key => $list ) {

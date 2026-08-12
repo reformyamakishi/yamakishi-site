@@ -318,7 +318,9 @@ if ( ! empty( $d['images'] ) || $csets || ! empty( $d['handles'] ) ) :
             <h3><?php echo esc_html( $r['name'] ); ?></h3>
             <?php if ( $r['text'] ) : ?><p><?php echo nl2br( esc_html( $r['text'] ) ); ?></p><?php endif; ?>
             <?php if ( $r['price'] ) : ?>
-              <p class="p-prd__optprice">+<?php echo esc_html( number_format( (int) $r['price'] ) ); ?>円<small>（税込）</small><?php
+              <?php /* マイナスの金額（値引き）も入れられるようにしています */
+                $op = (int) $r['price']; ?>
+              <p class="p-prd__optprice"><?php echo $op < 0 ? '−' : '+'; ?><?php echo esc_html( number_format( abs( $op ) ) ); ?>円<small>（税込）</small><?php
                 if ( $r['note'] ) echo '<em>' . esc_html( $r['note'] ) . '</em>';
               ?></p>
             <?php endif; ?>
