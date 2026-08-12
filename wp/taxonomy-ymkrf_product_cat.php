@@ -495,7 +495,8 @@ if ( ! empty( $pn['items'] ) ) :
         <div class="p-cat__calccard p-cat__calccard--work">
           <p class="p-cat__calchead p-cat__calchead--work"><?php echo esc_html( $pn['label'] ); ?></p>
           <div class="p-cat__calcin">
-            <p class="p-cat__calclead p-cat__calclead--work">追加料金なし！</p>
+            <?php /* ここにあった「追加料金なし！」は、お家の形状によって
+                     追加が出る場合があるため、削除しました。 */ ?>
             <p class="p-cat__calcprice">
               <span class="num"><?php echo esc_html( rtrim( rtrim( number_format( $pn['price'] / 10000, 1 ), '0' ), '.' ) ); ?></span><span class="man">万円</span>
             </p>

@@ -1282,9 +1282,9 @@ function ymkrf_works_section( $slug, $catname, $number = 3 ) {
 				<?php while ( $q->have_posts() ) : $q->the_post(); ymkrf_works_card(); endwhile; ?>
 			</div>
 			<?php if ( $more ) : ?>
-				<a class="c-more" href="<?php echo esc_url( $more ); ?>">
-					<?php echo esc_html( $catname ); ?>の施工事例をもっと見る
-				</a>
+				<?php /* すぐ上の見出しに分類名が出ているので、ボタンは短くしています。
+				         「洗面化粧台の…」のように長い分類だと2行になってしまうためです。 */ ?>
+				<a class="c-more" href="<?php echo esc_url( $more ); ?>">施工事例をもっと見る</a>
 			<?php endif; ?>
 		</div>
 	</section>

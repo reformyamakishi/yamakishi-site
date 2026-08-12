@@ -306,7 +306,7 @@ get_header();
         <div class="p-price__body">
           <h3 class="p-price__name">水まわり4点パック</h3>
           <p class="p-price__desc">キッチン・お風呂・トイレ・洗面をまとめて。別々に頼むよりぐんとお得です。</p>
-          <p class="p-price__yen"><span class="lbl">工事費込み</span><span class="num">162.8</span><span class="unit">万円〜（税込）</span></p>
+          <p class="p-price__yen"><span class="lbl">工事費込み</span><span class="num">162<span class="dec">.8</span></span><span class="unit">万円〜（税込）</span></p>
           <p class="p-price__inc">本体＋標準工事＋既存撤去処分＋保証</p>
           <a class="p-price__link" href="<?php echo esc_url( home_url( '/products/pack4/' ) ); ?>">プランを見る</a>
         </div>
@@ -323,7 +323,7 @@ get_header();
         <div class="p-price__body">
           <h3 class="p-price__name">キッチン</h3>
           <p class="p-price__desc">クリナップ・LIXIL・TOTOなど主要メーカーを、標準工事費込みで。</p>
-          <p class="p-price__yen"><span class="lbl">工事費込み</span><span class="num">59.8</span><span class="unit">万円〜（税込）</span></p>
+          <p class="p-price__yen"><span class="lbl">工事費込み</span><span class="num">59<span class="dec">.8</span></span><span class="unit">万円〜（税込）</span></p>
           <p class="p-price__inc">本体＋標準工事＋既存撤去処分</p>
           <a class="p-price__link" href="<?php echo esc_url( home_url( '/products/kitchen/' ) ); ?>">プランを見る</a>
         </div>
@@ -340,7 +340,7 @@ get_header();
         <div class="p-price__body">
           <h3 class="p-price__name">お風呂（ユニットバス）</h3>
           <p class="p-price__desc">断熱浴槽で冬もあたたか。工期は3〜5日が目安です。</p>
-          <p class="p-price__yen"><span class="lbl">工事費込み</span><span class="num">84.8</span><span class="unit">万円〜（税込）</span></p>
+          <p class="p-price__yen"><span class="lbl">工事費込み</span><span class="num">84<span class="dec">.8</span></span><span class="unit">万円〜（税込）</span></p>
           <p class="p-price__inc">本体＋標準工事＋既存撤去処分</p>
           <a class="p-price__link" href="<?php echo esc_url( home_url( '/products/bathroom/' ) ); ?>">プランを見る</a>
         </div>
@@ -357,7 +357,7 @@ get_header();
         <div class="p-price__body">
           <h3 class="p-price__name">トイレ</h3>
           <p class="p-price__desc">最短半日で交換完了。お掃除がラクな最新モデルにも対応します。</p>
-          <p class="p-price__yen"><span class="lbl">工事費込み</span><span class="num">12.9</span><span class="unit">万円〜（税込）</span></p>
+          <p class="p-price__yen"><span class="lbl">工事費込み</span><span class="num">12<span class="dec">.9</span></span><span class="unit">万円〜（税込）</span></p>
           <p class="p-price__inc">本体＋標準工事＋既存撤去処分</p>
           <a class="p-price__link" href="<?php echo esc_url( home_url( '/products/toilet/' ) ); ?>">プランを見る</a>
         </div>
@@ -374,7 +374,7 @@ get_header();
         <div class="p-price__body">
           <h3 class="p-price__name">洗面化粧台</h3>
           <p class="p-price__desc">朝の身支度がしやすく。収納が増えて、掃除もラクになります。</p>
-          <p class="p-price__yen"><span class="lbl">工事費込み</span><span class="num">7.48</span><span class="unit">万円〜（税込）</span></p>
+          <p class="p-price__yen"><span class="lbl">工事費込み</span><span class="num">7<span class="dec">.48</span></span><span class="unit">万円〜（税込）</span></p>
           <p class="p-price__inc">本体＋標準工事＋既存撤去処分</p>
           <a class="p-price__link" href="<?php echo esc_url( home_url( '/products/lavatory/' ) ); ?>">プランを見る</a>
         </div>
@@ -408,7 +408,7 @@ get_header();
         <div class="p-price__body">
           <h3 class="p-price__name">外壁塗装</h3>
           <p class="p-price__desc">北陸の雪と雨に耐える塗料選びから。専門サイトもご用意しています。</p>
-          <p class="p-price__yen"><span class="above">足場代込み！</span><span class="lbl">100㎡あたり</span><span class="p-price__amount"><span class="num">49.8</span><span class="unit">万円〜（税込）</span></span></p>
+          <p class="p-price__yen"><span class="above">足場代込み！</span><span class="lbl">100㎡あたり</span><span class="p-price__amount"><span class="num">49<span class="dec">.8</span></span><span class="unit">万円〜（税込）</span></span></p>
           <p class="p-price__inc">足場＋高圧洗浄＋下塗り〜上塗り</p>
           <a class="p-price__link" href="<?php echo esc_url( home_url( '/products/outer-wall/' ) ); ?>">プランを見る</a>
         </div>

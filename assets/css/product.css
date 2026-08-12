@@ -141,6 +141,12 @@
 /* 商品写真 */
 /* 商品写真。メーカー写真は白背景なので、枠も白にして地続きに見せます。
    高さを決め打ちにすると上下に余白の帯が出るため、写真の縦横比のまま置きます。 */
+/* スマホでは、商品名から写真までが遠く感じるので、
+   価格の枠と写真のあいだを少し詰めます（PCはこれまでどおり）。 */
+@media (max-width:767px){
+  .p-prd__head + .l-section{ padding-top:32px; }
+  .p-prd__photo{ margin-top:14px!important; padding:10px!important; }
+}
 .p-prd__photo{
   margin-top:20px; background:#fff; border:1px solid var(--border);
   border-radius:var(--radius); overflow:hidden; padding:14px;
@@ -651,7 +657,11 @@
   font-size:clamp(12.5px,3.4vw,17px); font-weight:900; letter-spacing:.02em;
   border-bottom:1px solid var(--border);
 }
-.p-cat__calcin{ padding:12px 12px 14px; text-align:center; flex:1; }
+/* 左右のカードで行数が違っても、金額の高さがそろうように中央ぞろえにします */
+.p-cat__calcin{
+  padding:12px 12px 14px; text-align:center; flex:1;
+  display:flex; flex-direction:column; justify-content:center;
+}
 .p-cat__calclead{
   margin:0; font-size:clamp(15px,4.4vw,22px); font-weight:900; color:var(--ink); line-height:1.3;
 }
