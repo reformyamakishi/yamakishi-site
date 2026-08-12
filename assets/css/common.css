@@ -190,6 +190,9 @@ address{ font-style:normal; }
   color:var(--brand-dark); font-weight:800; font-size:17px; text-decoration:none;
   transition:background .18s, transform .18s;
 }
+/* ボタンの文字は必ず1行に。狭い画面では文字を少しだけ小さくします */
+.c-more{ white-space:nowrap; }
+@media (max-width:400px){ .c-more{ font-size:15.5px; padding:12px 18px; } }
 .c-more:hover{ background:var(--brand-tint); transform:translateY(-2px); }
 .c-more::after{ content:""; width:8px; height:8px; border-right:2.5px solid currentColor; border-bottom:2.5px solid currentColor; transform:rotate(-45deg); }
 
@@ -448,6 +451,15 @@ address{ font-style:normal; }
   padding:0 5px;
   background:linear-gradient(transparent 55%, #ffe95c 55%);
   -webkit-box-decoration-break:clone; box-decoration-break:clone;
+}
+/* 小数点以下は小さくして、整数部の上端にそろえます。
+   （例：162.8 の「.8」を小さく、162 の上のほうに寄せる）
+   小さくすると下がって見えるので、少しだけ上に持ち上げています。 */
+.p-price__yen .dec{
+  font-size:.72em; letter-spacing:0;
+  /* position:relative で持ち上げると、行の高さも黄色いマーカーもそのままです。
+     下端が黄色いマーカーに少しかかる高さにしています。 */
+  position:relative; top:-.30em; margin-left:-.05em;
 }
 .p-price__yen .unit{ font-size:15px; }
 /* 金額の上に置く一言（外壁塗装の「足場代込み！」など）。
