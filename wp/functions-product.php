@@ -162,9 +162,9 @@ foreach ( array( 'created', 'edited', 'delete' ) as $when ) {
 add_action( 'init', function () {
 	/* トイレの分類を足したあと、URLのルールが古いままで
 	   /products/toilet/ が404になっていたため、数字を1つ上げています。 */
-	if ( get_option( 'ymkrf_rewrite_ver' ) === '5' ) return;
+	if ( get_option( 'ymkrf_rewrite_ver' ) === '6' ) return;
 	flush_rewrite_rules( false );
-	update_option( 'ymkrf_rewrite_ver', '5' );
+	update_option( 'ymkrf_rewrite_ver', '6' );
 }, 99 );
 
 
@@ -816,6 +816,21 @@ function ymkrf_pointnote( $slug ) {
 					       'sub'  => '新しい便器・便座の取り付け' ),
 				),
 		),
+		'lavatory' => array(
+				'label' => '洗面化粧台の標準工事費',
+				'price' => 24200,
+				'note'  => '洗面化粧台の標準工事費は24,200円（税込）です。',
+				'note2' => '※お家の形状により追加がかかる場合は、お見積りの際に詳細をお伝えさせていただきます。',
+				'itemsttl' => 'リフォームヤマキシの|標準工事費にふくまれる工事',
+				'items' => array(
+					array( 'name' => '既存洗面化粧台解体撤去工事', 'icon' => 'hammer',
+					       'sub'  => '古い洗面化粧台の取り外しと撤去にかかる工事' ),
+					array( 'name' => '水道工事',   'icon' => 'water',
+					       'sub'  => '給水・排水' ),
+					array( 'name' => '洗面設置工事', 'icon' => 'sink',
+					       'sub'  => '新しい洗面化粧台の取り付け・設置' ),
+				),
+		),
 	);
 	return isset( $d[ $slug ] ) ? $d[ $slug ] : array();
 }
@@ -852,6 +867,11 @@ if ( ! function_exists( 'ymkrf_work_icon' ) ) {
 			          . '<path d="M3 21h18"/><circle cx="15.4" cy="12" r="1"/>',
 			'toilet' => '<path d="M5 4h4v5h9v3.2a6.8 6.8 0 0 1-6.8 6.8H11A6 6 0 0 1 5 13z"/>'
 			          . '<path d="M9 19l-1 2M15.5 19l1 2"/><path d="M5 9h4"/>',
+			/* 洗面化粧台。上が鏡、下が洗面ボウルとキャビネットです */
+			'sink'   => '<rect x="7" y="2.6" width="10" height="6.4" rx="1"/>'
+			          . '<path d="M12 9v2.6"/><path d="M4 12h16"/>'
+			          . '<path d="M5.4 12v4.2A3.2 3.2 0 0 0 8.6 19.4h6.8A3.2 3.2 0 0 0 18.6 16.2V12"/>'
+			          . '<path d="M7.5 19.4V21.4M16.5 19.4V21.4"/>',
 		);
 		if ( empty( $d[ $key ] ) ) return '';
 		return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" '
@@ -869,6 +889,7 @@ function ymkrf_cat_label( $slug, $fallback = '' ) {
 		'kitchen'  => 'キッチン',
 		'bathroom' => 'ユニットバス',
 		'toilet'   => 'トイレ',
+		'lavatory' => '洗面化粧台',
 	);
 	return isset( $map[ $slug ] ) ? $map[ $slug ] : $fallback;
 }
@@ -883,6 +904,7 @@ function ymkrf_cat_listtitle( $slug, $fallback = '商品' ) {
 		'kitchen'  => 'キッチンマルシェの商品一覧',
 		'bathroom' => 'ユニットバス商品一覧',
 		'toilet'   => 'トイレ商品一覧',
+		'lavatory' => '洗面化粧台商品一覧',
 	);
 	return isset( $map[ $slug ] ) ? $map[ $slug ] : $fallback . 'の商品一覧';
 }
@@ -899,6 +921,7 @@ function ymkrf_cat_brand( $cat ) {
 		'kitchen'  => 'キッチンマルシェ',
 		'bathroom' => 'ユニットバスリフォームパック',
 		'toilet'   => 'トイレリフォームパック',
+		'lavatory' => '洗面化粧台リフォームパック',
 	);
 	return isset( $map[ $cat->slug ] ) ? $map[ $cat->slug ] : $cat->name . 'マルシェ';
 }

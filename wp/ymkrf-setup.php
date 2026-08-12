@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '53' );
+define( 'YMKRF_SETUP_VER', '54' );
 
 /* キッチンの「ヤマキシ標準工事内容」。
    ホームページの一覧表（7項目）と、番号入りの図（8項目）の
@@ -203,6 +203,7 @@ add_action( 'init', function () {
 		$theme . '/satis-s-counter',
 		$theme . '/neorest-rs3',
 		$theme . '/neorest-rs3-counter',
+		$theme . '/v1',
 		WP_CONTENT_DIR . '/themes/ymkrf/assets/img/works',
 		$dir,                 // 最後の受け皿（wp-content/ymkrf-import）
 	);
@@ -727,6 +728,8 @@ add_action( 'init', function () {
 		'amage-z', 'amage-z-aqua', 'purerest-qr', 'alauno-vs5', 'amage-z-premium',
 		'pleas-ls', 'alauno-s160', 'alauno-s160-counter', 'gga3', 'gga1-counter',
 		'satis-s', 'satis-s-counter', 'neorest-rs3', 'neorest-rs3-counter',
+		/* 洗面化粧台 */
+		'v1',
 	) as $slug ) {
 
 		$p = get_page_by_path( $slug, OBJECT, 'ymkrf_product' );
@@ -3731,6 +3734,8 @@ add_action( 'init', function () {
 		'satis-s-counter'     => 'satisc-main.jpg',
 		'neorest-rs3'         => 'rs3-main.jpg',
 		'neorest-rs3-counter' => 'rs3c-main.jpg',
+		/* 洗面化粧台 */
+		'v1'                  => 'v1-main.jpg',
 	);
 	foreach ( $main_files as $slug => $file ) {
 		$pp = get_page_by_path( $slug, OBJECT, 'ymkrf_product' );
@@ -3954,7 +3959,7 @@ add_action( 'init', function () {
 	        （文字列だけで登録すると、名前が英語のままになるためです）
 	   ------------------------------------------------------------ */
 	if ( taxonomy_exists( 'ymkrf_works_cat' ) ) {
-		foreach ( array( 'kitchen' => 'キッチン', 'bathroom' => 'お風呂', 'toilet' => 'トイレ' ) as $ws => $wn ) {
+		foreach ( array( 'kitchen' => 'キッチン', 'bathroom' => 'お風呂', 'toilet' => 'トイレ', 'lavatory' => '洗面化粧台' ) as $ws => $wn ) {
 			if ( ! term_exists( $ws, 'ymkrf_works_cat' ) ) {
 				wp_insert_term( $wn, 'ymkrf_works_cat', array( 'slug' => $ws ) );
 			}
@@ -5411,6 +5416,171 @@ TOTOのセフィオンテクト、LIXILのアクアセラミック、Panasonic�
 		update_post_meta( $p3->ID, '_ymkrf_features', $rows );
 		update_post_meta( $p3->ID, '_ymkrf_features_ver', $feat_fix[ $tp3['slug'] ] );
 		$log[] = get_the_title( $p3->ID ) . 'のおすすめポイントを入れ直しました';
+	}
+
+
+	/* ------------------------------------------------------------
+	   3-q. 洗面化粧台の商品を登録します。
+
+	        トイレと同じつくりですが、標準仕様が「写真つき」なので
+	        specs（_ymkrf_specs）に対応した別のループにしています。
+
+	   ★商品を足すときは、下の $lav_products に1つ配列を足すだけです。
+	     写真は assets/img/products/<スラッグ>/ に
+	     <接頭辞>-main.jpg のように置いてください。
+	   ------------------------------------------------------------ */
+
+	/* 洗面化粧台の「ヤマキシ標準工事内容」（3項目）は全機種共通です */
+	$lav_works = array(
+		array( '既存洗面化粧台解体撤去工事', '古い洗面化粧台の取り外しと撤去にかかる工事です。' ),
+		array( '水道工事',                   '給水・排水の工事です。' ),
+		array( '洗面設置工事',               '新しい洗面化粧台の取り付け工事です。' ),
+	);
+
+	$lav_products = array(
+
+		/* ===== Jグレード V1（LIXIL） ===== */
+		array(
+			'slug' => 'v1', 'prefix' => 'v1', 'title' => 'V1',
+			'meta' => array(
+				'_ymkrf_catch' => '使い勝手を追求したベーシックな洗面化粧台。',
+				'_ymkrf_grade' => 'Jグレード', '_ymkrf_name' => 'V1',
+				'_ymkrf_size'  => '間口75cm',
+				'_ymkrf_work'  => '24200', '_ymkrf_item' => '50600',
+				/* ★工期はPDFに書かれていなかったので空にしてあります。
+				   「半日」などが決まったら、ここに入れてください。 */
+				'_ymkrf_days'  => '', '_ymkrf_daystext' => '',
+				'_ymkrf_pt1'   => '使いやすい', '_ymkrf_pt2' => '省エネ設計', '_ymkrf_pt3' => '収納抜群',
+				'_ymkrf_caution' => '※写真はイメージです。',
+				'_ymkrf_note_colors' => 'none',
+				'_ymkrf_note_tops'   => 'none',
+			),
+			'total' => 74800, 'maker' => 'lixil',
+			'shops' => array( 'nonoichi', 'komathu', 'hakui', 'shinkaga', 'kawakita', 'kanadu', 'kahahothu', 'asahi' ),
+			'main'  => array( 'main', 'LIXIL V1 洗面化粧台 間口75cm' ),
+			/* 1つめの枠をボウル、2つめの枠を扉にしています */
+			'labels' => array(
+				'_ymkrf_lbl_colors' => 'ボウルカラー',
+				'_ymkrf_lbl_tops'   => '扉カラー',
+			),
+			'sets' => array(
+				'_ymkrf_colors' => array(
+					array( 'color-bowl-white', 'ホワイト' ),
+				),
+				'_ymkrf_tops' => array(
+					array( 'door-white',    'ホワイト' ),
+					array( 'door-criepale', 'クリエペール' ),
+				),
+			),
+			'specs' => array(
+				array( 'spec-bowl',    '広々洗面器',                 '素材：樹脂／ボウル容量15リットル。右奥の排水口で作業スペース広々' ),
+				array( 'spec-mirror',  '１面鏡ミラーキャビネット',   '40W型電球型LED×2灯（消費電力8.8W）／コンセント1個／くもり止めヒーターなし' ),
+				array( 'spec-faucet',  'シングルレバー洗髪シャワー水栓', 'ホース収納式／リフトアップ付／整流吐水切替付／エコハンドル' ),
+				array( 'spec-cabinet', '両開き扉タイプ',             '仕切りのない広い収納空間' ),
+			),
+			'feats' => array(
+				array( '排水口と一体で汚れが溜まりにくい。', '「スキマなし排水口」', '一体成型',
+				       '洗面器と一体成型になった新構造。だから、汚れが溜まりにくくカンタンにお掃除できます。', 'point-drain' ),
+				array( '', '', '上下昇降式排水栓',
+				       '回すだけで開閉できる排水栓。ヘアキャッチャーに溜まったゴミが直接見えず、すっきり。', 'point-plug' ),
+				array( '', '', 'ヘアキャッチャー',
+				       'ななめ形状のヘアキャッチャーが、ゴミをキャッチする部分と水を通す部分を分け、スムーズに通水します。', 'point-haircatcher' ),
+				array( '省エネ設計', '「エコハンドル」', '無意識に使っていたお湯を節約。',
+				       'よく使う正面の位置で「水」を出す省エネ設計。お湯を無意識に使うことが無いため、ムダな給湯エネルギーを使いません。',
+				       'point-ecohandle', '', '', '1' ),
+				array( '収納スペース充実。', '「開き扉キャビネット」', '右奥の排水口で収納スペースたっぷり。',
+				       '排水管を右奥にレイアウトすることにより、収納スペースが広がりました。',
+				       'point-storage', '', '', '1' ),
+			),
+			'opts' => array(
+				array( 'opt-base600',        'ベースキャビネット 間口600mm',        '0',     '間口を600mmに変更できます。', '※差額なし' ),
+				array( 'opt-mirror600',      'ミラーキャビネット 間口600mm',        '550',   '間口を600mmに変更できます。', '' ),
+				array( 'opt-mirror1kumori',  '1面鏡 曇り止めコートあり（LED）間口750mm', '2750',  '曇り止めコート装備。', '' ),
+				array( 'opt-mirror3kumori',  '3面鏡 曇り止めコートあり（LED）間口750mm', '13640', '鏡の裏面はタップリ収納。曇り止めコート装備。', '' ),
+				array( 'opt-interior-full',  '脱衣場内装パック（1坪）',              '80000', '天井・壁クロス張替え＋床クッションフロアー貼り替え（1坪まで）。', '' ),
+				array( 'opt-interior-wall',  '脱衣場内装パック（1坪／壁のみ）',      '65000', '壁クロス張替え（1坪まで）。', '' ),
+			),
+		),
+
+	);
+
+	foreach ( $lav_products as $lp ) {
+
+		if ( get_page_by_path( $lp['slug'], OBJECT, 'ymkrf_product' ) ) continue;
+
+		$pid = wp_insert_post( array(
+			'post_type'   => 'ymkrf_product',
+			'post_status' => 'publish',
+			'post_title'  => $lp['title'],
+			'post_name'   => $lp['slug'],
+		) );
+		if ( ! $pid || is_wp_error( $pid ) ) continue;
+
+		$m0  = $missing;
+		$pfl = $lp['prefix'];
+
+		$limg = function ( $key, $alt = '' ) use ( $img, $pfl ) {
+			return $key ? $img( $pfl . '-' . $key . '.jpg', $alt ) : '';
+		};
+
+		foreach ( $lp['meta'] as $k => $v )   update_post_meta( $pid, $k, $v );
+		foreach ( $lp['labels'] as $k => $v ) update_post_meta( $pid, $k, $v );
+		update_post_meta( $pid, '_ymkrf_total', $lp['total'] );
+
+		$main = $limg( $lp['main'][0], $lp['main'][1] );
+		if ( $main ) set_post_thumbnail( $pid, $main );
+
+		/* --- カラーバリエーション --- */
+		foreach ( $lp['sets'] as $key => $list ) {
+			$rows = array();
+			foreach ( $list as $r ) $rows[] = array( 'img' => $limg( $r[0], $r[1] ), 'name' => $r[1] );
+			update_post_meta( $pid, $key, $rows );
+		}
+
+		/* --- 標準仕様（写真つき）--- */
+		$rows = array();
+		foreach ( $lp['specs'] as $r ) {
+			$rows[] = array( 'img' => $limg( $r[0], $r[1] ), 'name' => $r[1], 'model' => $r[2] );
+		}
+		update_post_meta( $pid, '_ymkrf_specs', $rows );
+
+		/* --- おすすめポイント（8番目に '1' で白い枠）--- */
+		$rows = array();
+		foreach ( $lp['feats'] as $r ) {
+			$rows[] = array(
+				'gsub' => $r[0], 'gttl' => $r[1], 'ttl' => $r[2], 'text' => $r[3],
+				'note' => isset( $r[5] ) ? $r[5] : '',
+				'img'  => $limg( $r[4], $r[2] ),
+				'img2' => isset( $r[6] ) ? $limg( $r[6], $r[2] ) : '',
+				'frame'=> isset( $r[7] ) ? $r[7] : '',
+			);
+		}
+		update_post_meta( $pid, '_ymkrf_features', $rows );
+
+		/* --- おすすめオプション --- */
+		$rows = array();
+		foreach ( $lp['opts'] as $r ) {
+			$rows[] = array(
+				'img'   => $limg( $r[0], $r[1] ),
+				'name'  => $r[1],
+				'text'  => $r[3],
+				'price' => $r[2],
+				'note'  => $r[4],
+			);
+		}
+		update_post_meta( $pid, '_ymkrf_options', $rows );
+
+		/* --- ヤマキシ標準工事内容（洗面化粧台・3項目）--- */
+		$rows = array();
+		foreach ( $lav_works as $r ) $rows[] = array( 'name' => $r[0], 'text' => $r[1] );
+		update_post_meta( $pid, '_ymkrf_works', $rows );
+
+		wp_set_object_terms( $pid, 'lavatory', 'ymkrf_product_cat' );
+		wp_set_object_terms( $pid, $lp['maker'], 'ymkrf_maker' );
+		if ( $lp['shops'] ) wp_set_object_terms( $pid, $lp['shops'], 'ymkrf_shop' );
+
+		update_post_meta( $pid, '_ymkrf_img_missing', $missing - $m0 );
+		$log[] = '商品「' . $lp['title'] . '」を登録しました → ' . get_permalink( $pid );
 	}
 
 

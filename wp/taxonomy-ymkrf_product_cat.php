@@ -188,6 +188,41 @@ $intro = array(
 		'solutions'  => array(),
 	),
 
+	'lavatory' => array(
+
+		'en'    => 'LAVATORY',
+		'title' => '洗面化粧台リフォーム',
+		'hero'  => 'assets/img/products/head-lavatory.jpg',
+		'lead'  => '本体・標準工事費・古い洗面化粧台の解体処分費まで込みのパック価格でご案内します。',
+
+		/* --- ブランド紹介 --- */
+		'brandsub'  => '朝いちばんに使う場所を、気持ちよく',
+		'brand'     => '洗面化粧台リフォームパック',
+		'brandtext' => '毎朝の身支度から、洗濯・つけおき洗いまで。'
+		             . '<br>お掃除のしやすさと収納力を基準に、選び抜いた機種をご用意しました。',
+
+		/* --- 3つのこだわり --- */
+		'points' => array(
+			array( 'chara' => 'char-otoku',     'name' => 'お得',
+			       'text'  => '洗面化粧台の標準工事費・古い洗面台の解体撤去費用もコミコミ！' ),
+			array( 'chara' => 'char-hinshitsu', 'name' => '品質',
+			       'text'  => '経験豊富な自社職人を中心に、質の良い丁寧な工事を致します！' ),
+			array( 'chara' => 'char-anshin',    'name' => '安心',
+			       'text'  => '商品延長10年保証・工事保証5年・24時間365日トラブル対応付き！' ),
+		),
+
+		/* --- お悩み（いまは非表示） --- */
+		'worrytitle' => '洗面化粧台のお悩み',
+		'worryintro' => 'こんなことで悩んでいませんか？',
+		'worries'    => array(),
+		'worrylead'  => '',
+		'solvesub'   => '実は、そのお悩み',
+		'solvetitle' => '最新の洗面化粧台で解決できます！',
+		'tags'       => array(),
+		'tagnote'    => '',
+		'solutions'  => array(),
+	),
+
 );
 
 $c   = isset( $intro[ $slug ] ) ? $intro[ $slug ] : null;
