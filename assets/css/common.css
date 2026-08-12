@@ -49,6 +49,9 @@
   /* 文字 */
   --font: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP",
           "Yu Gothic Medium", "Yu Gothic", YuGothic, Meiryo, system-ui, sans-serif;
+  /* キャッチコピー用の丸ゴシック。読み込めないときは上の書体で出ます */
+  --font-catch: "Zen Maru Gothic", "Hiragino Maru Gothic ProN", "ヒラギノ丸ゴ ProN",
+                "Yu Gothic", var(--font);
 }
 
 /* --------------------------------------------------------------------------
@@ -466,6 +469,17 @@ address{ font-style:normal; }
      下端が黄色いマーカーに少しかかる高さにしています。 */
   position:relative; top:-.30em; margin-left:.04em;
 }
+/* 黄色いマーカーの左端に置く小さな条件（外壁塗装の「100㎡あたり」など）。
+   マーカーの中に入るので、札の背景は付けません。 */
+.p-price__yen .lbl--in{
+  background:none; padding:0; border-radius:0;
+  font-size:12.5px; line-height:1.25; color:var(--ink);
+  white-space:normal; text-align:center;
+  align-self:flex-end; margin-right:4px; position:relative; bottom:.15em;
+}
+/* 左に条件が入る行は、そのぶん金額を少しだけ小さくして枠に収めます */
+.p-price__amount:has(.lbl--in) .num{ font-size:clamp(42px,11.5vw,56px); }
+.p-price__amount:has(.lbl--in) .unit{ font-size:16px; }
 .p-price__yen .unit{ font-size:17px; }
 /* 「（税込）」は補足なので、単位より少し小さく */
 .p-price__yen .unit .tax{ font-size:.8em; font-weight:900; }
@@ -477,7 +491,36 @@ address{ font-style:normal; }
 }
 /* 「全部コミコミ!!」。金額のすぐ上に置く、いちばんの売り文句です。
    赤い丸帯（●）の中に、黄色い文字で入れています。 */
-.p-price__yen .above--all{ margin-bottom:8px; }
+/* 吹き出しと丸帯を、ひとまとまりで中央にそろえます */
+.p-price__yen .above--all{
+  margin-bottom:8px;
+  display:flex; align-items:flex-end; justify-content:center; gap:13px;
+}
+/* 「工事費も／処分費も」の吹き出し。丸帯の少し上・左に置きます */
+.p-price__yen .fuki{
+  position:relative; font-style:normal;
+  background:#fff; border:2px solid var(--brand); color:var(--brand-dark);
+  font-size:11.5px; font-weight:900; line-height:1.3; letter-spacing:.01em;
+  padding:5px 9px 6px; border-radius:12px; white-space:nowrap;
+  transform:translateY(-9px);
+}
+/* しっぽ。右にある「全部コミコミ!!」の丸帯のほうへ向けます */
+.p-price__yen .fuki::before,
+.p-price__yen .fuki::after{
+  content:""; position:absolute; width:0; height:0; border-style:solid;
+}
+/* 外側（枠の赤） */
+.p-price__yen .fuki::before{
+  right:-11px; bottom:5px;
+  border-width:6px 0 6px 11px;
+  border-color:transparent transparent transparent var(--brand);
+}
+/* 内側（白）。少し内に寄せて、枠線だけが見えるようにします */
+.p-price__yen .fuki::after{
+  right:-7px; bottom:7px;
+  border-width:4px 0 4px 8px;
+  border-color:transparent transparent transparent #fff;
+}
 .p-price__yen .above--all b{
   display:inline-block;
   background:var(--brand); color:#ffe95c;
@@ -518,11 +561,13 @@ address{ font-style:normal; }
 /* 「地域最安値に挑戦中！」の表示。金額の数字と同じ高さを保ちつつ、
    数字ほど大きくすると間延びするので少し小さめにしています。 */
 .p-price__yen--challenge{ align-items:baseline; }
+/* 「地域最安値に挑戦中！」。丸ゴシックでやわらかく、大きめに見せます */
 .p-price__yen .chal{
-  font-size:clamp(19px,4.4vw,24px); font-weight:900; color:var(--brand);
-  line-height:1.3; letter-spacing:-.01em;
-  padding:0 5px;
-  background:linear-gradient(transparent 66%, #ffe95c 66%);
+  font-family:var(--font-catch);
+  font-size:clamp(18px,6.6vw,24px); font-weight:900; color:var(--brand);
+  line-height:1.25; letter-spacing:.01em; white-space:nowrap;
+  padding:2px 8px 4px;
+  background:linear-gradient(transparent 62%, #ffe95c 62%);
   -webkit-box-decoration-break:clone; box-decoration-break:clone;
 }
 
