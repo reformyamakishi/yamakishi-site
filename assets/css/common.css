@@ -453,8 +453,8 @@ address{ font-style:normal; }
 /* 金額の上に置く一言（外壁塗装の「足場代込み！」など）。
    flex-basis:100% で、かならず金額の上の行になります。 */
 .p-price__yen .above{
-  flex-basis:100%; margin-bottom:3px;
-  font-size:13.5px; font-weight:900; color:var(--brand); line-height:1.4;
+  flex-basis:100%; margin-bottom:4px;
+  font-size:clamp(16px,4.2vw,19px); font-weight:900; color:var(--brand); line-height:1.4;
 }
 /* 金額と単位は必ず同じ行に並べます。
    ひとつの入れ物に入れて、その中では折り返さないようにしています。 */
