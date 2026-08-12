@@ -1178,22 +1178,28 @@ function ymkrf_works_card() {
 	?>
 	<article class="p-work">
 
-		<?php if ( $bimg && $aimg ) : /* --- 2枚そろっているとき：比較スライダー --- */ ?>
+		<?php if ( $aimg || $bimg ) : ?>
+			<?php /* トップページとまったく同じ、左右に動かして見くらべる形です。
+			         Before写真がまだ入っていない事例は、トップページと同じように
+			         「BEFORE 写真」の下じきを出します。
+			         施工事例の編集画面 右「施工データ」→「Before写真（施工前）」を
+			         入れると、その事例から本物の写真に変わります。 */ ?>
 			<div class="p-compare" data-compare style="--pos:50%">
-				<div class="p-compare__layer p-compare__layer--before"><?php echo $bimg; /* phpcs:ignore */ ?></div>
-				<div class="p-compare__layer p-compare__layer--after"><?php echo $aimg; /* phpcs:ignore */ ?></div>
+				<div class="p-compare__layer p-compare__layer--before">
+					<?php if ( $bimg ) : echo $bimg; /* phpcs:ignore */ else : ?>
+						<p class="p-compare__ph">BEFORE 写真</p>
+					<?php endif; ?>
+				</div>
+				<div class="p-compare__layer p-compare__layer--after">
+					<?php if ( $aimg ) : echo $aimg; /* phpcs:ignore */ else : ?>
+						<p class="p-compare__ph">AFTER 写真</p>
+					<?php endif; ?>
+				</div>
 				<span class="p-compare__tag p-compare__tag--before">BEFORE</span>
 				<span class="p-compare__tag p-compare__tag--after">AFTER</span>
 				<span class="p-compare__handle"></span>
 				<span class="p-compare__hint">← 左右に動かして見くらべる →</span>
 			</div>
-
-		<?php elseif ( $aimg ) : /* --- 施工後だけのとき --- */ ?>
-			<a class="p-work__ph" href="<?php echo esc_url( $link ); ?>">
-				<?php echo $aimg; /* phpcs:ignore */ ?>
-				<span class="p-compare__tag p-compare__tag--after">AFTER</span>
-			</a>
-
 		<?php endif; ?>
 
 		<div class="p-work__body">
