@@ -364,64 +364,10 @@
 
 /* --------------------------------------------------------------------------
    9. 施工事例（Before / After 比較スライダー）
+      → common.css へ移しました。
+        商品ページ・商品一覧ページでも同じ見た目で出すためです。
+        ここに書き戻すと同じ指定が2か所になるので、書かないでください。
    -------------------------------------------------------------------------- */
-.p-works__grid{ display:grid; gap:20px; }
-.p-work{
-  background:#fff; border:2px solid var(--border); border-radius:var(--radius);
-  overflow:hidden; box-shadow:var(--shadow); transition:transform .22s, box-shadow .22s;
-}
-.p-work:hover{ transform:translateY(-5px); box-shadow:var(--shadow-md); }
-.p-compare{ position:relative; aspect-ratio:4/3; overflow:hidden; user-select:none; touch-action:pan-y; cursor:ew-resize; }
-.p-compare__layer{ position:absolute; inset:0; }
-.p-compare__layer img{ width:100%; height:100%; object-fit:cover; }
-.p-compare__layer--before{ background:linear-gradient(135deg,#ded5cd,#c3b6ab); }
-.p-compare__layer--after {
-  background:linear-gradient(135deg,#fff0e8,#ffd8c6);
-  clip-path:inset(0 0 0 var(--pos,50%));
-}
-/* ↓写真を入れるまでのプレースホルダー。実写真に差し替えたら不要です */
-.p-compare__ph{
-  position:absolute; inset:0; display:grid; align-items:center;
-  font-size:13px; font-weight:900; color:rgba(0,0,0,.4);
-}
-.p-compare__layer--before .p-compare__ph{ justify-items:start; padding-left:11%; }
-.p-compare__layer--after  .p-compare__ph{ justify-items:end;   padding-right:11%; }
-.p-compare__tag{
-  position:absolute; top:12px; z-index:3; background:rgba(43,35,32,.82); color:#fff;
-  font-size:11.5px; font-weight:900; padding:4px 11px; border-radius:999px; letter-spacing:.06em;
-}
-.p-compare__tag--before{ left:12px; }
-.p-compare__tag--after { right:12px; background:var(--brand); }
-.p-compare__handle{
-  position:absolute; top:0; bottom:0; left:var(--pos,50%); z-index:4;
-  width:4px; background:#fff; box-shadow:0 0 10px rgba(0,0,0,.35); transform:translateX(-2px);
-}
-.p-compare__handle::after{
-  content:""; position:absolute; top:50%; left:50%; width:46px; height:46px;
-  transform:translate(-50%,-50%); border-radius:50%; background:#fff;
-  box-shadow:0 3px 12px rgba(0,0,0,.3);
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fe3301' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 6-5 6 5 6M15 6l5 6-5 6'/%3E%3C/svg%3E");
-  background-size:24px; background-position:center; background-repeat:no-repeat;
-}
-.p-compare__hint{
-  position:absolute; left:50%; bottom:12px; z-index:5; transform:translateX(-50%);
-  background:rgba(43,35,32,.78); color:#fff; font-size:11.5px; font-weight:800;
-  padding:5px 13px; border-radius:999px; white-space:nowrap;
-  animation:hint-blink 2.4s ease-in-out infinite;
-}
-.p-compare.is-touched .p-compare__hint{ display:none; }
-@keyframes hint-blink{ 0%,100%{opacity:.35} 50%{opacity:1} }
-
-.p-work__body{ padding:16px 18px 20px; }
-.p-work__meta{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
-.p-work__meta span{
-  background:var(--brand-tint); color:var(--brand-dark);
-  font-size:11.5px; font-weight:900; padding:4px 11px; border-radius:999px;
-}
-.p-work__title{ font-size:17px; font-weight:900; }
-.p-work__title a{ color:inherit; text-decoration:none; }
-.p-work__title a:hover{ color:var(--brand-dark); text-decoration:underline; }
-.p-work__data{ display:flex; flex-wrap:wrap; gap:6px 16px; margin-top:10px; font-size:14.5px; font-weight:900; color:var(--brand-dark); }
 
 /* --------------------------------------------------------------------------
    10. お客様の声
@@ -600,7 +546,6 @@
   .p-route__arrow{ display:none; }
   .p-menu__grid{ grid-template-columns:repeat(3,1fr); }
   .p-reason__grid{ grid-template-columns:repeat(2,1fr); }
-  .p-works__grid{ grid-template-columns:repeat(2,1fr); }
   .p-voice__grid{ grid-template-columns:repeat(3,1fr); }
   .p-shops__list{ grid-template-columns:repeat(2,1fr); }
   .p-subsidy{ display:grid; grid-template-columns:1.15fr .85fr; gap:28px; align-items:center; padding:36px 34px; }
@@ -616,7 +561,6 @@
   .p-hero__inner{ grid-template-columns:1.06fr .94fr; gap:48px; }
   .p-hero__mascot{ width:34%; max-width:230px; right:0; bottom:-24px; }
   .p-hero__balloon{ font-size:14px; }
-  .p-works__grid{ grid-template-columns:repeat(3,1fr); }
   .p-reason__grid{ grid-template-columns:repeat(4,1fr); }
   .p-cta__box{ grid-template-columns:1fr 1fr; max-width:760px; }
   .p-cta__tel{ grid-column:1/-1; }
