@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '64' );
+define( 'YMKRF_SETUP_VER', '65' );
 
 /* キッチンの「ヤマキシ標準工事内容」。
    ホームページの一覧表（7項目）と、番号入りの図（8項目）の
@@ -204,6 +204,7 @@ add_action( 'init', function () {
 		$theme . '/neorest-rs3',
 		$theme . '/neorest-rs3-counter',
 		$theme . '/v1',
+		$theme . '/d7',
 		WP_CONTENT_DIR . '/themes/ymkrf/assets/img/works',
 		$dir,                 // 最後の受け皿（wp-content/ymkrf-import）
 	);
@@ -729,7 +730,7 @@ add_action( 'init', function () {
 		'pleas-ls', 'alauno-s160', 'alauno-s160-counter', 'gga3', 'gga1-counter',
 		'satis-s', 'satis-s-counter', 'neorest-rs3', 'neorest-rs3-counter',
 		/* 洗面化粧台 */
-		'v1',
+		'v1', 'd7',
 	) as $slug ) {
 
 		$p = get_page_by_path( $slug, OBJECT, 'ymkrf_product' );
@@ -3736,6 +3737,7 @@ add_action( 'init', function () {
 		'neorest-rs3-counter' => 'rs3c-main.jpg',
 		/* 洗面化粧台 */
 		'v1'                  => 'v1-main.jpg',
+		'd7'                  => 'd7-main.jpg',
 	);
 	foreach ( $main_files as $slug => $file ) {
 		$pp = get_page_by_path( $slug, OBJECT, 'ymkrf_product' );
@@ -5721,6 +5723,58 @@ TOTOのセフィオンテクト、LIXILのアクアセラミック、Panasonic�
 				array( 'opt-mirror3kumori',  '3面鏡 曇り止めコートあり（LED）間口750mm', '13640', '鏡の裏面はタップリ収納。曇り止めコート装備。', '' ),
 				array( 'opt-interior-full',  '脱衣場内装パック（1坪）',              '80000', '天井・壁クロス張替え＋床クッションフロアー貼り替え（1坪まで）。', '' ),
 				array( 'opt-interior-wall',  '脱衣場内装パック（1坪／壁のみ）',      '65000', '壁クロス張替え（1坪まで）。', '' ),
+			),
+		),
+
+		/* ===== Iグレード D7（LIXIL） ===== */
+		array(
+			'slug' => 'd7', 'prefix' => 'd7', 'title' => 'D7',
+			'meta' => array(
+				'_ymkrf_catch' => 'みんなが快適でエコな、スタンダード洗面化粧台。',
+				'_ymkrf_grade' => 'Iグレード', '_ymkrf_name' => 'D7',
+				'_ymkrf_size'  => '間口75cm',
+				'_ymkrf_work'  => '24200', '_ymkrf_item' => '58600',
+				'_ymkrf_days'  => '', '_ymkrf_daystext' => '最短当日',
+				'_ymkrf_pt1'   => 'お掃除ラクラク', '_ymkrf_pt2' => '省エネ設計', '_ymkrf_pt3' => 'ストレスフリー',
+				'_ymkrf_caution' => '※写真はイメージです。',
+				'_ymkrf_note_colors' => 'none',
+			),
+			'total' => 82800, 'maker' => 'lixil',
+			'shops' => array( 'komathu', 'hakui', 'shinkaga', 'kawakita', 'asahi' ),
+			'main'  => array( 'main', 'LIXIL D7 洗面化粧台 間口75cm' ),
+			'labels' => array( '_ymkrf_lbl_colors' => '扉・洗面器カラー' ),
+			'sets' => array(
+				'_ymkrf_colors' => array(
+					array( 'color-white',      'ホワイト' ),
+					array( 'color-lightbeige', 'ライトベージュ' ),
+					array( 'color-criemocha',  'クリエモカ' ),
+					array( 'color-clearveil',  'クリアベール' ),
+				),
+			),
+			'specs' => array(
+				array( 'spec-mirror',  '１面鏡ミラーキャビネット', '40W型電球型LED×2灯（消費電力8.8W）／コンセント1個／くもり止めコートあり' ),
+				array( 'spec-bowl',    '広々陶器製大型洗面器',     '素材：陶器／色：ホワイト／ボウル容量15リットル' ),
+				array( 'spec-cabinet', '両開き扉タイプ',           '背の高いものやかさばるものをたっぷり収納' ),
+				array( 'spec-faucet',  'シングルレバー洗髪シャワー水栓', 'ホース収納式／リフトアップ付／整流吐水切替付／エコハンドル' ),
+			),
+			'feats' => array(
+				array( '日々のお掃除がラクラク、キレイ。', '「ラクとれヘアキャッチャー」', '髪の毛がからみにくいなめらか形状',
+				       "髪の毛が絡まず、するっととれます。凹凸が少なくブラシでラクにお掃除できるので、簡単なお手入れでいつでもキレイを保てます。",
+				       'point-haircatch', '', 'point-haircatch2' ),
+				array( '', '', 'プッシュワンウェイ排水栓', '栓の開閉は押すだけ。', 'point-push' ),
+				array( '省エネ設計', '「エコハンドル」', '無意識に使っていたお湯を節約。',
+				       'よく使う正面の位置で「水」を出す省エネ設計。お湯を無意識に使うことが無いため、ムダな給湯エネルギーを使いません。',
+				       'point-ecohandle', '', '', '1' ),
+				array( 'ストレスフリー、電力フリー', '「くもり止めコート」', '消費電力ゼロでつかえる。',
+				       '電気を使わず表面コーティングでくもりを抑えるので、待ち時間が無く消し忘れもありません。', 'point-kumori', '', '', '1' ),
+			),
+			'opts' => array(
+				array( 'opt-base600',       'ベースキャビネット 間口600mm',            '-4711',  'ベースキャビネットの間口を600mmに変更できます。', '' ),
+				array( 'opt-basedraw',      'ベースキャビネット 引出タイプ 間口750mm', '4815',   'よく使う小物と、背の高いものやストック品を分けて収納できます。', '' ),
+				array( 'opt-mirror3',       '3面鏡 曇り止めコートあり（LED）間口750mm', '10230',  '鏡の裏面はタップリ収納。曇り止めコート装備。', '' ),
+				array( 'opt-brush',         '歯ブラシ立て',                             '1540',   'ミラーキャビネットの収納トレイに納まります。', '' ),
+				array( 'opt-interior-full', '脱衣場内装パック（1坪）',                  '80000',  '天井・壁クロス張替え＋床クッションフロアー貼り替え（1坪まで）。', '' ),
+				array( 'opt-interior-wall', '脱衣場内装パック（1坪／壁のみ）',          '65000',  '壁クロス張替え（1坪まで）。', '' ),
 			),
 		),
 

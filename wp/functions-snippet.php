@@ -28,7 +28,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '1.0.1' );   // ファイル更新時はここを上げるとキャッシュが切れます
+if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '1.0.2' );   // ファイル更新時はここを上げるとキャッシュが切れます
 
 /* ============================================================
    1. CSS / JS の読み込み
@@ -39,6 +39,13 @@ if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '1.0.1' );   // ファイ�
 add_action( 'wp_enqueue_scripts', function () {
 
 	$dir = get_stylesheet_directory_uri();
+
+	/* キャッチコピー用の書体（Zen Maru Gothic）。
+	   丸ゴシックでやわらかく、太くても読みやすいのでシニアの方にも向いています。
+	   使っているのは「地域最安値に挑戦中！」などのひとことだけです。 */
+	wp_enqueue_style( 'ymkrf-gfont',
+		'https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@700;900&display=swap',
+		array(), null );
 
 	wp_enqueue_style( 'ymkrf-common', $dir . '/assets/css/common.css', array(), YMKRF_VER );
 	wp_enqueue_script( 'ymkrf-common', $dir . '/assets/js/common.js', array(), YMKRF_VER, true );

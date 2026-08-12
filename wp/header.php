@@ -22,6 +22,10 @@ $asset = get_stylesheet_directory_uri();
 <link rel="manifest" href="<?php echo esc_url( $asset ); ?>/assets/img/favicon/manifest.json">
 <meta name="msapplication-TileColor" content="#fe3301">
 <meta name="msapplication-TileImage" content="<?php echo esc_url( $asset ); ?>/assets/img/favicon/site-tile-150x150.png">
+
+<!-- キャッチコピー用の書体を、先につなぎに行っておきます（表示が速くなります） -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <?php wp_head(); /* CSS/JS は functions.php の wp_enqueue_scripts から読み込まれます */ ?>
 </head>
 
