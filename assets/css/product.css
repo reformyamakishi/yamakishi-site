@@ -837,10 +837,12 @@ body.term-bathroom .p-cat__cardph img{ object-position:center bottom; }
 .p-cat__cardbody{ padding:16px 16px 18px; display:flex; flex-direction:column; }
 .p-cat__cardname{
   font-size:clamp(17px,4.6vw,20px); font-weight:900; letter-spacing:.02em; color:var(--ink);
-  /* 商品名が1行の商品と2行の商品でメーカー・工期の位置がずれないよう、
-     2行ぶんの高さをあらかじめ確保しておきます。 */
-  line-height:1.35; min-height:2.7em;
+  line-height:1.35;
 }
+/* トイレだけ、商品名が2行になる商品（アメージュZ 高機能モデル）があるので、
+   2行ぶんの高さをあらかじめ確保して、工期の位置をそろえます。
+   キッチン・お風呂は全部1行なので、確保すると逆に間が空いてしまいます。 */
+body.term-toilet .p-cat__cardname{ min-height:2.7em; }
 /* 一覧カードでも、商品名の横に小さく出します */
 .p-cat__cardsub{
   display:inline-block; margin-left:.45em;
@@ -854,7 +856,8 @@ body.term-bathroom .p-cat__cardph img{ object-position:center bottom; }
    型番の長さは商品ごとにまちまちなので、型番は次の行にまわします。
    こうしないと、商品ごとに工期の位置がバラバラになります。 */
 .p-cat__carddays{ margin-left:auto; font-weight:900; white-space:nowrap; }
-.p-cat__cardsize{ flex-basis:100%; }
+/* 型番の行。文字の長さぶんだけ下地が付くようにしています */
+.p-cat__cardmeta--size{ margin-top:5px; }
 .p-cat__cardmeta span{
   background:var(--brand-tint); border-radius:4px; padding:3px 8px;
 }

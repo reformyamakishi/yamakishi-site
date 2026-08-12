@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '47' );
+define( 'YMKRF_SETUP_VER', '48' );
 
 /* キッチンの「ヤマキシ標準工事内容」。
    ホームページの一覧表（7項目）と、番号入りの図（8項目）の
@@ -3662,6 +3662,12 @@ add_action( 'init', function () {
 		'granspa'  => 'granspa-main.jpg',
 		'selevia'  => 'selevia-main.jpg',
 		'sinla'    => 'sinla-main.jpg',
+		/* トイレ */
+		'amage-z'         => 'amzi-main.jpg',
+		'amage-z-aqua'    => 'amzh-main.jpg',
+		'purerest-qr'     => 'qr-main.jpg',
+		'alauno-vs5'      => 'vs5-main.jpg',
+		'amage-z-premium' => 'amze-main.jpg',
 	);
 	foreach ( $main_files as $slug => $file ) {
 		$pp = get_page_by_path( $slug, OBJECT, 'ymkrf_product' );
@@ -3676,6 +3682,31 @@ add_action( 'init', function () {
 		if ( $re ) {
 			set_post_thumbnail( $pp->ID, $re );
 			$log[] = get_the_title( $pp->ID ) . 'のアイキャッチを入れ直しました';
+		}
+	}
+
+
+	/* ------------------------------------------------------------
+	   3-j2. アイキャッチの入れ直し（手動指定）
+	         上の自動修復で直らなかった商品を、名指しで入れ直します。
+	         数字を変えると、もう一度だけ入れ直します。
+	   ------------------------------------------------------------ */
+	$force_main = array(
+		'classo'  => array( 'classo-main.jpg', 'TOTO ザ・クラッソのキッチン全体' ),
+		'lidea-m' => array( 'lidea-main.jpg',  'LIXIL リデア Mタイプ 1坪サイズ（ユニットバス）' ),
+	);
+	foreach ( $force_main as $fs => $fi ) {
+		$fp = get_page_by_path( $fs, OBJECT, 'ymkrf_product' );
+		if ( ! $fp || get_post_meta( $fp->ID, '_ymkrf_main_fix', true ) === '1' ) continue;
+
+		$old = $img( $fi[0] );
+		if ( $old ) wp_delete_attachment( $old, true );
+
+		$new = $img( $fi[0], $fi[1], true );   /* 第3引数の true で、覚えている番号を捨てて探し直します */
+		if ( $new ) {
+			set_post_thumbnail( $fp->ID, $new );
+			update_post_meta( $fp->ID, '_ymkrf_main_fix', '1' );
+			$log[] = get_the_title( $fp->ID ) . 'のメイン写真を入れ直しました';
 		}
 	}
 
@@ -4621,6 +4652,30 @@ add_action( 'init', function () {
 
 		update_post_meta( $pid, '_ymkrf_img_missing', $missing - $m0 );
 		$log[] = '商品「' . $tp2['title'] . '」を登録しました → ' . get_permalink( $pid );
+	}
+
+
+	/* ------------------------------------------------------------
+	   3-y. 最後にもう一度、アイキャッチを点検します。
+
+	        上の 3-j でいちど直しても、そのあとの
+	        「写真の差し替え」の処理でまた空になることがあったため、
+	        いちばん最後にもう一度だけ見ています。
+	        （ザ・クラッソとリデアMで実際に起きました）
+	   ------------------------------------------------------------ */
+	foreach ( $main_files as $slug => $file ) {
+		$pp = get_page_by_path( $slug, OBJECT, 'ymkrf_product' );
+		if ( ! $pp ) continue;
+
+		$tid = get_post_thumbnail_id( $pp->ID );
+		if ( $tid && get_post( $tid ) && get_attached_file( $tid ) ) continue;
+
+		if ( $tid ) delete_post_thumbnail( $pp->ID );
+		$re = $img( $file, get_the_title( $pp->ID ), true );
+		if ( $re ) {
+			set_post_thumbnail( $pp->ID, $re );
+			$log[] = get_the_title( $pp->ID ) . 'のアイキャッチを入れ直しました（最終点検）';
+		}
 	}
 
 

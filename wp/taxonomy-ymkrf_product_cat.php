@@ -483,13 +483,16 @@ if ( ! empty( $pn['items'] ) ) :
             <div class="p-cat__cardbody">
               <h3 class="p-cat__cardname"><?php echo esc_html( $d['name'] ); ?><?php
                 if ( $d['sub'] ) echo '<span class="p-cat__cardsub">' . esc_html( $d['sub'] ) . '</span>'; ?></h3>
+              <?php /* 1行目：メーカーと工期。工期はどの商品でも右端にそろえます */ ?>
               <p class="p-cat__cardmeta">
                 <?php if ( $mt ) echo ymkrf_maker_logo( $mt, 'p-maker' ); /* phpcs:ignore */ ?>
-                <?php /* 工期は、どの商品でも同じ位置（メーカーの右）に出します */ ?>
                 <?php if ( $d['daystext'] ) : ?><span class="p-cat__carddays">工期<?php echo esc_html( $d['daystext'] ); ?></span>
                 <?php elseif ( $d['days'] ) : ?><span class="p-cat__carddays">工期<?php echo esc_html( $d['days'] ); ?>日</span><?php endif; ?>
-                <?php if ( $d['size'] ) : ?><span class="p-cat__cardsize"><?php echo esc_html( $d['size'] ); ?></span><?php endif; ?>
               </p>
+              <?php /* 2行目：型番。長さが商品ごとに違うので、行を分けています */ ?>
+              <?php if ( $d['size'] ) : ?>
+                <p class="p-cat__cardmeta p-cat__cardmeta--size"><span><?php echo esc_html( $d['size'] ); ?></span></p>
+              <?php endif; ?>
               <?php if ( $d['total'] ) : ?>
                 <p class="p-cat__cardprice">
                   <span class="lbl">工事費込み</span>
