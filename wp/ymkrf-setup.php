@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '55' );
+define( 'YMKRF_SETUP_VER', '56' );
 
 /* キッチンの「ヤマキシ標準工事内容」。
    ホームページの一覧表（7項目）と、番号入りの図（8項目）の
@@ -3792,7 +3792,7 @@ add_action( 'init', function () {
 		'ofuroa'   => array( 'ofuroa-main.jpg',  'Panasonic オフローラ 1坪サイズ（ユニットバス）' ),
 		'lidea-m'  => array( 'lidea-main.jpg',   'LIXIL リデア Mタイプ 1坪サイズ（ユニットバス）' ),
 		/* 洗面化粧台V1は、いただいた新しい写真（中央ぞろえ）に差し替えました */
-		'v1'       => array( 'v1-main.jpg',      'LIXIL V1 洗面化粧台 間口75cm', 'v2' ),
+		'v1'       => array( 'v1-main.jpg',      'LIXIL V1 洗面化粧台 間口75cm', 'v3' ),
 	);
 	foreach ( $retrim as $slug => $info ) {
 		$tp = get_page_by_path( $slug, OBJECT, 'ymkrf_product' );
