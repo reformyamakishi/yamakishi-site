@@ -450,6 +450,20 @@ address{ font-style:normal; }
   -webkit-box-decoration-break:clone; box-decoration-break:clone;
 }
 .p-price__yen .unit{ font-size:15px; }
+/* 金額の上に置く一言（外壁塗装の「足場代込み！」など）。
+   flex-basis:100% で、かならず金額の上の行になります。 */
+.p-price__yen .above{
+  flex-basis:100%; margin-bottom:3px;
+  font-size:13.5px; font-weight:900; color:var(--brand); line-height:1.4;
+}
+/* 金額と単位は必ず同じ行に並べます。
+   ひとつの入れ物に入れて、その中では折り返さないようにしています。 */
+.p-price__amount{ display:inline-flex; align-items:baseline; gap:4px; white-space:nowrap; }
+.p-price__yen .num,
+.p-price__yen .unit{ white-space:nowrap; }
+/* 「足場代込み！」の下は、ラベルと金額を必ず同じ行に。
+   入りきらないときは、ラベルだけ上の行にまわします。 */
+.p-price__yen:has(.above){ row-gap:0; }
 .p-price__inc{ font-size:12.5px; color:var(--ink-sub); margin:8px 0 16px; }
 .p-price__link{
   display:flex; align-items:center; justify-content:center; gap:8px;
