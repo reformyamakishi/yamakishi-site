@@ -291,6 +291,7 @@ function ymkrf_product_repeaters() {
 				'note' => array( '注記',             'text', '例：※地質、建物の構造などにより…' ),
 				'img'  => array( '写真1',            'image' ),
 				'img2' => array( '写真2',            'image' ),
+				'frame'=> array( '白い枠をつける',    'text', '説明図・グラフのときだけ 1' ),
 			),
 		),
 		'_ymkrf_options' => array(

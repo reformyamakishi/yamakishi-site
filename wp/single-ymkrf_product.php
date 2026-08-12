@@ -292,8 +292,14 @@ if ( ! empty( $d['images'] ) || $csets || ! empty( $d['handles'] ) ) :
         <?php if ( $r['text'] ) : ?><p class="p-prd__ptext"><?php echo nl2br( esc_html( $r['text'] ) ); ?></p><?php endif; ?>
         <?php if ( $r['note'] ) : ?><p class="p-prd__pnote"><?php echo esc_html( $r['note'] ); ?></p><?php endif; ?>
         <?php if ( $r['img'] || $r['img2'] ) : ?>
-          <?php $stack = ( $r['img'] && $r['img2'] ) ? ' p-prd__pfig--stack' : ''; ?>
-          <div class="p-prd__pfig p-prd__pfig--img<?php echo $stack; ?>">
+          <?php
+          $stack = ( $r['img'] && $r['img2'] ) ? ' p-prd__pfig--stack' : '';
+          /* 「白い枠をつける」に 1 と入れた図版だけ、白い下じきと細い枠を付けます。
+             グラフや説明図（もともと白地）のときに使ってください。
+             ふつうの写真は、枠なしのほうがきれいに見えます。 */
+          $frame = ( isset( $r['frame'] ) && $r['frame'] !== '' ) ? ' p-prd__pfig--frame' : '';
+          ?>
+          <div class="p-prd__pfig p-prd__pfig--img<?php echo $stack . $frame; ?>">
             <?php echo ymkrf_img( $r['img'], 'large', $r['ttl'] ); ?>
             <?php echo ymkrf_img( $r['img2'], 'large', $r['ttl'] ); ?>
           </div>

@@ -393,6 +393,11 @@
   width:auto; height:auto; max-width:100%; max-height:400px;
   object-fit:contain; border-radius:8px;
 }
+/* グラフ・説明図など、もともと白地の図版だけ。
+   白い下じきと細い枠でひとまとまりに見せます（写真には付けません）。 */
+.p-prd__pfig--frame{
+  background:#fff; border:1px solid var(--border); padding:14px;
+}
 /* 元の解像度が小さい図版は、引き伸ばしてぼやけないよう上限をつける */
 .p-prd__pfig--img img[data-cap]{ max-width:min(100%,390px); }
 /* 写真と説明図を縦に並べる場合（実物 → しくみ の順で見せたいとき） */

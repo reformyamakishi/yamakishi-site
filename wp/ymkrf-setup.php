@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '51' );
+define( 'YMKRF_SETUP_VER', '53' );
 
 /* キッチンの「ヤマキシ標準工事内容」。
    ホームページの一覧表（7項目）と、番号入りの図（8項目）の
@@ -3954,7 +3954,7 @@ add_action( 'init', function () {
 	        （文字列だけで登録すると、名前が英語のままになるためです）
 	   ------------------------------------------------------------ */
 	if ( taxonomy_exists( 'ymkrf_works_cat' ) ) {
-		foreach ( array( 'kitchen' => 'キッチン', 'bathroom' => 'お風呂' ) as $ws => $wn ) {
+		foreach ( array( 'kitchen' => 'キッチン', 'bathroom' => 'お風呂', 'toilet' => 'トイレ' ) as $ws => $wn ) {
 			if ( ! term_exists( $ws, 'ymkrf_works_cat' ) ) {
 				wp_insert_term( $wn, 'ymkrf_works_cat', array( 'slug' => $ws ) );
 			}
@@ -4035,6 +4035,85 @@ add_action( 'init', function () {
 			$log[] = 'お風呂の施工事例サンプルを追加：' . $sm['title'];
 		}
 		update_option( 'ymkrf_works_sample_bath', '1' );
+	}
+
+
+	/* ------------------------------------------------------------
+	   3-n2. トイレの施工事例サンプルを3件つくります（見え方の確認用）
+	         キッチン・お風呂と同じように、トイレ一覧ページの下にも
+	         施工事例が並ぶようにするためです。
+	         本番の記事を入れたら、この3件は削除してください。
+	   ------------------------------------------------------------ */
+	if ( post_type_exists( 'ymkrf_works' ) && get_option( 'ymkrf_works_sample_toilet' ) !== '1' ) {
+
+		$tsamples = array(
+			array(
+				'title' => '【サンプル】和式トイレを、手洗いカウンター付きの洋式トイレに',
+				'slug'  => 'sample-toilet-01',
+				'area'  => '羽咋市',
+				'price' => '39万円',
+				'days'  => '2日',
+				'img'   => 'works-toilet-01.jpg',
+				'text'  => "段差のある和式トイレで、ご家族の立ち座りがご負担でした。床の段差をなくし、手洗いカウンター付きの洋式トイレに入れ替えています。手すりもあわせて取り付けました。
+
+※これは表示確認用のサンプル記事です。",
+			),
+			array(
+				'title' => '【サンプル】20年使ったトイレを、お手入れのラクな一体型に',
+				'slug'  => 'sample-toilet-02',
+				'area'  => '金津',
+				'price' => '50万円',
+				'days'  => '半日',
+				'img'   => 'works-toilet-02.jpg',
+				'text'  => "便器のフチ裏の汚れがなかなか落ちない、というご相談でした。フチなし形状の一体型トイレに替え、掃除の手間がぐっと減ったと喜んでいただいています。工事は半日で終わりました。
+
+※これは表示確認用のサンプル記事です。",
+			),
+			array(
+				'title' => '【サンプル】トイレの交換とあわせて、壁紙と床も張り替え',
+				'slug'  => 'sample-toilet-03',
+				'area'  => '小松市',
+				'price' => '32万円',
+				'days'  => '1日',
+				'img'   => 'works-toilet-03.jpg',
+				'text'  => "便器を外したときにしか張り替えられない場所ですので、トイレの交換と同時に壁紙と床もきれいにしました。あとから頼むより費用がおさえられます。
+
+※これは表示確認用のサンプル記事です。",
+			),
+		);
+
+		foreach ( $tsamples as $sm ) {
+			if ( get_page_by_path( $sm['slug'], OBJECT, 'ymkrf_works' ) ) continue;
+
+			$wid = wp_insert_post( array(
+				'post_type'    => 'ymkrf_works',
+				'post_status'  => 'publish',
+				'post_title'   => $sm['title'],
+				'post_name'    => $sm['slug'],
+				'post_content' => $sm['text'],
+				'post_excerpt' => mb_substr( strtok( $sm['text'], "\n" ), 0, 80 ),
+			) );
+			if ( ! $wid || is_wp_error( $wid ) ) continue;
+
+			wp_set_object_terms( $wid, 'toilet', 'ymkrf_works_cat' );
+
+			if ( taxonomy_exists( 'ymkrf_works_area' ) ) {
+				$at = term_exists( $sm['area'], 'ymkrf_works_area' );
+				if ( ! $at ) $at = wp_insert_term( $sm['area'], 'ymkrf_works_area' );
+				if ( ! is_wp_error( $at ) ) {
+					wp_set_object_terms( $wid, (int) $at['term_id'], 'ymkrf_works_area' );
+				}
+			}
+
+			update_post_meta( $wid, '_ymkrf_price',  $sm['price'] );
+			update_post_meta( $wid, '_ymkrf_period', $sm['days'] );
+
+			$mid = $img( $sm['img'] );
+			if ( $mid ) set_post_thumbnail( $wid, $mid );
+
+			$log[] = 'トイレの施工事例サンプルを追加：' . $sm['title'];
+		}
+		update_option( 'ymkrf_works_sample_toilet', '1' );
 	}
 
 
@@ -4262,6 +4341,149 @@ add_action( 'init', function () {
 			}
 		}
 		update_option( 'ymkrf_column_sample', '1' );
+	}
+
+
+	/* ------------------------------------------------------------
+	   3-o2. お役立ち情報（コラム）のサンプルを、トイレにも3件つくります。
+	         キッチン・お風呂と同じ見え方にするためです。
+	         トイレに本物の記事がすでに1件でもあるときは作りません。
+	         本番の記事を入れたら、【サンプル】の3件は削除してください。
+	   ------------------------------------------------------------ */
+	if ( post_type_exists( 'ymkrf_column' ) && get_option( 'ymkrf_column_sample_toilet' ) !== '1' ) {
+
+		$tcols = array(
+			array(
+				'slug'  => 'sample-column-toilet-01',
+				'title' => '【サンプル】トイレの交換、工事は何日かかる？半日で終わるって本当？',
+				'img'   => 'gga1-main.jpg',
+				'lead'  => 'ヤマキシのトイレリフォームパックは、ほとんどの機種が工期半日です。当日の流れと、その間トイレが使えない時間をご説明します。',
+				'text'  => "「工事のあいだ、トイレはどうするの？」というご質問をいちばん多くいただきます。便器の交換だけであれば、朝からはじめてお昼すぎには使えるようになります。
+
+<h2>午前：古いトイレの取り外し</h2>
+
+止水栓を閉めて、便器・タンク・便座を取り外します。運び出しと処分まで、標準工事費にふくまれています。
+
+<h2>午前〜昼：床と給排水の確認</h2>
+
+便器を外したときにしか見えない場所ですので、床の傷みや配管の状態をこの時点で確認します。手直しが必要な場合は、その場でご相談させていただきます。
+
+<h2>午後：新しいトイレの取り付け</h2>
+
+便器を据えて、給水・排水をつなぎ、水もれがないか確認します。リモコンの使い方をご説明して終わりです。
+
+<h2>手洗いカウンター付きの場合</h2>
+
+カウンターの取り付けと、そこまでの給排水の工事が加わります。それでも1日で終わることがほとんどです。
+
+<h2>その間のトイレ</h2>
+
+工事中の数時間は使えません。ご近所やお勤め先ですませていただくか、簡易トイレをご用意しますのでお申し付けください。
+
+※これは表示確認用のサンプル記事です。",
+			),
+			array(
+				'slug'  => 'sample-column-toilet-02',
+				'title' => '【サンプル】掃除がラクなトイレとは？フチなし・防汚素材・自動おそうじのちがい',
+				'img'   => 's160-point-bubble.jpg',
+				'lead'  => '「掃除がラクなトイレにしたい」というご要望が年々増えています。メーカーごとの工夫を、しくみから見くらべました。',
+				'text'  => "トイレ掃除がつらい理由は、だいたい決まっています。フチの裏・便器の表面・便座のすきま、この3つです。いまのトイレは、それぞれに手が打たれています。
+
+<h2>フチなし形状</h2>
+
+汚れがたまる「フチの裏」そのものをなくした形です。ひとふきで拭き取れるので、ブラシを入れて奥をこする作業がなくなります。
+
+<h2>汚れがつきにくい素材</h2>
+
+TOTOのセフィオンテクト、LIXILのアクアセラミック、Panasonicのスゴピカ素材など、メーカーごとに呼び方は違いますが、ねらいは同じです。表面をなめらかにして、汚れを引っかからせません。
+
+<h2>自動おそうじ</h2>
+
+流すたびに洗剤や泡で洗ってくれる機能です。Panasonicのアラウーノは、泡と水流で毎回洗います。日々のこすり洗いの回数が目に見えて減ります。
+
+<h2>すきまの少ない設計</h2>
+
+便座と便器のあいだ、タンクと便器のあいだ。ここに凹凸が少ないほど、拭き掃除がラクになります。
+
+<h2>どれを選ぶか</h2>
+
+すべてを備えた機種は価格も上がります。「いちばん面倒なのはどこか」を教えていただければ、そこに効く機種をおすすめします。
+
+※これは表示確認用のサンプル記事です。",
+			),
+			array(
+				'slug'  => 'sample-column-toilet-03',
+				'title' => '【サンプル】手洗いカウンターは付けるべき？費用と、向いているお宅',
+				'img'   => 'rs3c-main.jpg',
+				'lead'  => 'タンクなしのトイレにすると、手を洗う場所が別に必要になります。付ける・付けないの判断材料を整理しました。',
+				'text'  => "タンク付きのトイレは、タンクの上で手を洗えます。タンクをなくしたスッキリした形にすると、そこがなくなりますので、手洗いをどうするかを決める必要があります。
+
+<h2>手洗いカウンターを付ける場合</h2>
+
+ヤマキシでは、標準工事費が38,000円（税込）から53,000円（税込）に変わります。カウンター本体の費用は商品代にふくまれています。収納が付くタイプを選べば、掃除道具やペーパーのストックもしまえます。
+
+<h2>付けない場合</h2>
+
+トイレを出てすぐに洗面所があるお宅では、無理に付けなくても不便を感じないことが多いです。そのぶん費用をおさえられますし、トイレも広く使えます。
+
+<h2>迷ったときの目安</h2>
+
+・トイレから洗面所までが遠い
+・お子さまやご年配の方がいる
+・来客が多い
+
+このいずれかに当てはまるなら、付けておくと便利です。
+
+<h2>あとから付けられる？</h2>
+
+給排水の工事が必要になりますので、トイレの交換と同時のほうが費用はおさえられます。
+
+※これは表示確認用のサンプル記事です。",
+			),
+		);
+
+		$tterm = get_term_by( 'slug', 'toilet', 'ymkrf_product_cat' );
+		if ( $tterm && ! is_wp_error( $tterm ) ) {
+
+			/* すでに本物の記事があるときは、サンプルを足しません */
+			$hasq = new WP_Query( array(
+				'post_type'      => 'ymkrf_column',
+				'posts_per_page' => 1,
+				'fields'         => 'ids',
+				'no_found_rows'  => true,
+				'tax_query'      => array( array(
+					'taxonomy' => 'ymkrf_product_cat',
+					'field'    => 'term_id',
+					'terms'    => (int) $tterm->term_id,
+				) ),
+			) );
+			$already = $hasq->have_posts();
+			wp_reset_postdata();
+
+			if ( ! $already ) {
+				foreach ( $tcols as $sm ) {
+					if ( get_page_by_path( $sm['slug'], OBJECT, 'ymkrf_column' ) ) continue;
+
+					$cid = wp_insert_post( array(
+						'post_type'    => 'ymkrf_column',
+						'post_status'  => 'publish',
+						'post_title'   => $sm['title'],
+						'post_name'    => $sm['slug'],
+						'post_content' => $sm['text'],
+						'post_excerpt' => $sm['lead'],
+					) );
+					if ( ! $cid || is_wp_error( $cid ) ) continue;
+
+					wp_set_object_terms( $cid, array( (int) $tterm->term_id ), 'ymkrf_product_cat' );
+
+					$mid = $img( $sm['img'] );
+					if ( $mid ) set_post_thumbnail( $cid, $mid );
+
+					$log[] = 'トイレのコラムのサンプルを追加：' . $sm['title'];
+				}
+			}
+			update_option( 'ymkrf_column_sample_toilet', '1' );
+		}
 	}
 
 
@@ -4755,14 +4977,15 @@ add_action( 'init', function () {
 				array( '清潔機能', "ノズルきれい\nセルフクリーニング\nプレミスト\nクリーン便座（継ぎ目なし）\nクリーンノズル\nクリーンケース\n抗菌\nお掃除リフト\n便ふた着脱\nノズルそうじ\nセフィオンテクト\nフチなし形状" ),
 			),
 			'feats' => array(
+				/* この2つは説明図（もともと白地）なので、白い枠を残しています＝8番目の '1' */
 				array( 'GGAが提案する、', '３つの特長。', 'ノズルきれい',
-				       '「きれい除菌水」でノズルの内側も外側も自動で洗浄・除菌。使用していない時も定期的に洗浄し、キレイが長持ちします。', 'point-nozzle' ),
+				       '「きれい除菌水」でノズルの内側も外側も自動で洗浄・除菌。使用していない時も定期的に洗浄し、キレイが長持ちします。', 'point-nozzle', '', '', '1' ),
 				array( '', '', 'セフィオンテクト',
 				       '約1200℃で焼き上げた、ナノレベルに滑らかな陶器表面だから、汚れがツルっと落ちてずっときれいが続きます。', 'point-cefiontect' ),
 				array( '', '', 'トルネード洗浄',
 				       '渦を巻くようなトルネード洗浄が、少ない水で、汚れをしっかり洗い流します。', 'point-tornado' ),
 				array( 'エコロジーでエコノミー。', '「4.8L洗浄で超節水！」', '従来の1/3の水で洗浄',
-				       '1回あたり13L必要だった15年前の便器と比べて、大幅な節水を実現しました。毎日普通に使っているだけで、いつの間にか大きな節約効果があります。', 'point-eco' ),
+				       '1回あたり13L必要だった15年前の便器と比べて、大幅な節水を実現しました。毎日普通に使っているだけで、いつの間にか大きな節約効果があります。', 'point-eco', '', '', '1' ),
 			),
 			'opts' => array(
 				array( 'opt-towelbar', 'タオル掛け（YT408S4R）', '7900', 'スタンダードなタオル掛けです。', '' ),
@@ -5108,7 +5331,9 @@ add_action( 'init', function () {
 		update_post_meta( $pid, '_ymkrf_speclist', $rows );
 
 		/* --- おすすめポイント ---
-		   5番目＝写真1、6番目＝注記、7番目＝写真2（どれも省略できます） */
+		   5番目＝写真1、6番目＝注記、7番目＝写真2、8番目＝白い枠（どれも省略できます）
+		   8番目に '1' を入れると、その図版だけ白い下じきと細い枠が付きます。
+		   グラフや説明図（もともと白地のもの）に使ってください。 */
 		$rows = array();
 		foreach ( $tp2['feats'] as $r ) {
 			$rows[] = array(
@@ -5116,6 +5341,7 @@ add_action( 'init', function () {
 				'note' => isset( $r[5] ) ? $r[5] : '',
 				'img'  => $timg( $r[4], $r[2] ),
 				'img2' => isset( $r[6] ) ? $timg( $r[6], $r[2] ) : '',
+				'frame'=> isset( $r[7] ) ? $r[7] : '',
 			);
 		}
 		update_post_meta( $pid, '_ymkrf_features', $rows );
@@ -5144,6 +5370,47 @@ add_action( 'init', function () {
 
 		update_post_meta( $pid, '_ymkrf_img_missing', $missing - $m0 );
 		$log[] = '商品「' . $tp2['title'] . '」を登録しました → ' . get_permalink( $pid );
+	}
+
+
+	/* ------------------------------------------------------------
+	   3-p2. すでに登録ずみの商品の「おすすめポイント」を入れ直します。
+
+	         写真まわりの白い枠をやめたとき、GGA3の
+	         「ノズルきれい」と「従来の1/3の水で洗浄」だけは
+	         説明図なので枠を残す、という指定を反映するためです。
+
+	   ★ここに商品のスラッグを足して、その商品の
+	     _ymkrf_features_ver を上げれば、いつでも入れ直せます。
+	   ------------------------------------------------------------ */
+	$feat_fix = array( 'gga3' => '2' );
+
+	foreach ( $toilet_products as $tp3 ) {
+
+		if ( ! isset( $feat_fix[ $tp3['slug'] ] ) ) continue;
+
+		$p3 = get_page_by_path( $tp3['slug'], OBJECT, 'ymkrf_product' );
+		if ( ! $p3 ) continue;
+		if ( get_post_meta( $p3->ID, '_ymkrf_features_ver', true ) === $feat_fix[ $tp3['slug'] ] ) continue;
+
+		$pf3   = $tp3['prefix'];
+		$timg3 = function ( $key, $alt = '' ) use ( $img, $pf3 ) {
+			return $key ? $img( $pf3 . '-' . $key . '.jpg', $alt ) : '';
+		};
+
+		$rows = array();
+		foreach ( $tp3['feats'] as $r ) {
+			$rows[] = array(
+				'gsub' => $r[0], 'gttl' => $r[1], 'ttl' => $r[2], 'text' => $r[3],
+				'note' => isset( $r[5] ) ? $r[5] : '',
+				'img'  => $timg3( $r[4], $r[2] ),
+				'img2' => isset( $r[6] ) ? $timg3( $r[6], $r[2] ) : '',
+				'frame'=> isset( $r[7] ) ? $r[7] : '',
+			);
+		}
+		update_post_meta( $p3->ID, '_ymkrf_features', $rows );
+		update_post_meta( $p3->ID, '_ymkrf_features_ver', $feat_fix[ $tp3['slug'] ] );
+		$log[] = get_the_title( $p3->ID ) . 'のおすすめポイントを入れ直しました';
 	}
 
 
