@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '70' );
+define( 'YMKRF_SETUP_VER', '72' );
 
 /* キッチンの「ヤマキシ標準工事内容」。
    ホームページの一覧表（7項目）と、番号入りの図（8項目）の
@@ -208,6 +208,7 @@ add_action( 'init', function () {
 		$theme . '/bga',
 		$theme . '/rakutowa',
 		$theme . '/j1',
+		$theme . '/rejust',
 		WP_CONTENT_DIR . '/themes/ymkrf/assets/img/works',
 		$dir,                 // 最後の受け皿（wp-content/ymkrf-import）
 	);
@@ -733,7 +734,7 @@ add_action( 'init', function () {
 		'pleas-ls', 'alauno-s160', 'alauno-s160-counter', 'gga3', 'gga1-counter',
 		'satis-s', 'satis-s-counter', 'neorest-rs3', 'neorest-rs3-counter',
 		/* 洗面化粧台 */
-		'v1', 'd7', 'bga', 'rakutowa', 'j1',
+		'v1', 'd7', 'bga', 'rakutowa', 'j1', 'rejust',
 	) as $slug ) {
 
 		$p = get_page_by_path( $slug, OBJECT, 'ymkrf_product' );
@@ -3744,6 +3745,7 @@ add_action( 'init', function () {
 		'bga'                 => 'bga-main.jpg',
 		'rakutowa'            => 'rakutowa-main.jpg',
 		'j1'                  => 'j1-main.jpg',
+		'rejust'              => 'rejust-main.jpg',
 	);
 	foreach ( $main_files as $slug => $file ) {
 		$pp = get_page_by_path( $slug, OBJECT, 'ymkrf_product' );
@@ -5949,11 +5951,74 @@ TOTOのセフィオンテクト、LIXILのアクアセラミック、Panasonic�
 			),
 		),
 
+		/* ===== Eグレード リジャスト（タカラスタンダード） ===== */
+		array(
+			'slug' => 'rejust', 'prefix' => 'rejust', 'title' => 'リジャスト',
+			'meta' => array(
+				'_ymkrf_catch' => 'シンプルなデザインの洗面化粧台。',
+				'_ymkrf_grade' => 'Eグレード', '_ymkrf_name' => 'リジャスト',
+				'_ymkrf_size'  => '間口75cm',
+				'_ymkrf_work'  => '24200', '_ymkrf_item' => '155600',
+				'_ymkrf_days'  => '', '_ymkrf_daystext' => '最短当日',
+				'_ymkrf_pt1'   => 'たっぷり収納', '_ymkrf_pt2' => 'ぴったりサイズ', '_ymkrf_pt3' => '省エネタイプ',
+				'_ymkrf_caution' => '※写真はイメージです。',
+				'_ymkrf_note_colors' => 'none',
+			),
+			'total' => 179800, 'maker' => 'takara',
+			'shops' => array( 'nonoichi', 'komathu', 'hakui', 'kawakita' ),
+			'main'  => array( 'main', 'タカラスタンダード リジャスト 洗面化粧台 間口75cm' ),
+			'labels' => array( '_ymkrf_lbl_colors' => '扉カラー（グループ1）' ),
+			'sets' => array(
+				'_ymkrf_colors' => array(
+					array( 'door-light',       'ライト' ),
+					array( 'door-lightwhite',  'ライトホワイト' ),
+					array( 'door-mediumbrown', 'ミディアムブラウン' ),
+					array( 'door-darkbrown',   'ダークブラウン' ),
+					array( 'door-superwhite',  'スーパーホワイト' ),
+					array( 'door-white',       'ホワイト' ),
+					array( 'door-winered',     'ワインレッド' ),
+				),
+			),
+			'specs' => array(
+				array( 'spec-mirror',  'LED照明3面鏡',              'くもり止めコートあり' ),
+				array( 'spec-bowl',    '人造大理石 フラットカウンター', '容量12L' ),
+				array( 'spec-faucet',  'シングルレバー式シャワー水栓', '' ),
+				array( 'spec-cabinet', '引き出し付きキャビネット',     '木製' ),
+			),
+			'feats' => array(
+				array( 'ミラー裏に収納スペースを確保。', '「3面鏡ミラー」', 'たっぷり収納スペース。',
+				       '中は内側コンセントや小物ラックを備えた、整頓に便利なたっぷりの収納スペースです。',
+				       'point-storage', '', '', '1' ),
+				array( '', '', '便利な内部コンセント付き。',
+				       '電動歯ブラシなど、棚に収納したままで充電でき、便利です。', 'point-outlet' ),
+				array( '1cm刻みでオーダー。', '「ぴったりサイズ洗面台」', 'リフォームに最適。',
+				       '特殊なサイズの空間にも壁とのスキマがなく、ぴったり収まります（1cm刻み）。',
+				       'point-fit', '※こちらはオプションとなります。価格は別途ご確認ください。', '', '1' ),
+				array( '省エネタイプ。', '「くもり止めコーティング」', '電気ヒーターなしでもくもり止め効果を発揮。',
+				       'ミラー表面に特殊なコーティングを施し、くもり止め効果を発揮します。', 'point-kumori', '', '', '1' ),
+			),
+			'opts' => array(
+				array( 'opt-highback',      'ハイバック仕様 間口750mm',                 '0',     'シングルレバー式シャワー水栓（クロムメッキ）エコタイプ／3面鏡LEDコートあり。', '※差額なし' ),
+				array( 'opt-faceclear',     'フェイスクリアミラー 3面鏡 間口750mm',     '93800', '手元照明付。自然な発色で顔に影が出来ず、メイクアップにおすすめ。', '' ),
+				array( 'opt-slide2',        '2段スライドタイプ 間口750mm',              '15900', '奥の収納物もラクに取り出せます。', '' ),
+				array( 'opt-whitefaucet',   'シングルレバーシャワー水栓（ホワイト）エコ水栓', '1000', 'レバー中央のクリック感で湯水をお知らせ。お湯のムダ使いをカットできます。', '' ),
+				array( 'opt-interior-full', '脱衣場内装パック（1坪）',                  '80000', '天井・壁クロス張替え＋床クッションフロアー貼り替え（1坪まで）。', '' ),
+				array( 'opt-interior-wall', '脱衣場内装パック（1坪／壁のみ）',          '65000', '壁クロス張替え（1坪まで）。', '' ),
+			),
+		),
+
 	);
+
+	/* ★1回のページ読み込みで登録するのは「1機種だけ」にしています。
+	     写真が1機種で20枚以上あり、まとめて処理すると
+	     PHPの制限時間を超えて途中で止まってしまうためです。
+	     残りは、次にページを開いたときに1機種ずつ登録されます。 */
+	$lav_made = 0;
 
 	foreach ( $lav_products as $lp ) {
 
 		if ( get_page_by_path( $lp['slug'], OBJECT, 'ymkrf_product' ) ) continue;
+		if ( $lav_made >= 1 ) break;
 
 		$pid = wp_insert_post( array(
 			'post_type'   => 'ymkrf_product',
@@ -6037,6 +6102,7 @@ TOTOのセフィオンテクト、LIXILのアクアセラミック、Panasonic�
 
 		update_post_meta( $pid, '_ymkrf_img_missing', $missing - $m0 );
 		$log[] = '商品「' . $lp['title'] . '」を登録しました → ' . get_permalink( $pid );
+		$lav_made++;
 	}
 
 	/* 登録できなかった商品があれば、管理画面のお知らせに出します。
@@ -6048,10 +6114,15 @@ TOTOのセフィオンテクト、LIXILのアクアセラミック、Panasonic�
 		}
 	}
 	if ( $lav_missing ) {
-		$log[] = '★洗面化粧台で登録できなかった商品：' . implode( '／', $lav_missing );
-	} else {
-		$log[] = '洗面化粧台は' . count( $lav_products ) . '機種すべて登録ずみです';
+		/* まだ残っているときは、ここでいったん終わります。
+		   完了の印（ymkrf_setup_done）を付けないので、
+		   次にページを開いたときに続きから登録されます。 */
+		$log[] = '洗面化粧台の残り：' . implode( '／', $lav_missing )
+		       . '　→ ページをもう一度開くと、続きを1機種ずつ登録します';
+		update_option( 'ymkrf_setup_log', $log );
+		return;
 	}
+	$log[] = '洗面化粧台は' . count( $lav_products ) . '機種すべて登録ずみです';
 
 	/* 洗面化粧台は、どの機種も工期「最短当日」です。
 	   すでに登録ずみの商品にも、あとから入れます。 */
