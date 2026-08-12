@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '65' );
+define( 'YMKRF_SETUP_VER', '68' );
 
 /* キッチンの「ヤマキシ標準工事内容」。
    ホームページの一覧表（7項目）と、番号入りの図（8項目）の
@@ -205,6 +205,8 @@ add_action( 'init', function () {
 		$theme . '/neorest-rs3-counter',
 		$theme . '/v1',
 		$theme . '/d7',
+		$theme . '/bga',
+		$theme . '/rakutowa',
 		WP_CONTENT_DIR . '/themes/ymkrf/assets/img/works',
 		$dir,                 // 最後の受け皿（wp-content/ymkrf-import）
 	);
@@ -730,7 +732,7 @@ add_action( 'init', function () {
 		'pleas-ls', 'alauno-s160', 'alauno-s160-counter', 'gga3', 'gga1-counter',
 		'satis-s', 'satis-s-counter', 'neorest-rs3', 'neorest-rs3-counter',
 		/* 洗面化粧台 */
-		'v1', 'd7',
+		'v1', 'd7', 'bga', 'rakutowa',
 	) as $slug ) {
 
 		$p = get_page_by_path( $slug, OBJECT, 'ymkrf_product' );
@@ -3738,6 +3740,8 @@ add_action( 'init', function () {
 		/* 洗面化粧台 */
 		'v1'                  => 'v1-main.jpg',
 		'd7'                  => 'd7-main.jpg',
+		'bga'                 => 'bga-main.jpg',
+		'rakutowa'            => 'rakutowa-main.jpg',
 	);
 	foreach ( $main_files as $slug => $file ) {
 		$pp = get_page_by_path( $slug, OBJECT, 'ymkrf_product' );
@@ -3795,6 +3799,9 @@ add_action( 'init', function () {
 		'lidea-m'  => array( 'lidea-main.jpg',   'LIXIL リデア Mタイプ 1坪サイズ（ユニットバス）' ),
 		/* 洗面化粧台V1は、いただいた新しい写真（中央ぞろえ）に差し替えました */
 		'v1'       => array( 'v1-main.jpg',      'LIXIL V1 洗面化粧台 間口75cm', 'v8' ),
+		/* D7・BGAも、いただいた商品写真に差し替えました */
+		'd7'       => array( 'd7-main.jpg',      'LIXIL D7 洗面化粧台 間口75cm', 'v2' ),
+		'bga'      => array( 'bga-main.jpg',     'クリナップ BGA 洗面化粧台 間口75cm', 'v2' ),
 	);
 	foreach ( $retrim as $slug => $info ) {
 		$tp = get_page_by_path( $slug, OBJECT, 'ymkrf_product' );
@@ -5778,6 +5785,113 @@ TOTOのセフィオンテクト、LIXILのアクアセラミック、Panasonic�
 			),
 		),
 
+		/* ===== Hグレード BGA（クリナップ） ===== */
+		array(
+			'slug' => 'bga', 'prefix' => 'bga', 'title' => 'BGA',
+			'meta' => array(
+				'_ymkrf_catch' => 'シンプルなデザインと機能性が魅力。',
+				'_ymkrf_grade' => 'Hグレード', '_ymkrf_name' => 'BGA',
+				'_ymkrf_size'  => '間口75cm',
+				'_ymkrf_work'  => '24200', '_ymkrf_item' => '85600',
+				'_ymkrf_days'  => '', '_ymkrf_daystext' => '最短当日',
+				'_ymkrf_pt1'   => 'スタイリッシュ', '_ymkrf_pt2' => '洗髪しやすい', '_ymkrf_pt3' => '節湯',
+				'_ymkrf_caution' => '※写真はイメージです。',
+				'_ymkrf_note_colors' => 'none', '_ymkrf_note_tops' => 'none',
+			),
+			'total' => 109800, 'maker' => 'cleanup',
+			'shops' => array( 'nonoichi', 'komathu', 'hakui', 'shinkaga', 'kawakita', 'kanadu' ),
+			'main'  => array( 'main', 'クリナップ BGA 洗面化粧台 間口75cm' ),
+			'labels' => array( '_ymkrf_lbl_colors' => 'ボウルカラー', '_ymkrf_lbl_tops' => '扉カラー（ハイグレード）' ),
+			'sets' => array(
+				'_ymkrf_colors' => array( array( 'color-white', 'ホワイト' ) ),
+				'_ymkrf_tops' => array(
+					array( 'door-naturalwood', 'ナチュラルウッド' ),
+					array( 'door-darkwood',    'ダークウッド' ),
+					array( 'door-smoothwhite', 'スムースホワイト' ),
+				),
+			),
+			'specs' => array(
+				array( 'spec-mirror',  '3面鏡ミラーキャビネット', 'くもり止めヒーター付き（LEDランプ）' ),
+				array( 'spec-bowl',    '人工大理石ボウル',        '容量15L' ),
+				array( 'spec-cabinet', '引出しタイプキャビネット', '' ),
+				array( 'spec-handle',  'バー取手',                '' ),
+				array( 'spec-faucet',  'シャワー付シングルレバー水栓', '' ),
+			),
+			'feats' => array(
+				array( '限られたスペースでも広々使える、', 'コンパクト＆ワイドなデザイン', '奥行き50cmだから、狭い空間でも広々つかえる。',
+				       'すれ違いがスムーズで、余裕のある洗面空間になります。', 'point-depth', '', '', '1' ),
+				array( '', '', 'コンパクトでも広々使えるスクエアなボール。',
+				       "コンパクトながら底面積が広い洗面ボール。バケツも入ります。\nボール前ぶちを薄くしたスタイリッシュなデザインです。",
+				       'point-square', '', 'point-square2' ),
+				array( '洗髪もしやすいホース式で、さらにエコ。', '「シャワー付水栓（節湯C1対応）」', '洗髪時や、背の高いものの水汲みに便利。',
+				       '高さ7cmまでリフトアップするので、便利です。', 'point-lift', '', 'point-lift2' ),
+				array( '', '', '節湯水栓でエコ。',
+				       'よく使うレバー中央位置で水を優先して吐水。水と湯の境にクリック感を設け、使い分けができます。ムダなガスや電気の使用を防ぎます。',
+				       'point-eco', '', '', '1' ),
+			),
+			'opts' => array(
+				array( 'opt-opendoor',      'キャビネット 開きタイプ 間口750mm',      '-4400',  '開き戸タイプキャビネットに変更できます。', '' ),
+				array( 'opt-wallwasher',    '洗濯機用ウォールキャビネット',            '14300',  '洗濯機の上部スペースを活かして効率的に収納。', '' ),
+				array( 'opt-middle',        '洗濯機用ミドルキャビネット（オープン）',   '13200',  '洗濯機の上部スペースを活かして効率的に収納。', '' ),
+				array( 'opt-wall750',       'ウォールキャビネット（W750）',             '14300',  'W750×D330×H400。洗面台と同色の吊戸棚です。', '' ),
+				array( 'opt-interior-full', '脱衣場内装パック（1坪）',                  '80000',  '天井・壁クロス張替え＋床クッションフロアー貼り替え（1坪まで）。', '' ),
+				array( 'opt-interior-wall', '脱衣場内装パック（1坪／壁のみ）',          '65000',  '壁クロス張替え（1坪まで）。', '' ),
+			),
+		),
+
+		/* ===== Gグレード ラクトワ（クリナップ） ===== */
+		array(
+			'slug' => 'rakutowa', 'prefix' => 'rakutowa', 'title' => 'ラクトワ',
+			'meta' => array(
+				'_ymkrf_catch' => '水ハネ、水垂れを気にすることなく使えます。',
+				'_ymkrf_grade' => 'Gグレード', '_ymkrf_name' => 'ラクトワ',
+				'_ymkrf_size'  => '間口75cm',
+				'_ymkrf_work'  => '24200', '_ymkrf_item' => '105600',
+				'_ymkrf_days'  => '', '_ymkrf_daystext' => '最短当日',
+				'_ymkrf_pt1'   => 'スタイリッシュ', '_ymkrf_pt2' => 'コンパクト', '_ymkrf_pt3' => '収納ひろびろ',
+				'_ymkrf_caution' => '※写真はイメージです。',
+				'_ymkrf_note_colors' => 'none', '_ymkrf_note_tops' => 'none',
+			),
+			'total' => 129800, 'maker' => 'cleanup',
+			'shops' => array( 'hakui', 'nonoichi', 'komathu', 'tazuruhama', 'kanadu', 'asahi', 'kahahothu' ),
+			'main'  => array( 'main', 'クリナップ ラクトワ 洗面化粧台 間口75cm' ),
+			'labels' => array( '_ymkrf_lbl_colors' => 'ボウルカラー', '_ymkrf_lbl_tops' => '扉カラー' ),
+			'sets' => array(
+				'_ymkrf_colors' => array( array( 'color-white', 'ホワイト' ) ),
+				'_ymkrf_tops'   => array( array( 'door-white', 'ホワイト' ) ),
+			),
+			'handles' => array(
+				array( 'handle-silver', 'シルバー' ),
+				array( 'handle-black',  'ブラック' ),
+			),
+			'specs' => array(
+				array( 'spec-mirror',  'スタンダードLED3面鏡', '' ),
+				array( 'spec-bowl',    '人工大理石ボウル',      '容量16L' ),
+				array( 'spec-cabinet', '開きタイプ',            '' ),
+				array( 'spec-handle',  'バー取手',              '' ),
+				array( 'spec-faucet',  'シャワー付シングルレバー水栓', '' ),
+			),
+			'feats' => array(
+				array( '楽に選べてスタイリッシュ。', '「コンパクトでも広く使えるスクエアボール」', '十分な容量のボウル',
+				       'ボール底面は広くスクエアな形状で、十分な容量を確保しています。', 'point-bowl' ),
+				array( '', '', 'スタイリッシュな見た目',
+				       '両サイドのカウンターは、濡らしたくない化粧品などの一時置きとして使えます。', 'point-bowl2', '※間口75cmの場合は11cmです。' ),
+				array( 'お手入れしやすい。', '「排水口・ヘアキャッチャー」', '外して洗える',
+				       'フタが簡単に分解できる構造で、お手入れラクラクです。', 'point-drain', '', 'point-drain2' ),
+				array( '', '', '段差の少ないフランジ形状', '排水口まわりの段差が少なく、汚れがたまりにくい形状です。', '' ),
+				array( '高さのある収納に便利。', '「開き戸タイプ」', '収納スペースが広い',
+				       '高さのあるバケツや掃除道具などをたっぷり収納できます。', '' ),
+			),
+			'opts' => array(
+				array( 'opt-w900',          '間口900mm',                          '20000',  'スタンダード3面鏡、開き扉W900幅に変更の場合。', '' ),
+				array( 'opt-slide',         '下台オールスライド（W750）',          '21400',  '全開するレールを採用し、奥の収納物もラクに取り出せます。', '' ),
+				array( 'opt-slimmirror',    'スリムLED3面鏡（W750）＋アンダーパネル', '38400', 'マグネットアイテムを使用できるアンダーパネル。デザイン性も向上します。', '' ),
+				array( 'opt-touchless',     'タッチレスシングルレバー水栓',        '77800',  '吐水は横のセンサーに手をかざすだけ。便利なシャワー付タッチレス水栓です。', '' ),
+				array( 'opt-interior-full', '脱衣場内装パック（1坪）',             '80000',  '天井・壁クロス張替え＋床クッションフロアー貼り替え（1坪まで）。', '' ),
+				array( 'opt-interior-wall', '脱衣場内装パック（1坪／壁のみ）',     '65000',  '壁クロス張替え（1坪まで）。', '' ),
+			),
+		),
+
 	);
 
 	foreach ( $lav_products as $lp ) {
@@ -5811,6 +5925,15 @@ TOTOのセフィオンテクト、LIXILのアクアセラミック、Panasonic�
 			$rows = array();
 			foreach ( $list as $r ) $rows[] = array( 'img' => $limg( $r[0], $r[1] ), 'name' => $r[1] );
 			update_post_meta( $pid, $key, $rows );
+		}
+
+		/* --- 取っ手（あれば）--- */
+		if ( ! empty( $lp['handles'] ) ) {
+			$rows = array();
+			foreach ( $lp['handles'] as $r ) {
+				$rows[] = array( 'img' => $limg( $r[0], $r[1] ), 'name' => $r[1], 'code' => isset( $r[2] ) ? $r[2] : '' );
+			}
+			update_post_meta( $pid, '_ymkrf_handles', $rows );
 		}
 
 		/* --- 標準仕様（写真つき）--- */
