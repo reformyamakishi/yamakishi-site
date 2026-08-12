@@ -443,14 +443,19 @@ address{ font-style:normal; }
 .p-price__body{ display:flex; flex-direction:column; flex:1; padding:18px; }
 .p-price__name{ font-size:19px; font-weight:900; }
 .p-price__desc{ font-size:14px; color:var(--ink-sub); margin:8px 0 14px; flex:1; }
-.p-price__yen{ display:flex; align-items:baseline; flex-wrap:wrap; gap:4px; color:var(--brand); font-weight:900; line-height:1.05; }
-.p-price__yen .lbl{ font-size:13px; color:var(--ink); background:var(--brand-tint); padding:3px 9px; border-radius:6px; }
+/* 金額はカードの中央にそろえます（いちばん見せたいところなので） */
+.p-price__yen{
+  display:flex; align-items:baseline; flex-wrap:wrap; justify-content:center; text-align:center;
+  gap:4px; color:var(--brand); font-weight:900; line-height:1.05;
+  /* 下にあった「本体＋標準工事＋既存撤去処分」を消したので、
+     ボタンとのあいだの余白はここで取ります */
+  margin-bottom:18px;
+}
+.p-price__yen .lbl{ font-size:13.5px; color:var(--ink); background:var(--brand-tint); padding:3px 9px; border-radius:6px; }
+/* 金額はいちばん目を引かせたい数字なので、大きめに。
+   狭い画面でもはみ出さないよう clamp で上限・下限を決めています。 */
 .p-price__yen .num{
-  font-size:38px; letter-spacing:-.02em;
-  /* 金額は黄色のマーカーを引いて目立たせます */
-  padding:0 5px;
-  background:linear-gradient(transparent 55%, #ffe95c 55%);
-  -webkit-box-decoration-break:clone; box-decoration-break:clone;
+  font-size:clamp(48px,13.5vw,62px); letter-spacing:-.035em;
 }
 /* 小数点以下は小さくして、整数部の上端にそろえます。
    （例：162.8 の「.8」を小さく、162 の上のほうに寄せる）
@@ -459,24 +464,43 @@ address{ font-style:normal; }
   font-size:.72em; letter-spacing:0;
   /* position:relative で持ち上げると、行の高さも黄色いマーカーもそのままです。
      下端が黄色いマーカーに少しかかる高さにしています。 */
-  position:relative; top:-.30em; margin-left:-.05em;
+  position:relative; top:-.30em; margin-left:.04em;
 }
-.p-price__yen .unit{ font-size:15px; }
+.p-price__yen .unit{ font-size:17px; }
+/* 「（税込）」は補足なので、単位より少し小さく */
+.p-price__yen .unit .tax{ font-size:.8em; font-weight:900; }
 /* 金額の上に置く一言（外壁塗装の「足場代込み！」など）。
    flex-basis:100% で、かならず金額の上の行になります。 */
 .p-price__yen .above{
   flex-basis:100%; margin-bottom:4px;
   font-size:clamp(16px,4.2vw,19px); font-weight:900; color:var(--brand); line-height:1.4;
 }
+/* 「全部コミコミ!!」。金額のすぐ上に置く、いちばんの売り文句です。
+   赤い丸帯（●）の中に、黄色い文字で入れています。 */
+.p-price__yen .above--all{ margin-bottom:8px; }
+.p-price__yen .above--all b{
+  display:inline-block;
+  background:var(--brand); color:#ffe95c;
+  font-size:clamp(15px,4.1vw,18px); font-weight:900; letter-spacing:.06em;
+  line-height:1.45; padding:5px 18px; border-radius:999px;
+}
 /* 金額と単位は必ず同じ行に並べます。
    ひとつの入れ物に入れて、その中では折り返さないようにしています。 */
-.p-price__amount{ display:inline-flex; align-items:baseline; gap:4px; white-space:nowrap; }
+/* 金額と「万円〜（税込）」をひとまとまりに。
+   黄色いマーカーは、このまとまり全体（＝（税込）まで）に引きます。 */
+.p-price__amount{
+  display:inline-flex; align-items:baseline; gap:4px; white-space:nowrap;
+  padding:0 6px;
+  background:linear-gradient(transparent 58%, #ffe95c 58%);
+}
 .p-price__yen .num,
 .p-price__yen .unit{ white-space:nowrap; }
 /* 「足場代込み！」の下は、ラベルと金額を必ず同じ行に。
    入りきらないときは、ラベルだけ上の行にまわします。 */
 .p-price__yen:has(.above){ row-gap:0; }
-.p-price__inc{ font-size:12.5px; color:var(--ink-sub); margin:8px 0 16px; }
+/* 金額と「万円〜（税込）」は p-price__amount でひとまとまりにしてあるので、
+   狭い画面では「工事費込み」の札だけが上の行に回り、金額は必ず1行に並びます。 */
+.p-price__inc{ font-size:12.5px; color:var(--ink-sub); margin:8px 0 16px; text-align:center; }
 .p-price__link{
   display:flex; align-items:center; justify-content:center; gap:8px;
   min-height:50px; background:var(--brand-tint); color:var(--brand-dark);
