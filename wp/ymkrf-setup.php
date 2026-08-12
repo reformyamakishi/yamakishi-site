@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '58' );
+define( 'YMKRF_SETUP_VER', '60' );
 
 /* キッチンの「ヤマキシ標準工事内容」。
    ホームページの一覧表（7項目）と、番号入りの図（8項目）の
@@ -3792,7 +3792,7 @@ add_action( 'init', function () {
 		'ofuroa'   => array( 'ofuroa-main.jpg',  'Panasonic オフローラ 1坪サイズ（ユニットバス）' ),
 		'lidea-m'  => array( 'lidea-main.jpg',   'LIXIL リデア Mタイプ 1坪サイズ（ユニットバス）' ),
 		/* 洗面化粧台V1は、いただいた新しい写真（中央ぞろえ）に差し替えました */
-		'v1'       => array( 'v1-main.jpg',      'LIXIL V1 洗面化粧台 間口75cm', 'v4' ),
+		'v1'       => array( 'v1-main.jpg',      'LIXIL V1 洗面化粧台 間口75cm', 'v5' ),
 	);
 	foreach ( $retrim as $slug => $info ) {
 		$tp = get_page_by_path( $slug, OBJECT, 'ymkrf_product' );
@@ -5523,9 +5523,7 @@ TOTOのセフィオンテクト、LIXILのアクアセラミック、Panasonic�
 				'_ymkrf_grade' => 'Jグレード', '_ymkrf_name' => 'V1',
 				'_ymkrf_size'  => '間口75cm',
 				'_ymkrf_work'  => '24200', '_ymkrf_item' => '50600',
-				/* ★工期はPDFに書かれていなかったので空にしてあります。
-				   「半日」などが決まったら、ここに入れてください。 */
-				'_ymkrf_days'  => '', '_ymkrf_daystext' => '',
+				'_ymkrf_days'  => '', '_ymkrf_daystext' => '最短当日',
 				'_ymkrf_pt1'   => '使いやすい', '_ymkrf_pt2' => '省エネ設計', '_ymkrf_pt3' => '収納抜群',
 				'_ymkrf_caution' => '※写真はイメージです。',
 				'_ymkrf_note_colors' => 'none',
@@ -5657,6 +5655,17 @@ TOTOのセフィオンテクト、LIXILのアクアセラミック、Panasonic�
 
 		update_post_meta( $pid, '_ymkrf_img_missing', $missing - $m0 );
 		$log[] = '商品「' . $lp['title'] . '」を登録しました → ' . get_permalink( $pid );
+	}
+
+	/* 洗面化粧台は、どの機種も工期「最短当日」です。
+	   すでに登録ずみの商品にも、あとから入れます。 */
+	foreach ( $lav_products as $lp2 ) {
+		$p2 = get_page_by_path( $lp2['slug'], OBJECT, 'ymkrf_product' );
+		if ( ! $p2 ) continue;
+		if ( get_post_meta( $p2->ID, '_ymkrf_daystext', true ) === '最短当日' ) continue;
+		update_post_meta( $p2->ID, '_ymkrf_days', '' );
+		update_post_meta( $p2->ID, '_ymkrf_daystext', '最短当日' );
+		$log[] = get_the_title( $p2->ID ) . 'の工期を「最短当日」にしました';
 	}
 
 
