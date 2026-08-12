@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '48' );
+define( 'YMKRF_SETUP_VER', '49' );
 
 /* キッチンの「ヤマキシ標準工事内容」。
    ホームページの一覧表（7項目）と、番号入りの図（8項目）の
@@ -723,9 +723,9 @@ add_action( 'init', function () {
 
 		$broken = false;
 
-		/* アイキャッチが無い、または実体が消えている */
-		$th = (int) get_post_thumbnail_id( $p->ID );
-		if ( ! $th || ! get_attached_file( $th ) ) $broken = true;
+		/* アイキャッチが空なだけでは作り直しません。
+		   （作り直すと商品が二重にできることがあったためです。
+		     アイキャッチは 3-j と 3-y で入れ直します） */
 
 		$note = get_post_meta( $p->ID, '_ymkrf_img_missing', true );
 
@@ -752,6 +752,49 @@ add_action( 'init', function () {
 			$log[] = "写真が入っていなかったので「{$slug}」を登録し直しました";
 		}
 	}
+
+	/* ------------------------------------------------------------
+	   2-z. 同じ商品が2つできてしまったときの掃除
+
+	        アイキャッチが空だと商品を作り直す処理が入っていたため、
+	        ザ・クラッソとリデアMが二重に登録されてしまいました。
+	        同じ商品名のものが2つ以上あったら、1つだけ残します。
+	        （残すのは、写真が入っているほう。両方入っていれば先にできたほう）
+	   ------------------------------------------------------------ */
+	$dups = get_posts( array(
+		'post_type'      => 'ymkrf_product',
+		'post_status'    => 'any',
+		'posts_per_page' => -1,
+		'orderby'        => 'ID',
+		'order'          => 'ASC',
+	) );
+	$seen_titles = array();
+	foreach ( $dups as $dp ) {
+		$key = $dp->post_title;
+		if ( ! isset( $seen_titles[ $key ] ) ) { $seen_titles[ $key ] = $dp; continue; }
+
+		$keep = $seen_titles[ $key ];
+		$drop = $dp;
+
+		$kt = (int) get_post_thumbnail_id( $keep->ID );
+		$dt = (int) get_post_thumbnail_id( $drop->ID );
+		$kok = ( $kt && get_attached_file( $kt ) );
+		$dok = ( $dt && get_attached_file( $dt ) );
+		if ( ! $kok && $dok ) { $tmp = $keep; $keep = $drop; $drop = $tmp; }
+
+		wp_delete_post( $drop->ID, true );
+		$seen_titles[ $key ] = $keep;
+		$log[] = '重複していた商品「' . $key . '」を1つに整理しました';
+
+		/* URLのうしろに付いた -2 などを外して、元のURLに戻します */
+		if ( preg_match( '/^(.+)-\d+$/', $keep->post_name, $m2 )
+			&& ! get_page_by_path( $m2[1], OBJECT, 'ymkrf_product' ) ) {
+			wp_update_post( array( 'ID' => $keep->ID, 'post_name' => $m2[1] ) );
+			$keep->post_name = $m2[1];
+			$log[] = '「' . $key . '」のURLを ' . $m2[1] . ' に戻しました';
+		}
+	}
+
 
 	/* ------------------------------------------------------------
 	   3. V-style を1件つくる
