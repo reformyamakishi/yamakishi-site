@@ -149,7 +149,10 @@ function ymkrf_column_section( $slug, $catname, $number = 3 ) {
 		?>
 		<section class="l-section l-section--soft" id="column">
 			<div class="l-wrap">
-				<h2 class="p-prd__bar"><?php echo esc_html( $catname ); ?>リフォームお役立ち情報</h2>
+				<div class="c-head">
+				<span class="c-head__en">COLUMN</span>
+				<h2 class="c-head__title"><?php echo esc_html( $catname ); ?>リフォームお役立ち情報</h2>
+			</div>
 				<div class="p-col__placeholder">
 					<p><b>この場所に、コラムが新しい順で<?php echo (int) $number; ?>件並びます。</b></p>
 					<p>
@@ -177,7 +180,10 @@ function ymkrf_column_section( $slug, $catname, $number = 3 ) {
 	?>
 	<section class="l-section l-section--soft" id="column">
 		<div class="l-wrap">
-			<h2 class="p-prd__bar"><?php echo esc_html( $catname ); ?>リフォームお役立ち情報</h2>
+			<div class="c-head">
+				<span class="c-head__en">COLUMN</span>
+				<h2 class="c-head__title"><?php echo esc_html( $catname ); ?>リフォームお役立ち情報</h2>
+			</div>
 			<div class="p-col__cards">
 				<?php while ( $q->have_posts() ) : $q->the_post(); ymkrf_column_card(); endwhile; ?>
 			</div>

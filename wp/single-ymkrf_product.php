@@ -31,8 +31,8 @@ while ( have_posts() ) : the_post();
 
 $d     = ymkrf_product_data();
 $sib   = ymkrf_product_siblings();
-/* 施工事例は下のほうで ymkrf_works_section() が自分で取り出すので、
-   ここでは取り出していません（トップページと同じ形にそろえたため）。 */
+/* 施工事例は、この商品詳細ページには出しません。
+   商品一覧ページ（/products/<分類>/）とトップページに出しています。 */
 $cat   = ! empty( $d['cats'] ) ? $d['cats'][0] : null;
 $maker = ! empty( $d['makers'] ) ? $d['makers'][0] : null;
 
@@ -443,16 +443,14 @@ if ( ! empty( $pn['items'] ) ) :
 </section>
 <?php endif; ?>
 
-<!-- =========== 施工事例（自動） ===========
-     トップページの施工事例とまったく同じ形（Before / After 比較スライダー）です。
-     中身は inc/functions-product.php の ymkrf_works_card() が作っています。
-     ここを直したいときは、商品一覧ページ・トップページと共通なので
-     ymkrf_works_card() のほうを直してください。 -->
-<?php
-if ( $cat && function_exists( 'ymkrf_works_section' ) ) {
-	ymkrf_works_section( $cat->slug, ymkrf_cat_label( $cat->slug, $cat->name ), 3 );
-}
-?>
+<!-- =========== 施工事例 ===========
+     ★商品詳細ページには施工事例を出しません（ご指示により削除）。
+       施工事例は、商品一覧ページ（/products/<分類>/）と
+       トップページに出しています。
+       もし戻したくなったときは、ここに
+       ymkrf_works_section( $cat->slug, ymkrf_cat_label( $cat->slug, $cat->name ), 3 );
+       をPHPタグで囲んで書けば復活します。
+-->
 
 <!-- =========== 最後のご案内 =========== -->
 <section class="l-section">

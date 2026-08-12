@@ -1230,7 +1230,10 @@ function ymkrf_works_section( $slug, $catname, $number = 3 ) {
 		?>
 		<section class="l-section" id="works">
 			<div class="l-wrap">
-				<h2 class="p-prd__bar"><?php echo esc_html( $catname ); ?>の施工事例</h2>
+				<div class="c-head">
+					<span class="c-head__en">WORKS</span>
+					<h2 class="c-head__title"><?php echo esc_html( $catname ); ?>の施工事例</h2>
+				</div>
 				<div class="p-col__placeholder">
 					<p><b>この場所に、施工事例が新しい順で<?php echo (int) $number; ?>件並びます。</b></p>
 					<p>
@@ -1259,9 +1262,16 @@ function ymkrf_works_section( $slug, $catname, $number = 3 ) {
 		: get_post_type_archive_link( 'ymkrf_works' );
 	if ( is_wp_error( $more ) ) $more = get_post_type_archive_link( 'ymkrf_works' );
 	?>
+	<!-- 見出し・カード・ボタンとも、トップページの施工事例とそろえています。
+	     背景だけは、ひとつ上の「お役立ち情報」が薄い色なので、
+	     交互になるように白にしています。 -->
 	<section class="l-section" id="works">
 		<div class="l-wrap">
-			<h2 class="p-prd__bar"><?php echo esc_html( $catname ); ?>の施工事例</h2>
+			<div class="c-head">
+				<span class="c-head__en">WORKS</span>
+				<h2 class="c-head__title"><?php echo esc_html( $catname ); ?>の施工事例</h2>
+				<p class="c-head__lead">石川・福井の実際のお宅で、どう変わったか。金額も公開しています。</p>
+			</div>
 			<div class="p-works__grid">
 				<?php while ( $q->have_posts() ) : $q->the_post(); ymkrf_works_card(); endwhile; ?>
 			</div>
