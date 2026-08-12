@@ -1291,12 +1291,25 @@ function ymkrf_colorsets( $d, $post_id = 0 ) {
 		$custom = get_post_meta( $post_id, '_ymkrf_lbl_' . $key, true );
 		$name   = $custom ? $custom : $label;
 		if ( ! $name ) $name = 'カラー';
+		/* 見出しのうしろの「（全4色）」はテンプレート側が自動で付けます。
+		   入力に同じものが入っていると二重になるので、ここで外します。 */
+		$name = preg_replace( '/[（(]\s*全?\s*[0-9０-９]+\s*色\s*[）)]\s*$/u', '', $name );
+
+		/* 但し書き。商品ごとに入れたいときは _ymkrf_note_<枠> に入れます。
+		   「none」と入れると、既定の但し書きも出さなくなります。 */
+		$cnote = get_post_meta( $post_id, '_ymkrf_note_' . $key, true );
+		if ( $cnote === 'none' ) {
+			$cnote = '';
+		} elseif ( $cnote === '' && $key === 'colors' ) {
+			/* 1つめの枠にだけ、オプション扱いの但し書きを出します */
+			$cnote = '※下記カラー以外選択の場合はオプションとなります';
+		}
+
 		$out[] = array(
 			'key'   => $key,
 			'label' => $name,
 			'rows'  => $d[ $key ],
-			/* 1つめの枠にだけ、オプション扱いの但し書きを出します */
-			'note'  => ( $key === 'colors' ) ? '※下記カラー以外選択の場合はオプションとなります' : '',
+			'note'  => $cnote,
 		);
 	}
 	return $out;

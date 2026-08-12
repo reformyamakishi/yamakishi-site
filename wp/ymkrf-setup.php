@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '46' );
+define( 'YMKRF_SETUP_VER', '47' );
 
 /* キッチンの「ヤマキシ標準工事内容」。
    ホームページの一覧表（7項目）と、番号入りの図（8項目）の
@@ -190,6 +190,10 @@ add_action( 'init', function () {
 		$theme . '/selevia',
 		$theme . '/sinla',
 		$theme . '/amage-z',
+		$theme . '/amage-z-aqua',
+		$theme . '/purerest-qr',
+		$theme . '/alauno-vs5',
+		$theme . '/amage-z-premium',
 		WP_CONTENT_DIR . '/themes/ymkrf/assets/img/works',
 		$dir,                 // 最後の受け皿（wp-content/ymkrf-import）
 	);
@@ -711,7 +715,7 @@ add_action( 'init', function () {
 		/* ユニットバス */
 		'ofuroa', 'sazana-n', 'lidea-m', 'rakuvia', 'sazana-t', 'lidea-b', 'granspa', 'selevia', 'sinla',
 		/* トイレ */
-		'amage-z',
+		'amage-z', 'amage-z-aqua', 'purerest-qr', 'alauno-vs5', 'amage-z-premium',
 	) as $slug ) {
 
 		$p = get_page_by_path( $slug, OBJECT, 'ymkrf_product' );
@@ -4294,6 +4298,252 @@ add_action( 'init', function () {
 			),
 		),
 
+		/* ===== Hグレード アメージュZ（アクアセラミック／LIXIL） ===== */
+		array(
+			'slug'   => 'amage-z-aqua',
+			'prefix' => 'amzh',
+			'title'  => 'アメージュZ（アクアセラミック）',
+			'meta'   => array(
+				'_ymkrf_catch'    => 'お掃除ラクラクで、エコロジーな超節水タイプ。',
+				'_ymkrf_grade'    => 'Hグレード',
+				'_ymkrf_name'     => 'アメージュZ',
+				'_ymkrf_sub'      => 'アクアセラミック',
+				'_ymkrf_size'     => 'シャワートイレRG10H',
+				'_ymkrf_work'     => '38000',
+				'_ymkrf_item'     => '101800',
+				'_ymkrf_days'     => '',
+				'_ymkrf_daystext' => '半日',
+				'_ymkrf_pt1'      => '汚れにくい',
+				'_ymkrf_pt2'      => '傷に強い',
+				'_ymkrf_pt3'      => 'お掃除ラクラク',
+				'_ymkrf_caution'  => '※写真はイメージになります。本体及び便座のみとなります。本体：アメージュZ（アクアセラミック）／便座：シャワートイレRG10H',
+				'_ymkrf_note_colors' => 'none',
+			),
+			'total'  => 139800,
+			'maker'  => 'lixil',
+			'shops'  => array( 'hakui', 'komathu', 'shinkaga', 'tazuruhama', 'kanadu' ),
+			'main'   => array( 'main', 'LIXIL アメージュZ（アクアセラミック／シャワートイレRG10H）' ),
+			'labels' => array( '_ymkrf_lbl_colors' => '便器カラー' ),
+			'sets' => array(
+				'_ymkrf_colors' => array(
+					array( 'color-purewhite', 'ピュアホワイト' ),
+					array( 'color-offwhite',  'オフホワイト' ),
+				),
+			),
+			'speclist' => array(
+				array( '快適機能',   "暖房便座\nスローダウン便座\n暖房便座コード内蔵\n点字対応" ),
+				array( '洗浄機能',   "おしり泡ジェット洗浄（泡沫）\nソフトビデ洗浄（泡沫）" ),
+				array( '省エネ機能', "超節水ECO５\nワンタッチ節電（8h）" ),
+				array( '清潔機能',   "パワーストリーム洗浄\n本体スライド着脱\n女性専用レディスノズル\nノズルそうじ\nノズルオートクリーニング\nノズル先端着脱\nキレイ便座\n便フタワンタッチ着脱\nアクアセラミック" ),
+			),
+			'feats' => array(
+				array( '汚れがつかない衛生陶器に最適な新素材', '「アクアセラミック」',
+				       '汚れが洗浄ごとにつるんと落ちます！',
+				       '便器鉢内に付いた汚れが、トイレを洗浄すると、つるんと落ちます。', 'point-aqua' ),
+				array( '', '', '簡単お掃除！',
+				       '簡単お掃除で、新品のようなツルツルが長続きします。', 'point-aqua2' ),
+				array( 'お掃除らくらく！', '「フチレス形状」・「キレイ便座」',
+				       'サッとひと拭き「フチレス形状」',
+				       '奥も手前も便器のフチを丸ごとなくし、サッとひと拭き、お掃除ラクラクです。', 'point-rimless' ),
+				array( '', '', 'お掃除ラクラク「キレイ便座」',
+				       "汚れが入りやすい継ぎ目をなくしました。さらに便座裏は防汚素材なのでお掃除ラクラク。\n（左：従来／右：キレイ便座）", 'point-seat' ),
+				array( '強力に洗い流す。', '「パワーストリーム洗浄」',
+				       '少ない水でしっかり洗浄。',
+				       '強力な水流が便器鉢内のすみずみまで回り、少ない水でもしっかり汚れを洗い流します。', 'point-stream' ),
+				array( '足元スリム', 'シャープなフォルム',
+				       '汚れが拭きやすい',
+				       'シャープで足元スリムなフォルムは、汚れも拭きやすく、お手入れ簡単です。', 'point-slim' ),
+			),
+			'opts' => array(
+				array( 'opt-rwa30', 'シャワートイレ（CW-RWA30HQ）', '70000',
+				       '★フルオート便座。フルオート便器洗浄。アクアセラミック仕様。', '' ),
+			),
+		),
+
+		/* ===== Gグレード ピュアレストQR（TOTO） ===== */
+		array(
+			'slug'   => 'purerest-qr',
+			'prefix' => 'qr',
+			'title'  => 'ピュアレストQR',
+			'meta'   => array(
+				'_ymkrf_catch'    => '簡単操作のベーシックモデル。',
+				'_ymkrf_grade'    => 'Gグレード',
+				'_ymkrf_name'     => 'ピュアレストQR',
+				'_ymkrf_size'     => 'ウォシュレットBV1 TCF2213E',
+				'_ymkrf_work'     => '38000',
+				'_ymkrf_item'     => '131800',
+				'_ymkrf_days'     => '',
+				'_ymkrf_daystext' => '半日',
+				'_ymkrf_pt1'      => 'ローシルエット',
+				'_ymkrf_pt2'      => 'ノズルきれい',
+				'_ymkrf_pt3'      => '環境にやさしい',
+				'_ymkrf_caution'  => '※写真はイメージになります。本体：ピュアレストQR／便座：ウォシュレットBV1 TCF2213E　※リフォーム配管が必要な場合は別途（+5,500円）がかかります。',
+				'_ymkrf_note_colors' => '※パステルアイボリーは受注生産のため、到着まで2週間ほどかかります',
+			),
+			'total'  => 169800,
+			'maker'  => 'toto',
+			'shops'  => array( 'komathu', 'hakui', 'shinkaga', 'tazuruhama', 'kanadu', 'asahi' ),
+			'main'   => array( 'main', 'TOTO ピュアレストQR（ウォシュレットBV1）' ),
+			'labels' => array( '_ymkrf_lbl_colors' => '便器カラー' ),
+			'sets' => array(
+				'_ymkrf_colors' => array(
+					array( 'color-white', 'ホワイト' ),
+					array( 'color-ivory', 'パステルアイボリー' ),
+				),
+			),
+			'speclist' => array(
+				array( '快適機能',   "暖房便座\n着座センサー\n便座・便ふたソフト閉止" ),
+				array( '洗浄機能',   "おしり洗浄\nビデ洗浄\nムーブ洗浄\n水勢調節\n洗浄位置調節" ),
+				array( '省エネ機能', "タイマー節電\nおまかせ節電" ),
+				array( '清潔機能',   "セルフクリーニング\nクリーン便座\nクリーンノズル\n抗菌\n便ふた着脱\n本体ワンタッチ着脱\nノズルそうじ" ),
+			),
+			'feats' => array(
+				array( '撥水性のある樹脂が汚れをはじく！', '「クリーン便座」「クリーンノズル」',
+				       'サッとひとふきでお手入れ',
+				       'ウォシュレットの便座とノズルには、防汚効果の高いクリーン樹脂を採用。撥水性のある特殊な樹脂が汚れをはじくから、汚れてもサッとひとふきでお手入れできます。',
+				       'point-resin', '', 'point-clean' ),
+				array( '快適な洗浄機能！', '「ウォシュレット」',
+				       '快適な洗い心地',
+				       '一定の間隔で、水に空気を混ぜることで洗浄の強弱をつけ、たっぷりとした洗い心地と、しっかりとした洗い心地の両立を実現しました。',
+				       'point-washlet', '※写真はイメージです' ),
+				array( 'かしこく節電。', '「タイマー節電」「おまかせ節電」',
+				       '2つのモードで、かしこく節電',
+				       '使わない時間帯に合わせて便座の保温を控えます。ご家庭の使い方に合わせて、無理なく電気代をおさえられます。',
+				       'point-eco' ),
+			),
+			'opts' => array(
+				array( 'opt-bv2',   'ウォシュレット（BV2 TCF2223E）', '4000',   'オートパワー脱臭付。', '' ),
+				array( 'opt-s1',    'ウォシュレット（S1 TCF6543）',   '61000',  'レバー便器洗浄タイプ。', '' ),
+				array( 'opt-f1a',   'アプリコット（F1A TCF4713AKR）オート洗浄タイプ', '98000', '便座・便ふたソフト閉止。', '' ),
+				array( 'opt-f4a',   'アプリコット（F4A TCF4744AK）オート洗浄タイプ',  '175000', '瞬間暖房便座・オート開閉・においきれい・やわらかライト・温風乾燥。', '' ),
+				array( 'opt-rwa30', 'シャワートイレ（CW-RWA30HQ）',   '70000',  '★フルオート便座。フルオート便器洗浄。アクアセラミック仕様。', '' ),
+			),
+		),
+
+		/* ===== Fグレード NewアラウーノV(S5)（Panasonic） ===== */
+		array(
+			'slug'   => 'alauno-vs5',
+			'prefix' => 'vs5',
+			'title'  => 'NewアラウーノV（S5）',
+			'meta'   => array(
+				'_ymkrf_catch'    => '手洗いが設置できない狭いスペースにもおすすめです。',
+				'_ymkrf_grade'    => 'Fグレード',
+				'_ymkrf_name'     => 'NewアラウーノV（S5）',
+				'_ymkrf_size'     => '専用トワレS5',
+				'_ymkrf_work'     => '38000',
+				'_ymkrf_item'     => '161800',
+				'_ymkrf_days'     => '',
+				'_ymkrf_daystext' => '半日',
+				'_ymkrf_pt1'      => '3Dツイスター',
+				'_ymkrf_pt2'      => 'エコ',
+				'_ymkrf_pt3'      => 'お掃除ラクラク',
+				'_ymkrf_caution'  => '※写真はイメージになります。※朝日店は手洗付きの展示です。',
+				'_ymkrf_note_colors' => 'none',
+			),
+			'total'  => 199800,
+			'maker'  => 'panasonic',
+			'shops'  => array( 'komathu', 'hakui', 'shinkaga', 'kawakita', 'kanadu', 'asahi' ),
+			'main'   => array( 'main', 'Panasonic NewアラウーノV（専用トワレS5）' ),
+			'labels' => array( '_ymkrf_lbl_colors' => '便器カラー' ),
+			'sets' => array(
+				'_ymkrf_colors' => array(
+					array( 'color-white', 'ホワイト' ),
+				),
+			),
+			'speclist' => array(
+				array( '快適機能',   "暖房便座\n着座センサー\nリモコン\n低水圧対応\n停電対応（手動）" ),
+				array( '洗浄機能',   "おしり洗浄（パワーパルス洗浄）\nおしりムーブ洗浄\nリズム洗浄\nビデ洗浄\nビデムーブ洗浄" ),
+				array( '省エネ機能', "おまかせ節電\n8時間切りタイマー" ),
+				array( '清潔機能',   "スゴピカ素材（有機ガラス系）\nひとふき形状\n水位調節\nステンレスノズル\nノズル位置調整機能\n便座本体\n便フタ着脱機能\n抗菌加工（便座表）\nおまかせノズルクリーニング" ),
+			),
+			'feats' => array(
+				array( '洗浄力と節水の両立を実現。', '３Ｄツイスター水流・ターントラップ洗浄',
+				       'まんべんなく洗って、一気に流し切る',
+				       '時間をかけて（約20秒）まんべんなく洗い、流れの方向を変えて一気に排水。スゴピカ素材（有機ガラス系）ならではの形状が生み出した、お掃除ラクラク水流です！',
+				       'point-twister' ),
+				array( '', '', '小洗浄1回がわずか、3.0Ｌ！',
+				       '独自の技術「ターントラップ方式」が、洗浄する水量をおさえて、年間の水道代を約1/4に。',
+				       'point-turntrap', '※メーカー測定値。（カタログより抜粋）' ),
+				array( 'フチ裏もさっとキレイに！', 'ひとふき形状',
+				       'フチ裏がおそうじしやすい形に',
+				       '汚れがたまりやすかった便器のフチ裏を、おそうじがラクな形状にしました。',
+				       'point-hitofuki' ),
+			),
+			'opts' => array(
+				array( 'opt-towelring', 'タオルリング（CHA22WS）', '3600',  'スタンダードなタオルリングです。', '' ),
+				array( 'opt-paper',     '紙巻器（CHA21WS）',       '4400',  '１連タイプの紙巻器です。', '' ),
+				array( 'opt-handrail',  '手すり Ｉ型セット Φ35×600mm', '7400', '', '' ),
+				array( 'opt-towares3',  '専用トワレS3',            '11200', '便フタ自動開閉付きで、機能充実。', '' ),
+			),
+		),
+
+		/* ===== Eグレード アメージュZ 高機能モデル（LIXIL） ===== */
+		array(
+			'slug'   => 'amage-z-premium',
+			'prefix' => 'amze',
+			'title'  => 'アメージュZ 高機能モデル',
+			'meta'   => array(
+				'_ymkrf_catch'    => '欲しい機能を凝縮した、おすすめトイレパック。',
+				'_ymkrf_grade'    => 'Eグレード',
+				'_ymkrf_name'     => 'アメージュZ 高機能モデル',
+				'_ymkrf_sub'      => 'アクアセラミック',
+				'_ymkrf_size'     => 'シャワートイレCW-RWA30AHQ',
+				'_ymkrf_work'     => '38000',
+				'_ymkrf_item'     => '171800',
+				'_ymkrf_days'     => '',
+				'_ymkrf_daystext' => '半日',
+				'_ymkrf_pt1'      => 'フルオート',
+				'_ymkrf_pt2'      => 'フチレス形状',
+				'_ymkrf_pt3'      => 'お掃除ラクラク',
+				'_ymkrf_caution'  => '※写真はイメージになります。便座：シャワートイレCW-RWA30AHQ',
+				'_ymkrf_note_colors' => 'none',
+			),
+			'total'  => 209800,
+			'maker'  => 'lixil',
+			'shops'  => array( 'nonoichi', 'komathu', 'hakui', 'asahi' ),
+			'main'   => array( 'main', 'LIXIL アメージュZ 高機能モデル（アクアセラミック／CW-RWA30AHQ）' ),
+			'labels' => array( '_ymkrf_lbl_colors' => '便器カラー' ),
+			'sets' => array(
+				'_ymkrf_colors' => array(
+					array( 'color-purewhite', 'ピュアホワイト（BW1）' ),
+					array( 'color-offwhite',  'オフホワイト（BN8）' ),
+					array( 'color-pink',      'ピンク（LR8）' ),
+					array( 'color-bluegray',  'ブルーグレー（BB7）' ),
+				),
+			),
+			'speclist' => array(
+				array( '快適機能',   "フルオート便器洗浄\nフルオート便座\nＷパワー脱臭\nターボ脱臭\n便座ヒーターオートＯＦＦ\n着座センサー（荷重式）\nリモコン\n暖房便座\nスローダウン便座\n暖房便座コード内蔵\n点字対応" ),
+				array( '洗浄機能',   "おしり洗浄（パワフル・マイルド）\nビデ洗浄" ),
+				array( '省エネ機能', "超節水ECO５\nワンタッチ節電（8h）" ),
+				array( '清潔機能',   "アクアセラミック\nフチレス便器\n女性専用レディスノズル\nノズルオートクリーニング\nノズル先端着脱\nキレイ便座\n便フタワンタッチ着脱\n抗菌樹脂\n鉢内スプレー\nノズル除菌\nスッキリノズルシャッター" ),
+			),
+			'feats' => array(
+				array( '便器に手を触れず衛生的！', '「フルオート便座」「フルオート便器洗浄」',
+				       '便フタを開け閉めする必要がありません',
+				       '便器に近づくと自動で便フタが開き、離れると閉まります。節電にもつながります。',
+				       'point-fullauto', '※写真はイメージです。' ),
+				array( '', '', '流し忘れの心配もありません。',
+				       '着座時間に応じて大・小を切り替え。便座から立ち上がると自動で洗浄します。',
+				       'point-autoflush' ),
+				array( 'お掃除らくらく！', '「フチレス形状」',
+				       'フチを丸ごとなくしました。',
+				       '奥も手前も便器のフチを丸ごとなくし、サッとひと拭き、お掃除ラクラクです。',
+				       'point-rimless' ),
+				array( '', '', '汚れが入りやすい継ぎ目をなくしました。',
+				       'さらに、便座裏は防汚素材なのでお掃除ラクラク。',
+				       'point-seat' ),
+				array( '強力に洗い流す。', '「パワーストリーム洗浄」',
+				       '少ない水でしっかり洗浄。',
+				       '強力な水流が便器鉢内のすみずみまで回り、少ない水でもしっかり汚れを洗い流します。',
+				       'point-stream' ),
+				array( '汚れがつかない衛生陶器に最適な新素材', '「アクアセラミック」',
+				       '汚れが洗浄ごとにつるんと落ちます！',
+				       '便器鉢内に付いた汚れが、トイレを洗浄すると、つるんと落ちます。',
+				       'point-aqua' ),
+			),
+			'opts' => array(),
+		),
+
 	);
 
 	foreach ( $toilet_products as $tp2 ) {
@@ -4334,12 +4584,15 @@ add_action( 'init', function () {
 		foreach ( $tp2['speclist'] as $r ) $rows[] = array( 'ttl' => $r[0], 'body' => $r[1] );
 		update_post_meta( $pid, '_ymkrf_speclist', $rows );
 
-		/* --- おすすめポイント --- */
+		/* --- おすすめポイント ---
+		   5番目＝写真1、6番目＝注記、7番目＝写真2（どれも省略できます） */
 		$rows = array();
 		foreach ( $tp2['feats'] as $r ) {
 			$rows[] = array(
 				'gsub' => $r[0], 'gttl' => $r[1], 'ttl' => $r[2], 'text' => $r[3],
-				'note' => '', 'img' => $timg( $r[4], $r[2] ), 'img2' => '',
+				'note' => isset( $r[5] ) ? $r[5] : '',
+				'img'  => $timg( $r[4], $r[2] ),
+				'img2' => isset( $r[6] ) ? $timg( $r[6], $r[2] ) : '',
 			);
 		}
 		update_post_meta( $pid, '_ymkrf_features', $rows );
