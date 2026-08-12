@@ -295,7 +295,7 @@ get_header();
     <div class="c-head" data-reveal>
       <span class="c-head__en">PACK PRICE</span>
       <h2 class="c-head__title">「結局いくら？」に<span class="marker">先にお答えします</span></h2>
-      <p class="c-head__lead">本体・工事費・古い設備の処分費まで込みのパック価格。あとからの追加請求はありません。</p>
+      <p class="c-head__lead">本体・標準工事費・古い設備の撤去・処分費・保証まですべて込みの安心パック価格！</p>
     </div>
 
     <div class="p-price__grid">
@@ -306,8 +306,7 @@ get_header();
         <div class="p-price__body">
           <h3 class="p-price__name">水まわり4点パック</h3>
           <p class="p-price__desc">キッチン・お風呂・トイレ・洗面をまとめて。別々に頼むよりぐんとお得です。</p>
-          <p class="p-price__yen"><span class="lbl">工事費込み</span><span class="num">162<span class="dec">.8</span></span><span class="unit">万円〜（税込）</span></p>
-          <p class="p-price__inc">本体＋標準工事＋既存撤去処分＋保証</p>
+          <p class="p-price__yen"><span class="above above--all"><b>全部コミコミ!!</b></span><span class="p-price__amount"><span class="num">162<span class="dec">.8</span></span><span class="unit">万円〜<small class="tax">（税込）</small></span></span></p>
           <a class="p-price__link" href="<?php echo esc_url( home_url( '/products/pack4/' ) ); ?>">プランを見る</a>
         </div>
       </div>
@@ -323,8 +322,7 @@ get_header();
         <div class="p-price__body">
           <h3 class="p-price__name">キッチン</h3>
           <p class="p-price__desc">クリナップ・LIXIL・TOTOなど主要メーカーを、標準工事費込みで。</p>
-          <p class="p-price__yen"><span class="lbl">工事費込み</span><span class="num">59<span class="dec">.8</span></span><span class="unit">万円〜（税込）</span></p>
-          <p class="p-price__inc">本体＋標準工事＋既存撤去処分</p>
+          <p class="p-price__yen"><span class="above above--all"><b>全部コミコミ!!</b></span><span class="p-price__amount"><span class="num">59<span class="dec">.8</span></span><span class="unit">万円〜<small class="tax">（税込）</small></span></span></p>
           <a class="p-price__link" href="<?php echo esc_url( home_url( '/products/kitchen/' ) ); ?>">プランを見る</a>
         </div>
       </div>
@@ -340,8 +338,7 @@ get_header();
         <div class="p-price__body">
           <h3 class="p-price__name">お風呂（ユニットバス）</h3>
           <p class="p-price__desc">断熱浴槽で冬もあたたか。工期は3〜5日が目安です。</p>
-          <p class="p-price__yen"><span class="lbl">工事費込み</span><span class="num">84<span class="dec">.8</span></span><span class="unit">万円〜（税込）</span></p>
-          <p class="p-price__inc">本体＋標準工事＋既存撤去処分</p>
+          <p class="p-price__yen"><span class="above above--all"><b>全部コミコミ!!</b></span><span class="p-price__amount"><span class="num">84<span class="dec">.8</span></span><span class="unit">万円〜<small class="tax">（税込）</small></span></span></p>
           <a class="p-price__link" href="<?php echo esc_url( home_url( '/products/bathroom/' ) ); ?>">プランを見る</a>
         </div>
       </div>
@@ -357,8 +354,7 @@ get_header();
         <div class="p-price__body">
           <h3 class="p-price__name">トイレ</h3>
           <p class="p-price__desc">最短半日で交換完了。お掃除がラクな最新モデルにも対応します。</p>
-          <p class="p-price__yen"><span class="lbl">工事費込み</span><span class="num">12<span class="dec">.9</span></span><span class="unit">万円〜（税込）</span></p>
-          <p class="p-price__inc">本体＋標準工事＋既存撤去処分</p>
+          <p class="p-price__yen"><span class="above above--all"><b>全部コミコミ!!</b></span><span class="p-price__amount"><span class="num">12<span class="dec">.9</span></span><span class="unit">万円〜<small class="tax">（税込）</small></span></span></p>
           <a class="p-price__link" href="<?php echo esc_url( home_url( '/products/toilet/' ) ); ?>">プランを見る</a>
         </div>
       </div>
@@ -374,8 +370,7 @@ get_header();
         <div class="p-price__body">
           <h3 class="p-price__name">洗面化粧台</h3>
           <p class="p-price__desc">朝の身支度がしやすく。収納が増えて、掃除もラクになります。</p>
-          <p class="p-price__yen"><span class="lbl">工事費込み</span><span class="num">7<span class="dec">.48</span></span><span class="unit">万円〜（税込）</span></p>
-          <p class="p-price__inc">本体＋標準工事＋既存撤去処分</p>
+          <p class="p-price__yen"><span class="above above--all"><b>全部コミコミ!!</b></span><span class="p-price__amount"><span class="num">7<span class="dec">.48</span></span><span class="unit">万円〜<small class="tax">（税込）</small></span></span></p>
           <a class="p-price__link" href="<?php echo esc_url( home_url( '/products/lavatory/' ) ); ?>">プランを見る</a>
         </div>
       </div>
@@ -391,8 +386,7 @@ get_header();
         <div class="p-price__body">
           <h3 class="p-price__name">給湯器・エコキュート</h3>
           <p class="p-price__desc">お湯が出ない、というときもすぐお伺いします。夜間・休日のトラブルにも対応。</p>
-          <p class="p-price__yen p-price__yen--challenge"><span class="lbl">工事費込み</span><span class="chal">地域最安値に<br class="sp-only">挑戦中！</span></p>
-          <p class="p-price__inc">本体＋標準工事＋既存撤去処分</p>
+          <p class="p-price__yen p-price__yen--challenge"><span class="above above--all"><b>全部コミコミ!!</b></span><span class="chal">地域最安値に<br class="sp-only">挑戦中！</span></p>
           <a class="p-price__link" href="<?php echo esc_url( home_url( '/products/boiler/' ) ); ?>">プランを見る</a>
         </div>
       </div>
@@ -408,8 +402,7 @@ get_header();
         <div class="p-price__body">
           <h3 class="p-price__name">外壁塗装</h3>
           <p class="p-price__desc">北陸の雪と雨に耐える塗料選びから。専門サイトもご用意しています。</p>
-          <p class="p-price__yen"><span class="above">足場代込み！</span><span class="lbl">100㎡あたり</span><span class="p-price__amount"><span class="num">49<span class="dec">.8</span></span><span class="unit">万円〜（税込）</span></span></p>
-          <p class="p-price__inc">足場＋高圧洗浄＋下塗り〜上塗り</p>
+          <p class="p-price__yen"><span class="above">足場代込み！</span><span class="lbl">100㎡あたり</span><span class="p-price__amount"><span class="num">49<span class="dec">.8</span></span><span class="unit">万円〜<small class="tax">（税込）</small></span></span></p>
           <a class="p-price__link" href="<?php echo esc_url( home_url( '/products/outer-wall/' ) ); ?>">プランを見る</a>
         </div>
       </div>
