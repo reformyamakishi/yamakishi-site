@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '60' );
+define( 'YMKRF_SETUP_VER', '62' );
 
 /* キッチンの「ヤマキシ標準工事内容」。
    ホームページの一覧表（7項目）と、番号入りの図（8項目）の
@@ -3792,7 +3792,7 @@ add_action( 'init', function () {
 		'ofuroa'   => array( 'ofuroa-main.jpg',  'Panasonic オフローラ 1坪サイズ（ユニットバス）' ),
 		'lidea-m'  => array( 'lidea-main.jpg',   'LIXIL リデア Mタイプ 1坪サイズ（ユニットバス）' ),
 		/* 洗面化粧台V1は、いただいた新しい写真（中央ぞろえ）に差し替えました */
-		'v1'       => array( 'v1-main.jpg',      'LIXIL V1 洗面化粧台 間口75cm', 'v5' ),
+		'v1'       => array( 'v1-main.jpg',      'LIXIL V1 洗面化粧台 間口75cm', 'v6' ),
 	);
 	foreach ( $retrim as $slug => $info ) {
 		$tp = get_page_by_path( $slug, OBJECT, 'ymkrf_product' );
@@ -4199,6 +4199,80 @@ add_action( 'init', function () {
 
 
 	/* ------------------------------------------------------------
+	   3-n3. 洗面化粧台の施工事例を3件つくります。
+
+	         これは実際のホームページに載っている事例です
+	         （能美市・白山市・福井県坂井市）。サンプルではないので、
+	         そのまま残していただいて大丈夫です。
+	   ------------------------------------------------------------ */
+	if ( post_type_exists( 'ymkrf_works' ) && get_option( 'ymkrf_works_lavatory' ) !== '1' ) {
+
+		$vsamples = array(
+			array(
+				'title' => '洗面化粧台の交換と、洗濯水栓の取付',
+				'slug'  => 'works-lavatory-01',
+				'area'  => '能美市',
+				'price' => '15万円',
+				'days'  => '',
+				'img'   => 'works-lavatory-01.jpg',
+				'text'  => '洗面化粧台の交換にあわせて、洗濯水栓の取付も行いました。',
+			),
+			array(
+				'title' => '洗面化粧台の交換工事',
+				'slug'  => 'works-lavatory-02',
+				'area'  => '白山市',
+				'price' => '14万円',
+				'days'  => '',
+				'img'   => 'works-lavatory-02.jpg',
+				'text'  => '長くお使いだった洗面化粧台を、三面鏡タイプに交換しました。',
+			),
+			array(
+				'title' => '洗面化粧台の取替工事',
+				'slug'  => 'works-lavatory-03',
+				'area'  => '福井県坂井市',
+				'price' => '14万円',
+				'days'  => '',
+				'img'   => 'works-lavatory-03.jpg',
+				'text'  => '洗面化粧台を取り替えました。',
+			),
+		);
+
+		foreach ( $vsamples as $sm ) {
+			if ( get_page_by_path( $sm['slug'], OBJECT, 'ymkrf_works' ) ) continue;
+
+			$wid = wp_insert_post( array(
+				'post_type'    => 'ymkrf_works',
+				'post_status'  => 'publish',
+				'post_title'   => $sm['title'],
+				'post_name'    => $sm['slug'],
+				'post_content' => $sm['text'],
+				'post_excerpt' => mb_substr( $sm['text'], 0, 80 ),
+			) );
+			if ( ! $wid || is_wp_error( $wid ) ) continue;
+
+			wp_set_object_terms( $wid, 'lavatory', 'ymkrf_works_cat' );
+
+			if ( taxonomy_exists( 'ymkrf_works_area' ) ) {
+				$at = term_exists( $sm['area'], 'ymkrf_works_area' );
+				if ( ! $at ) $at = wp_insert_term( $sm['area'], 'ymkrf_works_area' );
+				if ( ! is_wp_error( $at ) ) {
+					wp_set_object_terms( $wid, (int) $at['term_id'], 'ymkrf_works_area' );
+				}
+			}
+
+			update_post_meta( $wid, '_ymkrf_price',  $sm['price'] );
+			update_post_meta( $wid, '_ymkrf_period', $sm['days'] );
+
+			$mid = $img( $sm['img'] );
+			if ( $mid ) set_post_thumbnail( $wid, $mid );
+
+			$log[] = '洗面化粧台の施工事例を追加：' . $sm['title'];
+		}
+		update_option( 'ymkrf_works_lavatory', '1' );
+	}
+
+
+	/* ------------------------------------------------------------
 	   3-o. お役立ち情報（コラム）のサンプルを、キッチンとお風呂に
 	        3件ずつつくります。施工事例と同じ見え方にするためです。
 
@@ -4567,6 +4641,80 @@ TOTOのセフィオンテクト、LIXILのアクアセラミック、Panasonic�
 		}
 	}
 
+
+
+	/* ------------------------------------------------------------
+	   3-o3. お役立ち情報（コラム）のサンプルを、洗面化粧台にも3件。
+	         キッチン・お風呂・トイレと同じ見え方にするためです。
+	         本番の記事を入れたら、【サンプル】の3件は削除してください。
+	   ------------------------------------------------------------ */
+	if ( post_type_exists( 'ymkrf_column' ) && get_option( 'ymkrf_column_sample_lavatory' ) !== '1' ) {
+
+		$vcols = array(
+			array(
+				'slug'  => 'sample-column-lavatory-01',
+				'title' => '【サンプル】洗面化粧台の交換は何日かかる？最短当日で終わります',
+				'img'   => 'v1-main.jpg',
+				'lead'  => '洗面化粧台の交換は、ほとんどのお宅で当日中に終わります。当日の流れと、水が使えない時間をご説明します。',
+				'text'  => "「工事のあいだ、洗濯や洗面はどうするの？」というご質問をよくいただきます。洗面化粧台の入れ替えだけであれば、朝からはじめて夕方にはお使いいただけます。\n\n<h2>午前：古い洗面化粧台の取り外し</h2>\n\n止水栓を閉めて、ミラーキャビネット・洗面ボウル・下のキャビネットを外します。運び出しと処分まで、標準工事費にふくまれています。\n\n<h2>昼：壁と給排水の確認</h2>\n\n洗面化粧台を外したときにしか見えない場所ですので、壁の傷みや配管の状態をこの時点で確認します。手直しが必要な場合は、その場でご相談させていただきます。\n\n<h2>午後：新しい洗面化粧台の取り付け</h2>\n\n本体を据えて、給水・排水・電気をつなぎ、水もれがないか確認します。使い方をご説明して終わりです。\n\n<h2>その間の水まわり</h2>\n\n工事中の数時間は、洗面所の水道が使えません。キッチンやお風呂の水道はお使いいただけます。\n\n※これは表示確認用のサンプル記事です。",
+			),
+			array(
+				'slug'  => 'sample-column-lavatory-02',
+				'title' => '【サンプル】間口75cmと60cm、どちらを選ぶ？置ける幅の測り方',
+				'img'   => 'v1-spec-mirror.jpg',
+				'lead'  => '洗面化粧台の大きさは「間口」で決まります。いまのサイズの測り方と、大きくできる場合・できない場合を整理しました。',
+				'text'  => "洗面化粧台は、幅（間口）が60cm・75cm・90cmといった決まったサイズで作られています。いまお使いのものと同じ間口であれば、そのまま入れ替えられます。\n\n<h2>間口の測り方</h2>\n\n洗面化粧台の左端から右端までを測ってください。壁から壁までではなく、本体の幅です。だいたい60cmか75cmのどちらかに近い数字になるはずです。\n\n<h2>75cmにすると変わること</h2>\n\nボウルが広くなり、つけおき洗いがしやすくなります。下の収納も増えます。洗面所に余裕があるお宅では、60cmから75cmに広げるご相談も多くいただきます。\n\n<h2>広げられない場合</h2>\n\n洗濯機や扉との距離が足りないと、大きくできないことがあります。現地を見てご説明しますので、まずはご相談ください。\n\n<h2>迷ったときは</h2>\n\nショールームに実物を並べて展示しています。同じ間口でも、収納の作りで使い勝手はかなり変わります。\n\n※これは表示確認用のサンプル記事です。",
+			),
+			array(
+				'slug'  => 'sample-column-lavatory-03',
+				'title' => '【サンプル】洗面化粧台の交換と一緒にやると得なこと',
+				'img'   => 'v1-opt-interior-full.jpg',
+				'lead'  => '本体を外したときにしかできない工事があります。あとから頼むより費用がおさえられるものをまとめました。',
+				'text'  => "洗面化粧台を外すと、いつもは見えない壁と床が現れます。このタイミングでしかできない工事があります。\n\n<h2>脱衣場の壁紙・床の張り替え</h2>\n\n洗面化粧台の裏側は、あとから張り替えようとすると本体をもう一度外すことになります。同時であれば、その手間がかかりません。ヤマキシでは1坪までの内装パックをご用意しています。\n\n<h2>洗濯水栓の取り替え</h2>\n\n古い水栓は、ゴムホースが外れて水漏れすることがあります。緊急止水弁の付いたものに替えておくと安心です。\n\n<h2>コンセントの増設</h2>\n\nドライヤーや電動歯ブラシで足りなくなりがちです。壁を触るタイミングで一緒に。\n\n<h2>まとめてのご相談を</h2>\n\n「ついでにここも」というご相談は大歓迎です。お見積りの段階でお伝えください。\n\n※これは表示確認用のサンプル記事です。",
+			),
+		);
+		$vterm = get_term_by( 'slug', 'lavatory', 'ymkrf_product_cat' );
+		if ( $vterm && ! is_wp_error( $vterm ) ) {
+
+			$hasq = new WP_Query( array(
+				'post_type'      => 'ymkrf_column',
+				'posts_per_page' => 1,
+				'fields'         => 'ids',
+				'no_found_rows'  => true,
+				'tax_query'      => array( array(
+					'taxonomy' => 'ymkrf_product_cat',
+					'field'    => 'term_id',
+					'terms'    => (int) $vterm->term_id,
+				) ),
+			) );
+			$already = $hasq->have_posts();
+			wp_reset_postdata();
+
+			if ( ! $already ) {
+				foreach ( $vcols as $sm ) {
+					if ( get_page_by_path( $sm['slug'], OBJECT, 'ymkrf_column' ) ) continue;
+
+					$cid = wp_insert_post( array(
+						'post_type'    => 'ymkrf_column',
+						'post_status'  => 'publish',
+						'post_title'   => $sm['title'],
+						'post_name'    => $sm['slug'],
+						'post_content' => $sm['text'],
+						'post_excerpt' => $sm['lead'],
+					) );
+					if ( ! $cid || is_wp_error( $cid ) ) continue;
+
+					wp_set_object_terms( $cid, array( (int) $vterm->term_id ), 'ymkrf_product_cat' );
+
+					$mid = $img( $sm['img'] );
+					if ( $mid ) set_post_thumbnail( $cid, $mid );
+
+					$log[] = '洗面化粧台のコラムのサンプルを追加：' . $sm['title'];
+				}
+			}
+			update_option( 'ymkrf_column_sample_lavatory', '1' );
+		}
+	}
 
 
 	/* ------------------------------------------------------------
