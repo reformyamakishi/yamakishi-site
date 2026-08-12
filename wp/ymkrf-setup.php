@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '54' );
+define( 'YMKRF_SETUP_VER', '55' );
 
 /* キッチンの「ヤマキシ標準工事内容」。
    ホームページの一覧表（7項目）と、番号入りの図（8項目）の
@@ -3791,10 +3791,14 @@ add_action( 'init', function () {
 		/* オフローラとリデアMも、同じように左右の白い余白を切りました */
 		'ofuroa'   => array( 'ofuroa-main.jpg',  'Panasonic オフローラ 1坪サイズ（ユニットバス）' ),
 		'lidea-m'  => array( 'lidea-main.jpg',   'LIXIL リデア Mタイプ 1坪サイズ（ユニットバス）' ),
+		/* 洗面化粧台V1は、いただいた新しい写真（中央ぞろえ）に差し替えました */
+		'v1'       => array( 'v1-main.jpg',      'LIXIL V1 洗面化粧台 間口75cm', 'v2' ),
 	);
 	foreach ( $retrim as $slug => $info ) {
 		$tp = get_page_by_path( $slug, OBJECT, 'ymkrf_product' );
-		if ( ! $tp || get_post_meta( $tp->ID, '_ymkrf_main_ver', true ) === 'trim' ) continue;
+		/* 3つめの値があれば、それを合言葉にします（写真を替えるたびに増やせます） */
+		$ver = isset( $info[2] ) ? $info[2] : 'trim';
+		if ( ! $tp || get_post_meta( $tp->ID, '_ymkrf_main_ver', true ) === $ver ) continue;
 
 		$old = $img( $info[0] );
 		if ( $old ) wp_delete_attachment( $old, true );
@@ -3802,8 +3806,8 @@ add_action( 'init', function () {
 		$new = $img( $info[0], $info[1], true );
 		if ( $new ) {
 			set_post_thumbnail( $tp->ID, $new );
-			update_post_meta( $tp->ID, '_ymkrf_main_ver', 'trim' );
-			$log[] = get_the_title( $tp->ID ) . 'のメイン写真を、余白を切ったものに差し替えました';
+			update_post_meta( $tp->ID, '_ymkrf_main_ver', $ver );
+			$log[] = get_the_title( $tp->ID ) . 'のメイン写真を差し替えました';
 		}
 	}
 
