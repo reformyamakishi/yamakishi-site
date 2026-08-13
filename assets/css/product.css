@@ -1165,3 +1165,105 @@ body.term-toilet .p-cat__cardname{ min-height:2.7em; }
 .p-col__samplenote{
   margin-top:14px; text-align:center; font-size:12px; line-height:1.7; color:var(--ink-light);
 }
+
+
+/* ==========================================================================
+   水まわり4点パック（/products/pack4/）
+
+   プランごとに「キッチン／お風呂／洗面化粧台／トイレ」の4枚を並べ、
+   最後に通常価格とセット価格を出します。
+   ========================================================================== */
+
+/* --- プランの見出し --- */
+.p-pack__plan{ margin-top:56px; }
+.p-pack__plan:first-of-type{ margin-top:0; }
+
+.p-pack__head{
+  position:relative; overflow:hidden;
+  background:var(--brand-tint); border-radius:var(--radius);
+  padding:22px 20px; text-align:center;
+}
+.p-pack__no{
+  display:inline-block; background:var(--brand); color:#fff;
+  font-size:12.5px; font-weight:900; letter-spacing:.08em;
+  padding:5px 16px; border-radius:999px; margin-bottom:10px;
+}
+.p-pack__name{
+  font-family:var(--font-catch);
+  font-size:clamp(21px,5.6vw,30px); font-weight:900; line-height:1.35; color:var(--brand-dark);
+}
+.p-pack__catch{ margin-top:8px; font-size:15px; font-weight:800; color:var(--ink-sub); line-height:1.7; }
+.p-pack__head--best{ background:linear-gradient(180deg,#fff3ec,#ffe6da); }
+.p-pack__ribbon{
+  display:inline-block; margin-bottom:8px;
+  background:#ffe95c; color:var(--brand-dark);
+  font-size:13px; font-weight:900; padding:4px 14px; border-radius:999px;
+}
+
+/* --- 4点のカード --- */
+.p-pack__grid{ display:grid; gap:14px; margin-top:22px; }
+@media (min-width:640px){  .p-pack__grid{ grid-template-columns:repeat(2,1fr); } }
+@media (min-width:1024px){ .p-pack__grid{ grid-template-columns:repeat(4,1fr); } }
+
+.p-pack__item{
+  display:flex; flex-direction:column; overflow:hidden;
+  background:#fff; border:2px solid var(--border); border-radius:var(--radius);
+  text-decoration:none; color:var(--ink);
+  transition:border-color .2s, transform .2s, box-shadow .2s;
+}
+a.p-pack__item:hover{ border-color:var(--brand); transform:translateY(-4px); box-shadow:var(--shadow-lg); }
+
+.p-pack__part{
+  background:var(--brand); color:#fff; text-align:center;
+  font-size:13.5px; font-weight:900; letter-spacing:.06em; padding:7px 8px;
+}
+.p-pack__photo{ position:relative; aspect-ratio:4/3; background:#fff; }
+.p-pack__photo img{ position:absolute; inset:0; width:100%; height:100%; object-fit:contain; padding:8px; }
+.p-pack__body{ display:flex; flex-direction:column; gap:8px; padding:14px 14px 16px; flex:1; }
+.p-pack__maker{ font-size:12px; font-weight:800; color:var(--ink-sub); }
+.p-pack__prd{ font-size:16.5px; font-weight:900; line-height:1.4; }
+.p-pack__spectitle{
+  margin-top:2px; font-size:12px; font-weight:900; color:var(--brand-dark);
+  border-bottom:2px solid var(--brand-tint2); padding-bottom:4px;
+}
+.p-pack__spec{ display:flex; flex-direction:column; gap:5px; font-size:13.5px; line-height:1.55; }
+.p-pack__spec li{ position:relative; padding-left:16px; }
+.p-pack__spec li::before{
+  content:""; position:absolute; left:2px; top:.55em;
+  width:7px; height:7px; border-radius:50%; background:var(--brand-tint2);
+}
+.p-pack__more{
+  margin-top:auto; padding-top:10px;
+  font-size:13px; font-weight:900; color:var(--brand-dark);
+}
+.p-pack__more::after{ content:" ›"; }
+
+/* --- 価格 --- */
+.p-pack__price{
+  margin-top:18px; background:#fff;
+  border:3px solid var(--brand); border-radius:var(--radius);
+  padding:20px 18px; text-align:center;
+}
+.p-pack__was{ font-size:14.5px; font-weight:800; color:var(--ink-sub); }
+.p-pack__was b{ font-weight:900; text-decoration:line-through; text-decoration-thickness:2px; }
+.p-pack__now{
+  display:flex; align-items:baseline; justify-content:center; flex-wrap:wrap; gap:4px;
+  margin-top:6px; color:var(--brand); font-weight:900; line-height:1.05;
+}
+.p-pack__now .num{ font-size:clamp(38px,10.5vw,52px); letter-spacing:-.03em; }
+.p-pack__now .unit{ font-size:17px; }
+.p-pack__now .tax{ font-size:.8em; font-weight:900; }
+.p-pack__incl{
+  display:inline-block; margin-top:10px;
+  background:var(--brand); color:#ffe95c;
+  font-size:13.5px; font-weight:900; letter-spacing:.04em;
+  padding:5px 18px; border-radius:999px;
+}
+.p-pack__save{ margin-top:10px; font-size:13.5px; font-weight:900; color:var(--brand-dark); }
+
+/* --- ページ冒頭のご案内 --- */
+.p-pack__lead{
+  background:var(--bg-soft,#fff8f4); border:2px dashed var(--brand-tint2);
+  border-radius:var(--radius); padding:20px 18px; font-size:15px; line-height:1.9;
+}
+.p-pack__lead b{ color:var(--brand-dark); }

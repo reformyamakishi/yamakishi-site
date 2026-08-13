@@ -323,18 +323,23 @@
 .p-menu__item[data-icon="whole"] .p-menu__icon{ background-image:url("../img/icon/sim-whole.png"); }
 .p-menu__item[data-icon="ecocute"] .p-menu__icon{ background-image:url("../img/icon/sim-ecocute.png"); }
 .p-menu__item[data-icon="other"] .p-menu__icon{ background-image:url("../img/icon/sim-other.png"); }
-.p-menu__item[data-icon="carport"] .p-menu__icon{ background-image:url("../img/icon/sim-exterior.png"); }
-/* ★下記のアイコンは未支給です。届き次第、それぞれ background-image を指定してください。
-   いまは場所だけ確保するため、薄い点線の枠を表示しています。
-   IH ／ 内装・改装 ／ 玄関ドア ／ 物置 ／ ベランダ・サンルーム */
-.p-menu__item[data-icon="ih"] .p-menu__icon,
-.p-menu__item[data-icon="renovation"] .p-menu__icon,
-.p-menu__item[data-icon="door"] .p-menu__icon,
-.p-menu__item[data-icon="storage"] .p-menu__icon,
-.p-menu__item[data-icon="veranda"] .p-menu__icon{
-  background-image:none;
-  border:2px dashed var(--brand-tint2); border-radius:12px;
-}
+.p-menu__item[data-icon="carport"] .p-menu__icon{ background-image:url("../img/icon/sim-carport.png"); }
+/* 2026/08/12 に支給いただいたアイコン。これで全項目そろいました。
+   給湯器とエコキュートも、新しい絵に差し替えています。 */
+.p-menu__item[data-icon="ih"] .p-menu__icon{ background-image:url("../img/icon/sim-ih.png"); }
+.p-menu__item[data-icon="renovation"] .p-menu__icon{ background-image:url("../img/icon/sim-renovation.png"); }
+.p-menu__item[data-icon="door"] .p-menu__icon{ background-image:url("../img/icon/sim-door.png"); }
+.p-menu__item[data-icon="storage"] .p-menu__icon{ background-image:url("../img/icon/sim-storage.png"); }
+.p-menu__item[data-icon="veranda"] .p-menu__icon{ background-image:url("../img/icon/sim-veranda.png"); }
+.p-menu__item[data-icon="oiltank"] .p-menu__icon{ background-image:url("../img/icon/sim-oiltank.png"); }
+.p-menu__item[data-icon="demolition"] .p-menu__icon{ background-image:url("../img/icon/sim-demolition.png"); }
+
+/* 給湯器・物置・解体は、絵のまわりに空きが多く（湯気やアームの分）
+   ほかより小さく見えてしまうので、この3つだけ枠を大きくしています。
+   マイナスのmarginで、文字の位置は動かないようにしています。 */
+.p-menu__item[data-icon="boiler"] .p-menu__icon{ width:78px; height:78px; margin:-10px 0; }
+.p-menu__item[data-icon="demolition"] .p-menu__icon{ width:76px; height:76px; margin:-9px 0; }
+.p-menu__item[data-icon="storage"] .p-menu__icon{ width:70px; height:70px; margin:-6px 0; }
 .p-menu__item[data-icon="interior"] .p-menu__icon{ background-image:url("../img/icon/sim-interior.png"); }
 .p-menu__name{ font-size:15px; font-weight:900; line-height:1.35; }
 .p-menu__note{ font-size:11.5px; color:var(--ink-sub); font-weight:700; }
@@ -444,6 +449,17 @@
 .p-shop__pin{ width:34px; height:34px; flex:none; color:var(--brand); }
 .p-shop__name{ display:block; font-size:16.5px; font-weight:900; }
 .p-shop__info{ display:block; font-size:13px; color:var(--ink-sub); }
+/* 店名とバッジが1行に入りきらないときは、バッジを下の行に落とします */
+.p-shop__name{ display:flex; flex-wrap:wrap; align-items:center; gap:0 8px; }
+
+/* 2026年10月オープン予定の東金沢店。まだ開いていないお店だと
+   ひと目で分かるように、名前のうしろに小さな印を付けています。 */
+.p-shop__badge{
+  display:inline-block; padding:3px 9px 4px;
+  background:var(--brand); color:#fff; border-radius:999px;
+  font-size:11px; font-weight:900; letter-spacing:.02em; vertical-align:2px; white-space:nowrap;
+}
+.p-shop--soon .p-shop__pin{ opacity:.55; }
 .p-shop__arrow{ margin-left:auto; color:var(--brand); font-weight:900; font-size:20px; }
 
 .p-area{
