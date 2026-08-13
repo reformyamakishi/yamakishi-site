@@ -239,9 +239,10 @@ $q = new WP_Query( array(
 		'field'    => 'term_id',
 		'terms'    => $term->term_id,
 	) ),
-	'meta_key' => '_ymkrf_total',
-	'orderby'  => 'meta_value_num',
-	'order'    => 'ASC',
+	/* 並び順は inc/functions-product.php にまとめてあります。
+	   「込み価格の安い順、同じ価格ならグレードの低い順」です。
+	   管理画面の一覧とまったく同じ順番になります。 */
+	'ymkrf_sort' => 'price',
 ) );
 
 /* 価格が未入力の商品があると上の並べ替えから漏れるので、

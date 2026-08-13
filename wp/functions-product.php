@@ -231,6 +231,8 @@ function ymkrf_product_fields() {
 		//  キー           => array( 見出し, 種類, 入力例, 補足説明 )
 		'_ymkrf_catch'   => array( 'キャッチコピー',   'text',   '例：キレイと快適が毎日つづく快適キッチン！', '商品名の上に、小さな赤い文字で出ます' ),
 		'_ymkrf_grade'   => array( 'グレード',         'text',   '例：Fグレード', '空欄でもかまいません' ),
+		'_ymkrf_order'   => array( '並び順',           'number', '例：85',
+			'空欄のままで大丈夫です。グレードから自動で決まります（J=10／I=20／H=30／G=40／F=50／E=60／D=70／C=80／B=90／A=100／S=110／SS=120／SSS=125／プレミアム=130）。順番を変えたいときだけ、入れたい位置の数字を書いてください。数字が小さいほど先に出ます。' ),
 		'_ymkrf_name'    => array( '商品名',           'text',   '例：V-style（Vスタイル）', '空欄なら上のタイトルを使います' ),
 		'_ymkrf_size'    => array( '型（サイズ）',     'text',   '例：I型2550サイズ', 'メーカーロゴのとなりに出ます' ),
 		'_ymkrf_sub'     => array( '商品名の横の言葉', 'text',   '例：ハイパーキラミック', '商品名のすぐ横に、小さく出ます（トイレの陶器の種類など）' ),
@@ -612,6 +614,54 @@ add_action( 'manage_ymkrf_product_posts_custom_column', function ( $col, $post_i
 	}
 }, 10, 2 );
 
+/* ------------------------------------------------------------
+   グレードの序列
+
+   「Jグレード」「Cグレード」「SSグレード」…という文字のままでは
+   正しい順に並びません（文字の順だと C が E より先、SS が S より先に
+   なってしまいます）。そこで数字に置きかえて持っておきます。
+   数字が大きいほど上位のグレードです。
+
+   同じ価格の商品が並んだとき、この数字で順番を決めます。
+   （洗面化粧台の「Eグレード リジャスト」と「Cグレード K1」は
+     どちらも179,800円のため、ここが無いと順番が入れかわります）
+   ------------------------------------------------------------ */
+if ( ! function_exists( 'ymkrf_grade_rank' ) ) :
+function ymkrf_grade_rank( $text ) {
+	$t = trim( (string) $text );
+	if ( $t === '' ) return 999;
+	if ( preg_match( '/premium|プレミアム/iu', $t ) ) return 130;
+	if ( preg_match( '/(SSS|SS|S|A|B|C|D|E|F|G|H|I|J)\s*グレード/u', $t, $m ) ) {
+		$map = array( 'J' => 10, 'I' => 20, 'H' => 30, 'G' => 40, 'F' => 50, 'E' => 60,
+		              'D' => 70, 'C' => 80, 'B' => 90, 'A' => 100,
+		              'S' => 110, 'SS' => 120, 'SSS' => 125 );
+		return isset( $map[ $m[1] ] ) ? $map[ $m[1] ] : 999;
+	}
+	return 999;
+}
+endif;
+
+/* グレードの数字を保存しなおします（商品を保存したときに自動で走ります） */
+if ( ! function_exists( 'ymkrf_update_grade_sort' ) ) :
+function ymkrf_update_grade_sort( $post_id ) {
+	update_post_meta( $post_id, '_ymkrf_gsort',
+		ymkrf_grade_rank( get_post_meta( $post_id, '_ymkrf_grade', true ) ) );
+}
+endif;
+add_action( 'save_post_ymkrf_product', 'ymkrf_update_grade_sort', 20 );
+
+/* 既にある商品にも1回だけ入れます（数字を上げると、もう一度だけ走ります） */
+add_action( 'admin_init', function () {
+	if ( get_option( 'ymkrf_gsort_ver' ) === '2' ) return;
+	$ids = get_posts( array(
+		'post_type' => 'ymkrf_product', 'posts_per_page' => -1,
+		'fields' => 'ids', 'post_status' => 'any',
+	) );
+	foreach ( (array) $ids as $id ) ymkrf_update_grade_sort( $id );
+	update_option( 'ymkrf_gsort_ver', '2' );
+} );
+
+
 /* 「グレード」「込み価格」の見出しをクリックで並べ替えられるようにします */
 add_filter( 'manage_edit-ymkrf_product_sortable_columns', function ( $cols ) {
 	$cols['ymkrf_grade'] = 'ymkrf_grade';
@@ -621,37 +671,60 @@ add_filter( 'manage_edit-ymkrf_product_sortable_columns', function ( $cols ) {
 
 /**
  * 一覧の並び順。
- * ・見出しをクリックしていないときは「込み価格の安い順」
+ * ・見出しをクリックしていないときは「グレード順」
+ *     J → I → H → G → F → E → D → C → B → A → S → SS → SSS → プレミアム
+ *     同じグレードが2つ以上あるときは、込み価格の安い順です。
  * ・「グレード」「込み価格」の見出しをクリックしたら、その順
+ * ・商品の編集画面で「並び順」に数字を入れると、その数字が優先されます
  *
  * meta_key で並べると価格が未入力の商品が一覧から消えてしまうため、
  * LEFT JOIN を自前で足しています（未入力の商品も必ず出ます）。
  */
 add_filter( 'posts_clauses', function ( $clauses, $q ) {
 
-	if ( ! is_admin() || ! $q->is_main_query() ) return $clauses;
-	if ( $q->get( 'post_type' ) !== 'ymkrf_product' ) return $clauses;
-
 	global $wpdb;
+
+	/* 表示ページ側（分類ページ）からも同じ並び順を使えるようにしています。
+	   'ymkrf_sort' => 'price' を付けた WP_Query が対象です。 */
+	$front = ( $q->get( 'ymkrf_sort' ) === 'price' );
+
+	if ( ! $front ) {
+		if ( ! is_admin() || ! $q->is_main_query() ) return $clauses;
+		if ( $q->get( 'post_type' ) !== 'ymkrf_product' ) return $clauses;
+	}
 
 	$by    = $q->get( 'orderby' );
 	$order = ( strtoupper( (string) $q->get( 'order' ) ) === 'DESC' ) ? 'DESC' : 'ASC';
 
-	if ( ! $by ) {
-		$by = 'ymkrf_price';   // 見出しを押していないときの既定
+	if ( $front ) {
+		$by = 'ymkrf_grade';   // 表示ページはいつもグレード順
+		$order = 'ASC';
+	} elseif ( ! $by ) {
+		$by = 'ymkrf_grade';   // 見出しを押していないときの既定
 		$order = 'ASC';
 	} elseif ( ! in_array( $by, array( 'ymkrf_price', 'ymkrf_grade' ), true ) ) {
 		return $clauses;       // 日付順・タイトル順などは、そのまま
 	}
 
+	/* グレードの序列（数字）と込み価格、どちらも使います */
+	$clauses['join'] .= " LEFT JOIN {$wpdb->postmeta} AS ymkrf_gs"
+	                  . " ON ( ymkrf_gs.post_id = {$wpdb->posts}.ID AND ymkrf_gs.meta_key = '_ymkrf_gsort' )";
+	$clauses['join'] .= " LEFT JOIN {$wpdb->postmeta} AS ymkrf_od"
+	                  . " ON ( ymkrf_od.post_id = {$wpdb->posts}.ID AND ymkrf_od.meta_key = '_ymkrf_order' )";
+	$clauses['join'] .= " LEFT JOIN {$wpdb->postmeta} AS ymkrf_ot"
+	                  . " ON ( ymkrf_ot.post_id = {$wpdb->posts}.ID AND ymkrf_ot.meta_key = '_ymkrf_total' )";
+
+	/* 並び順に数字が入っていればそれを、無ければグレードの序列を使います */
+	$gs = "CAST( COALESCE( NULLIF( ymkrf_od.meta_value, '' ), ymkrf_gs.meta_value, 999 ) AS SIGNED )";
+	$pr = "CAST( COALESCE( NULLIF( ymkrf_ot.meta_value, '' ), 0 ) AS SIGNED )";
+
 	if ( $by === 'ymkrf_price' ) {
-		$clauses['join']   .= " LEFT JOIN {$wpdb->postmeta} AS ymkrf_ot"
-		                    . " ON ( ymkrf_ot.post_id = {$wpdb->posts}.ID AND ymkrf_ot.meta_key = '_ymkrf_total' )";
-		$clauses['orderby'] = "CAST( ymkrf_ot.meta_value AS SIGNED ) {$order}, {$wpdb->posts}.post_title ASC";
+		/* 「込み価格」の見出しを押したとき */
+		$clauses['orderby'] = "{$pr} {$order}, {$gs} ASC, {$wpdb->posts}.post_title ASC";
 	} else {
-		$clauses['join']   .= " LEFT JOIN {$wpdb->postmeta} AS ymkrf_og"
-		                    . " ON ( ymkrf_og.post_id = {$wpdb->posts}.ID AND ymkrf_og.meta_key = '_ymkrf_grade' )";
-		$clauses['orderby'] = "ymkrf_og.meta_value {$order}, {$wpdb->posts}.post_title ASC";
+		/* 既定＝グレード順。同じグレードが並んだら、込み価格の安い順。
+		   （文字のままだと C が E より先、SS が S より先になってしまうので数字で並べます） */
+		$clauses['orderby'] = "{$gs} {$order}, {$pr} ASC, {$wpdb->posts}.post_title ASC";
 	}
 
 	return $clauses;
