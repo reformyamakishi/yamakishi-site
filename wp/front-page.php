@@ -564,7 +564,7 @@ get_header();
     </div>
 
     <p class="p-reason__more">
-      <a href="<?php echo esc_url( home_url( '/lp/seikatsu-kaizen/' ) ); ?>">ヤマキシの考え方「リフォームは生活改善」をもっと見る</a>
+      <a href="<?php echo esc_url( home_url( '/about/' ) ); ?>">ヤマキシのこだわり・特徴「安い・早い・安心」をもっと見る</a>
     </p>
   </div>
 </section>

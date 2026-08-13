@@ -213,11 +213,11 @@ foreach ( array( 'created', 'edited', 'delete' ) as $when ) {
 
 /* 上のルールを1回だけ反映させます（数字を変えると、もう一度だけ反映されます） */
 add_action( 'init', function () {
-	/* トイレの分類を足したあと、URLのルールが古いままで
-	   /products/toilet/ が404になっていたため、数字を1つ上げています。 */
-	if ( get_option( 'ymkrf_rewrite_ver' ) === '7' ) return;
+	/* 数字を1つ上げると、次の表示のときに1回だけURLのルールを作り直します。
+	   8 … こだわりページ（/about/）を追加したため */
+	if ( get_option( 'ymkrf_rewrite_ver' ) === '8' ) return;
 	flush_rewrite_rules( false );
-	update_option( 'ymkrf_rewrite_ver', '7' );
+	update_option( 'ymkrf_rewrite_ver', '8' );
 }, 99 );
 
 

@@ -28,7 +28,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '1.0.4' );   // ファイル更新時はここを上げるとキャッシュが切れます
+if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '1.0.5' );   // ファイル更新時はここを上げるとキャッシュが切れます
 
 /* ============================================================
    1. CSS / JS の読み込み
@@ -50,15 +50,95 @@ add_action( 'wp_enqueue_scripts', function () {
 	wp_enqueue_style( 'ymkrf-common', $dir . '/assets/css/common.css', array(), YMKRF_VER );
 	wp_enqueue_script( 'ymkrf-common', $dir . '/assets/js/common.js', array(), YMKRF_VER, true );
 
-	/* 4点パックのページは、WordPressから見ると「指定のないページ」なので
+	/* 4点パック・こだわりのページは、WordPressから見ると「指定のないページ」なので
 	   そのままではトップページ扱いになってしまいます。ここで除きます。 */
-	$is_top = is_front_page() && ! ( function_exists( 'ymkrf_is_pack4' ) && ymkrf_is_pack4() );
+	$is_special = ( function_exists( 'ymkrf_is_pack4' ) && ymkrf_is_pack4() )
+	           || ( function_exists( 'ymkrf_is_about' ) && ymkrf_is_about() );
+	$is_top = is_front_page() && ! $is_special;
 
 	if ( $is_top ) {
 		wp_enqueue_style( 'ymkrf-home', $dir . '/assets/css/home.css', array( 'ymkrf-common' ), YMKRF_VER );
 		wp_enqueue_script( 'ymkrf-home', $dir . '/assets/js/home.js', array( 'ymkrf-common' ), YMKRF_VER, true );
 	} else {
 		wp_enqueue_style( 'ymkrf-page', $dir . '/assets/css/page.css', array( 'ymkrf-common' ), YMKRF_VER );
+	}
+
+	/* こだわりページだけ、専用のCSSを1枚足します */
+	if ( function_exists( 'ymkrf_is_about' ) && ymkrf_is_about() ) {
+		wp_enqueue_style( 'ymkrf-lp', $dir . '/assets/css/lp.css', array( 'ymkrf-page' ), YMKRF_VER );
+	}
+} );
+
+
+/* ============================================================
+   1-2. こだわりページ（/about/）のURL
+        固定ページを作らずに、専用のURLで出しています。
+        やり方は4点パック（inc/functions-product.php）と同じです。
+   ============================================================ */
+add_action( 'init', function () {
+	add_rewrite_rule( '^about/?$', 'index.php?ymkrf_about=1', 'top' );
+}, 20 );
+
+add_filter( 'query_vars', function ( $vars ) {
+	$vars[] = 'ymkrf_about';
+	return $vars;
+} );
+
+add_filter( 'template_include', function ( $tpl ) {
+	if ( ! get_query_var( 'ymkrf_about' ) ) return $tpl;
+	$found = locate_template( 'ymkrf-about.php' );
+	return $found ? $found : $tpl;
+} );
+
+/* このURLは「見つかりません」でもトップページでもありません。
+   ここをはっきりさせないと、下層ページ用のCSSが読み込まれません。 */
+add_action( 'wp', function () {
+	if ( ! get_query_var( 'ymkrf_about' ) ) return;
+	global $wp_query;
+	$wp_query->is_404        = false;
+	$wp_query->is_home       = false;
+	$wp_query->is_front_page = false;
+	$wp_query->is_page       = false;
+	$wp_query->is_singular   = false;
+	$wp_query->is_archive    = false;
+	$wp_query->is_post_type_archive = false;
+	status_header( 200 );
+} );
+
+/* ブラウザのタブに出る題名 */
+add_filter( 'document_title_parts', function ( $parts ) {
+	if ( get_query_var( 'ymkrf_about' ) ) {
+		$parts['title'] = 'ヤマキシのこだわり・特徴｜安い・早い・安心のリフォーム';
+		unset( $parts['tagline'] );
+	}
+	return $parts;
+} );
+
+/* こだわりページかどうか。CSSの読み分けなどで使います。 */
+if ( ! function_exists( 'ymkrf_is_about' ) ) :
+function ymkrf_is_about() {
+	return (bool) get_query_var( 'ymkrf_about' );
+}
+endif;
+
+/* 旧URLからの引っ越し。
+   /concept/ と /system/ は、この1枚にまとめたので /about/ へ送ります。
+   （301＝恒久的な移転。検索エンジンの評価も引き継がれます） */
+add_action( 'template_redirect', function () {
+	$path = trim( (string) parse_url( isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '', PHP_URL_PATH ), '/' );
+
+	/* localhost では http://localhost/reform_yamakishi/ のように
+	   フォルダが1段はさまるので、その分を取り除きます */
+	$base = trim( (string) parse_url( home_url( '/' ), PHP_URL_PATH ), '/' );
+	if ( $base !== '' ) {
+		if ( $path === $base )                            $path = '';
+		elseif ( strpos( $path, $base . '/' ) === 0 )     $path = substr( $path, strlen( $base ) + 1 );
+	}
+
+	$old = array( 'concept', 'system', 'lp/seikatsu-kaizen' );
+	if ( in_array( $path, $old, true ) ) {
+		wp_redirect( home_url( '/about/' ), 301 );
+		exit;
 	}
 } );
 
