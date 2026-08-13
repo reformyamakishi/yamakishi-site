@@ -233,19 +233,19 @@ function ymkrf_stars( $score, $show_num = true ) {
 	$score = max( 0, min( 100, (int) $score ) );
 	$band  = ymkrf_score_band( $score );
 	$star5 = round( $score / 10 ) / 2;      // 5段階に直した数（0.5きざみ）
+	$lbl   = sprintf( '満足度 %d点（5段階で%s）', $score,
+	         rtrim( rtrim( number_format( $star5, 1 ), '0' ), '.' ) );
 
-	$html  = '<p class="c-stars p-voice__stars" data-band="' . esc_attr( $band ) . '"';
-	$html .= ' style="--rate:' . $score . '%"';
-	$html .= ' aria-label="' . esc_attr( sprintf( '満足度 %d点（5段階で%s）', $score, rtrim( rtrim( number_format( $star5, 1 ), '0' ), '.' ) ) ) . '">';
-	$html .= '<span class="c-stars__base" aria-hidden="true">★★★★★</span>';
-	$html .= '<span class="c-stars__fill" aria-hidden="true">★★★★★</span>';
-	$html .= '</p>';
-
-	if ( $show_num ) {
-		$html = str_replace( '</p>', '</p>', $html );
-		$html .= '<span class="c-stars__score">' . $score . '点</span>';
-	}
-	return $html;
+	$h  = '<span class="c-starsrow">';
+	$h .= '<span class="c-stars" data-band="' . esc_attr( $band ) . '"';
+	$h .= ' style="--rate:' . $score . '%"';
+	$h .= ' role="img" aria-label="' . esc_attr( $lbl ) . '">';
+	$h .= '<span class="c-stars__base" aria-hidden="true">★★★★★</span>';
+	$h .= '<span class="c-stars__fill" aria-hidden="true">★★★★★</span>';
+	$h .= '</span>';
+	if ( $show_num ) $h .= '<span class="c-stars__score">' . $score . '点</span>';
+	$h .= '</span>';
+	return $h;
 }
 endif;
 

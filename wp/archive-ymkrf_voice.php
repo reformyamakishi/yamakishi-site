@@ -69,10 +69,12 @@ get_header(); ?>
             </p>
           <?php endif; ?>
           <p class="p-voice__text"><?php echo esc_html( ymkrf_voice_excerpt( $id, 100 ) ); ?></p>
-          <p class="p-voice__who">
-            <span class="p-voice__avatar"><?php echo esc_html( mb_substr( $cust ? $cust : 'お', 0, 1, 'UTF-8' ) ); ?></span>
-            <?php echo esc_html( $cust ? $cust : 'お客様' ); ?>
-          </p>
+          <?php if ( $cust ) : ?>
+            <p class="p-voice__who">
+              <span class="p-voice__avatar"><?php echo esc_html( mb_substr( $cust, 0, 1, 'UTF-8' ) ); ?></span>
+              <?php echo esc_html( $cust ); ?>
+            </p>
+          <?php endif; ?>
           <a class="p-voice__more" href="<?php the_permalink(); ?>">くわしく見る</a>
         </article>
         <?php endwhile; ?>

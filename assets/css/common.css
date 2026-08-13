@@ -672,6 +672,7 @@ address{ font-style:normal; }
      --rate … うまり具合（点数をそのまま % で入れます）
      data-band … 色の段階。点数から自動で決まります。
    -------------------------------------------------------------------------- */
+.c-starsrow{ display:inline-flex; align-items:center; gap:8px; align-self:flex-start; }
 .c-stars{
   position:relative; display:inline-block; line-height:1;
   font-size:17px; letter-spacing:2px; white-space:nowrap;
@@ -688,7 +689,7 @@ address{ font-style:normal; }
 .c-stars[data-band="c"]{ --star:#d98324; }       /* 55〜69点 */
 .c-stars[data-band="d"]{ --star:#b0a49c; }       /* 〜54点 おちついた灰 */
 .c-stars__score{
-  margin-left:8px; font-size:13px; font-weight:900; letter-spacing:0;
+  font-size:13px; font-weight:900; letter-spacing:0;
   color:var(--ink-sub); vertical-align:1px;
 }
 
