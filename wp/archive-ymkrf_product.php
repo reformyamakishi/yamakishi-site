@@ -98,6 +98,19 @@ get_header();
 
     <?php if ( $ready ) : ?>
       <div class="p-price__grid">
+
+        <!-- 水まわり4点パックは分類ではなく専用ページなので、ここだけ手書きです -->
+        <div class="p-price__card p-price__card--feature" data-reveal>
+          <p class="p-price__badge">WEB限定・いちばん人気</p>
+          <div class="p-price__photo">［写真］水まわり4点パック</div>
+          <div class="p-price__body">
+            <h2 class="p-price__name">水まわり4点パック</h2>
+            <p class="p-price__desc">キッチン・お風呂・洗面化粧台・トイレをまとめて。別々に頼むよりぐんとおトクです。</p>
+            <p class="p-price__yen"><span class="above above--all"><i class="fuki">工事費も<br>処分費も</i><b>全部コミコミ!!</b></span><span class="p-price__amount"><span class="num">162<span class="dec">.8</span></span><span class="unit">万円〜<small class="tax">（税込）</small></span></span></p>
+            <a class="p-price__link" href="<?php echo esc_url( ymkrf_cat_url( 'pack4' ) ); ?>">4つのプランを見る</a>
+          </div>
+        </div>
+
         <?php foreach ( $ready as $i => $c ) : ?>
           <div class="p-price__card" data-reveal<?php echo $i % 3 ? ' data-reveal-delay="' . ( ( $i % 3 ) * 80 ) . '"' : ''; ?>>
 
