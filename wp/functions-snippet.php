@@ -28,7 +28,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '1.0.5' );   // ファイル更新時はここを上げるとキャッシュが切れます
+if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '1.0.6' );   // ファイル更新時はここを上げるとキャッシュが切れます
 
 /* ============================================================
    1. CSS / JS の読み込み
@@ -66,6 +66,11 @@ add_action( 'wp_enqueue_scripts', function () {
 	/* こだわりページだけ、専用のCSSを1枚足します */
 	if ( function_exists( 'ymkrf_is_about' ) && ymkrf_is_about() ) {
 		wp_enqueue_style( 'ymkrf-lp', $dir . '/assets/css/lp.css', array( 'ymkrf-page' ), YMKRF_VER );
+	}
+
+	/* お客様の声のページ */
+	if ( is_singular( 'ymkrf_voice' ) || is_post_type_archive( 'ymkrf_voice' ) ) {
+		wp_enqueue_style( 'ymkrf-voice', $dir . '/assets/css/voice.css', array( 'ymkrf-page' ), YMKRF_VER );
 	}
 } );
 
