@@ -42,7 +42,7 @@ $maker = ! empty( $d['makers'] ) ? $d['makers'][0] : null;
 <nav class="p-breadcrumb" aria-label="パンくずリスト">
   <ol class="p-breadcrumb__list">
     <li><a href="<?php echo esc_url( home_url( '/' ) ); ?>">ホーム</a></li>
-    <li><a href="<?php echo esc_url( home_url( '/products/' ) ); ?>">商品・価格</a></li>
+    <li><a href="<?php echo esc_url( ymkrf_products_url() ); ?>">商品・価格</a></li>
     <?php if ( $cat ) : ?>
       <li><a href="<?php echo esc_url( get_term_link( $cat ) ); ?>"><?php echo esc_html( $cat->name ); ?></a></li>
     <?php endif; ?>
@@ -500,7 +500,7 @@ echo '<script type="application/ld+json">' . wp_json_encode( $ld, JSON_UNESCAPED
 
 $crumbs = array(
 	array( 'ホーム', home_url( '/' ) ),
-	array( '商品・価格', home_url( '/products/' ) ),
+	array( '商品・価格', ymkrf_products_url() ),
 );
 if ( $cat ) $crumbs[] = array( $cat->name, get_term_link( $cat ) );
 $crumbs[] = array( ( $d['grade'] ? '【' . $d['grade'] . '】' : '' ) . $d['name'], get_permalink() );

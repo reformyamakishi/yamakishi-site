@@ -550,6 +550,20 @@ address{ font-style:normal; }
   border-radius:999px; font-size:15px; font-weight:900; text-decoration:none; transition:background .18s;
 }
 .p-price__link:hover{ background:var(--brand-tint2); }
+
+/* ページをまだ作っていない分類のカード。
+   押せるように見えて開けない、がいちばん困るので、
+   リンクにはせず「準備中」とはっきり出します。 */
+.p-price__card--soon{ background:var(--bg-gray, #f7f7f7); }
+.p-price__card--soon:hover{ transform:none; box-shadow:var(--shadow); border-color:var(--border); }
+.p-price__card--soon .p-price__photo{ opacity:.62; }
+.p-price__soon{
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+  min-height:50px; padding:10px 14px; border-radius:14px;
+  background:#fff; border:2px dashed var(--border);
+  color:var(--ink-sub); font-size:14px; font-weight:900; line-height:1.5; text-align:center;
+}
+.p-price__soon span{ font-size:12.5px; font-weight:700; }
 /* カードのどこを押してもリンク先へ行けるようにします。
    写真や商品名を押しても「プランを見る」と同じページが開きます。
    （リンクの中にリンクは入れられないので、透明な板をカード全体にかぶせています） */

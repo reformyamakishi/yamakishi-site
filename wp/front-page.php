@@ -27,7 +27,7 @@ get_header();
   <div class="l-wrap p-hero__inner">
 
     <div class="p-hero__copy">
-      <span class="p-hero__badge">石川県・福井県に10店舗</span>
+      <span class="p-hero__badge">石川県・福井県に11店舗</span>
 
       <h1 class="p-hero__title" data-split-text>
         <span class="p-hero__title2 p-hero__title2--lead">工事費込みのパック価格だから</span>
@@ -307,7 +307,7 @@ get_header();
           <h3 class="p-price__name">水まわり4点パック</h3>
           <p class="p-price__desc">キッチン・お風呂・トイレ・洗面をまとめて。別々に頼むよりぐんとお得です。</p>
           <p class="p-price__yen"><span class="above above--all"><i class="fuki">工事費も<br>処分費も</i><b>全部コミコミ!!</b></span><span class="p-price__amount"><span class="num">162<span class="dec">.8</span></span><span class="unit">万円〜<small class="tax">（税込）</small></span></span></p>
-          <a class="p-price__link" href="<?php echo esc_url( home_url( '/products/pack4/' ) ); ?>">プランを見る</a>
+          <a class="p-price__link" href="<?php echo esc_url( ymkrf_cat_url( 'pack4' ) ); ?>">プランを見る</a>
         </div>
       </div>
 
@@ -323,7 +323,7 @@ get_header();
           <h3 class="p-price__name">キッチン</h3>
           <p class="p-price__desc">クリナップ・LIXIL・TOTOなど主要メーカーを、標準工事費込みで。</p>
           <p class="p-price__yen"><span class="above above--all"><i class="fuki">工事費も<br>処分費も</i><b>全部コミコミ!!</b></span><span class="p-price__amount"><span class="num">59<span class="dec">.8</span></span><span class="unit">万円〜<small class="tax">（税込）</small></span></span></p>
-          <a class="p-price__link" href="<?php echo esc_url( home_url( '/products/kitchen/' ) ); ?>">プランを見る</a>
+          <a class="p-price__link" href="<?php echo esc_url( ymkrf_cat_url( 'kitchen' ) ); ?>">プランを見る</a>
         </div>
       </div>
 
@@ -339,7 +339,7 @@ get_header();
           <h3 class="p-price__name">お風呂（ユニットバス）</h3>
           <p class="p-price__desc">断熱浴槽で冬もあたたか。工期は3〜5日が目安です。</p>
           <p class="p-price__yen"><span class="above above--all"><i class="fuki">工事費も<br>処分費も</i><b>全部コミコミ!!</b></span><span class="p-price__amount"><span class="num">84<span class="dec">.8</span></span><span class="unit">万円〜<small class="tax">（税込）</small></span></span></p>
-          <a class="p-price__link" href="<?php echo esc_url( home_url( '/products/bathroom/' ) ); ?>">プランを見る</a>
+          <a class="p-price__link" href="<?php echo esc_url( ymkrf_cat_url( 'bathroom' ) ); ?>">プランを見る</a>
         </div>
       </div>
 
@@ -355,7 +355,7 @@ get_header();
           <h3 class="p-price__name">トイレ</h3>
           <p class="p-price__desc">最短半日で交換完了。お掃除がラクな最新モデルにも対応します。</p>
           <p class="p-price__yen"><span class="above above--all"><i class="fuki">工事費も<br>処分費も</i><b>全部コミコミ!!</b></span><span class="p-price__amount"><span class="num">12<span class="dec">.9</span></span><span class="unit">万円〜<small class="tax">（税込）</small></span></span></p>
-          <a class="p-price__link" href="<?php echo esc_url( home_url( '/products/toilet/' ) ); ?>">プランを見る</a>
+          <a class="p-price__link" href="<?php echo esc_url( ymkrf_cat_url( 'toilet' ) ); ?>">プランを見る</a>
         </div>
       </div>
 
@@ -371,7 +371,7 @@ get_header();
           <h3 class="p-price__name">洗面化粧台</h3>
           <p class="p-price__desc">朝の身支度がしやすく。収納が増えて、掃除もラクになります。</p>
           <p class="p-price__yen"><span class="above above--all"><i class="fuki">工事費も<br>処分費も</i><b>全部コミコミ!!</b></span><span class="p-price__amount"><span class="num">7<span class="dec">.48</span></span><span class="unit">万円〜<small class="tax">（税込）</small></span></span></p>
-          <a class="p-price__link" href="<?php echo esc_url( home_url( '/products/lavatory/' ) ); ?>">プランを見る</a>
+          <a class="p-price__link" href="<?php echo esc_url( ymkrf_cat_url( 'lavatory' ) ); ?>">プランを見る</a>
         </div>
       </div>
 
@@ -387,7 +387,7 @@ get_header();
           <h3 class="p-price__name">給湯器・エコキュート</h3>
           <p class="p-price__desc">お湯が出ない、というときもすぐお伺いします。夜間・休日のトラブルにも対応。</p>
           <p class="p-price__yen p-price__yen--challenge"><span class="above above--all"><i class="fuki">工事費も<br>処分費も</i><b>全部コミコミ!!</b></span><span class="chal">地域最安値に挑戦中！</span></p>
-          <a class="p-price__link" href="<?php echo esc_url( home_url( '/products/boiler/' ) ); ?>">プランを見る</a>
+          <a class="p-price__link" href="<?php echo esc_url( ymkrf_cat_url( 'boiler' ) ); ?>">プランを見る</a>
         </div>
       </div>
 
@@ -403,13 +403,13 @@ get_header();
           <h3 class="p-price__name">外壁塗装</h3>
           <p class="p-price__desc">北陸の雪と雨に耐える塗料選びから。専門サイトもご用意しています。</p>
           <p class="p-price__yen"><span class="above above--all"><b>足場代込み！</b></span><span class="p-price__amount"><span class="lbl lbl--in">100㎡<br>あたり</span><span class="num">49<span class="dec">.8</span></span><span class="unit">万円〜<small class="tax">（税込）</small></span></span></p>
-          <a class="p-price__link" href="<?php echo esc_url( home_url( '/products/outer-wall/' ) ); ?>">プランを見る</a>
+          <a class="p-price__link" href="<?php echo esc_url( ymkrf_cat_url( 'outer-wall' ) ); ?>">プランを見る</a>
         </div>
       </div>
 
     </div>
 
-    <a class="c-more" href="<?php echo esc_url( home_url( '/products/' ) ); ?>">すべての商品・価格を見る</a>
+    <a class="c-more" href="<?php echo esc_url( ymkrf_products_url() ); ?>">すべての商品・価格を見る</a>
   </div>
 </section>
 
@@ -425,75 +425,79 @@ get_header();
     </div>
 
     <div class="p-menu__grid" data-reveal>
-      <a class="p-menu__item" href="<?php echo esc_url( home_url( '/products/kitchen/' ) ); ?>" data-icon="kitchen">
+      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_cat_url( 'kitchen' ) ); ?>" data-icon="kitchen">
         <span class="p-menu__icon"></span>
         <span class="p-menu__name">キッチン</span><span class="p-menu__note">システムキッチン交換</span>
       </a>
-      <a class="p-menu__item" href="<?php echo esc_url( home_url( '/products/bathroom/' ) ); ?>" data-icon="bath">
+      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_cat_url( 'bathroom' ) ); ?>" data-icon="bath">
         <span class="p-menu__icon"></span>
         <span class="p-menu__name">お風呂</span><span class="p-menu__note">断熱浴槽であたたかく</span>
       </a>
-      <a class="p-menu__item" href="<?php echo esc_url( home_url( '/products/toilet/' ) ); ?>" data-icon="toilet">
+      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_cat_url( 'toilet' ) ); ?>" data-icon="toilet">
         <span class="p-menu__icon"></span>
         <span class="p-menu__name">トイレ</span><span class="p-menu__note">最短半日で交換</span>
       </a>
-      <a class="p-menu__item" href="<?php echo esc_url( home_url( '/products/lavatory/' ) ); ?>" data-icon="washroom">
+      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_cat_url( 'lavatory' ) ); ?>" data-icon="washroom">
         <span class="p-menu__icon"></span>
         <span class="p-menu__name">洗面化粧台</span><span class="p-menu__note">収納たっぷり</span>
       </a>
-      <a class="p-menu__item" href="<?php echo esc_url( home_url( '/products/boiler/' ) ); ?>" data-icon="boiler">
+      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_cat_url( 'boiler' ) ); ?>" data-icon="boiler">
         <span class="p-menu__icon"></span>
         <span class="p-menu__name">給湯器</span><span class="p-menu__note">故障・交換のご相談</span>
       </a>
-      <a class="p-menu__item" href="<?php echo esc_url( home_url( '/products/ecocute/' ) ); ?>" data-icon="ecocute">
+      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_cat_url( 'oiltank' ) ); ?>" data-icon="oiltank">
+        <span class="p-menu__icon"></span>
+        <span class="p-menu__name">オイルタンク</span><span class="p-menu__note">灯油タンクの交換</span>
+      </a>
+      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_cat_url( 'ecocute' ) ); ?>" data-icon="ecocute">
         <span class="p-menu__icon"></span>
         <span class="p-menu__name">エコキュート</span><span class="p-menu__note">電気でお湯をつくる</span>
       </a>
-      <a class="p-menu__item" href="<?php echo esc_url( home_url( '/products/ih/' ) ); ?>" data-icon="ih">
+      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_cat_url( 'ih' ) ); ?>" data-icon="ih">
         <span class="p-menu__icon"></span>
         <span class="p-menu__name">IH</span><span class="p-menu__note">IHクッキングヒーター</span>
       </a>
-      <a class="p-menu__item" href="<?php echo esc_url( home_url( '/products/interior/' ) ); ?>" data-icon="interior">
+      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_cat_url( 'interior' ) ); ?>" data-icon="interior">
         <span class="p-menu__icon"></span>
         <span class="p-menu__name">内装・クロス・床</span><span class="p-menu__note">お部屋の模様替え</span>
       </a>
-      <a class="p-menu__item" href="<?php echo esc_url( home_url( '/products/renovation/' ) ); ?>" data-icon="renovation">
+      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_cat_url( 'renovation' ) ); ?>" data-icon="renovation">
         <span class="p-menu__icon"></span>
         <span class="p-menu__name">内装・改装</span><span class="p-menu__note">間取りの変更も</span>
       </a>
-      <a class="p-menu__item" href="<?php echo esc_url( home_url( '/products/window/' ) ); ?>" data-icon="window">
+      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_cat_url( 'window' ) ); ?>" data-icon="window">
         <span class="p-menu__icon"></span>
         <span class="p-menu__name">窓・断熱</span><span class="p-menu__note">補助金の対象工事</span>
       </a>
-      <a class="p-menu__item" href="<?php echo esc_url( home_url( '/products/door/' ) ); ?>" data-icon="door">
+      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_cat_url( 'door' ) ); ?>" data-icon="door">
         <span class="p-menu__icon"></span>
         <span class="p-menu__name">玄関ドア</span><span class="p-menu__note">1日で交換できます</span>
       </a>
-      <a class="p-menu__item" href="<?php echo esc_url( home_url( '/products/outer-wall/' ) ); ?>" data-icon="wall">
-        <span class="p-menu__icon"></span>
-        <span class="p-menu__name">外壁・屋根</span><span class="p-menu__note">塗装・サイディング</span>
-      </a>
-      <a class="p-menu__item" href="<?php echo esc_url( home_url( '/products/carport/' ) ); ?>" data-icon="carport">
-        <span class="p-menu__icon"></span>
-        <span class="p-menu__name">カーポート</span><span class="p-menu__note">雪や雨から車を守る</span>
-      </a>
-      <a class="p-menu__item" href="<?php echo esc_url( home_url( '/products/storage/' ) ); ?>" data-icon="storage">
-        <span class="p-menu__icon"></span>
-        <span class="p-menu__name">物置</span><span class="p-menu__note">庭まわりの収納に</span>
-      </a>
-      <a class="p-menu__item" href="<?php echo esc_url( home_url( '/products/veranda/' ) ); ?>" data-icon="veranda">
+      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_cat_url( 'veranda' ) ); ?>" data-icon="veranda">
         <span class="p-menu__icon"></span>
         <span class="p-menu__name">ベランダ・サンルーム</span><span class="p-menu__note">洗濯物も安心</span>
       </a>
-      <a class="p-menu__item" href="<?php echo esc_url( home_url( '/works/repair/' ) ); ?>" data-icon="repair">
+      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_cat_url( 'carport' ) ); ?>" data-icon="carport">
+        <span class="p-menu__icon"></span>
+        <span class="p-menu__name">カーポート</span><span class="p-menu__note">雪や雨から車を守る</span>
+      </a>
+      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_cat_url( 'storage' ) ); ?>" data-icon="storage">
+        <span class="p-menu__icon"></span>
+        <span class="p-menu__name">物置</span><span class="p-menu__note">庭まわりの収納に</span>
+      </a>
+      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_cat_url( 'outer-wall' ) ); ?>" data-icon="wall">
+        <span class="p-menu__icon"></span>
+        <span class="p-menu__name">外壁・屋根</span><span class="p-menu__note">塗装・サイディング</span>
+      </a>
+      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_products_url() ); ?>" data-icon="repair">
         <span class="p-menu__icon"></span>
         <span class="p-menu__name">修理・小工事</span><span class="p-menu__note">水漏れ・建具・電気</span>
       </a>
-      <a class="p-menu__item" href="<?php echo esc_url( home_url( '/works/whole/' ) ); ?>" data-icon="whole">
+      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_products_url() ); ?>" data-icon="demolition">
         <span class="p-menu__icon"></span>
-        <span class="p-menu__name">全面リフォーム</span><span class="p-menu__note">住まいまるごと</span>
+        <span class="p-menu__name">解体</span><span class="p-menu__note">建物・部分解体</span>
       </a>
-      <a class="p-menu__item" href="<?php echo esc_url( home_url( '/inquiry/' ) ); ?>" data-icon="other">
+      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_products_url() ); ?>" data-icon="other">
         <span class="p-menu__icon"></span>
         <span class="p-menu__name">その他</span><span class="p-menu__note">まずはご相談ください</span>
       </a>
@@ -527,8 +531,8 @@ get_header();
         <span class="p-reason__icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h18l-1.6 3.4a2 2 0 0 1-1.8 1.1H6.4a2 2 0 0 1-1.8-1.1z"/><path d="M5 11.5V20h14v-8.5"/><path d="M9.5 20v-5h5v5"/><path d="M7 7V4h10v3"/></svg>
         </span>
-        <h3 class="p-reason__title">10店舗＋全国100社の<br>まとめ仕入れ</h3>
-        <p class="p-reason__text">石川・福井の10店舗分をまとめ、さらに全国100社以上が加盟する「ファストリフォーム」グループで共同仕入れ。だから商品を安く入れられます。</p>
+        <h3 class="p-reason__title">11店舗＋全国100社の<br>まとめ仕入れ</h3>
+        <p class="p-reason__text">石川・福井の11店舗分をまとめ、さらに全国100社以上が加盟する「ファストリフォーム」グループで共同仕入れ。だから商品を安く入れられます。</p>
       </article>
 
       <article class="p-reason__card" data-reveal data-reveal-delay="160">
@@ -546,7 +550,7 @@ get_header();
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 6.6V12l3.6 2.2"/></svg>
         </span>
         <h3 class="p-reason__title">お店から30分。<br>だからすぐ来られる</h3>
-        <p class="p-reason__text">石川・福井の10店舗から、およそ30分以内で伺える範囲が対応エリアです。工事のあとも、いちばん近いお店がずっと窓口としてお付き合いします。</p>
+        <p class="p-reason__text">石川・福井の11店舗から、およそ30分以内で伺える範囲が対応エリアです。工事のあとも、いちばん近いお店がずっと窓口としてお付き合いします。</p>
       </article>
     </div>
 
@@ -711,7 +715,7 @@ get_header();
   <div class="l-wrap">
     <div class="c-head" data-reveal>
       <span class="c-head__en">SHOPS &amp; AREA</span>
-      <h2 class="c-head__title">石川・福井に<span class="marker">10店舗</span>。<br class="sp-only">だから、すぐ来られます。</h2>
+      <h2 class="c-head__title">石川・福井に<span class="marker">11店舗</span>。<br class="sp-only">だから、すぐ来られます。</h2>
       <p class="c-head__lead">実物を見て決められるショールームもご用意しています。</p>
     </div>
 
@@ -721,7 +725,7 @@ get_header();
     </div>
 
     <div class="p-shops__tabs" role="tablist" aria-label="県で絞り込む">
-      <button class="p-shops__tab is-active" type="button" role="tab" aria-selected="true" data-shoptab="ishikawa">石川県（7店舗）</button>
+      <button class="p-shops__tab is-active" type="button" role="tab" aria-selected="true" data-shoptab="ishikawa">石川県（8店舗）</button>
       <button class="p-shops__tab" type="button" role="tab" aria-selected="false" data-shoptab="fukui">福井県（3店舗）</button>
     </div>
 
@@ -747,6 +751,9 @@ get_header();
       <li><a class="p-shop" href="<?php echo esc_url( home_url( '/shops/tagami/' ) ); ?>">
         <svg class="p-shop__pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
         <span><span class="p-shop__name">金沢田上店</span><span class="p-shop__info">石川県金沢市／10:00〜17:00</span></span><span class="p-shop__arrow">›</span></a></li>
+      <li><a class="p-shop p-shop--soon" href="<?php echo esc_url( home_url( '/shops/higashikanazawa/' ) ); ?>">
+        <svg class="p-shop__pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span><span class="p-shop__name">東金沢店<span class="p-shop__badge">10月24日（土）オープン</span></span><span class="p-shop__info">石川県金沢市大樋町</span></span><span class="p-shop__arrow">›</span></a></li>
     </ul>
 
     <ul class="p-shops__list" data-shoplist="fukui" hidden>
@@ -790,7 +797,7 @@ get_header();
       <div class="p-faq__item" data-faq>
         <button class="p-faq__q" type="button">小さな修理だけでも頼めますか？</button>
         <div class="p-faq__a"><div class="p-faq__a-inner">
-          水漏れ、建具の調整、コンセントの増設といった小工事だけでも承ります。石川・福井に10店舗ありますので、お近くのお店からすぐに伺えます。
+          水漏れ、建具の調整、コンセントの増設といった小工事だけでも承ります。石川・福井に11店舗ありますので、お近くのお店からすぐに伺えます。
         </div></div>
       </div>
       <div class="p-faq__item" data-faq>
@@ -871,7 +878,7 @@ get_header();
     <h2 class="p-cta__title">まずは<span class="em">「いくらかかるか」</span>だけでも、<br>聞いてみませんか。</h2>
     <p class="p-cta__text">
       見積り・現地調査は無料。ご相談だけでもかまいません。<br>
-      石川・福井の10店舗が、お近くから伺います。
+      石川・福井の11店舗が、お近くから伺います。
     </p>
 
     <div class="p-cta__box">

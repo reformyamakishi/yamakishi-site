@@ -62,7 +62,7 @@ $asset = get_stylesheet_directory_uri();
         ) );
       } else { ?>
         <ul class="p-gnav__list">
-          <li><a href="<?php echo esc_url( home_url( '/products/' ) ); ?>">商品・価格</a></li>
+          <li><a href="<?php echo esc_url( ymkrf_products_url() ); ?>">商品・価格</a></li>
           <li><a href="<?php echo esc_url( home_url( '/works/' ) ); ?>">施工事例</a></li>
           <li><a href="<?php echo esc_url( home_url( '/voice/' ) ); ?>">お客様の声</a></li>
           <li><a href="<?php echo esc_url( home_url( '/shops/' ) ); ?>">店舗・エリア</a></li>
@@ -128,14 +128,14 @@ $asset = get_stylesheet_directory_uri();
       ) );
     } else { ?>
       <ul class="p-drawer__list">
-        <li><a href="<?php echo esc_url( home_url( '/products/kitchen/' ) ); ?>">キッチン</a></li>
-        <li><a href="<?php echo esc_url( home_url( '/products/bathroom/' ) ); ?>">お風呂・ユニットバス</a></li>
-        <li><a href="<?php echo esc_url( home_url( '/products/toilet/' ) ); ?>">トイレ</a></li>
-        <li><a href="<?php echo esc_url( home_url( '/products/lavatory/' ) ); ?>">洗面化粧台</a></li>
-        <li><a href="<?php echo esc_url( home_url( '/products/boiler/' ) ); ?>">給湯器・エコキュート</a></li>
-        <li><a href="<?php echo esc_url( home_url( '/products/outer-wall/' ) ); ?>">外壁・屋根</a></li>
-        <li><a href="<?php echo esc_url( home_url( '/products/exterior/' ) ); ?>">エクステリア</a></li>
-        <li><a href="<?php echo esc_url( home_url( '/products/interior/' ) ); ?>">内装・窓・断熱</a></li>
+        <li><a href="<?php echo esc_url( ymkrf_cat_url( 'kitchen' ) ); ?>">キッチン</a></li>
+        <li><a href="<?php echo esc_url( ymkrf_cat_url( 'bathroom' ) ); ?>">お風呂・ユニットバス</a></li>
+        <li><a href="<?php echo esc_url( ymkrf_cat_url( 'toilet' ) ); ?>">トイレ</a></li>
+        <li><a href="<?php echo esc_url( ymkrf_cat_url( 'lavatory' ) ); ?>">洗面化粧台</a></li>
+        <li><a href="<?php echo esc_url( ymkrf_cat_url( 'boiler' ) ); ?>">給湯器・エコキュート</a></li>
+        <li><a href="<?php echo esc_url( ymkrf_cat_url( 'outer-wall' ) ); ?>">外壁・屋根</a></li>
+        <li><a href="<?php echo esc_url( ymkrf_cat_url( 'exterior' ) ); ?>">エクステリア</a></li>
+        <li><a href="<?php echo esc_url( ymkrf_cat_url( 'interior' ) ); ?>">内装・窓・断熱</a></li>
       </ul>
     <?php } ?>
   </div>

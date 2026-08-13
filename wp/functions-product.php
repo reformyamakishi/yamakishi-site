@@ -124,11 +124,37 @@ add_action( 'init', function () {
 			'index.php?ymkrf_product_cat=$matches[1]', 'top' );
 	}
 
+	/* 水まわり4点パック。分類でも商品でもない専用ページなので、
+	   ほかのルールより先に置いています */
+	add_rewrite_rule( '^products/pack4/?$', 'index.php?ymkrf_pack4=1', 'top' );
+
 	/* /products/<分類>/<商品>/ … 商品ページ（2段のとき）
 	   分類の部分は見ていないので、あとから商品の分類を変えても開けます */
 	add_rewrite_rule( '^products/[^/]+/([^/]+)/?$',
 		'index.php?ymkrf_product=$matches[1]', 'top' );
 }, 20 );
+
+/* 上のルールで使う目印をWordPressに教えます */
+add_filter( 'query_vars', function ( $vars ) {
+	$vars[] = 'ymkrf_pack4';
+	return $vars;
+} );
+
+/* 目印があったら、4点パックのテンプレートで表示します */
+add_filter( 'template_include', function ( $tpl ) {
+	if ( ! get_query_var( 'ymkrf_pack4' ) ) return $tpl;
+	$found = locate_template( 'ymkrf-pack4.php' );
+	return $found ? $found : $tpl;
+} );
+
+/* 4点パックのページは「見つかりません」ではありません */
+add_action( 'wp', function () {
+	if ( get_query_var( 'ymkrf_pack4' ) ) {
+		global $wp_query;
+		$wp_query->is_404 = false;
+		status_header( 200 );
+	}
+} );
 
 /**
  * 念のための保険。
@@ -162,9 +188,9 @@ foreach ( array( 'created', 'edited', 'delete' ) as $when ) {
 add_action( 'init', function () {
 	/* トイレの分類を足したあと、URLのルールが古いままで
 	   /products/toilet/ が404になっていたため、数字を1つ上げています。 */
-	if ( get_option( 'ymkrf_rewrite_ver' ) === '6' ) return;
+	if ( get_option( 'ymkrf_rewrite_ver' ) === '7' ) return;
 	flush_rewrite_rules( false );
-	update_option( 'ymkrf_rewrite_ver', '6' );
+	update_option( 'ymkrf_rewrite_ver', '7' );
 }, 99 );
 
 
@@ -879,6 +905,76 @@ if ( ! function_exists( 'ymkrf_work_icon' ) ) {
 	}
 }
 
+/* ============================================================
+   商品カテゴリへのリンク先
+
+   ★ここが「リンクが外れる」問題の対策です。
+
+   トップページやメニューには、まだ商品を入れていない分類
+   （エコキュート・IH・玄関ドア…）へのボタンも並んでいます。
+   これまでは /products/<分類>/ を直接書いていたので、
+   その分類がまだ無いとき・中身が空のときに
+   「ページが見つかりません」（404）になっていました。
+
+   この関数を通すと、
+     ・その分類があって、商品も入っている → その一覧ページへ
+     ・まだ無い／中身が空                  → 商品一覧（/products/）へ
+   と、かならずどこかに着地します。リンクが切れることはありません。
+
+   使い方： <a href="<?php echo esc_url( ymkrf_cat_url( 'kitchen' ) ); ?>">
+   ============================================================ */
+if ( ! function_exists( 'ymkrf_products_url' ) ) :
+function ymkrf_products_url() {
+	$url = get_post_type_archive_link( 'ymkrf_product' );
+	return $url ? $url : home_url( '/products/' );
+}
+endif;
+
+/**
+ * 商品ページへのリンク。まだその商品が無いときは商品一覧に着地します。
+ * 4点パックのページから各商品へ飛ぶときに使っています。
+ */
+if ( ! function_exists( 'ymkrf_prd_url' ) ) :
+function ymkrf_prd_url( $slug ) {
+	$p = $slug ? get_page_by_path( $slug, OBJECT, 'ymkrf_product' ) : null;
+	if ( ! $p ) return ymkrf_products_url();
+	$url = get_permalink( $p );
+	return $url ? $url : ymkrf_products_url();
+}
+endif;
+
+if ( ! function_exists( 'ymkrf_cat_url' ) ) :
+function ymkrf_cat_url( $slug ) {
+
+	$slug = trim( (string) $slug );
+	if ( $slug === '' ) return ymkrf_products_url();
+
+	/* 水まわり4点パックだけは、分類ではなく専用ページです */
+	if ( $slug === 'pack4' ) return home_url( '/products/pack4/' );
+
+	$term = get_term_by( 'slug', $slug, 'ymkrf_product_cat' );
+
+	/* 分類そのものが無い（＝これまで404になっていたところ） */
+	if ( ! $term || is_wp_error( $term ) ) return ymkrf_products_url();
+
+	/* 分類はあるが、商品がまだ1つも入っていない
+	   （子分類に入れている場合もあるので、子の数もたします） */
+	$count = (int) $term->count;
+	if ( ! $count ) {
+		$kids = get_terms( array(
+			'taxonomy'   => 'ymkrf_product_cat',
+			'child_of'   => $term->term_id,
+			'hide_empty' => true,
+			'fields'     => 'ids',
+		) );
+		if ( is_wp_error( $kids ) || ! $kids ) return ymkrf_products_url();
+	}
+
+	$url = get_term_link( $term );
+	return is_wp_error( $url ) ? ymkrf_products_url() : $url;
+}
+endif;
+
 /**
  * カテゴリの呼び名。コラム・施工事例の見出しなどに使います。
  * 「お風呂」だと硬いので、ページ上では「ユニットバス」と呼びます。
@@ -988,7 +1084,10 @@ endif;
  * common.css → page.css → product.css の順です。
  */
 add_action( 'wp_enqueue_scripts', function () {
-	if ( ! is_singular( 'ymkrf_product' ) && ! is_tax( 'ymkrf_product_cat' ) ) return;
+	if ( ! is_singular( 'ymkrf_product' )
+	  && ! is_tax( 'ymkrf_product_cat' )
+	  && ! is_post_type_archive( 'ymkrf_product' )
+	  && ! get_query_var( 'ymkrf_pack4' ) ) return;   // ← 商品一覧・4点パックでも使います
 	wp_enqueue_style( 'ymkrf-product',
 		get_stylesheet_directory_uri() . '/assets/css/product.css',
 		array( 'ymkrf-common', 'ymkrf-page' ), defined( 'YMKRF_VER' ) ? YMKRF_VER : null );

@@ -323,7 +323,7 @@ get_header();
 <nav class="p-breadcrumb" aria-label="パンくずリスト">
   <ol class="p-breadcrumb__list">
     <li><a href="<?php echo esc_url( home_url( '/' ) ); ?>">ホーム</a></li>
-    <li><a href="<?php echo esc_url( home_url( '/products/' ) ); ?>">商品・価格</a></li>
+    <li><a href="<?php echo esc_url( ymkrf_products_url() ); ?>">商品・価格</a></li>
     <li><?php echo esc_html( $name ); ?></li>
   </ol>
 </nav>

@@ -14,14 +14,14 @@ $home  = home_url( '/' );
       <div class="p-footer__col">
         <h3>リフォームメニュー</h3>
         <ul>
-          <li><a href="<?php echo esc_url( $home . 'products/kitchen/' ); ?>">キッチンリフォーム</a></li>
-          <li><a href="<?php echo esc_url( $home . 'products/bathroom/' ); ?>">お風呂・ユニットバス</a></li>
-          <li><a href="<?php echo esc_url( $home . 'products/toilet/' ); ?>">トイレリフォーム</a></li>
-          <li><a href="<?php echo esc_url( $home . 'products/lavatory/' ); ?>">洗面化粧台</a></li>
-          <li><a href="<?php echo esc_url( $home . 'products/boiler/' ); ?>">給湯器・エコキュート</a></li>
-          <li><a href="<?php echo esc_url( $home . 'products/outer-wall/' ); ?>">外壁塗装・屋根</a></li>
-          <li><a href="<?php echo esc_url( $home . 'products/exterior/' ); ?>">エクステリア</a></li>
-          <li><a href="<?php echo esc_url( $home . 'products/interior/' ); ?>">内装・窓・断熱</a></li>
+          <li><a href="<?php echo esc_url( ymkrf_cat_url( 'kitchen' ) ); ?>">キッチンリフォーム</a></li>
+          <li><a href="<?php echo esc_url( ymkrf_cat_url( 'bathroom' ) ); ?>">お風呂・ユニットバス</a></li>
+          <li><a href="<?php echo esc_url( ymkrf_cat_url( 'toilet' ) ); ?>">トイレリフォーム</a></li>
+          <li><a href="<?php echo esc_url( ymkrf_cat_url( 'lavatory' ) ); ?>">洗面化粧台</a></li>
+          <li><a href="<?php echo esc_url( ymkrf_cat_url( 'boiler' ) ); ?>">給湯器・エコキュート</a></li>
+          <li><a href="<?php echo esc_url( ymkrf_cat_url( 'outer-wall' ) ); ?>">外壁塗装・屋根</a></li>
+          <li><a href="<?php echo esc_url( ymkrf_cat_url( 'exterior' ) ); ?>">エクステリア</a></li>
+          <li><a href="<?php echo esc_url( ymkrf_cat_url( 'interior' ) ); ?>">内装・窓・断熱</a></li>
         </ul>
       </div>
 
@@ -58,7 +58,7 @@ $home  = home_url( '/' );
         <address class="p-footer__company">
           株式会社山岸（リフォームヤマキシ）<br>
           <a class="p-footer__tel" href="tel:0800-777-3331" data-cta="footer">0800-777-3331</a><br>
-          石川県・福井県に10店舗
+          石川県・福井県に11店舗
         </address>
         <ul style="margin-top:12px">
           <li><a href="<?php echo esc_url( $home . 'inquiry/webrsv/' ); ?>">ネット来店予約</a></li>

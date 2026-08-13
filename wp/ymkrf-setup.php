@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '74' );
+define( 'YMKRF_SETUP_VER', '76' );
 
 /* キッチンの「ヤマキシ標準工事内容」。
    ホームページの一覧表（7項目）と、番号入りの図（8項目）の
@@ -121,6 +121,8 @@ add_action( 'init', function () {
 			'kanadu'     => '金津店',
 			'kahahothu'  => '開発店',
 			'asahi'      => '朝日店',
+			/* 2026年10月オープン予定 */
+			'higashikanazawa' => '東金沢店',
 		),
 	);
 
@@ -6560,6 +6562,12 @@ TOTOのセフィオンテクト、LIXILのアクアセラミック、Panasonic�
 		}
 	}
 	if ( $lav_missing ) {
+		/* ★ここで一度URLの設定を更新します。
+		     以前は、いちばん最後（すべて登録し終わったあと）でしか
+		     更新していなかったため、途中まで登録した商品のURLが
+		     「ページが見つかりません」になっていました。 */
+		if ( $lav_made ) flush_rewrite_rules();
+
 		/* まだ残っているときは、ここでいったん終わります。
 		   完了の印（ymkrf_setup_done）を付けないので、
 		   次にページを開いたときに続きから登録されます。 */
