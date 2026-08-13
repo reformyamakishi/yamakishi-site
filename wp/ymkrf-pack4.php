@@ -170,7 +170,7 @@ get_header();
       <div class="p-pack__plan" data-reveal>
 
         <div class="p-pack__head">
-          <img class="p-pack__chara c-chara--float" src="<?php echo $asset; ?>/assets/img/character/char-flag.webp" width="717" height="640" alt="" loading="lazy" decoding="async">
+          <img class="p-pack__chara c-chara--float" src="<?php echo $asset; ?>/assets/img/character/char-jump.webp" width="533" height="640" alt="" loading="lazy" decoding="async">
           <span class="p-pack__no">PLAN 2</span>
           <h2 class="p-pack__name">間違いないスタンダードプラン</h2>
           <p class="p-pack__catch">大好評の機能をパッケージ！</p>
@@ -284,7 +284,7 @@ get_header();
       <div class="p-pack__plan" data-reveal>
 
         <div class="p-pack__head p-pack__head--best">
-          <img class="p-pack__chara c-chara--float" src="<?php echo $asset; ?>/assets/img/character/char-jump.webp" width="533" height="640" alt="" loading="lazy" decoding="async">
+          <img class="p-pack__chara c-chara--float" src="<?php echo $asset; ?>/assets/img/character/char-flag.webp" width="717" height="640" alt="" loading="lazy" decoding="async">
           <p class="p-pack__ribbon">いちばん人気</p>
           <span class="p-pack__no">PLAN 3</span>
           <h2 class="p-pack__name">ヤマキシ1番人気ベストプラン</h2>
