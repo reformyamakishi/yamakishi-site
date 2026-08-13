@@ -199,6 +199,64 @@ add_action( 'init', function () {
 
 
 /* ============================================================
+   2-2. 満足度の星
+        アンケートの「満足度は何点ですか？」（100点満点）から、
+        星のうまり具合と色を出します。
+        点数が入っていないときは、③〜⑧の5段階評価から見当をつけます。
+   ============================================================ */
+
+/* 点数 → 色の段階。CSSの .c-stars[data-band="…"] と対応しています。 */
+if ( ! function_exists( 'ymkrf_score_band' ) ) :
+function ymkrf_score_band( $score ) {
+	$score = (int) $score;
+	if ( $score >= 95 ) return 's';   // きらきらした金
+	if ( $score >= 85 ) return 'a';
+	if ( $score >= 70 ) return 'b';
+	if ( $score >= 55 ) return 'c';
+	return 'd';                        // おちついた灰
+}
+endif;
+
+/**
+ * 星を出します。
+ *
+ * @param int  $score     満足度（0〜100）
+ * @param bool $show_num  「80点」の文字も出すか
+ */
+if ( ! function_exists( 'ymkrf_stars' ) ) :
+function ymkrf_stars( $score, $show_num = true ) {
+	$score = max( 0, min( 100, (int) $score ) );
+	$band  = ymkrf_score_band( $score );
+	$star5 = round( $score / 10 ) / 2;      // 5段階に直した数（0.5きざみ）
+
+	$html  = '<p class="c-stars p-voice__stars" data-band="' . esc_attr( $band ) . '"';
+	$html .= ' style="--rate:' . $score . '%"';
+	$html .= ' aria-label="' . esc_attr( sprintf( '満足度 %d点（5段階で%s）', $score, rtrim( rtrim( number_format( $star5, 1 ), '0' ), '.' ) ) ) . '">';
+	$html .= '<span class="c-stars__base" aria-hidden="true">★★★★★</span>';
+	$html .= '<span class="c-stars__fill" aria-hidden="true">★★★★★</span>';
+	$html .= '</p>';
+
+	if ( $show_num ) {
+		$html = str_replace( '</p>', '</p>', $html );
+		$html .= '<span class="c-stars__score">' . $score . '点</span>';
+	}
+	return $html;
+}
+endif;
+
+/* 5段階評価（大変良かった=4 … よくなかった=1）の平均から点数を見当づけます。
+   アンケートに点数の記入がなかったときの予備です。 */
+if ( ! function_exists( 'ymkrf_score_from_ratings' ) ) :
+function ymkrf_score_from_ratings( $ratings ) {
+	$v = array_filter( array_map( 'intval', (array) $ratings ) );
+	if ( ! $v ) return 0;
+	$avg = array_sum( $v ) / count( $v );          // 1〜4
+	return (int) round( ( $avg - 1 ) / 3 * 100 );  // 0〜100
+}
+endif;
+
+
+/* ============================================================
    3. カスタムフィールド（ACF を使わない場合の簡易メタボックス）
    ============================================================ */
 add_action( 'add_meta_boxes', function () {

@@ -99,7 +99,7 @@ get_header();
   <div class="l-wrap">
     <ul class="p-stats__list">
       <li class="p-stats__item">
-        <span class="p-stats__num"><span data-count="10">10</span></span>
+        <span class="p-stats__num"><span data-count="11">11</span></span>
         <span class="p-stats__label">石川・福井の店舗数</span>
       </li>
       <li class="p-stats__item">
@@ -655,17 +655,17 @@ get_header();
 
     <div class="p-voice__grid">
       <div class="p-voice__card" data-reveal>
-        <p class="p-voice__stars" aria-label="5段階中5">★★★★★</p>
+        <p class="c-stars p-voice__stars" data-band="s" style="--rate:100%" aria-label="満足度 100点（5段階で5）"><span class="c-stars__base" aria-hidden="true">★★★★★</span><span class="c-stars__fill" aria-hidden="true">★★★★★</span></p><span class="c-stars__score">100点</span>
         <p class="p-voice__text">［お客様アンケートの実際のコメントを掲載］見積りが総額で出てきたので、他社と比べやすかったです。職人さんも毎日きちんと片付けてくれて安心でした。</p>
         <p class="p-voice__who"><span class="p-voice__avatar">K</span>金沢市／K様（40代）・キッチンリフォーム</p>
       </div>
       <div class="p-voice__card" data-reveal data-reveal-delay="80">
-        <p class="p-voice__stars" aria-label="5段階中5">★★★★★</p>
+        <p class="c-stars p-voice__stars" data-band="s" style="--rate:95%" aria-label="満足度 95点（5段階で5）"><span class="c-stars__base" aria-hidden="true">★★★★★</span><span class="c-stars__fill" aria-hidden="true">★★★★★</span></p><span class="c-stars__score">95点</span>
         <p class="p-voice__text">［お客様アンケートの実際のコメントを掲載］給湯器が急に壊れて困っていたところ、近くの店舗からすぐ来てくれました。補助金の書類も全部やってもらえて助かりました。</p>
         <p class="p-voice__who"><span class="p-voice__avatar">N</span>福井市／N様（70代）・給湯器交換</p>
       </div>
       <div class="p-voice__card" data-reveal data-reveal-delay="160">
-        <p class="p-voice__stars" aria-label="5段階中5">★★★★★</p>
+        <p class="c-stars p-voice__stars" data-band="b" style="--rate:80%" aria-label="満足度 80点（5段階で4）"><span class="c-stars__base" aria-hidden="true">★★★★★</span><span class="c-stars__fill" aria-hidden="true">★★★★★</span></p><span class="c-stars__score">80点</span>
         <p class="p-voice__text">［お客様アンケートの実際のコメントを掲載］LINEで写真を送ったら、その日のうちに概算を教えてもらえました。無理に勧められることもなく、気楽に相談できました。</p>
         <p class="p-voice__who"><span class="p-voice__avatar">Y</span>小松市／Y様（30代）・浴室リフォーム</p>
       </div>

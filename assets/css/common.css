@@ -665,6 +665,33 @@ address{ font-style:normal; }
 @media (min-width:768px){  .p-works__grid{ grid-template-columns:repeat(2,1fr); } }
 @media (min-width:1024px){ .p-works__grid{ grid-template-columns:repeat(3,1fr); } }
 
+/* --------------------------------------------------------------------------
+   満足度の星（お客様の声）
+   アンケートの「満足度は何点ですか？」の点数に合わせて、
+   星のうまり具合と色が変わります。
+     --rate … うまり具合（点数をそのまま % で入れます）
+     data-band … 色の段階。点数から自動で決まります。
+   -------------------------------------------------------------------------- */
+.c-stars{
+  position:relative; display:inline-block; line-height:1;
+  font-size:17px; letter-spacing:2px; white-space:nowrap;
+  --star:#f5a623;
+}
+.c-stars__base{ color:#e6ded9; }                 /* うまっていない部分 */
+.c-stars__fill{
+  position:absolute; left:0; top:0; width:var(--rate,100%);
+  overflow:hidden; color:var(--star);
+}
+.c-stars[data-band="s"]{ --star:#f2b705; }       /* 95〜100点 きらきらした金 */
+.c-stars[data-band="a"]{ --star:#f5a623; }       /* 85〜94点 */
+.c-stars[data-band="b"]{ --star:#ef8c1f; }       /* 70〜84点 */
+.c-stars[data-band="c"]{ --star:#d98324; }       /* 55〜69点 */
+.c-stars[data-band="d"]{ --star:#b0a49c; }       /* 〜54点 おちついた灰 */
+.c-stars__score{
+  margin-left:8px; font-size:13px; font-weight:900; letter-spacing:0;
+  color:var(--ink-sub); vertical-align:1px;
+}
+
 /* 印刷 */
 @media print{
   .p-fixcta,.p-pagetop,.p-hamburger,.p-subnav,.p-notice{ display:none!important; }

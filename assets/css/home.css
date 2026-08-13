@@ -387,7 +387,7 @@
   content:"“"; position:absolute; top:2px; right:16px;
   font-size:64px; line-height:1; color:var(--brand-tint2); font-family:Georgia,serif;
 }
-.p-voice__stars{ color:#f5a623; font-size:17px; letter-spacing:2px; }
+.p-voice__stars{ font-size:17px; letter-spacing:2px; }   /* 色は common.css の .c-stars が決めます */
 .p-voice__text{ font-size:15px; margin:10px 0 16px; }
 .p-voice__who{ display:flex; align-items:center; gap:11px; font-size:13px; font-weight:800; color:var(--ink-sub); }
 .p-voice__avatar{
