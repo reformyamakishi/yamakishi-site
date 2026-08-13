@@ -468,6 +468,16 @@ window.YmkrfSurvey = {
 
       $('#ymkrf-read-info').val('かたむき' + R.angle.toFixed(1) + '度 / 一致' + R.votes + '個');
 
+      /* 題名がまだ空なら、工事箇所から自動でつけます。
+         （WordPressは題名も本文も空だと投稿を保存してくれません） */
+      var $title = $('#title');
+      if ($title.length && !$title.val()) {
+        var t = A.parts.length ? A.parts.slice(0, 2).join('・') + 'のリフォーム' : 'お客様の声';
+        var cust = $('input[name="_ymkrf_customer"]').val();
+        $title.val(cust ? cust + '　' + t : t).trigger('change');
+        if (window.wp && wp.autosave) { /* 題名の下のURL欄も更新されます */ }
+      }
+
       /* 公開用の画像（ご紹介欄を白く塗ったもの）を作って保存します */
       try {
         var pub = window.YmkrfSurvey.publicImage(R, 1600);
