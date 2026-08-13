@@ -189,6 +189,7 @@
   padding:26px 20px; box-shadow:var(--shadow-md); position:relative; overflow:hidden;
 }
 .p-sim__head{ text-align:center; margin-bottom:22px; }
+.p-sim__chara{ display:block; width:auto; height:clamp(70px,16vw,88px); margin:0 auto 6px; }
 .p-sim__head h2{ font-size:clamp(20px,4.6vw,28px); font-weight:900; }
 .p-sim__head p{ margin-top:8px; font-size:14.5px; color:var(--ink-sub); }
 .p-sim__steps{ display:flex; justify-content:center; gap:8px; margin-bottom:20px; }

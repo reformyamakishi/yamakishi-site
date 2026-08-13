@@ -1193,6 +1193,8 @@ body.term-toilet .p-cat__cardname{ min-height:2.7em; }
   font-size:clamp(21px,5.6vw,30px); font-weight:900; line-height:1.35; color:var(--brand-dark);
 }
 .p-pack__catch{ margin-top:8px; font-size:15px; font-weight:800; color:var(--ink-sub); line-height:1.7; }
+/* プランの見出しに出る、とんとこトン */
+.p-pack__chara{ display:block; width:auto; height:clamp(74px,17vw,96px); margin:0 auto 4px; }
 .p-pack__head--best{ background:linear-gradient(180deg,#fff3ec,#ffe6da); }
 .p-pack__ribbon{
   display:inline-block; margin-bottom:8px;
@@ -1218,7 +1220,8 @@ a.p-pack__item:hover{ border-color:var(--brand); transform:translateY(-4px); box
   font-size:13.5px; font-weight:900; letter-spacing:.06em; padding:7px 8px;
 }
 .p-pack__photo{ position:relative; aspect-ratio:4/3; background:#fff; }
-.p-pack__photo img{ position:absolute; inset:0; width:100%; height:100%; object-fit:contain; padding:8px; }
+/* 写真は _pack4/ に4:3で書き出してあるので、枠いっぱいに出します */
+.p-pack__photo img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
 .p-pack__body{ display:flex; flex-direction:column; gap:8px; padding:14px 14px 16px; flex:1; }
 .p-pack__maker{ font-size:12px; font-weight:800; color:var(--ink-sub); }
 .p-pack__prd{ font-size:16.5px; font-weight:900; line-height:1.4; }
@@ -1267,3 +1270,9 @@ a.p-pack__item:hover{ border-color:var(--brand); transform:translateY(-4px); box
   border-radius:var(--radius); padding:20px 18px; font-size:15px; line-height:1.9;
 }
 .p-pack__lead b{ color:var(--brand-dark); }
+/* 追加工事についてのおことわり。本文より一段小さく、控えめに出します。 */
+.p-pack__note{
+  display:block; margin-top:12px;
+  font-size:12.5px; line-height:1.8; color:var(--ink-sub);
+  text-indent:-1em; padding-left:1em;
+}

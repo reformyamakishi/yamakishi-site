@@ -135,6 +135,9 @@ address{ font-style:normal; }
 
 /* セクション見出し */
 .c-head{ text-align:center; margin-bottom:36px; }
+/* 見出しのうえに出る、とんとこトン。
+   出しすぎると散らかるので、いくつかの節だけに置いています。 */
+.c-head__chara{ display:block; width:auto; height:clamp(72px,17vw,96px); margin:0 auto 4px; }
 .c-head__en{
   display:block; font-size:12px; font-weight:800; letter-spacing:.22em;
   color:var(--brand); margin-bottom:8px;
