@@ -326,4 +326,60 @@
 
   /* 他ファイルからも使えるように公開 */
   window.YMK = { debounce: debounce, onScroll: onScroll, reduceMotion: reduceMotion };
+
+  /* ------------------------------------------------------------------
+     画像の拡大表示（ライトボックス）
+     .js-lightbox のリンクを押したときだけ開きます。
+     リンク自体は本物の画像URLなので、JavaScriptが動かない場合でも
+     ふつうに画像が開きますし、検索エンジンからも画像として読まれます。
+     ------------------------------------------------------------------ */
+  (function () {
+    var links = document.querySelectorAll('a.js-lightbox');
+    if (!links.length) return;
+
+    var box = document.createElement('div');
+    box.className = 'c-lightbox';
+    box.setAttribute('role', 'dialog');
+    box.setAttribute('aria-modal', 'true');
+    box.innerHTML =
+      '<button type="button" class="c-lightbox__close" aria-label="閉じる">×</button>' +
+      '<img class="c-lightbox__img" alt="">' +
+      '<p class="c-lightbox__cap"></p>';
+    document.body.appendChild(box);
+
+    var img = box.querySelector('.c-lightbox__img');
+    var cap = box.querySelector('.c-lightbox__cap');
+    var last = null;
+
+    function open(href, caption, from) {
+      img.src = href;
+      img.alt = caption || '';
+      cap.textContent = caption || '';
+      box.classList.add('is-open');
+      document.body.style.overflow = 'hidden';
+      last = from;
+      box.querySelector('.c-lightbox__close').focus();
+    }
+    function close() {
+      box.classList.remove('is-open');
+      document.body.style.overflow = '';
+      img.src = '';
+      if (last) last.focus();
+    }
+
+    Array.prototype.forEach.call(links, function (a) {
+      a.addEventListener('click', function (e) {
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;  /* 別タブで開くときはそのまま */
+        e.preventDefault();
+        open(a.getAttribute('href'), a.getAttribute('data-caption') || '', a);
+      });
+    });
+    box.addEventListener('click', function (e) {
+      if (e.target === box || e.target.classList.contains('c-lightbox__close')) close();
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && box.classList.contains('is-open')) close();
+    });
+  })();
+
 })();
