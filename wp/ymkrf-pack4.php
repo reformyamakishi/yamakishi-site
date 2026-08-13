@@ -32,6 +32,7 @@ get_header();
 
 <div class="p-pagehead">
   <div class="l-wrap p-pagehead__inner">
+    <img class="p-pagehead__chara c-chara--float" src="<?php echo $asset; ?>/assets/img/character/char-otoku.webp" width="488" height="640" alt="" loading="lazy" decoding="async">
     <span class="p-pagehead__en">4-PIECE PACK</span>
     <h1 class="p-pagehead__title">Web限定<br class="xs-only">水まわり4点パック</h1>
     <p class="p-pagehead__lead">
@@ -48,12 +49,17 @@ get_header();
       キッチン・お風呂・洗面化粧台・トイレを<b>まとめて4点</b>取り替えるプランです。<br>
       別々に頼むより工事がまとまるぶん、<b>費用も工期もぐっと抑えられます。</b><br>
       下の金額は、本体・標準工事費・古い設備の撤去・処分費・保証まで<b>すべて込みの税込価格</b>です。
-      あとからの追加請求はありません。
+      <span class="p-pack__note">
+        ※お住まいの形や、配管・電気の状態によっては、追加の工事が必要になることがあります。
+        その場合も着工前にかならずお見積りをお出しし、ご了承をいただいてから進めますので、
+        だまって費用が増えることはありません。
+      </span>
     </div>
 
       <div class="p-pack__plan" data-reveal>
 
         <div class="p-pack__head">
+          <img class="p-pack__chara c-chara--float" src="<?php echo $asset; ?>/assets/img/character/char-smile.webp" width="503" height="640" alt="" loading="lazy" decoding="async">
           <span class="p-pack__no">PLAN 1</span>
           <h2 class="p-pack__name">お財布に優しいプラン</h2>
           <p class="p-pack__catch">価格を抑えた激安仕様</p>
@@ -64,8 +70,8 @@ get_header();
           <p class="p-pack__part">キッチン</p>
           <div class="p-pack__photo">
             <picture>
-              <source srcset="<?php echo $asset; ?>/assets/img/products/v-style/main.webp" type="image/webp">
-              <img src="<?php echo $asset; ?>/assets/img/products/v-style/main.jpg" width="800" height="600"
+              <source srcset="<?php echo $asset; ?>/assets/img/products/_pack4/vstyle.webp" type="image/webp">
+              <img src="<?php echo $asset; ?>/assets/img/products/_pack4/vstyle.jpg" width="1200" height="900"
                    alt="Panasonic リビングステーションV" loading="lazy" decoding="async">
             </picture>
           </div>
@@ -87,8 +93,8 @@ get_header();
           <p class="p-pack__part">お風呂</p>
           <div class="p-pack__photo">
             <picture>
-              <source srcset="<?php echo $asset; ?>/assets/img/products/ofuroa/ofuroa-main.webp" type="image/webp">
-              <img src="<?php echo $asset; ?>/assets/img/products/ofuroa/ofuroa-main.jpg" width="800" height="600"
+              <source srcset="<?php echo $asset; ?>/assets/img/products/_pack4/ofuroa.webp" type="image/webp">
+              <img src="<?php echo $asset; ?>/assets/img/products/_pack4/ofuroa.jpg" width="1200" height="900"
                    alt="Panasonic オフローラ" loading="lazy" decoding="async">
             </picture>
           </div>
@@ -109,8 +115,8 @@ get_header();
           <p class="p-pack__part">洗面化粧台</p>
           <div class="p-pack__photo">
             <picture>
-              <source srcset="<?php echo $asset; ?>/assets/img/products/v1/v1-main.webp" type="image/webp">
-              <img src="<?php echo $asset; ?>/assets/img/products/v1/v1-main.jpg" width="800" height="600"
+              <source srcset="<?php echo $asset; ?>/assets/img/products/_pack4/v1.webp" type="image/webp">
+              <img src="<?php echo $asset; ?>/assets/img/products/_pack4/v1.jpg" width="1200" height="900"
                    alt="LIXIL V1" loading="lazy" decoding="async">
             </picture>
           </div>
@@ -131,8 +137,8 @@ get_header();
           <p class="p-pack__part">トイレ</p>
           <div class="p-pack__photo">
             <picture>
-              <source srcset="<?php echo $asset; ?>/assets/img/products/amage-z/amzi-main.webp" type="image/webp">
-              <img src="<?php echo $asset; ?>/assets/img/products/amage-z/amzi-main.jpg" width="800" height="600"
+              <source srcset="<?php echo $asset; ?>/assets/img/products/_pack4/amzi.webp" type="image/webp">
+              <img src="<?php echo $asset; ?>/assets/img/products/_pack4/amzi.jpg" width="1200" height="900"
                    alt="LIXIL アメージュZ ハイパーキラミックシャワートイレRG10H" loading="lazy" decoding="async">
             </picture>
           </div>
@@ -164,6 +170,7 @@ get_header();
       <div class="p-pack__plan" data-reveal>
 
         <div class="p-pack__head">
+          <img class="p-pack__chara c-chara--float" src="<?php echo $asset; ?>/assets/img/character/char-flag.webp" width="717" height="640" alt="" loading="lazy" decoding="async">
           <span class="p-pack__no">PLAN 2</span>
           <h2 class="p-pack__name">間違いないスタンダードプラン</h2>
           <p class="p-pack__catch">大好評の機能をパッケージ！</p>
@@ -174,8 +181,8 @@ get_header();
           <p class="p-pack__part">キッチン</p>
           <div class="p-pack__photo">
             <picture>
-              <source srcset="<?php echo $asset; ?>/assets/img/products/rakuera/raku-main-product.webp" type="image/webp">
-              <img src="<?php echo $asset; ?>/assets/img/products/rakuera/raku-main-product.jpg" width="800" height="600"
+              <source srcset="<?php echo $asset; ?>/assets/img/products/_pack4/raku.webp" type="image/webp">
+              <img src="<?php echo $asset; ?>/assets/img/products/_pack4/raku.jpg" width="1200" height="900"
                    alt="クリナップ ラクエラ" loading="lazy" decoding="async">
             </picture>
           </div>
@@ -197,8 +204,8 @@ get_header();
           <p class="p-pack__part">お風呂</p>
           <div class="p-pack__photo">
             <picture>
-              <source srcset="<?php echo $asset; ?>/assets/img/products/lidea-m/lidea-main.webp" type="image/webp">
-              <img src="<?php echo $asset; ?>/assets/img/products/lidea-m/lidea-main.jpg" width="800" height="600"
+              <source srcset="<?php echo $asset; ?>/assets/img/products/_pack4/lidea.webp" type="image/webp">
+              <img src="<?php echo $asset; ?>/assets/img/products/_pack4/lidea.jpg" width="1200" height="900"
                    alt="LIXIL リデア Mタイプ" loading="lazy" decoding="async">
             </picture>
           </div>
@@ -219,8 +226,8 @@ get_header();
           <p class="p-pack__part">洗面化粧台</p>
           <div class="p-pack__photo">
             <picture>
-              <source srcset="<?php echo $asset; ?>/assets/img/products/j1/j1-main.webp" type="image/webp">
-              <img src="<?php echo $asset; ?>/assets/img/products/j1/j1-main.jpg" width="800" height="600"
+              <source srcset="<?php echo $asset; ?>/assets/img/products/_pack4/j1.webp" type="image/webp">
+              <img src="<?php echo $asset; ?>/assets/img/products/_pack4/j1.jpg" width="1200" height="900"
                    alt="LIXIL J1" loading="lazy" decoding="async">
             </picture>
           </div>
@@ -243,8 +250,8 @@ get_header();
           <p class="p-pack__part">トイレ</p>
           <div class="p-pack__photo">
             <picture>
-              <source srcset="<?php echo $asset; ?>/assets/img/products/amage-z-premium/amze-main.webp" type="image/webp">
-              <img src="<?php echo $asset; ?>/assets/img/products/amage-z-premium/amze-main.jpg" width="800" height="600"
+              <source srcset="<?php echo $asset; ?>/assets/img/products/_pack4/amze.webp" type="image/webp">
+              <img src="<?php echo $asset; ?>/assets/img/products/_pack4/amze.jpg" width="1200" height="900"
                    alt="LIXIL アメージュZ アクアセラミック高機能モデル（CW-RWA30HQ）" loading="lazy" decoding="async">
             </picture>
           </div>
@@ -277,6 +284,7 @@ get_header();
       <div class="p-pack__plan" data-reveal>
 
         <div class="p-pack__head p-pack__head--best">
+          <img class="p-pack__chara c-chara--float" src="<?php echo $asset; ?>/assets/img/character/char-cape.webp" width="571" height="640" alt="" loading="lazy" decoding="async">
           <p class="p-pack__ribbon">いちばん人気</p>
           <span class="p-pack__no">PLAN 3</span>
           <h2 class="p-pack__name">ヤマキシ1番人気ベストプラン</h2>
@@ -288,8 +296,8 @@ get_header();
           <p class="p-pack__part">キッチン</p>
           <div class="p-pack__photo">
             <picture>
-              <source srcset="<?php echo $asset; ?>/assets/img/products/stedia/stedia-main.webp" type="image/webp">
-              <img src="<?php echo $asset; ?>/assets/img/products/stedia/stedia-main.jpg" width="800" height="600"
+              <source srcset="<?php echo $asset; ?>/assets/img/products/_pack4/stedia.webp" type="image/webp">
+              <img src="<?php echo $asset; ?>/assets/img/products/_pack4/stedia.jpg" width="1200" height="900"
                    alt="クリナップ ステディア" loading="lazy" decoding="async">
             </picture>
           </div>
@@ -311,8 +319,8 @@ get_header();
           <p class="p-pack__part">お風呂</p>
           <div class="p-pack__photo">
             <picture>
-              <source srcset="<?php echo $asset; ?>/assets/img/products/sazana-t/sazanat-main.webp" type="image/webp">
-              <img src="<?php echo $asset; ?>/assets/img/products/sazana-t/sazanat-main.jpg" width="800" height="600"
+              <source srcset="<?php echo $asset; ?>/assets/img/products/_pack4/sazanat.webp" type="image/webp">
+              <img src="<?php echo $asset; ?>/assets/img/products/_pack4/sazanat.jpg" width="1200" height="900"
                    alt="TOTO サザナ Tタイプ" loading="lazy" decoding="async">
             </picture>
           </div>
@@ -333,8 +341,8 @@ get_header();
           <p class="p-pack__part">洗面化粧台</p>
           <div class="p-pack__photo">
             <picture>
-              <source srcset="<?php echo $asset; ?>/assets/img/products/fansio/fansio-main.webp" type="image/webp">
-              <img src="<?php echo $asset; ?>/assets/img/products/fansio/fansio-main.jpg" width="800" height="600"
+              <source srcset="<?php echo $asset; ?>/assets/img/products/_pack4/fansio.webp" type="image/webp">
+              <img src="<?php echo $asset; ?>/assets/img/products/_pack4/fansio.jpg" width="1200" height="900"
                    alt="クリナップ ファンシオ" loading="lazy" decoding="async">
             </picture>
           </div>
@@ -356,8 +364,8 @@ get_header();
           <p class="p-pack__part">トイレ</p>
           <div class="p-pack__photo">
             <picture>
-              <source srcset="<?php echo $asset; ?>/assets/img/products/alauno-s160/s160-main.webp" type="image/webp">
-              <img src="<?php echo $asset; ?>/assets/img/products/alauno-s160/s160-main.jpg" width="800" height="600"
+              <source srcset="<?php echo $asset; ?>/assets/img/products/_pack4/s160.webp" type="image/webp">
+              <img src="<?php echo $asset; ?>/assets/img/products/_pack4/s160.jpg" width="1200" height="900"
                    alt="Panasonic アラウーノS160タイプ1K" loading="lazy" decoding="async">
             </picture>
           </div>
@@ -400,8 +408,8 @@ get_header();
           <p class="p-pack__part">キッチン</p>
           <div class="p-pack__photo">
             <picture>
-              <source srcset="<?php echo $asset; ?>/assets/img/products/richelle/richelle-main.webp" type="image/webp">
-              <img src="<?php echo $asset; ?>/assets/img/products/richelle/richelle-main.jpg" width="800" height="600"
+              <source srcset="<?php echo $asset; ?>/assets/img/products/_pack4/richelle.webp" type="image/webp">
+              <img src="<?php echo $asset; ?>/assets/img/products/_pack4/richelle.jpg" width="1200" height="900"
                    alt="LIXIL リシェル" loading="lazy" decoding="async">
             </picture>
           </div>
@@ -423,8 +431,8 @@ get_header();
           <p class="p-pack__part">お風呂</p>
           <div class="p-pack__photo">
             <picture>
-              <source srcset="<?php echo $asset; ?>/assets/img/products/selevia/selevia-main.webp" type="image/webp">
-              <img src="<?php echo $asset; ?>/assets/img/products/selevia/selevia-main.jpg" width="800" height="600"
+              <source srcset="<?php echo $asset; ?>/assets/img/products/_pack4/selevia.webp" type="image/webp">
+              <img src="<?php echo $asset; ?>/assets/img/products/_pack4/selevia.jpg" width="1200" height="900"
                    alt="クリナップ セレヴィア" loading="lazy" decoding="async">
             </picture>
           </div>
@@ -447,8 +455,8 @@ get_header();
           <p class="p-pack__part">洗面化粧台</p>
           <div class="p-pack__photo">
             <picture>
-              <source srcset="<?php echo $asset; ?>/assets/img/products/sakua/sakua-main.webp" type="image/webp">
-              <img src="<?php echo $asset; ?>/assets/img/products/sakua/sakua-main.jpg" width="800" height="600"
+              <source srcset="<?php echo $asset; ?>/assets/img/products/_pack4/sakua.webp" type="image/webp">
+              <img src="<?php echo $asset; ?>/assets/img/products/_pack4/sakua.jpg" width="1200" height="900"
                    alt="TOTO サクア" loading="lazy" decoding="async">
             </picture>
           </div>
@@ -471,8 +479,8 @@ get_header();
           <p class="p-pack__part">トイレ</p>
           <div class="p-pack__photo">
             <picture>
-              <source srcset="<?php echo $asset; ?>/assets/img/products/neorest-rs3/rs3-main.webp" type="image/webp">
-              <img src="<?php echo $asset; ?>/assets/img/products/neorest-rs3/rs3-main.jpg" width="800" height="600"
+              <source srcset="<?php echo $asset; ?>/assets/img/products/_pack4/rs3.webp" type="image/webp">
+              <img src="<?php echo $asset; ?>/assets/img/products/_pack4/rs3.jpg" width="1200" height="900"
                    alt="TOTO ネオレスト" loading="lazy" decoding="async">
             </picture>
           </div>
@@ -510,7 +518,7 @@ get_header();
 <section class="l-section l-section--soft">
   <div class="l-wrap">
     <div class="p-pagecta" data-reveal="zoom">
-      <img class="p-pagecta__chara c-chara--float" src="<?php echo $asset; ?>/assets/img/character/char-tel.webp" width="570" height="640" alt="" loading="lazy">
+      <img class="p-pagecta__chara c-chara--float" src="<?php echo $asset; ?>/assets/img/character/char-plan.webp" width="640" height="595" alt="" loading="lazy">
       <h2 class="p-pagecta__title">どのプランが合うか、<br>一緒に考えます</h2>
       <p class="p-pagecta__text">
         いまのお住まいを見せていただければ、<br class="xs-only">ぴったりのプランをご提案します。<br>

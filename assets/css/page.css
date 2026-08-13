@@ -21,7 +21,7 @@
 .p-pagehead__en{ display:block; font-size:12px; font-weight:800; letter-spacing:.2em; color:var(--brand); }
 .p-pagehead__title{ font-size:clamp(24px,5.4vw,38px); font-weight:900; margin-top:8px; }
 .p-pagehead__lead{ margin-top:14px; font-size:16px; color:var(--ink-sub); }
-.p-pagehead__chara{ width:96px; margin:14px auto 0; }
+.p-pagehead__chara{ display:block; width:auto; height:clamp(78px,18vw,104px); margin:0 auto 6px; }
 
 /* --------------------------------------------------------------------------
    2. パンくず（構造化データと合わせて設置してください）
@@ -112,7 +112,8 @@
 }
 /* とんとこトン（虫めがね）。まわりの光の線ぶん、絵として大きめに置きます。
    画像の余白は切り落としてあるので、下の見出しとの間隔は詰めています。 */
-.p-pagecta__chara{ width:clamp(158px,44vw,196px); margin:-24px auto -12px; }
+/* とんとこトンと見出しがくっついて見えたので、下に少し余白を足しました */
+.p-pagecta__chara{ width:clamp(158px,44vw,196px); margin:6px auto 12px; }
 /* text-wrap:balance ＝ 行の長さを自動でそろえる指定。
    万一この先で文言を変えても、「ん。」だけが最終行に残るような崩れを防げます。 */
 .p-pagecta__title{

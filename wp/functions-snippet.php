@@ -28,7 +28,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '1.0.3' );   // ファイル更新時はここを上げるとキャッシュが切れます
+if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '1.0.4' );   // ファイル更新時はここを上げるとキャッシュが切れます
 
 /* ============================================================
    1. CSS / JS の読み込み
@@ -50,7 +50,11 @@ add_action( 'wp_enqueue_scripts', function () {
 	wp_enqueue_style( 'ymkrf-common', $dir . '/assets/css/common.css', array(), YMKRF_VER );
 	wp_enqueue_script( 'ymkrf-common', $dir . '/assets/js/common.js', array(), YMKRF_VER, true );
 
-	if ( is_front_page() ) {
+	/* 4点パックのページは、WordPressから見ると「指定のないページ」なので
+	   そのままではトップページ扱いになってしまいます。ここで除きます。 */
+	$is_top = is_front_page() && ! ( function_exists( 'ymkrf_is_pack4' ) && ymkrf_is_pack4() );
+
+	if ( $is_top ) {
 		wp_enqueue_style( 'ymkrf-home', $dir . '/assets/css/home.css', array( 'ymkrf-common' ), YMKRF_VER );
 		wp_enqueue_script( 'ymkrf-home', $dir . '/assets/js/home.js', array( 'ymkrf-common' ), YMKRF_VER, true );
 	} else {

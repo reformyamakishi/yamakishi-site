@@ -147,14 +147,41 @@ add_filter( 'template_include', function ( $tpl ) {
 	return $found ? $found : $tpl;
 } );
 
-/* 4点パックのページは「見つかりません」ではありません */
+/* 4点パックのページは「見つかりません」ではありません。
+
+   ★ここが抜けていたため、CSSが当たらない不具合が出ていました。
+     このURLはWordPressから見ると「何も指定のないページ」なので、
+     そのままだとトップページ（is_front_page）と判定されてしまい、
+     下層ページ用の page.css が読み込まれませんでした。
+     下で「トップでもなければ一覧でもない」とはっきりさせています。 */
 add_action( 'wp', function () {
-	if ( get_query_var( 'ymkrf_pack4' ) ) {
-		global $wp_query;
-		$wp_query->is_404 = false;
-		status_header( 200 );
-	}
+	if ( ! get_query_var( 'ymkrf_pack4' ) ) return;
+	global $wp_query;
+	$wp_query->is_404        = false;
+	$wp_query->is_home       = false;
+	$wp_query->is_front_page = false;
+	$wp_query->is_page       = false;
+	$wp_query->is_singular   = false;
+	$wp_query->is_archive    = false;
+	$wp_query->is_post_type_archive = false;
+	status_header( 200 );
 } );
+
+/* ブラウザのタブに出る題名。ふつうのページと同じ形にそろえます。 */
+add_filter( 'document_title_parts', function ( $parts ) {
+	if ( get_query_var( 'ymkrf_pack4' ) ) {
+		$parts['title'] = 'Web限定 水まわり4点パック';
+		unset( $parts['tagline'] );
+	}
+	return $parts;
+} );
+
+/* 4点パックのページかどうか。CSSの読み分けなどで使います。 */
+if ( ! function_exists( 'ymkrf_is_pack4' ) ) :
+function ymkrf_is_pack4() {
+	return (bool) get_query_var( 'ymkrf_pack4' );
+}
+endif;
 
 /**
  * 念のための保険。
@@ -1087,7 +1114,7 @@ add_action( 'wp_enqueue_scripts', function () {
 	if ( ! is_singular( 'ymkrf_product' )
 	  && ! is_tax( 'ymkrf_product_cat' )
 	  && ! is_post_type_archive( 'ymkrf_product' )
-	  && ! get_query_var( 'ymkrf_pack4' ) ) return;   // ← 商品一覧・4点パックでも使います
+	  && ! ymkrf_is_pack4() ) return;   // ← 商品一覧・4点パックでも使います
 	wp_enqueue_style( 'ymkrf-product',
 		get_stylesheet_directory_uri() . '/assets/css/product.css',
 		array( 'ymkrf-common', 'ymkrf-page' ), defined( 'YMKRF_VER' ) ? YMKRF_VER : null );
@@ -1105,7 +1132,7 @@ function ymkrf_product_cta( $place = 'product', $with_tel = false ) {
 	?>
 	<div class="p-pagecta__btns" style="margin-top:26px">
 	  <a class="c-btn c-btn--block" href="<?php echo $rsv; ?>" data-cta="<?php echo esc_attr( $place ); ?>">
-	    <span class="c-btn__label">来店して現物を見る<span class="c-btn__sub">初回特典500円ヤマキシお買物券／展示のない店舗もあります</span></span>
+	    <span class="c-btn__label">来店して現物を見る<span class="c-btn__sub">初回特典500円ヤマキシお買物券<br>※展示のない店舗もあります</span></span>
 	  </a>
 	  <a class="c-btn c-btn--line c-btn--block" href="<?php echo esc_url( $line ); ?>" rel="noopener" data-cta="<?php echo esc_attr( $place ); ?>">
 	    <span class="c-btn__label">LINEで相談・見積もり<span class="c-btn__sub">ご相談だけでもOK・24時間受付</span></span>
