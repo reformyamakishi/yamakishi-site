@@ -28,7 +28,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '1.0.7' );   // ファイル更新時はここを上げるとキャッシュが切れます
+if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '1.0.8' );   // ファイル更新時はここを上げるとキャッシュが切れます
 
 /* ============================================================
    1. CSS / JS の読み込み
@@ -193,13 +193,18 @@ add_action( 'init', function () {
 	   本文（エディター）と抜粋は使いません。
 	   ページに出る中身は、すべて「お客様アンケート」の欄から組み立てています。
 	   入力画面に出しておくと「ここに書くのかな」と迷うもとになるので外しています。 */
+	/* URLは「/voice/工事箇所/案件番号/」の形にします。
+	   例）/voice/oiltank/2607-0389/
+	   %ymkrf_vpart% のところに、工事箇所の英字が入ります（詳しくは functions-voice.php の5-1）。 */
+	add_rewrite_tag( '%ymkrf_vpart%', '([a-z0-9-]+)' );
+
 	register_post_type( 'ymkrf_voice', array(
 		'label'        => 'お客様の声',
 		'public'       => true,
-		'has_archive'  => true,
+		'has_archive'  => 'voice',   /* 一覧は /voice/（工事箇所は付けません） */
 		'menu_icon'    => 'dashicons-format-quote',
 		'menu_position'=> 6,
-		'rewrite'      => array( 'slug' => 'voice', 'with_front' => false ),
+		'rewrite'      => array( 'slug' => 'voice/%ymkrf_vpart%', 'with_front' => false ),
 		'supports'     => array( 'title' ),
 		'show_in_rest' => true,
 	) );

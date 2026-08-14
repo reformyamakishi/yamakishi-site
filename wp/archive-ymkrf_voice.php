@@ -6,18 +6,34 @@
 if ( ! defined( 'ABSPATH' ) ) exit;
 $asset = get_stylesheet_directory_uri();
 
-/* 全体の平均点（公開ぶんだけ） */
-$all = get_posts( array( 'post_type' => 'ymkrf_voice', 'posts_per_page' => -1, 'fields' => 'ids' ) );
+/* いま見ている工事箇所（/voice/oiltank/ のときだけ入ります） */
+$vpart  = function_exists( 'ymkrf_voice_current_part' ) ? ymkrf_voice_current_part() : '';
+$vroman = (string) get_query_var( 'ymkrf_vpart' );
+
+/* 平均点（いま並んでいるぶんだけ） */
+$avg_args = array( 'post_type' => 'ymkrf_voice', 'posts_per_page' => -1, 'fields' => 'ids' );
+if ( $vpart !== '' ) {
+	$avg_args['meta_query'] = array( array( 'key' => '_ymkrf_parts', 'value' => $vpart, 'compare' => 'LIKE' ) );
+}
+$all = get_posts( $avg_args );
 $sum = 0; $cnt = 0;
 foreach ( (array) $all as $id ) { $s = ymkrf_voice_score( $id ); if ( $s ) { $sum += $s; $cnt++; } }
 $avg = $cnt ? (int) round( $sum / $cnt ) : 0;
+
+/* 箇所でさがすボタン */
+$vcats = function_exists( 'ymkrf_voice_part_counts' ) ? ymkrf_voice_part_counts() : array();
 
 get_header(); ?>
 
 <nav class="p-breadcrumb" aria-label="パンくずリスト">
   <ol class="p-breadcrumb__list">
     <li><a href="<?php echo esc_url( home_url( '/' ) ); ?>">ホーム</a></li>
-    <li>お客様の声</li>
+    <?php if ( $vpart !== '' ) : ?>
+      <li><a href="<?php echo esc_url( home_url( '/voice/' ) ); ?>">お客様の声</a></li>
+      <li><?php echo esc_html( $vpart ); ?></li>
+    <?php else : ?>
+      <li>お客様の声</li>
+    <?php endif; ?>
   </ol>
 </nav>
 
@@ -28,11 +44,20 @@ get_header(); ?>
     <img class="p-pagehead__chara c-chara--float" src="<?php echo $asset; ?>/assets/img/character/char-hinshitsu.webp"
          width="592" height="640" alt="" loading="lazy" decoding="async">
     <span class="p-pagehead__en">VOICE</span>
-    <h1 class="p-pagehead__title">お客様の声</h1>
-    <p class="p-pagehead__lead">
-      工事のあとにお送りしている<br class="xs-only">アンケート「仕事の通信簿」を、<br>
-      いただいたまま載せています。<br class="xs-only">良い評価も、そうでない評価も。
-    </p>
+    <?php if ( $vpart !== '' ) : ?>
+      <h1 class="p-pagehead__title"><?php echo esc_html( $vpart ); ?>のお客様の声</h1>
+      <p class="p-pagehead__lead">
+        <?php echo esc_html( $vpart ); ?>の工事をさせていただいたお客様から<br class="xs-only">いただいた、
+        アンケート「仕事の通信簿」です。<br>
+        いただいたまま載せています。<br class="xs-only">良い評価も、そうでない評価も。
+      </p>
+    <?php else : ?>
+      <h1 class="p-pagehead__title">お客様の声</h1>
+      <p class="p-pagehead__lead">
+        工事のあとにお送りしている<br class="xs-only">アンケート「仕事の通信簿」を、<br>
+        いただいたまま載せています。<br class="xs-only">良い評価も、そうでない評価も。
+      </p>
+    <?php endif; ?>
   </div>
 </div>
 
@@ -44,6 +69,30 @@ get_header(); ?>
       <?php echo ymkrf_stars( $avg ); ?>
       <p class="p-voice__avgnum"><?php echo (int) $cnt; ?>件の平均</p>
     </div>
+  </div>
+</section>
+<?php endif; ?>
+
+<?php if ( count( $vcats ) > 1 ) : ?>
+<section class="l-section l-section--tight">
+  <div class="l-wrap">
+    <nav class="p-voice__cats" aria-label="工事箇所でさがす">
+      <p class="p-voice__catsttl">工事箇所でさがす</p>
+      <ul class="p-voice__catslist">
+        <li>
+          <a class="p-voice__cat<?php echo ( $vpart === '' ? ' is-current' : '' ); ?>"
+             href="<?php echo esc_url( home_url( '/voice/' ) ); ?>">すべて</a>
+        </li>
+        <?php foreach ( $vcats as $name => $c ) : ?>
+        <li>
+          <a class="p-voice__cat<?php echo ( $vpart === $name ? ' is-current' : '' ); ?>"
+             href="<?php echo esc_url( ymkrf_voice_part_url( $c['roman'] ) ); ?>">
+            <?php echo esc_html( $name ); ?><span class="p-voice__catnum"><?php echo (int) $c['count']; ?></span>
+          </a>
+        </li>
+        <?php endforeach; ?>
+      </ul>
+    </nav>
   </div>
 </section>
 <?php endif; ?>

@@ -210,3 +210,30 @@
 
 @media (min-width:768px){ .p-voice__rel{ grid-template-columns:repeat(2,1fr); } }
 .p-voice__sheetlead{ margin:-6px 0 12px; font-size:13.5px; line-height:1.9; color:var(--ink-sub); }
+
+/* --------------------------------------------------------------------------
+   工事箇所でさがす（/voice/oiltank/ などへのボタン）
+   -------------------------------------------------------------------------- */
+.p-voice__cats{ text-align:center; }
+.p-voice__catsttl{
+  font-size:13px; font-weight:900; color:var(--ink-sub);
+  letter-spacing:.08em; margin-bottom:12px;
+}
+.p-voice__catslist{
+  list-style:none; margin:0; padding:0;
+  display:flex; flex-wrap:wrap; gap:8px; justify-content:center;
+}
+.p-voice__cat{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:7px 15px; border-radius:999px; text-decoration:none;
+  background:#fff; border:2px solid var(--border);
+  color:var(--ink); font-size:13.5px; font-weight:900; line-height:1.4;
+}
+.p-voice__cat:hover{ border-color:var(--brand); color:var(--brand-dark); }
+.p-voice__cat.is-current{
+  background:var(--brand); border-color:var(--brand); color:#fff;
+}
+.p-voice__catnum{
+  font-size:11.5px; font-weight:900; color:var(--ink-light);
+}
+.p-voice__cat.is-current .p-voice__catnum{ color:#fff; opacity:.8; }

@@ -71,7 +71,7 @@ function ymkrf_voice_meta_keys() {
 			'_ymkrf_case_no', '_ymkrf_survey_id', '_ymkrf_survey_pub_id',
 			'_ymkrf_parts', '_ymkrf_reasons', '_ymkrf_recommend', '_ymkrf_score',
 			'_ymkrf_trouble', '_ymkrf_after', '_ymkrf_comment',
-			'_ymkrf_customer', '_ymkrf_area', '_ymkrf_show_survey', '_ymkrf_read_info',
+			'_ymkrf_customer', '_ymkrf_area', '_ymkrf_read_info',
 			'_ymkrf_city', '_ymkrf_initial', '_ymkrf_shop', '_ymkrf_illust',
 		),
 		array_keys( ymkrf_voice_rating_fields() )
@@ -319,18 +319,20 @@ function ymkrf_voice_metabox( $post ) {
 	        <?php endif; ?>
 	      </td>
 	    </tr>
+	    <?php if ( $pid ) : ?>
 	    <tr>
-	      <th>アンケート画像の掲載</th>
+	      <th>公開用のアンケート画像</th>
 	      <td>
-	        <label><input type="checkbox" name="_ymkrf_show_survey" value="1"
-	          <?php checked( (string) $get( '_ymkrf_show_survey', '1' ), '1' ); ?>>
-	          ページにアンケート画像を出す（クリックで拡大）</label>
-	        <p class="description">「ご紹介（　様）」の欄は自動で白く塗りつぶした画像を使います。</p>
-	        <?php if ( $pid ) : ?>
-	          <p><a href="<?php echo esc_url( wp_get_attachment_url( $pid ) ); ?>" target="_blank" rel="noopener">公開用の画像を確認する</a></p>
-	        <?php endif; ?>
+	        <p><a href="<?php echo esc_url( wp_get_attachment_url( $pid ) ); ?>" target="_blank" rel="noopener">
+	          別の窓で開いて確かめる</a></p>
+	        <p class="description">
+	          ページに出るのは、こちらの画像です（クリックで拡大します）。<br>
+	          「ご紹介（　様）」の欄を白く塗りつぶしたものが、自動で作られます。<br>
+	          お名前がきちんと消えているか、公開のまえに一度ごらんください。
+	        </p>
 	      </td>
 	    </tr>
+	    <?php endif; ?>
 	  </table>
 	</div>
 	<?php
@@ -415,7 +417,6 @@ add_action( 'save_post_ymkrf_voice', function ( $post_id ) {
 	foreach ( array( '_ymkrf_survey_id', '_ymkrf_survey_pub_id' ) as $k ) {
 		update_post_meta( $post_id, $k, isset( $_POST[ $k ] ) ? (int) $_POST[ $k ] : 0 );
 	}
-	update_post_meta( $post_id, '_ymkrf_show_survey', isset( $_POST['_ymkrf_show_survey'] ) ? '1' : '0' );
 
 	/* 題名が空なら、内容から自動でつけます */
 	$p = get_post( $post_id );
@@ -559,7 +560,6 @@ function ymkrf_voice_summary( $post_id ) {
    クリックで拡大しますが、<a href> で包んであるので
    検索エンジンからもふつうの画像リンクとして読まれます。 */
 function ymkrf_voice_survey_figure( $post_id ) {
-	if ( get_post_meta( $post_id, '_ymkrf_show_survey', true ) !== '1' ) return '';
 	$pid = (int) get_post_meta( $post_id, '_ymkrf_survey_pub_id', true );
 	if ( ! $pid ) return '';
 
@@ -631,30 +631,41 @@ function ymkrf_voice_excerpt( $post_id, $len = 90 ) {
 
 /* ============================================================
    4. 管理画面の一覧に出す列
-      題名だけでは見分けがつかないので、案件番号・施工店舗・
-      お客様・満足度も出します。
+      一覧の主役は「案件番号」です。
+      題名（オイルタンクのリフォーム など）は同じものが並んでしまい
+      見分けがつかないので、一覧では出しません。
+      かわりに、いちばん左の列に案件番号を出して、
+      そこから編集画面へ入っていただきます。
    ============================================================ */
 add_filter( 'manage_ymkrf_voice_posts_columns', function ( $cols ) {
 	$new = array();
 	foreach ( $cols as $k => $v ) {
-		$new[ $k ] = $v;
 		if ( $k === 'title' ) {
-			$new['ymkrf_case']  = '案件番号';
+			$new['title'] = '案件番号';        /* 見出しだけ差しかえます */
 			$new['ymkrf_shop']  = '施工店舗';
 			$new['ymkrf_cust']  = 'お客様';
 			$new['ymkrf_score'] = '満足度';
 			$new['ymkrf_parts'] = '工事箇所';
+			continue;
 		}
+		$new[ $k ] = $v;
 	}
 	return $new;
 } );
 
+/* 一覧のリンク文字を、題名ではなく案件番号にします。
+   （編集・クイック編集・ゴミ箱のリンクはそのまま使えます） */
+add_filter( 'the_title', function ( $title, $post_id = 0 ) {
+	if ( ! is_admin() ) return $title;
+	if ( ! isset( $GLOBALS['pagenow'] ) || $GLOBALS['pagenow'] !== 'edit.php' ) return $title;
+	if ( get_post_type( $post_id ) !== 'ymkrf_voice' ) return $title;
+
+	$no = trim( (string) get_post_meta( $post_id, '_ymkrf_case_no', true ) );
+	return $no !== '' ? $no : '（案件番号なし）';
+}, 10, 2 );
+
 add_action( 'manage_ymkrf_voice_posts_custom_column', function ( $col, $post_id ) {
 	switch ( $col ) {
-		case 'ymkrf_case':
-			$v = get_post_meta( $post_id, '_ymkrf_case_no', true );
-			echo $v ? esc_html( $v ) : '<span style="color:#a7aaad">—</span>';
-			break;
 		case 'ymkrf_shop':
 			$v = ymkrf_voice_shop_name( $post_id );
 			echo $v ? esc_html( $v ) : '<span style="color:#a7aaad">—</span>';
@@ -681,7 +692,7 @@ add_action( 'manage_ymkrf_voice_posts_custom_column', function ( $col, $post_id 
 
 /* 案件番号・満足度は見出しをクリックで並べ替えできます */
 add_filter( 'manage_edit-ymkrf_voice_sortable_columns', function ( $cols ) {
-	$cols['ymkrf_case']  = 'ymkrf_case';
+	$cols['title']       = 'ymkrf_case';   /* いちばん左＝案件番号 */
 	$cols['ymkrf_score'] = 'ymkrf_score';
 	return $cols;
 } );
@@ -703,7 +714,7 @@ add_action( 'admin_head', function () {
 	$s = get_current_screen();
 	if ( ! $s || $s->id !== 'edit-ymkrf_voice' ) return;
 	echo '<style>
-	  .column-ymkrf_case{width:110px}
+	  .column-title{width:130px}
 	  .column-ymkrf_shop{width:110px}
 	  .column-ymkrf_cust{width:170px}
 	  .column-ymkrf_score{width:80px}
@@ -719,18 +730,23 @@ add_action( 'admin_head', function () {
       そのままだと Google に「同じページ」と見なされ、
       サーチコンソールに「重複したコンテンツ」の指摘が出ます。
 
-      対策は4つです。
+      対策は3つです。
         (1) URLを内容の分かる英字にして、重複させない
         (2) 題名・説明文をページごとに変える
-        (3) 中身がうすいページは、あえて検索結果に出さない
-        (4) ページごとに違う関連リンクを持たせる
+        (3) ページごとに違う関連リンクを持たせる
    ============================================================ */
 
 /* --- (1) URL --------------------------------------------------
    「修理・小工事のリフォーム」のような題名は何件も出てくるので、
-   URLは「市町 + 工事箇所 + 案件番号」の英字にします。
-     例）/voice/kanazawa-oiltank-26070389/
-   案件番号が入っているので、絶対に重複しません。
+   URLは「工事箇所 ／ 案件番号」の英字にします。
+
+     1件のページ … /voice/oiltank/2607-0389/
+     箇所ごとの一覧 … /voice/oiltank/
+     ぜんぶの一覧 …… /voice/
+
+   前半（oiltank）が工事箇所、後半（2607-0389）が案件番号です。
+   案件番号は重ならないので、URLも絶対に重複しません。
+   工事箇所だけのURLを開くと、その箇所のお客様の声だけが並びます。
    ------------------------------------------------------------- */
 
 /** 石川・福井の市町 → ローマ字 */
@@ -759,32 +775,41 @@ function ymkrf_voice_part_roman() {
 	);
 }
 
-/** この投稿にふさわしいURL（英字） */
-function ymkrf_voice_make_slug( $post_id ) {
-	$bits = array();
-
-	$city = trim( (string) get_post_meta( $post_id, '_ymkrf_city', true ) );
-	$cmap = ymkrf_voice_city_roman();
-	if ( $city !== '' && isset( $cmap[ $city ] ) ) $bits[] = $cmap[ $city ];
-
-	$parts = ymkrf_voice_meta_array( $post_id, '_ymkrf_parts' );
-	$pmap  = ymkrf_voice_part_roman();
-	foreach ( array_slice( $parts, 0, 2 ) as $p ) {
-		if ( isset( $pmap[ $p ] ) ) $bits[] = $pmap[ $p ];
-	}
-
-	$no = strtolower( preg_replace( '/[^0-9A-Za-z-]/', '', (string) get_post_meta( $post_id, '_ymkrf_case_no', true ) ) );
-	if ( $no !== '' ) $bits[] = $no;
-
-	if ( ! $bits ) return '';
-	if ( count( $bits ) === 1 && $no === '' ) return '';   // 番号も箇所も無いときは触らない
-	return implode( '-', $bits );
+/** ローマ字 → 工事箇所（上の表の逆引き。例：oiltank → オイルタンク） */
+function ymkrf_voice_part_from_roman( $roman ) {
+	$map = array_flip( ymkrf_voice_part_roman() );
+	$roman = strtolower( (string) $roman );
+	return isset( $map[ $roman ] ) ? $map[ $roman ] : '';
 }
 
 /**
- * 保存のたびにURLを整えます。
- * すでに英字で手入力されたURLは、そのままにします
- * （日本語のURLか、まだ番号が入っていないURLだけ作り直します）。
+ * この投稿の「工事箇所」の英字。URLの前半（/voice/ここ/番号/）に入ります。
+ * 工事箇所が複数あるときは、いちばん上のものを使います。
+ * 何も選ばれていないときは other になります。
+ */
+function ymkrf_voice_part_slug( $post_id ) {
+	$pmap = ymkrf_voice_part_roman();
+	foreach ( ymkrf_voice_meta_array( $post_id, '_ymkrf_parts' ) as $p ) {
+		if ( isset( $pmap[ $p ] ) ) return $pmap[ $p ];
+	}
+	return 'other';
+}
+
+/** URLの中の %ymkrf_vpart% を、その投稿の工事箇所に置きかえます */
+add_filter( 'post_type_link', function ( $link, $post ) {
+	if ( ! $post || $post->post_type !== 'ymkrf_voice' ) return $link;
+	return str_replace( '%ymkrf_vpart%', ymkrf_voice_part_slug( $post->ID ), $link );
+}, 10, 2 );
+
+/** この投稿にふさわしいURLの後半（＝案件番号） */
+function ymkrf_voice_make_slug( $post_id ) {
+	return strtolower( preg_replace( '/[^0-9A-Za-z-]/', '',
+		(string) get_post_meta( $post_id, '_ymkrf_case_no', true ) ) );
+}
+
+/**
+ * 保存のたびにURLの後半を、案件番号にそろえます。
+ * （案件番号が入っていないあいだは、触りません）
  */
 add_action( 'save_post_ymkrf_voice', function ( $post_id ) {
 	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
@@ -797,11 +822,9 @@ add_action( 'save_post_ymkrf_voice', function ( $post_id ) {
 	if ( ! $p ) return;
 	$now = rawurldecode( (string) $p->post_name );
 
-	/* 日本語が入っている／案件番号が入っていない ときだけ作り直します */
-	$no = strtolower( preg_replace( '/[^0-9A-Za-z-]/', '', (string) get_post_meta( $post_id, '_ymkrf_case_no', true ) ) );
-	$has_jp  = (bool) preg_match( '/[^\x20-\x7E]/', $now );
-	$has_no  = ( $no !== '' && strpos( $now, $no ) !== false );
-	if ( ! $has_jp && $has_no ) return;
+	/* すでに案件番号だけのURLになっていれば、そのままにします
+	   （2607-0389 や、重なったときの 2607-0389-2 を含みます） */
+	if ( preg_match( '/^' . preg_quote( $want, '/' ) . '(-[0-9]+)?$/', $now ) ) return;
 
 	remove_action( 'save_post_ymkrf_voice', __FUNCTION__ );
 	wp_update_post( array(
@@ -811,9 +834,165 @@ add_action( 'save_post_ymkrf_voice', function ( $post_id ) {
 }, 30 );
 
 
+/**
+ * すでに登録ずみのお客様の声のURLを、1回だけ新しい形にそろえます。
+ * 前のURLは自動で控えが残るので、古いリンクで来られた方も
+ * 新しいページへご案内できます。
+ * （数字を上げると、もう一度だけ実行されます）
+ */
+add_action( 'admin_init', function () {
+	if ( get_option( 'ymkrf_voice_url_ver' ) === '2' ) return;
+
+	$ids = get_posts( array(
+		'post_type' => 'ymkrf_voice', 'posts_per_page' => -1,
+		'fields' => 'ids', 'post_status' => 'any',
+	) );
+	foreach ( (array) $ids as $id ) {
+		$want = ymkrf_voice_make_slug( $id );
+		if ( $want === '' ) continue;
+		$p = get_post( $id );
+		if ( ! $p ) continue;
+		$now = rawurldecode( (string) $p->post_name );
+		if ( preg_match( '/^' . preg_quote( $want, '/' ) . '(-[0-9]+)?$/', $now ) ) continue;
+		wp_update_post( array(
+			'ID'        => $id,
+			'post_name' => wp_unique_post_slug( $want, $id, $p->post_status, $p->post_type, 0 ),
+		) );
+	}
+	update_option( 'ymkrf_voice_url_ver', '2' );
+}, 20 );
+
+
+/* --- (1-2) 工事箇所ごとの一覧（/voice/oiltank/） ----------------
+   /voice/oiltank/ というURLのルールは、ワードプレスが
+   「1件のページ」のルールを作るときに、いっしょに作ってくれます。
+   ただ、そのままだと「どの投稿タイプの一覧か」が伝わらないので、
+   ここで「お客様の声の一覧です」と足しています。
+   ------------------------------------------------------------- */
+
+add_filter( 'request', function ( $qv ) {
+	if ( ! isset( $qv['ymkrf_vpart'] ) || $qv['ymkrf_vpart'] === '' ) return $qv;
+
+	/* 1件のページ（/voice/oiltank/2607-0389/）のときは、そのままにします */
+	if ( isset( $qv['ymkrf_voice'] ) || isset( $qv['name'] ) || isset( $qv['attachment'] ) ) return $qv;
+
+	$qv['post_type'] = 'ymkrf_voice';
+	return $qv;
+} );
+
+/** いま見ている一覧の工事箇所（日本語）。ふつうの一覧のときは空です */
+function ymkrf_voice_current_part() {
+	$roman = get_query_var( 'ymkrf_vpart' );
+	if ( ! $roman ) return '';
+	return ymkrf_voice_part_from_roman( $roman );
+}
+
+/* 一覧を、その工事箇所のものだけにしぼります */
+add_action( 'pre_get_posts', function ( $q ) {
+	if ( is_admin() || ! $q->is_main_query() ) return;
+	if ( ! $q->is_post_type_archive( 'ymkrf_voice' ) ) return;
+
+	$part = ymkrf_voice_part_from_roman( $q->get( 'ymkrf_vpart' ) );
+	if ( $part === '' ) return;
+
+	$q->set( 'meta_query', array( array(
+		'key'     => '_ymkrf_parts',
+		'value'   => $part,
+		'compare' => 'LIKE',
+	) ) );
+} );
+
+/**
+ * 前のURL（/voice/kanazawa-oiltank-2607-0389/ など）で来られた方を、
+ * 新しいURLへご案内します（301＝ずっとこちら、という合図）。
+ * 知らない工事箇所のURLは、見つかりませんでした（404）にします。
+ */
+add_action( 'template_redirect', function () {
+	if ( ! is_post_type_archive( 'ymkrf_voice' ) ) return;
+
+	$roman = (string) get_query_var( 'ymkrf_vpart' );
+	if ( $roman === '' ) return;                                  /* ふつうの一覧 */
+	if ( ymkrf_voice_part_from_roman( $roman ) !== '' ) return;   /* 正しい工事箇所 */
+
+	$id = 0;
+
+	/* いまのURL／前のURLで、そのままさがします */
+	foreach ( array(
+		array( 'name'       => $roman ),
+		array( 'meta_key'   => '_wp_old_slug', 'meta_value' => $roman ),
+	) as $args ) {
+		if ( $id ) break;
+		$hit = get_posts( array_merge( $args, array(
+			'post_type' => 'ymkrf_voice', 'posts_per_page' => 1, 'fields' => 'ids',
+		) ) );
+		if ( $hit ) $id = (int) $hit[0];
+	}
+
+	/* それでも見つからなければ、末尾の案件番号でさがします
+	   （kanazawa-oiltank-2607-0389 → 2607-0389） */
+	if ( ! $id && preg_match( '/(\d{4})-?(\d{4})$/', $roman, $m ) ) {
+		foreach ( array( $m[1] . '-' . $m[2], $m[1] . $m[2] ) as $no ) {
+			if ( $id ) break;
+			$hit = get_posts( array(
+				'post_type' => 'ymkrf_voice', 'posts_per_page' => 1, 'fields' => 'ids',
+				'meta_key'  => '_ymkrf_case_no', 'meta_value' => $no,
+			) );
+			if ( $hit ) $id = (int) $hit[0];
+		}
+	}
+
+	if ( $id ) {
+		wp_safe_redirect( get_permalink( $id ), 301 );
+		exit;
+	}
+
+	global $wp_query;
+	$wp_query->set_404();
+	status_header( 404 );
+	nocache_headers();
+} );
+
+/**
+ * 工事箇所ごとの件数。
+ * 一覧ページの「箇所でさがす」ボタンに使います。
+ * 返るのは array( 'オイルタンク' => array( 'roman' => 'oiltank', 'count' => 3 ), … )
+ */
+function ymkrf_voice_part_counts() {
+	$ids = get_posts( array(
+		'post_type' => 'ymkrf_voice', 'posts_per_page' => -1, 'fields' => 'ids',
+	) );
+	$pmap = ymkrf_voice_part_roman();
+	$out  = array();
+	foreach ( (array) $ids as $id ) {
+		foreach ( ymkrf_voice_meta_array( $id, '_ymkrf_parts' ) as $p ) {
+			if ( ! isset( $pmap[ $p ] ) ) continue;
+			if ( ! isset( $out[ $p ] ) ) $out[ $p ] = array( 'roman' => $pmap[ $p ], 'count' => 0 );
+			$out[ $p ]['count']++;
+		}
+	}
+	/* 多い順に */
+	uasort( $out, function ( $a, $b ) { return $b['count'] - $a['count']; } );
+	return $out;
+}
+
+/** 工事箇所ごとの一覧のURL（例：/voice/oiltank/） */
+function ymkrf_voice_part_url( $roman ) {
+	return home_url( '/voice/' . rawurlencode( $roman ) . '/' );
+}
+
+
 /* --- (2) 題名・説明文 ------------------------------------------
    ページごとに違う文にします。
    ------------------------------------------------------------- */
+
+/* 工事箇所ごとの一覧（/voice/oiltank/）の題名 */
+add_filter( 'document_title_parts', function ( $parts ) {
+	if ( ! is_post_type_archive( 'ymkrf_voice' ) ) return $parts;
+	$part = ymkrf_voice_current_part();
+	if ( $part === '' ) return $parts;
+	$parts['title'] = $part . 'リフォームのお客様の声・口コミ';
+	return $parts;
+}, 20 );
 
 /* ブラウザのタブと検索結果に出る題名 */
 add_filter( 'document_title_parts', function ( $parts ) {
@@ -878,44 +1057,7 @@ add_action( 'wp_head', function () {
 }, 5 );
 
 
-/* --- (3) 中身がうすいページ ------------------------------------
-   手書きの文章がまったく無いアンケート（チェックだけ）は、
-   ページとしての中身がほとんど同じになります。
-   そういうページは、検索結果に出さない設定にします。
-   一覧には出ますし、お客様も見られます。消すわけではありません。
-   ------------------------------------------------------------- */
-function ymkrf_voice_is_thin( $post_id ) {
-	$len = 0;
-	foreach ( array( '_ymkrf_comment', '_ymkrf_after', '_ymkrf_trouble' ) as $k ) {
-		$len += mb_strlen( trim( (string) get_post_meta( $post_id, $k, true ) ), 'UTF-8' );
-	}
-	return $len < 25;   // 手書きの文章が25文字に満たないもの
-}
-
-add_action( 'wp_head', function () {
-	if ( ! is_singular( 'ymkrf_voice' ) ) return;
-	if ( ymkrf_voice_is_thin( get_the_ID() ) ) {
-		echo '<meta name="robots" content="noindex,follow">' . "\n";
-	}
-}, 4 );
-
-/* 管理画面で「検索結果に出るかどうか」が分かるようにします */
-add_filter( 'manage_ymkrf_voice_posts_columns', function ( $cols ) {
-	$cols['ymkrf_seo'] = '検索';
-	return $cols;
-}, 20 );
-add_action( 'manage_ymkrf_voice_posts_custom_column', function ( $col, $post_id ) {
-	if ( $col !== 'ymkrf_seo' ) return;
-	if ( ymkrf_voice_is_thin( $post_id ) ) {
-		echo '<span style="color:#b26a00" title="手書きの文章が少ないため、検索結果には出しません。'
-		   . '感想を追記すると出るようになります。">出さない</span>';
-	} else {
-		echo '<span style="color:#118a3d">出す</span>';
-	}
-}, 10, 2 );
-
-
-/* --- (4) ページごとに違う関連リンク ----------------------------
+/* --- (3) ページごとに違う関連リンク ----------------------------
    同じ工事箇所の声・同じ店舗の声を出します。
    ページごとに中身が変わるので、似たページになりにくくなります。
    ------------------------------------------------------------- */
