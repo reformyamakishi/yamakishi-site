@@ -341,6 +341,7 @@ function toAnswers(R) {
 
 /* 手書き部分を切り出して、小さな画像にします */
 function cropArea(R, key, maxW) {
+  /* maxW に 0 を渡すと、縮めずにそのままの大きさで切り出します（文字起こし用） */
   var A = AREAS[key];
   var p0 = R.map(A[0], A[1]), p1 = R.map(A[2], A[3]);
   var x = Math.round(Math.min(p0[0], p1[0])), y = Math.round(Math.min(p0[1], p1[1]));
@@ -348,7 +349,7 @@ function cropArea(R, key, maxW) {
   x = Math.max(0, x); y = Math.max(0, y);
   w = Math.min(w, R.gr.W - x); h = Math.min(h, R.gr.H - y);
   if (w <= 0 || h <= 0) return null;
-  var s = Math.min(1, (maxW || 900) / w);
+  var s = ( maxW === 0 ) ? 1 : Math.min(1, (maxW || 900) / w);
   var cv = document.createElement('canvas');
   cv.width = Math.round(w * s); cv.height = Math.round(h * s);
   cv.getContext('2d').drawImage(R.gr.canvas, x, y, w, h, 0, 0, cv.width, cv.height);
@@ -491,7 +492,55 @@ window.YmkrfSurvey = {
 
       var n = A.parts.length + A.reasons.length +
               Object.keys(A.ratings).length + (A.q9 ? 1 : 0);
-      say('読み取りました（' + n + '項目）。手書きの感想と点数をご記入ください。', 'is-ok');
+
+      if (YMKRF_VOICE.ocr) {
+        say('読み取りました（' + n + '項目）。手書きの文字起こし中…', 'is-ok');
+        runOcr(R);
+      } else {
+        say('読み取りました（' + n + '項目）。手書きの感想と点数をご記入ください。', 'is-ok');
+      }
+    }
+
+    /* 手書きの部分をGoogleに送って、文字にしてもらいます */
+    function runOcr(R) {
+      var send = {};
+      [['trouble','_ymkrf_trouble'],['after','_ymkrf_after'],
+       ['comment','_ymkrf_comment'],['score','score']].forEach(function (o) {
+        var cv = window.YmkrfSurvey.crop(R, o[0], 0);   /* 縮めずに送ります */
+        if (cv) send[o[0]] = cv.toDataURL('image/jpeg', 0.92);
+      });
+      if (!Object.keys(send).length) return;
+
+      $.post(YMKRF_VOICE.ajax, {
+        action: 'ymkrf_voice_ocr', nonce: YMKRF_VOICE.nonce, images: send
+      }).done(function (res) {
+        if (!res || !res.success) {
+          say('チェックは読み取れました。手書きの文字起こしは失敗しました（'
+              + ((res && res.data) || '原因不明') + '）。手で入力してください。', 'is-ng');
+          return;
+        }
+        var d = res.data, filled = [];
+        function put(sel, val, label) {
+          if (!val) return;
+          var $el = $(sel);
+          if (!$el.length || $el.val()) return;      /* すでに入っていれば触りません */
+          $el.val(val).addClass('is-ocr');
+          filled.push(label);
+        }
+        put('textarea[name="_ymkrf_trouble"]', d.trouble, 'お悩み');
+        put('textarea[name="_ymkrf_after"]',   d.after,   'いかがでしたか');
+        put('textarea[name="_ymkrf_comment"]', d.comment, 'メッセージ');
+        put('#ymkrf-score',                    d.score,   '満足度');
+
+        if (filled.length) {
+          say('文字起こししました（' + filled.join('・') + '）。'
+            + '★下の切り抜き画像と見くらべて、まちがいがないか確かめてください。', 'is-warn');
+        } else {
+          say('手書きの文章は見つかりませんでした。記入がないアンケートのようです。', 'is-ok');
+        }
+      }).fail(function () {
+        say('チェックは読み取れました。文字起こしの通信に失敗しました。手で入力してください。', 'is-ng');
+      });
     }
   });
 })();

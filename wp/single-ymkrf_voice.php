@@ -35,31 +35,38 @@ while ( have_posts() ) : the_post();
 
 <div class="p-pagehead">
   <div class="l-wrap p-pagehead__inner">
-    <?php if ( $ill ) : ?><span class="p-voice__illhead"><?php echo $ill; ?></span><?php endif; ?>
     <span class="p-pagehead__en">VOICE</span>
     <h1 class="p-pagehead__title"><?php the_title(); ?></h1>
     <div class="p-voice__headstars"><?php echo ymkrf_stars( $score ); ?></div>
-    <?php if ( $cust || $shop ) : ?>
-      <p class="p-pagehead__lead">
-        <?php echo esc_html( $cust ); ?><?php if ( $cust && $shop ) echo '　／　'; ?><?php
-        if ( $shop ) echo esc_html( $shop ) . '施工'; ?>
-      </p>
-    <?php endif; ?>
   </div>
 </div>
 
 <section class="l-section">
   <div class="l-wrap l-wrap--narrow">
 
-    <?php if ( $parts ) : ?>
-      <p class="p-voice__tags p-voice__tags--lg">
-        <?php foreach ( $parts as $t ) : ?><span class="p-voice__tag"><?php echo esc_html( $t ); ?></span><?php endforeach; ?>
-      </p>
-    <?php endif; ?>
+    <?php /* ご感想のとなりに、お客様イメージのイラストを置きます */ ?>
+    <div class="p-voice__intro">
 
-    <?php if ( $comment ) : ?>
-      <blockquote class="p-voice__quote"><?php echo nl2br( esc_html( $comment ) ); ?></blockquote>
-    <?php endif; ?>
+      <div class="p-voice__introtxt">
+        <?php if ( $parts ) : ?>
+          <p class="p-voice__tags p-voice__tags--lg">
+            <?php foreach ( $parts as $t ) : ?><span class="p-voice__tag"><?php echo esc_html( $t ); ?></span><?php endforeach; ?>
+          </p>
+        <?php endif; ?>
+        <?php if ( $comment ) : ?>
+          <blockquote class="p-voice__quote"><?php echo nl2br( esc_html( $comment ) ); ?></blockquote>
+        <?php endif; ?>
+      </div>
+
+      <?php if ( $ill || $cust || $shop ) : ?>
+        <div class="p-voice__introfig">
+          <?php if ( $ill ) : ?><span class="p-voice__illfig"><?php echo $ill; ?></span><?php endif; ?>
+          <?php if ( $cust ) : ?><span class="p-voice__whopill"><?php echo esc_html( $cust ); ?></span><?php endif; ?>
+          <?php if ( $shop ) : ?><span class="p-voice__whoshop"><?php echo esc_html( $shop ); ?>施工</span><?php endif; ?>
+        </div>
+      <?php endif; ?>
+
+    </div>
 
     <?php /* お悩み・いかがでしたか は、アンケートに記入があるときだけ出します */ ?>
     <?php if ( $trouble || $after ) : ?>
@@ -101,9 +108,16 @@ while ( have_posts() ) : the_post();
     <?php endif; ?>
 
     <?php $fig = ymkrf_voice_survey_figure( $id ); if ( $fig ) : ?>
-      <h2 class="p-voice__h2">いただいたアンケート</h2>
+      <h2 class="p-voice__h2">いただいたアンケートの実物</h2>
+      <p class="p-voice__sheetlead">上の文章は、この用紙に手書きでいただいたものを、そのまま文字にして起こしています。</p>
       <?php echo $fig; ?>
     <?php endif; ?>
+
+    <?php /* 手書きの感想がないときは、チェック内容から作った紹介文を出します。
+             ページごとに言い回しを変えて、似たページにならないようにしています。 */ ?>
+    <?php if ( ! $comment ) : $sum = ymkrf_voice_summary( $id ); if ( $sum ) : ?>
+      <p class="p-voice__summary"><?php echo esc_html( $sum ); ?></p>
+    <?php endif; endif; ?>
 
     <?php if ( $works ) : ?>
       <h2 class="p-voice__h2">この工事の施工事例</h2>
@@ -114,14 +128,33 @@ while ( have_posts() ) : the_post();
       </ul>
     <?php endif; ?>
 
-    <p class="p-voice__note">
-      ※お客様からいただいたアンケートを、内容を変えずに掲載しています。<br>
-      　ご記入いただいたお名前の欄は、塗りつぶしたうえで掲載しています。
-      <?php if ( $case ) : ?><br><span class="p-voice__case">案件番号 <?php echo esc_html( $case ); ?></span><?php endif; ?>
-    </p>
+
 
   </div>
 </section>
+
+<?php /* ページごとに違う関連リンク。似たページと見なされにくくなります */ ?>
+<?php $rel = ymkrf_voice_related( $id, 4 ); if ( $rel ) : ?>
+<section class="l-section l-section--tight">
+  <div class="l-wrap">
+    <h2 class="p-voice__h2">同じような工事の、ほかのお客様の声</h2>
+    <div class="p-voice__rel">
+      <?php foreach ( $rel as $r ) :
+        $rp = ymkrf_voice_meta_array( $r->ID, '_ymkrf_parts' );
+        $rc = ymkrf_voice_customer_label( $r->ID ); ?>
+        <a class="p-voice__relcard" href="<?php echo esc_url( get_permalink( $r ) ); ?>">
+          <?php echo ymkrf_voice_illust_img( $r->ID, 56 ); ?>
+          <span class="p-voice__reltxt">
+            <span class="p-voice__relttl"><?php echo esc_html( $rp ? implode( '・', $rp ) : get_the_title( $r ) ); ?></span>
+            <?php if ( $rc ) : ?><span class="p-voice__relsub"><?php echo esc_html( $rc ); ?></span><?php endif; ?>
+          </span>
+          <?php echo ymkrf_stars( ymkrf_voice_score( $r->ID ), false ); ?>
+        </a>
+      <?php endforeach; ?>
+    </div>
+  </div>
+</section>
+<?php endif; ?>
 
 <section class="l-section l-section--soft">
   <div class="l-wrap">

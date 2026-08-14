@@ -189,7 +189,10 @@ add_action( 'init', function () {
 		'show_in_rest' => true,
 	) );
 
-	/* --- お客様の声 --- */
+	/* --- お客様の声 ---
+	   本文（エディター）と抜粋は使いません。
+	   ページに出る中身は、すべて「お客様アンケート」の欄から組み立てています。
+	   入力画面に出しておくと「ここに書くのかな」と迷うもとになるので外しています。 */
 	register_post_type( 'ymkrf_voice', array(
 		'label'        => 'お客様の声',
 		'public'       => true,
@@ -197,7 +200,7 @@ add_action( 'init', function () {
 		'menu_icon'    => 'dashicons-format-quote',
 		'menu_position'=> 6,
 		'rewrite'      => array( 'slug' => 'voice', 'with_front' => false ),
-		'supports'     => array( 'title', 'editor', 'thumbnail', 'excerpt' ),
+		'supports'     => array( 'title' ),
 		'show_in_rest' => true,
 	) );
 } );
@@ -249,14 +252,32 @@ function ymkrf_stars( $score, $show_num = true ) {
 }
 endif;
 
-/* 5段階評価（大変良かった=4 … よくなかった=1）の平均から点数を見当づけます。
-   アンケートに点数の記入がなかったときの予備です。 */
+/**
+ * 点数の記入がなかったときに、③〜⑧の評価から点数を見当づけます。
+ *
+ * ★点数の記入があるときは、かならずそちらが優先されます（ここは使いません）。
+ *
+ * 評価と点数の対応
+ *   大変良かった … 100点
+ *   満足　　　　 …  85点
+ *   普通　　　　 …  70点
+ *   よくなかった …  40点
+ *
+ * 「普通」を単純に真ん中（33点）にすると、実際のお客様の感覚とかけ離れます。
+ * 実例として、③〜⑧をすべて「普通」とされたお客様が、
+ * 満足度の欄にはご自身で「80点」と書かれていました。
+ * その感覚に近づけた対応にしてあります。
+ */
 if ( ! function_exists( 'ymkrf_score_from_ratings' ) ) :
 function ymkrf_score_from_ratings( $ratings ) {
-	$v = array_filter( array_map( 'intval', (array) $ratings ) );
-	if ( ! $v ) return 0;
-	$avg = array_sum( $v ) / count( $v );          // 1〜4
-	return (int) round( ( $avg - 1 ) / 3 * 100 );  // 0〜100
+	$map = array( 4 => 100, 3 => 85, 2 => 70, 1 => 40 );
+	$sum = 0; $n = 0;
+	foreach ( (array) $ratings as $r ) {
+		$r = (int) $r;
+		if ( isset( $map[ $r ] ) ) { $sum += $map[ $r ]; $n++; }
+	}
+	if ( ! $n ) return 0;
+	return (int) round( $sum / $n );
 }
 endif;
 
