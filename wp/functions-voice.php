@@ -997,6 +997,96 @@ add_action( 'save_post_ymkrf_voice', function ( $post_id ) {
 }, 30 );
 
 
+/* --- (1-1) 投稿の題名 --------------------------------------------
+   ワードプレスの題名欄と、ページに出る大見出しを同じにします。
+
+     金沢市｜オイルタンクのリフォーム
+     └市・町┘ └ 工事の内容 ─────┘
+
+   保存するたびに、いまの「お客様（市・町）」に合わせて組み立て直します。
+   工事の内容の部分（｜より右）は、手で書きかえていただけます。
+   ------------------------------------------------------------- */
+
+/**
+ * 工事箇所から、題名の「工事の内容」の部分を作ります。
+ *   例）キッチン・その他 → キッチンリフォームのお客様の声
+ * 「その他」は検索されない言葉なので、題名には使いません。
+ */
+function ymkrf_voice_title_from_parts( $post_id ) {
+	$ps = ymkrf_voice_meta_array( $post_id, '_ymkrf_parts' );
+	$ps = array_values( array_filter( $ps, function ( $p ) { return $p !== 'その他'; } ) );
+	if ( ! $ps ) return 'リフォームのお客様の声';
+
+	$name = implode( '・', array_slice( $ps, 0, 2 ) );
+
+	/* 「修理・小工事」「改装・内装」は、それだけで意味が通るので
+	   うしろに「リフォーム」を足しません */
+	$asis = array( '修理・小工事', '改装・内装' );
+	if ( in_array( $ps[0], $asis, true ) ) return $name . 'のお客様の声';
+
+	return $name . 'リフォームのお客様の声';
+}
+
+/** 題名から「工事の内容」の部分だけを取り出します */
+function ymkrf_voice_title_body( $title ) {
+	$t = (string) $title;
+	$t = preg_replace( '/^お客様の声[\s　]*/u', '', $t );
+	if ( strpos( $t, '｜' ) !== false ) {
+		$p = explode( '｜', $t, 2 );
+		$t = $p[1];
+	}
+	return trim( $t );
+}
+
+/** 一覧や関連リンクで使う、短い題名（例：オイルタンクのリフォーム） */
+function ymkrf_voice_short_title( $post_id ) {
+	return ymkrf_voice_title_body( get_post_field( 'post_title', $post_id ) );
+}
+
+add_action( 'save_post_ymkrf_voice', function ( $post_id ) {
+	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
+	if ( wp_is_post_revision( $post_id ) ) return;
+
+	$p = get_post( $post_id );
+	if ( ! $p ) return;
+	$now = (string) $p->post_title;
+
+	$body = ymkrf_voice_title_body( $now );
+	if ( $body === '' ) $body = ymkrf_voice_title_from_parts( $post_id );
+
+	$city = trim( (string) get_post_meta( $post_id, '_ymkrf_city', true ) );
+	$want = ( $city !== '' ? $city . '｜' : '' ) . $body;
+	if ( $want === $now ) return;
+
+	remove_action( 'save_post_ymkrf_voice', __FUNCTION__, 25 );
+	wp_update_post( array( 'ID' => $post_id, 'post_title' => $want ) );
+}, 25 );
+
+
+
+/* すでに登録ずみの題名も、1回だけそろえます
+   （数字を上げると、もう一度だけ実行されます） */
+add_action( 'admin_init', function () {
+	if ( get_option( 'ymkrf_voice_title_ver' ) === '3' ) return;
+
+	$ids = get_posts( array(
+		'post_type' => 'ymkrf_voice', 'posts_per_page' => -1,
+		'fields' => 'ids', 'post_status' => 'any',
+	) );
+	foreach ( (array) $ids as $id ) {
+		$p = get_post( $id );
+		if ( ! $p ) continue;
+		/* 今回は工事箇所から作り直します（「その他」を題名から外すため） */
+		$body = ymkrf_voice_title_from_parts( $id );
+		$city = trim( (string) get_post_meta( $id, '_ymkrf_city', true ) );
+		$want = ( $city !== '' ? $city . '｜' : '' ) . $body;
+		if ( $want !== $p->post_title ) {
+			wp_update_post( array( 'ID' => $id, 'post_title' => $want ) );
+		}
+	}
+	update_option( 'ymkrf_voice_title_ver', '3' );
+}, 21 );
+
 /**
  * すでに登録ずみのお客様の声のURLを、1回だけ新しい形にそろえます。
  * 前のURLは自動で控えが残るので、古いリンクで来られた方も
@@ -1259,6 +1349,7 @@ add_filter( 'document_title_parts', function ( $parts ) {
 	$id = get_the_ID();
 
 	$p    = ymkrf_voice_meta_array( $id, '_ymkrf_parts' );
+	$p    = array_values( array_filter( $p, function ( $v ) { return $v !== 'その他'; } ) );
 	$cust = ymkrf_voice_customer_label( $id );
 	$shop = ymkrf_voice_shop_name( $id );
 	$sc   = ymkrf_voice_score( $id );

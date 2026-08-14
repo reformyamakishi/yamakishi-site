@@ -506,13 +506,21 @@ window.YmkrfSurvey = {
       $('#ymkrf-read-info').val('かたむき' + R.angle.toFixed(1) + '度 / 一致' + R.votes + '個');
 
       /* 題名がまだ空なら、工事箇所から自動でつけます。
-         （WordPressは題名も本文も空だと投稿を保存してくれません） */
+         （WordPressは題名も本文も空だと投稿を保存してくれません）
+         「金沢市｜」の部分は、保存のときにサーバー側で付きます。 */
       var $title = $('#title');
       if ($title.length && !$title.val()) {
-        var t = A.parts.length ? A.parts.slice(0, 2).join('・') + 'のリフォーム' : 'お客様の声';
-        var cust = $('input[name="_ymkrf_customer"]').val();
-        $title.val(cust ? cust + '　' + t : t).trigger('change');
-        if (window.wp && wp.autosave) { /* 題名の下のURL欄も更新されます */ }
+        /* 「その他」は検索されない言葉なので、題名には使いません */
+        var ps = A.parts.filter(function (p) { return p !== 'その他'; });
+        var t;
+        if (!ps.length) {
+          t = 'リフォームのお客様の声';
+        } else if (ps[0] === '修理・小工事' || ps[0] === '改装・内装') {
+          t = ps.slice(0, 2).join('・') + 'のお客様の声';
+        } else {
+          t = ps.slice(0, 2).join('・') + 'リフォームのお客様の声';
+        }
+        $title.val(t).trigger('change');
       }
 
       /* 公開用の画像（ご紹介欄を白く塗ったもの）を作って保存します */

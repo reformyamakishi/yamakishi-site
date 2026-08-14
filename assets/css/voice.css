@@ -36,6 +36,16 @@
 
 /* 詳細 */
 .p-voice__headstars{ margin-top:10px; }
+/* 見出しの星と点数。パソコンでは点数を大きく出します */
+.p-voice__headstars .c-stars{ font-size:22px; letter-spacing:3px; }
+.p-voice__headstars .c-stars__score{
+  font-size:22px; color:var(--ink); vertical-align:0;
+}
+@media (min-width:768px){
+  .p-voice__headstars .c-stars{ font-size:28px; letter-spacing:4px; }
+  .p-voice__headstars .c-starsrow{ gap:12px; }
+  .p-voice__headstars .c-stars__score{ font-size:34px; letter-spacing:.01em; }
+}
 .p-voice__h2{
   margin:34px 0 14px; font-size:19px; font-weight:900;
   padding-left:12px; border-left:5px solid var(--brand);
@@ -48,6 +58,78 @@
   content:"“"; position:absolute; top:2px; left:12px;
   font-size:56px; line-height:1; color:var(--brand-tint2); font-family:Georgia,serif;
 }
+/* --------------------------------------------------------------------------
+   とんとこトンとお客様の会話
+   -------------------------------------------------------------------------- */
+.p-voice__talk{ margin-top:26px; display:grid; gap:18px; }
+.p-voice__row{ display:flex; align-items:flex-start; gap:12px; }
+.p-voice__row--a{ justify-content:flex-end; }
+
+.p-voice__face{
+  flex:0 0 auto; width:64px; height:64px; border-radius:50%; overflow:hidden;
+  display:block; background:#fff; border:2px solid var(--border);
+}
+.p-voice__face img,
+.p-voice__face .p-voice__illust{
+  width:100%; height:100%; object-fit:cover; display:block; border-radius:50%;
+}
+.p-voice__face--ton{ border-color:var(--brand); background:var(--brand-tint); }
+.p-voice__face--cust{ background:var(--bg-soft); }
+.p-voice__facenone{ display:block; width:100%; height:100%; background:var(--bg-gray); }
+
+.p-voice__bubble{
+  position:relative; margin:0; max-width:min(78%, 560px);
+  padding:15px 18px; border-radius:18px; font-size:16px; line-height:1.95;
+}
+.p-voice__bubble::after{
+  content:""; position:absolute; top:20px; border:10px solid transparent;
+}
+/* とんとこトンの質問 */
+.p-voice__bubble--q{
+  background:#fff; border:2px solid var(--brand); color:var(--brand-dark);
+  font-weight:900; font-size:15px;
+}
+.p-voice__bubble--q::after{
+  left:-10px; border-right-color:var(--brand); border-left:0;
+}
+/* お客様の答え */
+.p-voice__bubble--a{ background:var(--brand-tint); }
+.p-voice__bubble--a::after{
+  right:-10px; border-left-color:var(--brand-tint); border-right:0;
+}
+
+/* 見出しのよこの、イラストとお名前 */
+.p-voice__headrow{
+  display:flex; flex-direction:column; align-items:center; gap:10px;
+}
+.p-voice__headwho{ display:flex; flex-direction:column; align-items:center; gap:6px; }
+.p-voice__headill{
+  display:block; width:92px; height:92px; border-radius:50%; overflow:hidden;
+  background:#fff; border:3px solid var(--brand-tint2);
+}
+.p-voice__headill .p-voice__illust{
+  width:100%; height:100%; object-fit:cover; display:block;
+}
+.p-voice__headname{
+  padding:5px 16px; border-radius:999px; background:var(--brand-tint);
+  font-size:14px; font-weight:900;
+}
+.p-voice__headshop{
+  margin:12px 0 0; font-size:17px; font-weight:900; color:var(--brand);
+  letter-spacing:.03em;
+}
+@media (min-width:768px){
+  .p-voice__headshop{ font-size:20px; }
+}
+
+@media (min-width:768px){
+  .p-voice__headrow{ flex-direction:row; justify-content:center; gap:26px; }
+  .p-voice__headwho{ order:2; }
+  .p-voice__headtxt{ order:1; }
+  .p-voice__face{ width:72px; height:72px; }
+  .p-voice__headill{ width:110px; height:110px; }
+}
+
 .p-voice__qa{ margin-top:22px; }
 .p-voice__qa dt{ font-size:14.5px; font-weight:900; color:var(--brand-dark); margin-top:16px; }
 .p-voice__qa dd{ margin:6px 0 0; font-size:15.5px; line-height:1.95; color:var(--ink-sub); }
@@ -239,12 +321,21 @@
 .p-voice__cat.is-current .p-voice__catnum{ color:#fff; opacity:.8; }
 .p-voice__cats--area{ margin-top:22px; padding-top:20px; border-top:1px dashed var(--border); }
 
-/* 見出しの市町（例：金沢市｜オイルタンクのリフォーム） */
-.p-pagehead__city{ display:inline; }
+/* 見出し（例：お客様の声　金沢市｜オイルタンクのリフォーム） */
+.p-pagehead__kind{
+  display:inline; font-size:.62em; color:var(--ink-light); margin-right:.55em;
+}
+.p-pagehead__city{ display:inline; font-size:.78em; }
 .p-pagehead__city::after{
-  content:"｜"; margin:0 -.1em 0 .05em; font-weight:900; color:var(--ink-light);
+  content:"｜"; margin:0 -.05em 0 .1em; font-weight:900; color:var(--ink-light);
+}
+@media (max-width:640px){
+  .p-pagehead__kind,
+  .p-pagehead__city{ display:inline-block; }
+  .p-pagehead__kind{ margin-right:.4em; }
 }
 @media (max-width:520px){
+  .p-pagehead__kind{ display:block; margin:0 0 2px; }
   .p-pagehead__city{ display:block; font-size:.62em; margin-bottom:2px; }
   .p-pagehead__city::after{ content:none; }
 }

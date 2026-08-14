@@ -27,7 +27,7 @@ while ( have_posts() ) : the_post();
   <ol class="p-breadcrumb__list">
     <li><a href="<?php echo esc_url( home_url( '/' ) ); ?>">ホーム</a></li>
     <li><a href="<?php echo esc_url( get_post_type_archive_link( 'ymkrf_voice' ) ); ?>">お客様の声</a></li>
-    <li><?php the_title(); ?></li>
+    <li><?php echo esc_html( ymkrf_voice_short_title( get_the_ID() ) ); ?></li>
   </ol>
 </nav>
 
@@ -36,60 +36,67 @@ while ( have_posts() ) : the_post();
 <div class="p-pagehead">
   <div class="l-wrap p-pagehead__inner">
     <span class="p-pagehead__en">VOICE</span>
-    <?php
-    /* 見出しに市町を入れます（例：金沢市｜オイルタンクのリフォーム）。
-       「金沢市 リフォーム 口コミ」のような検索に対応するためです。 */
-    $h1city = trim( (string) get_post_meta( get_the_ID(), '_ymkrf_city', true ) );
-    ?>
-    <h1 class="p-pagehead__title">
-      <?php if ( $h1city !== '' ) : ?>
-        <span class="p-pagehead__city"><?php echo esc_html( $h1city ); ?></span>
+
+    <?php /* 見出しのよこに、お客様イメージのイラストとお名前を置きます。
+             題名は保存のたびに「金沢市｜○○のリフォーム」の形に
+             自動でととのえています（inc/functions-voice.php の 5-1-1）。 */ ?>
+    <div class="p-voice__headrow">
+      <?php if ( $ill || $cust ) : ?>
+        <div class="p-voice__headwho">
+          <?php if ( $ill ) : ?><span class="p-voice__headill"><?php echo $ill; ?></span><?php endif; ?>
+          <?php if ( $cust ) : ?><span class="p-voice__headname"><?php echo esc_html( $cust ); ?></span><?php endif; ?>
+        </div>
       <?php endif; ?>
-      <?php the_title(); ?>
-    </h1>
-    <div class="p-voice__headstars"><?php echo ymkrf_stars( $score ); ?></div>
+      <div class="p-voice__headtxt">
+        <h1 class="p-pagehead__title"><?php the_title(); ?></h1>
+        <div class="p-voice__headstars"><?php echo ymkrf_stars( $score ); ?></div>
+        <?php if ( $shop ) : ?>
+          <p class="p-voice__headshop">施工店舗：<?php echo esc_html( $shop ); ?></p>
+        <?php endif; ?>
+      </div>
+    </div>
   </div>
 </div>
 
 <section class="l-section">
   <div class="l-wrap l-wrap--narrow">
 
-    <?php /* ご感想のとなりに、お客様イメージのイラストを置きます */ ?>
-    <div class="p-voice__intro">
+    <?php
+    /* とんとこトンが質問して、お客様が答える形にしています。
+       アンケートに記入があるものだけ出します。 */
+    $talk = array();
+    if ( $trouble ) $talk[] = array( 'リフォームする前は、どんなことでお困りでしたか？', $trouble );
+    if ( $after )   $talk[] = array( 'リフォームしてみて、いかがでしたか？',           $after );
+    if ( $comment ) $talk[] = array( '工事について感じたことを教えてください',         $comment );
+    ?>
 
-      <div class="p-voice__introtxt">
-        <?php if ( $parts ) : ?>
-          <p class="p-voice__tags p-voice__tags--lg">
-            <?php foreach ( $parts as $t ) : ?><span class="p-voice__tag"><?php echo esc_html( $t ); ?></span><?php endforeach; ?>
-          </p>
-        <?php endif; ?>
-        <?php if ( $comment ) : ?>
-          <blockquote class="p-voice__quote"><?php echo nl2br( esc_html( $comment ) ); ?></blockquote>
-        <?php endif; ?>
-      </div>
+    <?php if ( $parts ) : ?>
+      <p class="p-voice__tags p-voice__tags--lg">
+        <?php foreach ( $parts as $t ) : ?><span class="p-voice__tag"><?php echo esc_html( $t ); ?></span><?php endforeach; ?>
+      </p>
+    <?php endif; ?>
 
-      <?php if ( $ill || $cust || $shop ) : ?>
-        <div class="p-voice__introfig">
-          <?php if ( $ill ) : ?><span class="p-voice__illfig"><?php echo $ill; ?></span><?php endif; ?>
-          <?php if ( $cust ) : ?><span class="p-voice__whopill"><?php echo esc_html( $cust ); ?></span><?php endif; ?>
-          <?php if ( $shop ) : ?><span class="p-voice__whoshop"><?php echo esc_html( $shop ); ?>施工</span><?php endif; ?>
+    <?php if ( $talk ) : ?>
+    <div class="p-voice__talk">
+      <?php foreach ( $talk as $t ) : ?>
+
+        <div class="p-voice__row p-voice__row--q">
+          <span class="p-voice__face p-voice__face--ton">
+            <img src="<?php echo esc_url( $asset . '/assets/img/character/char-icon.webp' ); ?>"
+                 width="117" height="117" alt="とんとこトン" loading="lazy" decoding="async">
+          </span>
+          <p class="p-voice__bubble p-voice__bubble--q"><?php echo esc_html( $t[0] ); ?></p>
         </div>
-      <?php endif; ?>
 
+        <div class="p-voice__row p-voice__row--a">
+          <p class="p-voice__bubble p-voice__bubble--a"><?php echo nl2br( esc_html( $t[1] ) ); ?></p>
+          <span class="p-voice__face p-voice__face--cust">
+            <?php echo $ill ? $ill : '<span class="p-voice__facenone"></span>'; ?>
+          </span>
+        </div>
+
+      <?php endforeach; ?>
     </div>
-
-    <?php /* お悩み・いかがでしたか は、アンケートに記入があるときだけ出します */ ?>
-    <?php if ( $trouble || $after ) : ?>
-      <dl class="p-voice__qa">
-        <?php if ( $trouble ) : ?>
-          <dt>今回リフォームする前は、どのようなお悩み（お困り）でしたか？</dt>
-          <dd><?php echo nl2br( esc_html( $trouble ) ); ?></dd>
-        <?php endif; ?>
-        <?php if ( $after ) : ?>
-          <dt>今回リフォームしていかがでしたでしょうか？</dt>
-          <dd><?php echo nl2br( esc_html( $after ) ); ?></dd>
-        <?php endif; ?>
-      </dl>
     <?php endif; ?>
 
     <h2 class="p-voice__h2">いただいた評価</h2>
@@ -155,7 +162,7 @@ while ( have_posts() ) : the_post();
         <a class="p-voice__relcard" href="<?php echo esc_url( get_permalink( $r ) ); ?>">
           <?php echo ymkrf_voice_illust_img( $r->ID, 56 ); ?>
           <span class="p-voice__reltxt">
-            <span class="p-voice__relttl"><?php echo esc_html( $rp ? implode( '・', $rp ) : get_the_title( $r ) ); ?></span>
+            <span class="p-voice__relttl"><?php echo esc_html( $rp ? implode( '・', $rp ) : ymkrf_voice_short_title( $r ) ); ?></span>
             <?php if ( $rc ) : ?><span class="p-voice__relsub"><?php echo esc_html( $rc ); ?></span><?php endif; ?>
           </span>
           <?php echo ymkrf_stars( ymkrf_voice_score( $r->ID ), false ); ?>
