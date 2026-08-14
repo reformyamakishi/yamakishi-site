@@ -160,7 +160,16 @@ function ymkrf_voice_metabox( $post ) {
 	      チェック欄の読み取りは、このパソコンの中だけで行います。<br>
 	      <?php if ( get_option( YMKRF_VISION_OPT, '' ) ) : ?>
 	        手書きの文字起こしは Google の文字認識を使います。
-	        <b style="color:#b26a00">自動で入った文字は、かならず切り抜き画像と見くらべてください。</b>
+	        <b style="color:#b26a00">自動で入った文字は、かならず切り抜き画像と見くらべてください。</b><br>
+	        <?php $vleft = ymkrf_vision_left(); ?>
+	        <?php if ( $vleft < 4 ) : ?>
+	          <b style="color:#b26a00">今月の上限に達したため、文字起こしは止まっています。</b>
+	          手で打ち込んでください。
+	          （<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=ymkrf_voice&page=ymkrf-voice-ocr' ) ); ?>">設定</a>）
+	        <?php else : ?>
+	          今月ののこり <b><?php echo (int) floor( $vleft / 4 ); ?></b> 件ぶん
+	          （<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=ymkrf_voice&page=ymkrf-voice-ocr' ) ); ?>">設定</a>）
+	        <?php endif; ?>
 	      <?php else : ?>
 	        手書きの部分は、下に出る切り抜きを見ながら打ち込んでください。
 	        （<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=ymkrf_voice&page=ymkrf-voice-ocr' ) ); ?>">自動で文字起こしする設定</a>もあります）
@@ -178,11 +187,23 @@ function ymkrf_voice_metabox( $post ) {
 	  <input type="hidden" name="_ymkrf_survey_pub_id" id="ymkrf-pub-id"     value="<?php echo esc_attr( $pid ); ?>">
 	  <input type="hidden" name="_ymkrf_read_info"     id="ymkrf-read-info"  value="<?php echo esc_attr( $get( '_ymkrf_read_info' ) ); ?>">
 
+	  <?php
+	  /* 画面に出すのは「公開用（お名前を塗りつぶしたもの）」です。
+	     まだ作られていないときだけ、選んだ画像そのものを出します。 */
+	  $show_id = $pid ? $pid : $sid;
+	  ?>
 	  <div id="ymkrf-preview" class="ymkrf-voice__preview">
-	    <?php if ( $sid ) : $u = wp_get_attachment_image_url( $sid, 'large' ); ?>
-	      <img src="<?php echo esc_url( $u ); ?>" alt="">
+	    <?php if ( $show_id ) : ?>
+	      <img src="<?php echo esc_url( (string) wp_get_attachment_image_url( $show_id, 'large' ) ); ?>"
+	           data-full="<?php echo esc_url( (string) wp_get_attachment_url( $show_id ) ); ?>"
+	           data-orig="<?php echo esc_url( $sid ? (string) wp_get_attachment_url( $sid ) : '' ); ?>" alt="">
 	    <?php endif; ?>
 	  </div>
+	  <p class="description ymkrf-voice__previewnote" id="ymkrf-previewnote"
+	     <?php if ( ! $show_id ) echo 'style="display:none"'; ?>>
+	    画像を押すと大きくなります。ページに出るのは、この画像です。<br>
+	    「ご紹介（　様）」の欄は、念のため自動で白く塗りつぶしています。
+	  </p>
 
 	  <table class="form-table ymkrf-voice__table">
 	    <tr>
@@ -319,20 +340,6 @@ function ymkrf_voice_metabox( $post ) {
 	        <?php endif; ?>
 	      </td>
 	    </tr>
-	    <?php if ( $pid ) : ?>
-	    <tr>
-	      <th>公開用のアンケート画像</th>
-	      <td>
-	        <p><a href="<?php echo esc_url( wp_get_attachment_url( $pid ) ); ?>" target="_blank" rel="noopener">
-	          別の窓で開いて確かめる</a></p>
-	        <p class="description">
-	          ページに出るのは、こちらの画像です（クリックで拡大します）。<br>
-	          「ご紹介（　様）」の欄を白く塗りつぶしたものが、自動で作られます。<br>
-	          お名前がきちんと消えているか、公開のまえに一度ごらんください。
-	        </p>
-	      </td>
-	    </tr>
-	    <?php endif; ?>
 	  </table>
 	</div>
 	<?php
@@ -369,7 +376,13 @@ add_action( 'admin_enqueue_scripts', function ( $hook ) {
 	  /* 自動で文字起こしした欄は、色を変えて「確認してね」と分かるようにします */
 	  .ymkrf-voice textarea.is-ocr, .ymkrf-voice input.is-ocr{
 	    background:#fffbe6; border-color:#e0b000; box-shadow:0 0 0 1px #e0b000 inset }
-	  .ymkrf-voice__preview img{max-width:420px;height:auto;border:1px solid #dcdcde;margin:6px 0 14px}
+	  .ymkrf-voice__preview img{max-width:420px;height:auto;border:1px solid #dcdcde;margin:6px 0 4px;
+	    cursor:zoom-in}
+	  .ymkrf-voice__previewnote{margin:0 0 14px}
+	  /* 押したときに出る、大きい画像 */
+	  .ymkrf-voice__zoom{position:fixed;inset:0;z-index:100100;display:flex;align-items:center;
+	    justify-content:center;background:rgba(0,0,0,.8);cursor:zoom-out;padding:20px}
+	  .ymkrf-voice__zoom img{max-width:96vw;max-height:92vh;background:#fff;box-shadow:0 10px 40px rgba(0,0,0,.5)}
 	  .ymkrf-voice__checks label{display:inline-block;min-width:190px;margin:0 10px 8px 0}
 	  .ymkrf-voice__radios label{display:inline-block;margin:0 16px 6px 0}
 	  .ymkrf-voice__crop{margin-top:8px}
@@ -637,6 +650,51 @@ function ymkrf_voice_excerpt( $post_id, $len = 90 ) {
       かわりに、いちばん左の列に案件番号を出して、
       そこから編集画面へ入っていただきます。
    ============================================================ */
+/**
+ * 案件番号でつながっている投稿をさがします。
+ * お客様の声と施工事例に、同じ案件番号を入れておくと、たがいにつながります。
+ * 下書きのものも数えます（一覧で「もう入れたかどうか」を見たいので）。
+ */
+function ymkrf_linked_by_case_no( $case_no, $post_type ) {
+	$no = trim( (string) $case_no );
+	if ( $no === '' ) return array();
+	return get_posts( array(
+		'post_type'      => $post_type,
+		'posts_per_page' => 5,
+		'post_status'    => array( 'publish', 'draft', 'pending', 'future', 'private' ),
+		'fields'         => 'ids',
+		'meta_query'     => array( array( 'key' => '_ymkrf_case_no', 'value' => $no ) ),
+	) );
+}
+
+/**
+ * 一覧の「つながっているか」の欄。
+ *   ● 済 …… 同じ案件番号のものがあります（クリックでその編集画面へ）
+ *   未 ……… まだありません
+ *   —  ……… 案件番号が入っていないので、つなげられません
+ */
+function ymkrf_case_link_cell( $post_id, $target_type ) {
+	$no = trim( (string) get_post_meta( $post_id, '_ymkrf_case_no', true ) );
+	if ( $no === '' ) {
+		return '<span style="color:#a7aaad" title="案件番号が入っていないので、つなげられません">—</span>';
+	}
+
+	$ids = ymkrf_linked_by_case_no( $no, $target_type );
+	if ( ! $ids ) {
+		$label = ( $target_type === 'ymkrf_works' ) ? '施工事例' : 'お客様の声';
+		return '<span style="color:#b26a00" title="同じ案件番号の' . esc_attr( $label ) . 'は、まだありません">未</span>';
+	}
+
+	$links = array();
+	foreach ( $ids as $id ) {
+		$t = trim( (string) get_post_field( 'post_title', $id ) );
+		if ( $t === '' ) $t = '（題名なし）';
+		$links[] = '<a href="' . esc_url( (string) get_edit_post_link( $id ) ) . '">' . esc_html( $t ) . '</a>';
+	}
+	return '<span style="color:#118a3d;font-weight:700">● 済</span>'
+	     . '<br><span style="font-size:11px;line-height:1.5">' . implode( '<br>', $links ) . '</span>';
+}
+
 add_filter( 'manage_ymkrf_voice_posts_columns', function ( $cols ) {
 	$new = array();
 	foreach ( $cols as $k => $v ) {
@@ -646,6 +704,7 @@ add_filter( 'manage_ymkrf_voice_posts_columns', function ( $cols ) {
 			$new['ymkrf_cust']  = 'お客様';
 			$new['ymkrf_score'] = '満足度';
 			$new['ymkrf_parts'] = '工事箇所';
+			$new['ymkrf_works'] = '施工事例';
 			continue;
 		}
 		$new[ $k ] = $v;
@@ -687,39 +746,138 @@ add_action( 'manage_ymkrf_voice_posts_custom_column', function ( $col, $post_id 
 			$p = ymkrf_voice_meta_array( $post_id, '_ymkrf_parts' );
 			echo $p ? esc_html( implode( '／', $p ) ) : '<span style="color:#a7aaad">—</span>';
 			break;
+		case 'ymkrf_works':
+			echo ymkrf_case_link_cell( $post_id, 'ymkrf_works' );
+			break;
 	}
 }, 10, 2 );
 
-/* 案件番号・満足度は見出しをクリックで並べ替えできます */
+/* 見出しをクリックで並べ替えできる列。
+   ふだんは登録順（日付順）です。見出しを押したときだけ並びかわります。
+     案件番号 …… 番号順
+     施工店舗 …… 店舗ごとにまとまります
+     工事箇所 …… 箇所ごとにまとまります
+     施工事例 …… 済／未でまとまります
+   満足度は並べ替えできません（点数で順位をつけたくないため）。 */
 add_filter( 'manage_edit-ymkrf_voice_sortable_columns', function ( $cols ) {
+	unset( $cols['ymkrf_score'] );
 	$cols['title']       = 'ymkrf_case';   /* いちばん左＝案件番号 */
-	$cols['ymkrf_score'] = 'ymkrf_score';
+	$cols['ymkrf_shop']  = 'ymkrf_shop';
+	$cols['ymkrf_parts'] = 'ymkrf_parts';
+	$cols['ymkrf_works'] = 'ymkrf_link';
 	return $cols;
 } );
 add_action( 'pre_get_posts', function ( $q ) {
 	if ( ! is_admin() || ! $q->is_main_query() ) return;
 	if ( $q->get( 'post_type' ) !== 'ymkrf_voice' ) return;
+
+	$map = array(
+		'ymkrf_case'  => '_ymkrf_case_no',
+		'ymkrf_shop'  => '_ymkrf_shop',
+		'ymkrf_parts' => '_ymkrf_parts',
+	);
 	$by = $q->get( 'orderby' );
-	if ( $by === 'ymkrf_case' ) {
-		$q->set( 'meta_key', '_ymkrf_case_no' );
+	if ( isset( $map[ $by ] ) ) {
+		$q->set( 'meta_key', $map[ $by ] );
 		$q->set( 'orderby', 'meta_value' );
-	} elseif ( $by === 'ymkrf_score' ) {
-		$q->set( 'meta_key', '_ymkrf_score' );
-		$q->set( 'orderby', 'meta_value_num' );
 	}
 } );
+
+/**
+ * 「施工事例（済／未）」での並べ替え。
+ * 同じ案件番号のものが相手側にあるかどうかを、その場で数えて並べます。
+ * （印を持たせずに毎回数えるので、ずれることがありません）
+ */
+add_filter( 'posts_clauses', function ( $c, $q ) {
+	if ( ! is_admin() || ! $q->is_main_query() ) return $c;
+	if ( $q->get( 'orderby' ) !== 'ymkrf_link' ) return $c;
+
+	$type = $q->get( 'post_type' );
+	if ( $type === 'ymkrf_voice' )      $other = 'ymkrf_works';
+	elseif ( $type === 'ymkrf_works' )  $other = 'ymkrf_voice';
+	else return $c;
+
+	global $wpdb;
+	$c['join'] .= " LEFT JOIN {$wpdb->postmeta} ymkrf_cn"
+	            . " ON ymkrf_cn.post_id = {$wpdb->posts}.ID"
+	            . " AND ymkrf_cn.meta_key = '_ymkrf_case_no' ";
+
+	$has = $wpdb->prepare(
+		"( SELECT COUNT(*) FROM {$wpdb->postmeta} ymkrf_m2"
+		. " INNER JOIN {$wpdb->posts} ymkrf_p2 ON ymkrf_p2.ID = ymkrf_m2.post_id"
+		. " WHERE ymkrf_p2.post_type = %s AND ymkrf_p2.post_status <> 'trash'"
+		. " AND ymkrf_m2.meta_key = '_ymkrf_case_no'"
+		. " AND ymkrf_m2.meta_value = ymkrf_cn.meta_value"
+		. " AND ymkrf_cn.meta_value <> '' )",
+		$other
+	);
+
+	$order = ( strtoupper( (string) $q->get( 'order' ) ) === 'ASC' ) ? 'ASC' : 'DESC';
+	$c['orderby'] = "( {$has} > 0 ) {$order}, {$wpdb->posts}.post_date DESC";
+	return $c;
+}, 10, 2 );
 
 /* 列の幅 */
 add_action( 'admin_head', function () {
 	$s = get_current_screen();
-	if ( ! $s || $s->id !== 'edit-ymkrf_voice' ) return;
-	echo '<style>
-	  .column-title{width:130px}
-	  .column-ymkrf_shop{width:110px}
-	  .column-ymkrf_cust{width:170px}
-	  .column-ymkrf_score{width:80px}
-	  .column-ymkrf_parts{width:180px}
-	</style>';
+	if ( ! $s ) return;
+	if ( $s->id === 'edit-ymkrf_voice' ) {
+		echo '<style>
+		  .column-title{width:130px}
+		  .column-ymkrf_shop{width:110px}
+		  .column-ymkrf_cust{width:170px}
+		  .column-ymkrf_score{width:80px}
+		  .column-ymkrf_parts{width:170px}
+		  .column-ymkrf_works{width:170px}
+		</style>';
+	} elseif ( $s->id === 'edit-ymkrf_works' ) {
+		echo '<style>
+		  .column-ymkrf_case{width:110px}
+		  .column-ymkrf_voice{width:170px}
+		</style>';
+	}
+} );
+
+
+/* ============================================================
+   4-2. 施工事例の一覧にも、つながりを出します
+        お客様の声と同じ「案件番号」を入れておくと、
+        たがいに ● 済 と出て、クリックで行き来できます。
+   ============================================================ */
+add_filter( 'manage_ymkrf_works_posts_columns', function ( $cols ) {
+	$new = array();
+	foreach ( $cols as $k => $v ) {
+		$new[ $k ] = $v;
+		if ( $k === 'title' ) {
+			$new['ymkrf_case']  = '案件番号';
+			$new['ymkrf_voice'] = 'お客様の声';
+		}
+	}
+	return $new;
+} );
+
+add_action( 'manage_ymkrf_works_posts_custom_column', function ( $col, $post_id ) {
+	if ( $col === 'ymkrf_case' ) {
+		$v = trim( (string) get_post_meta( $post_id, '_ymkrf_case_no', true ) );
+		echo $v ? esc_html( $v ) : '<span style="color:#a7aaad">—</span>';
+	} elseif ( $col === 'ymkrf_voice' ) {
+		echo ymkrf_case_link_cell( $post_id, 'ymkrf_voice' );
+	}
+}, 10, 2 );
+
+/* 案件番号・お客様の声（済／未）で並べ替えできます */
+add_filter( 'manage_edit-ymkrf_works_sortable_columns', function ( $cols ) {
+	$cols['ymkrf_case']  = 'ymkrf_case';
+	$cols['ymkrf_voice'] = 'ymkrf_link';
+	return $cols;
+} );
+add_action( 'pre_get_posts', function ( $q ) {
+	if ( ! is_admin() || ! $q->is_main_query() ) return;
+	if ( $q->get( 'post_type' ) !== 'ymkrf_works' ) return;
+	if ( $q->get( 'orderby' ) === 'ymkrf_case' ) {
+		$q->set( 'meta_key', '_ymkrf_case_no' );
+		$q->set( 'orderby', 'meta_value' );
+	}
 } );
 
 
@@ -1120,7 +1278,50 @@ function ymkrf_voice_related( $post_id, $num = 4 ) {
      切り抜き画像を横に出していますので、**保存前に必ず目で確かめてください。**
    ============================================================ */
 
-define( 'YMKRF_VISION_OPT', 'ymkrf_vision_key' );
+define( 'YMKRF_VISION_OPT',     'ymkrf_vision_key' );   /* APIキー */
+define( 'YMKRF_VISION_CAP_OPT', 'ymkrf_vision_cap' );   /* 1か月の上限（枚） */
+define( 'YMKRF_VISION_USE_OPT', 'ymkrf_vision_use' );   /* 今月の枚数 */
+
+/* ------------------------------------------------------------------
+   お金がかからないようにする安全装置
+
+   Google は「1か月に1000枚まで無料」です。
+   ここでは、その手前（はじめは950枚）で自動的に止めます。
+   上限に達したら、それ以上は Google に送りません。
+   翌月になると、枚数は自動で0に戻ります。
+   ------------------------------------------------------------------ */
+
+/** 1か月の上限（枚）。0にすると自動の文字起こしを完全に止めます */
+function ymkrf_vision_cap() {
+	$v = get_option( YMKRF_VISION_CAP_OPT, '' );
+	if ( $v === '' ) return 950;
+	return max( 0, (int) $v );
+}
+
+/** いまの年月（サイトの時計） */
+function ymkrf_vision_month() {
+	return function_exists( 'wp_date' ) ? wp_date( 'Y-m' ) : date_i18n( 'Y-m' );
+}
+
+/** 今月すでに送った枚数 */
+function ymkrf_vision_used() {
+	$u = get_option( YMKRF_VISION_USE_OPT, array() );
+	if ( ! is_array( $u ) || ! isset( $u['ym'] ) || $u['ym'] !== ymkrf_vision_month() ) return 0;
+	return (int) $u['n'];
+}
+
+/** 今月ののこり枚数 */
+function ymkrf_vision_left() {
+	return max( 0, ymkrf_vision_cap() - ymkrf_vision_used() );
+}
+
+/** 送った枚数を足します */
+function ymkrf_vision_add( $n ) {
+	update_option( YMKRF_VISION_USE_OPT, array(
+		'ym' => ymkrf_vision_month(),
+		'n'  => ymkrf_vision_used() + max( 0, (int) $n ),
+	), false );
+}
 
 /* --- 設定ページ --- */
 add_action( 'admin_menu', function () {
@@ -1135,16 +1336,41 @@ function ymkrf_voice_ocr_page() {
 	if ( ! current_user_can( 'manage_options' ) ) return;
 
 	if ( isset( $_POST['ymkrf_vision_nonce'] ) && wp_verify_nonce( $_POST['ymkrf_vision_nonce'], 'ymkrf_vision' ) ) {
-		$key = isset( $_POST['ymkrf_vision_key'] ) ? trim( sanitize_text_field( $_POST['ymkrf_vision_key'] ) ) : '';
-		if ( $key === '' || preg_match( '/^[A-Za-z0-9_\-]{20,}$/', $key ) ) {
-			update_option( YMKRF_VISION_OPT, $key );
-			echo '<div class="notice notice-success"><p>保存しました。</p></div>';
-		} else {
-			echo '<div class="notice notice-error"><p>キーの形が正しくないようです。もう一度ご確認ください。</p></div>';
+
+		/* 上限（枚／月） */
+		if ( isset( $_POST['ymkrf_vision_cap'] ) ) {
+			update_option( YMKRF_VISION_CAP_OPT, max( 0, (int) $_POST['ymkrf_vision_cap'] ) );
+		}
+
+		/* 今月の枚数を0に戻す */
+		if ( isset( $_POST['ymkrf_vision_reset'] ) ) {
+			delete_option( YMKRF_VISION_USE_OPT );
+			echo '<div class="notice notice-success"><p>今月の枚数を0に戻しました。</p></div>';
+		}
+
+		/* キーを消す */
+		if ( isset( $_POST['ymkrf_vision_clear'] ) ) {
+			delete_option( YMKRF_VISION_OPT );
+			echo '<div class="notice notice-success"><p>キーを消しました。自動の文字起こしは止まっています。</p></div>';
+
+		} elseif ( isset( $_POST['ymkrf_vision_key'] ) ) {
+			$key = trim( sanitize_text_field( $_POST['ymkrf_vision_key'] ) );
+			if ( $key === '' ) {
+				/* 空のときは、いまのキーをそのまま残します */
+				echo '<div class="notice notice-success"><p>保存しました。</p></div>';
+			} elseif ( preg_match( '/^[A-Za-z0-9_\-]{20,}$/', $key ) ) {
+				update_option( YMKRF_VISION_OPT, $key );
+				echo '<div class="notice notice-success"><p>保存しました。</p></div>';
+			} else {
+				echo '<div class="notice notice-error"><p>キーの形が正しくないようです。もう一度ご確認ください。</p></div>';
+			}
 		}
 	}
 	$cur  = (string) get_option( YMKRF_VISION_OPT, '' );
 	$mask = $cur === '' ? '' : substr( $cur, 0, 4 ) . str_repeat( '•', max( 8, strlen( $cur ) - 8 ) ) . substr( $cur, -4 );
+	$cap  = ymkrf_vision_cap();
+	$used = ymkrf_vision_used();
+	$left = ymkrf_vision_left();
 	?>
 	<div class="wrap">
 	  <h1>手書きの文字起こしの設定</h1>
@@ -1174,15 +1400,52 @@ function ymkrf_voice_ocr_page() {
 	          </p>
 	        </td>
 	      </tr>
+	      <tr>
+	        <th><label for="ymkrf_vision_cap">1か月の上限（枚）</label></th>
+	        <td>
+	          <input type="number" id="ymkrf_vision_cap" name="ymkrf_vision_cap" min="0" step="10"
+	                 value="<?php echo esc_attr( $cap ); ?>" class="small-text"> 枚 ／ 月
+	          <p class="description">
+	            <b>お金がかからないようにするための安全装置です。</b><br>
+	            Googleは「1か月1000枚まで無料」なので、その手前の <b>950枚</b> をおすすめします。<br>
+	            この枚数に達すると、それ以上は<b>自動でGoogleに送らなくなります</b>（手入力に切りかわります）。<br>
+	            <b>0</b> にすると、自動の文字起こしを完全に止められます。<br>
+	            枚数は毎月1日に自動で0に戻ります。
+	          </p>
+	        </td>
+	      </tr>
+	      <tr>
+	        <th>今月の枚数</th>
+	        <td>
+	          <p style="font-size:16px;margin:0">
+	            <b><?php echo (int) $used; ?></b> 枚 使用　／　のこり <b><?php echo (int) $left; ?></b> 枚
+	            <?php if ( $left === 0 ) : ?>
+	              <span style="color:#b26a00;font-weight:700">（上限に達しています。いまは止まっています）</span>
+	            <?php endif; ?>
+	          </p>
+	          <p class="description">
+	            アンケート1件につき4枚（お悩み・いかがでしたか・メッセージ・点数）を送ります。<br>
+	            <?php echo (int) floor( $left / 4 ); ?>件ぶんの余裕があります。
+	          </p>
+	        </td>
+	      </tr>
 	    </table>
 	    <?php submit_button( '保存する' ); ?>
 	  </form>
 
-	  <?php if ( $cur !== '' ) : ?>
-	  <form method="post" onsubmit="return confirm('キーを消すと、自動の文字起こしは止まります。よろしいですか？');">
+	  <form method="post" style="display:inline-block;margin-right:10px"
+	        onsubmit="return confirm('今月の枚数を0に戻します。Google側の実際の枚数は戻りませんのでご注意ください。よろしいですか？');">
 	    <?php wp_nonce_field( 'ymkrf_vision', 'ymkrf_vision_nonce' ); ?>
-	    <input type="hidden" name="ymkrf_vision_key" value="">
-	    <?php submit_button( 'キーを消す', 'delete', 'submit', true ); ?>
+	    <input type="hidden" name="ymkrf_vision_reset" value="1">
+	    <?php submit_button( '今月の枚数を0に戻す', 'secondary', 'submit', false ); ?>
+	  </form>
+
+	  <?php if ( $cur !== '' ) : ?>
+	  <form method="post" style="display:inline-block"
+	        onsubmit="return confirm('キーを消すと、自動の文字起こしは止まります。よろしいですか？');">
+	    <?php wp_nonce_field( 'ymkrf_vision', 'ymkrf_vision_nonce' ); ?>
+	    <input type="hidden" name="ymkrf_vision_clear" value="1">
+	    <?php submit_button( 'キーを消す', 'delete', 'submit', false ); ?>
 	  </form>
 	  <?php endif; ?>
 
@@ -1243,6 +1506,21 @@ add_action( 'wp_ajax_ymkrf_voice_ocr', function () {
 	}
 	if ( ! $reqs ) wp_send_json_error( '画像を読み取れませんでした' );
 
+	/* ★安全装置★ 今月の上限をこえるときは、Googleに送りません */
+	$cap  = ymkrf_vision_cap();
+	$left = ymkrf_vision_left();
+	if ( $cap === 0 ) {
+		wp_send_json_error( '自動の文字起こしは止めてあります（上限が0枚に設定されています）。手で入力してください。' );
+	}
+	if ( $left < count( $reqs ) ) {
+		wp_send_json_error( sprintf(
+			'今月の上限（%d枚）に達したので、自動で止めました。'
+			. '使用 %d枚／のこり %d枚。'
+			. 'お金がかからないようにするための安全装置です。手で入力してください。',
+			$cap, ymkrf_vision_used(), $left
+		) );
+	}
+
 	$res = wp_remote_post(
 		'https://vision.googleapis.com/v1/images:annotate?key=' . rawurlencode( $key ),
 		array(
@@ -1255,6 +1533,10 @@ add_action( 'wp_ajax_ymkrf_voice_ocr', function () {
 
 	$code = wp_remote_retrieve_response_code( $res );
 	$body = json_decode( wp_remote_retrieve_body( $res ), true );
+
+	/* Googleが受け取った枚数を数えます（これが料金のもとになります） */
+	if ( $code === 200 ) ymkrf_vision_add( count( $reqs ) );
+
 	if ( $code !== 200 ) {
 		$msg = isset( $body['error']['message'] ) ? $body['error']['message'] : ( 'エラー ' . $code );
 		wp_send_json_error( 'Googleからの返事：' . $msg );
