@@ -57,10 +57,15 @@ get_header(); ?>
           $id    = get_the_ID();
           $score = ymkrf_voice_score( $id );
           $parts = ymkrf_voice_meta_array( $id, '_ymkrf_parts' );
-          $cust  = get_post_meta( $id, '_ymkrf_customer', true );
+          $cust  = ymkrf_voice_customer_label( $id );
+          $shop  = ymkrf_voice_shop_name( $id );
+          $ill   = ymkrf_voice_illust_img( $id, 96 );
         ?>
         <article class="p-voice__card" data-reveal>
-          <?php echo ymkrf_stars( $score ); ?>
+          <div class="p-voice__top">
+            <?php if ( $ill ) : ?><span class="p-voice__illwrap"><?php echo $ill; ?></span><?php endif; ?>
+            <span class="p-voice__topin"><?php echo ymkrf_stars( $score ); ?></span>
+          </div>
           <?php if ( $parts ) : ?>
             <p class="p-voice__tags">
               <?php foreach ( array_slice( $parts, 0, 3 ) as $t ) : ?>
@@ -69,10 +74,10 @@ get_header(); ?>
             </p>
           <?php endif; ?>
           <p class="p-voice__text"><?php echo esc_html( ymkrf_voice_excerpt( $id, 100 ) ); ?></p>
-          <?php if ( $cust ) : ?>
+          <?php if ( $cust || $shop ) : ?>
             <p class="p-voice__who">
-              <span class="p-voice__avatar"><?php echo esc_html( mb_substr( $cust, 0, 1, 'UTF-8' ) ); ?></span>
-              <?php echo esc_html( $cust ); ?>
+              <?php if ( $cust ) : ?><span><?php echo esc_html( $cust ); ?></span><?php endif; ?>
+              <?php if ( $shop ) : ?><span class="p-voice__shop"><?php echo esc_html( $shop ); ?>施工</span><?php endif; ?>
             </p>
           <?php endif; ?>
           <a class="p-voice__more" href="<?php the_permalink(); ?>">くわしく見る</a>

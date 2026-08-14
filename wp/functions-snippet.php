@@ -28,7 +28,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '1.0.6' );   // ファイル更新時はここを上げるとキャッシュが切れます
+if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '1.0.7' );   // ファイル更新時はここを上げるとキャッシュが切れます
 
 /* ============================================================
    1. CSS / JS の読み込み
@@ -269,8 +269,10 @@ add_action( 'add_meta_boxes', function () {
 	add_meta_box( 'ymkrf_works_box', '施工データ', function ( $post ) {
 		wp_nonce_field( 'ymkrf_meta_save', 'ymkrf_meta_nonce' );
 		ymkrf_meta_fields( $post->ID, array(
-			'_ymkrf_price'  => array( '工事費（例：128万円）', 'text' ),
-			'_ymkrf_period' => array( '工期（例：3日）', 'text' ),
+			'_ymkrf_price'   => array( '工事費（例：128万円）', 'text' ),
+			'_ymkrf_period'  => array( '工期（例：3日）', 'text' ),
+			/* お客様の声と同じ番号を入れると、おたがいに自動でリンクします */
+			'_ymkrf_case_no' => array( '案件番号（お客様の声とつなぐ番号）', 'text' ),
 		) );
 		ymkrf_works_before_field( $post->ID );
 	}, 'ymkrf_works', 'side' );
@@ -369,7 +371,8 @@ add_action( 'save_post', function ( $post_id ) {
 	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
 	if ( ! current_user_can( 'edit_post', $post_id ) ) return;
 
-	foreach ( array( '_ymkrf_price', '_ymkrf_period', '_ymkrf_before_img', '_ymkrf_customer', '_ymkrf_star' ) as $key ) {
+	foreach ( array( '_ymkrf_price', '_ymkrf_period', '_ymkrf_before_img',
+	                 '_ymkrf_customer', '_ymkrf_star', '_ymkrf_case_no' ) as $key ) {
 		if ( isset( $_POST[ $key ] ) ) {
 			update_post_meta( $post_id, $key, sanitize_text_field( wp_unslash( $_POST[ $key ] ) ) );
 		}

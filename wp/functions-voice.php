@@ -72,9 +72,51 @@ function ymkrf_voice_meta_keys() {
 			'_ymkrf_parts', '_ymkrf_reasons', '_ymkrf_recommend', '_ymkrf_score',
 			'_ymkrf_trouble', '_ymkrf_after', '_ymkrf_comment',
 			'_ymkrf_customer', '_ymkrf_area', '_ymkrf_show_survey', '_ymkrf_read_info',
+			'_ymkrf_city', '_ymkrf_initial', '_ymkrf_shop', '_ymkrf_illust',
 		),
 		array_keys( ymkrf_voice_rating_fields() )
 	);
+}
+
+
+/* ============================================================
+   1-2. お客様イメージのイラスト
+
+   assets/img/voice/ に置いたファイルが、そのまま選べるようになります。
+   ファイルを足したり消したりすれば一覧も変わります（書き換え不要）。
+   ============================================================ */
+
+function ymkrf_voice_illust_dir() {
+	return get_stylesheet_directory() . '/assets/img/voice';
+}
+function ymkrf_voice_illust_url() {
+	return get_stylesheet_directory_uri() . '/assets/img/voice';
+}
+
+/** フォルダにあるイラストの一覧（ファイル名だけ） */
+function ymkrf_voice_illusts() {
+	$dir = ymkrf_voice_illust_dir();
+	if ( ! is_dir( $dir ) ) return array();
+	$out = array();
+	foreach ( (array) scandir( $dir ) as $f ) {
+		if ( $f === '.' || $f === '..' ) continue;
+		if ( ! preg_match( '/\.(png|jpe?g|webp)$/i', $f ) ) continue;
+		$out[] = $f;
+	}
+	natcasesort( $out );
+	return array_values( $out );
+}
+
+/** お客様の表示名。「金沢市／K様」の形にします。 */
+function ymkrf_voice_customer_label( $post_id ) {
+	$city = trim( (string) get_post_meta( $post_id, '_ymkrf_city', true ) );
+	$ini  = trim( (string) get_post_meta( $post_id, '_ymkrf_initial', true ) );
+	if ( $city !== '' || $ini !== '' ) {
+		$s = $city;
+		if ( $ini !== '' ) $s .= ( $s !== '' ? '／' : '' ) . $ini . '様';
+		return $s;
+	}
+	return trim( (string) get_post_meta( $post_id, '_ymkrf_customer', true ) );
 }
 
 
@@ -135,9 +177,10 @@ function ymkrf_voice_metabox( $post ) {
 
 	  <table class="form-table ymkrf-voice__table">
 	    <tr>
-	      <th>案件番号<br><span class="description">（非公開）</span></th>
+	      <th>案件番号</th>
 	      <td><input type="text" name="_ymkrf_case_no" value="<?php echo esc_attr( $get( '_ymkrf_case_no' ) ); ?>" class="regular-text">
-	          <p class="description">画像のファイル名から自動で入ります。ページには出しません。</p></td>
+	          <p class="description">画像のファイル名から自動で入ります。ページの下のほうに小さく出ます。<br>
+	            同じ番号の施工事例を登録すると、自動でリンクします。</p></td>
 	    </tr>
 	    <tr>
 	      <th>① 工事した箇所</th>
@@ -209,10 +252,59 @@ function ymkrf_voice_metabox( $post ) {
 	          <div class="ymkrf-voice__crop" id="ymkrf-crop-comment"></div></td>
 	    </tr>
 	    <tr>
-	      <th>お客様（表示用）</th>
-	      <td><input type="text" name="_ymkrf_customer" value="<?php echo esc_attr( $get( '_ymkrf_customer' ) ); ?>" class="regular-text"
-	                 placeholder="例：金沢市／K様（40代）">
-	          <p class="description">お名前は書かないでください。市町村とイニシャル、年代までにしてください。</p></td>
+	      <th>お客様（市・町）</th>
+	      <td><input type="text" name="_ymkrf_city" value="<?php echo esc_attr( $get( '_ymkrf_city' ) ); ?>" class="regular-text"
+	                 placeholder="例：金沢市">
+	          <p class="description">お住まいの市や町だけ。番地は入れないでください。</p></td>
+	    </tr>
+	    <tr>
+	      <th>お客様（名字の頭文字）</th>
+	      <td><input type="text" name="_ymkrf_initial" value="<?php echo esc_attr( $get( '_ymkrf_initial' ) ); ?>"
+	                 maxlength="2" style="width:80px" placeholder="例：K">
+	          <p class="description">アルファベット1文字。「様」は自動で付きます。
+	            <b>いまの表示：</b><?php
+	              $lbl = ymkrf_voice_customer_label( $post->ID );
+	              echo esc_html( $lbl !== '' ? $lbl : '（未入力）' ); ?></p></td>
+	    </tr>
+	    <tr>
+	      <th>施工した店舗</th>
+	      <td>
+	        <?php $cur_shop = (string) $get( '_ymkrf_shop' );
+	        $shops = get_terms( array( 'taxonomy' => 'ymkrf_shop', 'hide_empty' => false ) ); ?>
+	        <select name="_ymkrf_shop">
+	          <option value="">（えらんでください）</option>
+	          <?php if ( ! is_wp_error( $shops ) ) foreach ( (array) $shops as $sh ) : ?>
+	            <option value="<?php echo esc_attr( $sh->slug ); ?>" <?php selected( $cur_shop, $sh->slug ); ?>>
+	              <?php echo esc_html( $sh->name ); ?></option>
+	          <?php endforeach; ?>
+	        </select>
+	        <p class="description">工事を担当した店舗です。ページに出ます。</p>
+	      </td>
+	    </tr>
+	    <tr>
+	      <th>お客様イメージのイラスト</th>
+	      <td>
+	        <?php $cur_ill = (string) $get( '_ymkrf_illust' ); $ills = ymkrf_voice_illusts(); ?>
+	        <?php if ( ! $ills ) : ?>
+	          <p class="description">
+	            イラストがまだありません。テーマの <code>assets/img/voice/</code> に
+	            画像（png / jpg / webp）を置くと、ここに一覧が出ます。</p>
+	        <?php else : ?>
+	          <div class="ymkrf-voice__ills">
+	            <label class="ymkrf-voice__ill <?php echo $cur_ill === '' ? 'is-on' : ''; ?>">
+	              <input type="radio" name="_ymkrf_illust" value="" <?php checked( $cur_ill, '' ); ?>>
+	              <span class="ymkrf-voice__illnone">なし</span>
+	            </label>
+	            <?php foreach ( $ills as $f ) : ?>
+	              <label class="ymkrf-voice__ill <?php echo $cur_ill === $f ? 'is-on' : ''; ?>">
+	                <input type="radio" name="_ymkrf_illust" value="<?php echo esc_attr( $f ); ?>" <?php checked( $cur_ill, $f ); ?>>
+	                <img src="<?php echo esc_url( ymkrf_voice_illust_url() . '/' . $f ); ?>" alt="<?php echo esc_attr( $f ); ?>">
+	              </label>
+	            <?php endforeach; ?>
+	          </div>
+	          <p class="description">工事の内容やお客様の雰囲気に合うものをえらんでください（<?php echo count( $ills ); ?>点）。</p>
+	        <?php endif; ?>
+	      </td>
 	    </tr>
 	    <tr>
 	      <th>アンケート画像の掲載</th>
@@ -247,6 +339,10 @@ add_action( 'admin_enqueue_scripts', function ( $hook ) {
 		'parts'   => ymkrf_voice_parts_list(),
 		'reasons' => ymkrf_voice_reasons_list(),
 	) );
+	wp_add_inline_script( 'jquery', "jQuery(function($){"
+		. "$(document).on('change','.ymkrf-voice__ill input',function(){"
+		. "$('.ymkrf-voice__ill').removeClass('is-on');"
+		. "$(this).closest('.ymkrf-voice__ill').addClass('is-on');});});" );
 	wp_add_inline_style( 'wp-admin', '
 	  .ymkrf-voice__lead{margin:4px 0 14px}
 	  .ymkrf-voice__status{margin-left:12px;font-weight:700}
@@ -258,6 +354,14 @@ add_action( 'admin_enqueue_scripts', function ( $hook ) {
 	  .ymkrf-voice__crop{margin-top:8px}
 	  .ymkrf-voice__crop img{max-width:100%;border:1px solid #dcdcde;background:#fff}
 	  .ymkrf-voice__table th{width:220px}
+	  .ymkrf-voice__ills{display:flex;flex-wrap:wrap;gap:8px;max-width:900px}
+	  .ymkrf-voice__ill{display:block;cursor:pointer;border:3px solid #dcdcde;border-radius:10px;
+	    background:#fff;padding:2px;line-height:0}
+	  .ymkrf-voice__ill.is-on{border-color:#fe3301;box-shadow:0 0 0 2px rgba(254,51,1,.18)}
+	  .ymkrf-voice__ill input{position:absolute;opacity:0;width:0;height:0}
+	  .ymkrf-voice__ill img{width:76px;height:76px;object-fit:contain;display:block}
+	  .ymkrf-voice__illnone{display:flex;width:76px;height:76px;align-items:center;justify-content:center;
+	    font-size:12px;color:#666;line-height:1.4}
 	' );
 } );
 
@@ -409,6 +513,41 @@ function ymkrf_voice_survey_figure( $post_id ) {
 	$h .= '<figcaption>実際にお客様からいただいたアンケートです。お名前の欄は塗りつぶしています。</figcaption>';
 	$h .= '</figure>';
 	return $h;
+}
+
+/* お客様イメージのイラスト（無ければ空） */
+function ymkrf_voice_illust_img( $post_id, $size = 96 ) {
+	$f = trim( (string) get_post_meta( $post_id, '_ymkrf_illust', true ) );
+	if ( $f === '' ) return '';
+	if ( ! file_exists( ymkrf_voice_illust_dir() . '/' . $f ) ) return '';
+	return '<img class="p-voice__illust" src="' . esc_url( ymkrf_voice_illust_url() . '/' . $f ) . '"'
+	     . ' width="' . (int) $size . '" height="' . (int) $size . '"'
+	     . ' alt="" loading="lazy" decoding="async">';
+}
+
+/* 施工した店舗の名前 */
+function ymkrf_voice_shop_name( $post_id ) {
+	$slug = trim( (string) get_post_meta( $post_id, '_ymkrf_shop', true ) );
+	if ( $slug === '' ) return '';
+	$t = get_term_by( 'slug', $slug, 'ymkrf_shop' );
+	return ( $t && ! is_wp_error( $t ) ) ? $t->name : '';
+}
+
+/**
+ * 案件番号でつながる施工事例をさがします。
+ * 施工事例の側にも同じ「案件番号」を入れておくと、自動でリンクが出ます。
+ * （施工事例はこれから登録していく予定とのことなので、
+ *   見つからないときは何も出しません）
+ */
+function ymkrf_voice_linked_works( $post_id ) {
+	$no = trim( (string) get_post_meta( $post_id, '_ymkrf_case_no', true ) );
+	if ( $no === '' ) return array();
+	return get_posts( array(
+		'post_type'      => 'ymkrf_works',
+		'posts_per_page' => 5,
+		'post_status'    => 'publish',
+		'meta_query'     => array( array( 'key' => '_ymkrf_case_no', 'value' => $no ) ),
+	) );
 }
 
 /* 一覧に出す、短いご感想 */

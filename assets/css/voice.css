@@ -115,3 +115,36 @@
   font-size:26px; line-height:1; cursor:pointer;
 }
 .c-lightbox__close:hover{ background:rgba(255,255,255,.28); }
+
+/* --------------------------------------------------------------------------
+   お客様イメージのイラスト
+   -------------------------------------------------------------------------- */
+.p-voice__top{ display:flex; align-items:center; gap:12px; }
+.p-voice__illwrap{
+  flex:0 0 auto; width:64px; height:64px; border-radius:50%;
+  background:var(--brand-tint); display:flex; align-items:center; justify-content:center;
+  overflow:hidden;
+}
+.p-voice__illwrap .p-voice__illust{ width:100%; height:100%; object-fit:contain; display:block; }
+.p-voice__topin{ min-width:0; }
+
+.p-voice__illhead{
+  display:flex; width:104px; height:104px; margin:0 auto 8px;
+  border-radius:50%; background:#fff; align-items:center; justify-content:center;
+  overflow:hidden; box-shadow:var(--shadow);
+}
+.p-voice__illhead .p-voice__illust{ width:100%; height:100%; object-fit:contain; }
+
+/* お客様・施工店舗 */
+.p-voice__who{ display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; }
+.p-voice__shop{
+  display:inline-block; padding:2px 9px; border-radius:999px;
+  background:var(--bg-gray); color:var(--ink-sub); font-size:11.5px; font-weight:900;
+}
+
+/* 案件番号（控えめに） */
+.p-voice__case{ font-size:11.5px; color:var(--ink-light); letter-spacing:.04em; }
+
+/* 案件番号でつながった施工事例 */
+.p-voice__works{ display:grid; gap:8px; margin-top:4px; }
+.p-voice__works a{ font-size:15px; font-weight:900; color:var(--brand-dark); }

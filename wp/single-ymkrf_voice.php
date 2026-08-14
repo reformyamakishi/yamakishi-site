@@ -12,7 +12,11 @@ while ( have_posts() ) : the_post();
   $score   = ymkrf_voice_score( $id );
   $parts   = ymkrf_voice_meta_array( $id, '_ymkrf_parts' );
   $reasons = ymkrf_voice_meta_array( $id, '_ymkrf_reasons' );
-  $cust    = get_post_meta( $id, '_ymkrf_customer', true );
+  $cust    = ymkrf_voice_customer_label( $id );
+  $shop    = ymkrf_voice_shop_name( $id );
+  $ill     = ymkrf_voice_illust_img( $id, 128 );
+  $case    = trim( (string) get_post_meta( $id, '_ymkrf_case_no', true ) );
+  $works   = ymkrf_voice_linked_works( $id );
   $trouble = get_post_meta( $id, '_ymkrf_trouble', true );
   $after   = get_post_meta( $id, '_ymkrf_after', true );
   $comment = get_post_meta( $id, '_ymkrf_comment', true );
@@ -31,10 +35,16 @@ while ( have_posts() ) : the_post();
 
 <div class="p-pagehead">
   <div class="l-wrap p-pagehead__inner">
+    <?php if ( $ill ) : ?><span class="p-voice__illhead"><?php echo $ill; ?></span><?php endif; ?>
     <span class="p-pagehead__en">VOICE</span>
     <h1 class="p-pagehead__title"><?php the_title(); ?></h1>
     <div class="p-voice__headstars"><?php echo ymkrf_stars( $score ); ?></div>
-    <?php if ( $cust ) : ?><p class="p-pagehead__lead"><?php echo esc_html( $cust ); ?></p><?php endif; ?>
+    <?php if ( $cust || $shop ) : ?>
+      <p class="p-pagehead__lead">
+        <?php echo esc_html( $cust ); ?><?php if ( $cust && $shop ) echo '　／　'; ?><?php
+        if ( $shop ) echo esc_html( $shop ) . '施工'; ?>
+      </p>
+    <?php endif; ?>
   </div>
 </div>
 
@@ -51,13 +61,16 @@ while ( have_posts() ) : the_post();
       <blockquote class="p-voice__quote"><?php echo nl2br( esc_html( $comment ) ); ?></blockquote>
     <?php endif; ?>
 
+    <?php /* お悩み・いかがでしたか は、アンケートに記入があるときだけ出します */ ?>
     <?php if ( $trouble || $after ) : ?>
       <dl class="p-voice__qa">
         <?php if ( $trouble ) : ?>
-          <dt>リフォーム前は、どのようなお悩みでしたか</dt><dd><?php echo nl2br( esc_html( $trouble ) ); ?></dd>
+          <dt>今回リフォームする前は、どのようなお悩み（お困り）でしたか？</dt>
+          <dd><?php echo nl2br( esc_html( $trouble ) ); ?></dd>
         <?php endif; ?>
         <?php if ( $after ) : ?>
-          <dt>リフォームしていかがでしたか</dt><dd><?php echo nl2br( esc_html( $after ) ); ?></dd>
+          <dt>今回リフォームしていかがでしたでしょうか？</dt>
+          <dd><?php echo nl2br( esc_html( $after ) ); ?></dd>
         <?php endif; ?>
       </dl>
     <?php endif; ?>
@@ -92,9 +105,19 @@ while ( have_posts() ) : the_post();
       <?php echo $fig; ?>
     <?php endif; ?>
 
+    <?php if ( $works ) : ?>
+      <h2 class="p-voice__h2">この工事の施工事例</h2>
+      <ul class="p-voice__works">
+        <?php foreach ( $works as $w ) : ?>
+          <li><a href="<?php echo esc_url( get_permalink( $w ) ); ?>"><?php echo esc_html( get_the_title( $w ) ); ?></a></li>
+        <?php endforeach; ?>
+      </ul>
+    <?php endif; ?>
+
     <p class="p-voice__note">
       ※お客様からいただいたアンケートを、内容を変えずに掲載しています。<br>
       　ご記入いただいたお名前の欄は、塗りつぶしたうえで掲載しています。
+      <?php if ( $case ) : ?><br><span class="p-voice__case">案件番号 <?php echo esc_html( $case ); ?></span><?php endif; ?>
     </p>
 
   </div>
