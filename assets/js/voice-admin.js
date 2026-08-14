@@ -389,8 +389,14 @@ window.YmkrfSurvey = {
 
   $(function () {
     var $pick = $('#ymkrf-pick'), $re = $('#ymkrf-reread'), $st = $('#ymkrf-status');
+    var $ocr = $('#ymkrf-ocr');
     if (!$pick.length) return;
     var frame = null;
+
+    /* いちばん最後に読み取った結果を覚えておきます。
+       「Cloud Visionで文字起こしする」を押したときに、これを使います。 */
+    var lastRead = null;
+    var wantOcr  = false;   /* 読み取りのあと、そのまま文字起こしまで進むかどうか */
 
     function say(msg, cls) { $st.attr('class', 'ymkrf-voice__status ' + (cls || '')).text(msg); }
 
@@ -413,6 +419,7 @@ window.YmkrfSurvey = {
                                  '" data-orig="' + url + '" alt="">');
         $('#ymkrf-previewnote').show();
         $re.prop('disabled', false);
+        wantOcr = false;
         run(url);
       });
       frame.open();
@@ -422,6 +429,21 @@ window.YmkrfSurvey = {
       e.preventDefault();
       var $img = $('#ymkrf-preview img');
       if (!$img.length) { say('先に画像を選んでください', 'is-ng'); return; }
+      wantOcr = false;
+      run($img.attr('data-orig') || $img.attr('src'));
+    });
+
+    /* 「Cloud Visionで文字起こしする」ボタン。
+       押したときだけ Google に送ります（自動では送りません）。 */
+    $ocr.on('click', function (e) {
+      e.preventDefault();
+      if (lastRead) { runOcr(lastRead); return; }
+
+      /* まだ読み取っていないとき（ページを開き直したときなど）は、
+         先に画像を読み取ってから文字起こしします。 */
+      var $img = $('#ymkrf-preview img');
+      if (!$img.length) { say('先に画像を選んでください', 'is-ng'); return; }
+      wantOcr = true;
       run($img.attr('data-orig') || $img.attr('src'));
     });
 
@@ -502,23 +524,39 @@ window.YmkrfSurvey = {
       var n = A.parts.length + A.reasons.length +
               Object.keys(A.ratings).length + (A.q9 ? 1 : 0);
 
-      if (YMKRF_VOICE.ocr) {
-        say('読み取りました（' + n + '項目）。手書きの文字起こし中…', 'is-ok');
+      lastRead = R;
+      $ocr.prop('disabled', false);
+
+      if (wantOcr) {
+        wantOcr = false;
         runOcr(R);
+      } else if (YMKRF_VOICE.ocr) {
+        say('読み取りました（' + n + '項目）。手書きは打ち込むか、'
+          + '「Cloud Visionで文字起こしする」を押してください。', 'is-ok');
       } else {
         say('読み取りました（' + n + '項目）。手書きの感想と点数をご記入ください。', 'is-ok');
       }
     }
 
-    /* 手書きの部分をGoogleに送って、文字にしてもらいます */
+    /* 手書きの部分をGoogleに送って、文字にしてもらいます。
+       すでに文字が入っている欄は送りません（そのぶん料金がかかりません）。 */
     function runOcr(R) {
       var send = {};
-      [['trouble','_ymkrf_trouble'],['after','_ymkrf_after'],
-       ['comment','_ymkrf_comment'],['score','score']].forEach(function (o) {
-        var cv = window.YmkrfSurvey.crop(R, o[0], 0);   /* 縮めずに送ります */
+      [['trouble', 'textarea[name="_ymkrf_trouble"]'],
+       ['after',   'textarea[name="_ymkrf_after"]'],
+       ['comment', 'textarea[name="_ymkrf_comment"]'],
+       ['score',   '#ymkrf-score']].forEach(function (o) {
+        var $el = $(o[1]);
+        if ($el.length && $.trim($el.val()) !== '') return;   /* もう入っている欄はとばします */
+        var cv = window.YmkrfSurvey.crop(R, o[0], 0);         /* 縮めずに送ります */
         if (cv) send[o[0]] = cv.toDataURL('image/jpeg', 0.92);
       });
-      if (!Object.keys(send).length) return;
+      var num = Object.keys(send).length;
+      if (!num) {
+        say('手書きの欄はすべて入力ずみでした。文字起こしは行いません。', 'is-ok');
+        return;
+      }
+      say('手書きの文字起こし中…（画像' + num + '枚）', 'is-ok');
 
       $.post(YMKRF_VOICE.ajax, {
         action: 'ymkrf_voice_ocr', nonce: YMKRF_VOICE.nonce, images: send
