@@ -409,7 +409,9 @@ window.YmkrfSurvey = {
           $('input[name="_ymkrf_case_no"]').val(name);      /* ファイル名＝案件番号 */
         }
         var url = (a.sizes && a.sizes.full ? a.sizes.full.url : a.url);
-        $('#ymkrf-preview').html('<img src="' + url + '" alt="">');
+        $('#ymkrf-preview').html('<img src="' + url + '" data-full="' + url +
+                                 '" data-orig="' + url + '" alt="">');
+        $('#ymkrf-previewnote').show();
         $re.prop('disabled', false);
         run(url);
       });
@@ -420,7 +422,7 @@ window.YmkrfSurvey = {
       e.preventDefault();
       var $img = $('#ymkrf-preview img');
       if (!$img.length) { say('先に画像を選んでください', 'is-ng'); return; }
-      run($img.attr('src'));
+      run($img.attr('data-orig') || $img.attr('src'));
     });
 
     function run(url) {
@@ -486,7 +488,14 @@ window.YmkrfSurvey = {
           action: 'ymkrf_voice_pub_image', nonce: YMKRF_VOICE.nonce,
           data: pub.toDataURL('image/jpeg', 0.86)
         }).done(function (res) {
-          if (res && res.success) $('#ymkrf-pub-id').val(res.data.id);
+          if (!res || !res.success) return;
+          $('#ymkrf-pub-id').val(res.data.id);
+          /* 画面に出す画像も、公開用（お名前を塗りつぶしたもの）に差しかえます。
+             読み取り用の元画像は data-orig に残しておきます。 */
+          var $img = $('#ymkrf-preview img');
+          if ($img.length && res.data.url) {
+            $img.attr('src', res.data.url).attr('data-full', res.data.url);
+          }
         });
       } catch (e) { /* 画像づくりに失敗しても、読み取り結果は残します */ }
 
@@ -542,5 +551,18 @@ window.YmkrfSurvey = {
         say('チェックは読み取れました。文字起こしの通信に失敗しました。手で入力してください。', 'is-ng');
       });
     }
+
+    /* プレビューを押すと、大きく出します（もう一度押すと閉じます） */
+    $(document).on('click', '#ymkrf-preview img', function () {
+      var src = $(this).attr('data-full') || $(this).attr('src');
+      if (!src) return;
+      var $z = $('<div class="ymkrf-voice__zoom"><img alt=""></div>');
+      $z.find('img').attr('src', src);
+      $z.on('click', function () { $z.remove(); });
+      $(document).on('keydown.ymkrfzoom', function (ev) {
+        if (ev.key === 'Escape') { $z.remove(); $(document).off('keydown.ymkrfzoom'); }
+      });
+      $('body').append($z);
+    });
   });
 })();
