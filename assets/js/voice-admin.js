@@ -12,7 +12,8 @@
  *    3. 拾った四角と、基準の57個の並びを投票で照合して、倍率と位置を決める
  *    4. 1つずつ微調整して、枠の内側のインクの量でチェックの有無を決める
  *
- *  ※用紙の書式が変わったら REF の座標を取り直してください。
+ *  ※用紙の書式が変わったら REF と AREAS の座標を取り直してください。
+ *    （いまの座標は 2026/08 の「仕事の通信簿」から測っています）
  */
 (function () {
 'use strict';
@@ -42,14 +43,24 @@ var Q2_LABELS = [
 var RATING4 = ['大変良かった','満足','普通','よくなかった'];
 var Q9_LABELS = ['勧める','勧めても良い','わからない','勧められない'];
 
-/* 手書きが入る場所（基準用紙での位置）。切り出して画面に出します。 */
+/* 手書きが入る場所（基準用紙での位置）。切り出して画面に出します。
+
+   2026/08 に、いまのアンケート用紙（きれいな原本）から測り直しました。
+   用紙に印刷されている見出し（「今回リフォームする前は…」など）が
+   入らないよう、見出しの下から始まる範囲にしてあります。
+
+   Google に送るのは trouble / after / comment の3か所だけです。
+   score は画面に出すだけで、送りません（点数は手で打ち込みます）。 */
 var AREAS = {
-  trouble: [2620,  700, 4900, 1300],
-  after:   [2620, 1330, 4900, 2130],
-  comment: [2620, 2370, 4110, 3180],
+  trouble: [2471,  845, 4885, 1368],
+  after:   [2446, 1508, 4893, 2242],
+  comment: [2446, 2370, 4098, 3184],
   score:   [4150, 2540, 4740, 3040],
   shokai:  [ 170, 1815, 1580, 1915]   /* ご紹介（　様）… 公開画像では塗りつぶします */
 };
+
+/* このうち、Google に送ってよいのはここだけ */
+var OCR_AREAS = ['trouble', 'after', 'comment'];
 
 function refPoints() {
   var p = [], ri, ci;
@@ -374,6 +385,7 @@ function makePublicImage(R, width) {
 
 window.YmkrfSurvey = {
   read: readSurvey, answers: toAnswers, crop: cropArea, publicImage: makePublicImage,
+  ocrAreas: OCR_AREAS,
   labels: { q1: Q1_LABELS, q2: Q2_LABELS, rating: RATING4, q9: Q9_LABELS }
 };
 
@@ -542,14 +554,16 @@ window.YmkrfSurvey = {
        すでに文字が入っている欄は送りません（そのぶん料金がかかりません）。 */
     function runOcr(R) {
       var send = {};
-      [['trouble', 'textarea[name="_ymkrf_trouble"]'],
-       ['after',   'textarea[name="_ymkrf_after"]'],
-       ['comment', 'textarea[name="_ymkrf_comment"]'],
-       ['score',   '#ymkrf-score']].forEach(function (o) {
-        var $el = $(o[1]);
+      var FIELD = {
+        trouble: 'textarea[name="_ymkrf_trouble"]',
+        after:   'textarea[name="_ymkrf_after"]',
+        comment: 'textarea[name="_ymkrf_comment"]'
+      };
+      window.YmkrfSurvey.ocrAreas.forEach(function (key) {
+        var $el = $(FIELD[key]);
         if ($el.length && $.trim($el.val()) !== '') return;   /* もう入っている欄はとばします */
-        var cv = window.YmkrfSurvey.crop(R, o[0], 0);         /* 縮めずに送ります */
-        if (cv) send[o[0]] = cv.toDataURL('image/jpeg', 0.92);
+        var cv = window.YmkrfSurvey.crop(R, key, 0);          /* 縮めずに送ります */
+        if (cv) send[key] = cv.toDataURL('image/jpeg', 0.92);
       });
       var num = Object.keys(send).length;
       if (!num) {

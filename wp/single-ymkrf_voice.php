@@ -36,7 +36,17 @@ while ( have_posts() ) : the_post();
 <div class="p-pagehead">
   <div class="l-wrap p-pagehead__inner">
     <span class="p-pagehead__en">VOICE</span>
-    <h1 class="p-pagehead__title"><?php the_title(); ?></h1>
+    <?php
+    /* 見出しに市町を入れます（例：金沢市｜オイルタンクのリフォーム）。
+       「金沢市 リフォーム 口コミ」のような検索に対応するためです。 */
+    $h1city = trim( (string) get_post_meta( get_the_ID(), '_ymkrf_city', true ) );
+    ?>
+    <h1 class="p-pagehead__title">
+      <?php if ( $h1city !== '' ) : ?>
+        <span class="p-pagehead__city"><?php echo esc_html( $h1city ); ?></span>
+      <?php endif; ?>
+      <?php the_title(); ?>
+    </h1>
     <div class="p-voice__headstars"><?php echo ymkrf_stars( $score ); ?></div>
   </div>
 </div>

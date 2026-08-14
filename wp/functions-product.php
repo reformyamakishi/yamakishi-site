@@ -216,10 +216,11 @@ add_action( 'init', function () {
 	/* 数字を1つ上げると、次の表示のときに1回だけURLのルールを作り直します。
 	   8 … こだわりページ（/about/）を追加したため
 	   9 … お客様の声のURLを /voice/工事箇所/案件番号/ に変えたため
-	   10 … 工事箇所ごとの一覧（/voice/oiltank/）の作りを直したため */
-	if ( get_option( 'ymkrf_rewrite_ver' ) === '10' ) return;
+	   10 … 工事箇所ごとの一覧（/voice/oiltank/）の作りを直したため
+	   11 … 地域ごとの一覧（/voice/area/kanazawa/）を足したため */
+	if ( get_option( 'ymkrf_rewrite_ver' ) === '11' ) return;
 	flush_rewrite_rules( false );
-	update_option( 'ymkrf_rewrite_ver', '10' );
+	update_option( 'ymkrf_rewrite_ver', '11' );
 }, 99 );
 
 

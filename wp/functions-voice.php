@@ -163,12 +163,12 @@ function ymkrf_voice_metabox( $post ) {
 	        <b style="color:#b26a00">自動で入った文字は、かならず切り抜き画像と見くらべてください。</b><br>
 	        <?php $vleft = ymkrf_vision_left(); ?>
 	        文字起こしは<b>「Cloud Visionで文字起こしする」を押したときだけ</b>動きます。<br>
-	        <?php if ( $vleft < 4 ) : ?>
+	        <?php if ( $vleft < 3 ) : ?>
 	          <b style="color:#b26a00">今月の上限に達したため、文字起こしは止まっています。</b>
 	          手で打ち込んでください。
 	          （<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=ymkrf_voice&page=ymkrf-voice-ocr' ) ); ?>">設定</a>）
 	        <?php else : ?>
-	          今月ののこり <b><?php echo (int) floor( $vleft / 4 ); ?></b> 件ぶん
+	          今月ののこり <b><?php echo (int) floor( $vleft / 3 ); ?></b> 件ぶん
 	          （<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=ymkrf_voice&page=ymkrf-voice-ocr' ) ); ?>">設定</a>）
 	        <?php endif; ?>
 	      <?php else : ?>
@@ -1043,6 +1043,70 @@ add_filter( 'request', function ( $qv ) {
 	return $qv;
 } );
 
+/* --- (1-3) 地域ごとの一覧（/voice/area/kanazawa/） ----------------
+   「金沢市 リフォーム 口コミ」のような検索の受け皿になるページです。
+   1件ごとのページのURLに市の名前を入れるより、
+   こうしてまとまったページを作るほうが検索に強くなります。
+   ------------------------------------------------------------- */
+
+add_filter( 'query_vars', function ( $vars ) {
+	$vars[] = 'ymkrf_varea';
+	return $vars;
+} );
+
+add_action( 'init', function () {
+	/* 2ページ目から先 */
+	add_rewrite_rule(
+		'^voice/area/([a-z0-9-]+)/page/([0-9]+)/?$',
+		'index.php?post_type=ymkrf_voice&ymkrf_varea=$matches[1]&paged=$matches[2]',
+		'top'
+	);
+	/* 1ページ目（1件ページのルールより先に見てほしいので top） */
+	add_rewrite_rule(
+		'^voice/area/([a-z0-9-]+)/?$',
+		'index.php?post_type=ymkrf_voice&ymkrf_varea=$matches[1]',
+		'top'
+	);
+}, 5 );
+
+/** ローマ字 → 市町（例：kanazawa → 金沢市） */
+function ymkrf_voice_city_from_roman( $roman ) {
+	$map = array_flip( ymkrf_voice_city_roman() );
+	$roman = strtolower( (string) $roman );
+	return isset( $map[ $roman ] ) ? $map[ $roman ] : '';
+}
+
+/** いま見ている一覧の市町（日本語）。ふつうの一覧のときは空です */
+function ymkrf_voice_current_city() {
+	$r = get_query_var( 'ymkrf_varea' );
+	return $r ? ymkrf_voice_city_from_roman( $r ) : '';
+}
+
+/** 地域ごとの一覧のURL（例：/voice/area/kanazawa/） */
+function ymkrf_voice_area_url( $roman ) {
+	return home_url( '/voice/area/' . rawurlencode( $roman ) . '/' );
+}
+
+/**
+ * 市町ごとの件数。
+ * 返るのは array( '金沢市' => array( 'roman' => 'kanazawa', 'count' => 3 ), … )
+ */
+function ymkrf_voice_area_counts() {
+	$ids = get_posts( array(
+		'post_type' => 'ymkrf_voice', 'posts_per_page' => -1, 'fields' => 'ids',
+	) );
+	$cmap = ymkrf_voice_city_roman();
+	$out  = array();
+	foreach ( (array) $ids as $id ) {
+		$c = trim( (string) get_post_meta( $id, '_ymkrf_city', true ) );
+		if ( $c === '' || ! isset( $cmap[ $c ] ) ) continue;
+		if ( ! isset( $out[ $c ] ) ) $out[ $c ] = array( 'roman' => $cmap[ $c ], 'count' => 0 );
+		$out[ $c ]['count']++;
+	}
+	uasort( $out, function ( $a, $b ) { return $b['count'] - $a['count']; } );
+	return $out;
+}
+
 /** いま見ている一覧の工事箇所（日本語）。ふつうの一覧のときは空です */
 function ymkrf_voice_current_part() {
 	$roman = get_query_var( 'ymkrf_vpart' );
@@ -1055,6 +1119,18 @@ add_action( 'pre_get_posts', function ( $q ) {
 	if ( is_admin() || ! $q->is_main_query() ) return;
 	if ( ! $q->is_post_type_archive( 'ymkrf_voice' ) ) return;
 
+	/* 市町でしぼる（/voice/area/kanazawa/） */
+	$city = ymkrf_voice_city_from_roman( $q->get( 'ymkrf_varea' ) );
+	if ( $city !== '' ) {
+		$q->set( 'meta_query', array( array(
+			'key'     => '_ymkrf_city',
+			'value'   => $city,
+			'compare' => '=',
+		) ) );
+		return;
+	}
+
+	/* 工事箇所でしぼる（/voice/kitchen/） */
 	$part = ymkrf_voice_part_from_roman( $q->get( 'ymkrf_vpart' ) );
 	if ( $part === '' ) return;
 
@@ -1063,6 +1139,19 @@ add_action( 'pre_get_posts', function ( $q ) {
 		'value'   => $part,
 		'compare' => 'LIKE',
 	) ) );
+} );
+
+/* 知らない市町のURLは、見つかりませんでした（404）にします */
+add_action( 'template_redirect', function () {
+	if ( ! is_post_type_archive( 'ymkrf_voice' ) ) return;
+	$r = (string) get_query_var( 'ymkrf_varea' );
+	if ( $r === '' ) return;
+	if ( ymkrf_voice_city_from_roman( $r ) !== '' ) return;
+
+	global $wp_query;
+	$wp_query->set_404();
+	status_header( 404 );
+	nocache_headers();
 } );
 
 /**
@@ -1148,9 +1237,16 @@ function ymkrf_voice_part_url( $roman ) {
    ページごとに違う文にします。
    ------------------------------------------------------------- */
 
-/* 工事箇所ごとの一覧（/voice/oiltank/）の題名 */
+/* 工事箇所ごと・地域ごとの一覧の題名 */
 add_filter( 'document_title_parts', function ( $parts ) {
 	if ( ! is_post_type_archive( 'ymkrf_voice' ) ) return $parts;
+
+	$city = ymkrf_voice_current_city();
+	if ( $city !== '' ) {
+		$parts['title'] = $city . 'のリフォーム｜お客様の声・口コミ';
+		return $parts;
+	}
+
 	$part = ymkrf_voice_current_part();
 	if ( $part === '' ) return $parts;
 	$parts['title'] = $part . 'リフォームのお客様の声・口コミ';
@@ -1429,9 +1525,9 @@ function ymkrf_voice_ocr_page() {
 	            <?php endif; ?>
 	          </p>
 	          <p class="description">
-	            アンケート1件につき最大4枚（お悩み・いかがでしたか・メッセージ・点数）を送ります。<br>
+	            アンケート1件につき最大3枚（お悩み・いかがでしたか・メッセージ）を送ります。<br>
 	            すでに文字が入っている欄は送らないので、実際はもっと少なくなります。<br>
-	            <?php echo (int) floor( $left / 4 ); ?>件ぶんの余裕があります。
+	            <?php echo (int) floor( $left / 3 ); ?>件ぶんの余裕があります。
 	          </p>
 	        </td>
 	      </tr>
