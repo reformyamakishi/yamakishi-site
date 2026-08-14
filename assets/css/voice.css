@@ -65,22 +65,31 @@
 .p-voice__rate--2{ background:var(--bg-gray); color:var(--ink-sub); }
 .p-voice__rate--1{ background:#e9e3df; color:var(--ink-sub); }
 
-/* アンケート画像 */
-.p-voice__sheet{ margin:0; }
+/* アンケート画像。
+   本文は文字にして起こしてあるので、画像は「実物の証拠」として
+   小さく置くだけにします。クリックで大きく見られます。 */
+.p-voice__sheet{ margin:0; max-width:300px; }
 .p-voice__sheet a{
-  position:relative; display:block; border:2px solid var(--border);
-  border-radius:var(--radius); overflow:hidden; background:#fff;
+  position:relative; display:block; border:1px solid #d6cec9;
+  border-radius:4px; overflow:hidden; background:#fff;
+  transition:border-color .15s, box-shadow .15s;
 }
+.p-voice__sheet a:hover{ border-color:var(--brand); box-shadow:var(--shadow-md); }
 .p-voice__sheet img{ width:100%; height:auto; display:block; }
 .p-voice__zoom{
-  position:absolute; right:10px; bottom:10px;
-  background:rgba(43,35,32,.82); color:#fff; font-size:12px; font-weight:900;
-  padding:6px 12px; border-radius:999px;
+  position:absolute; left:50%; bottom:8px; transform:translateX(-50%);
+  display:inline-flex; align-items:center; gap:5px; white-space:nowrap;
+  background:rgba(43,35,32,.86); color:#fff; font-size:11.5px; font-weight:900;
+  padding:5px 11px; border-radius:999px;
 }
-.p-voice__sheet figcaption{ margin-top:10px; font-size:12.5px; color:var(--ink-light); }
-.p-voice__note{
-  margin-top:28px; font-size:12.5px; line-height:1.9; color:var(--ink-light);
+.p-voice__zoom::before{
+  content:""; width:12px; height:12px; flex:0 0 auto;
+  background:currentColor;
+  -webkit-mask:no-repeat center/contain; mask:no-repeat center/contain;
+  -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5M11 8v6M8 11h6'/%3E%3C/svg%3E");
+  mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5M11 8v6M8 11h6'/%3E%3C/svg%3E");
 }
+.p-voice__sheet figcaption{ margin-top:5px; text-align:right; }
 
 @media (min-width:768px){
   .p-voice__grid--list{ grid-template-columns:repeat(2,1fr); }
@@ -135,6 +144,32 @@
 }
 .p-voice__illhead .p-voice__illust{ width:100%; height:100%; object-fit:contain; }
 
+/* --------------------------------------------------------------------------
+   ご感想と、お客様イメージのイラストを横に並べる
+   -------------------------------------------------------------------------- */
+.p-voice__intro{ display:flex; flex-direction:column; gap:14px; }
+.p-voice__introtxt{ min-width:0; }
+.p-voice__introfig{
+  display:flex; flex-direction:column; align-items:center; gap:6px;
+  flex:0 0 auto; align-self:center;
+}
+.p-voice__illfig{ display:block; line-height:0; }
+.p-voice__illfig .p-voice__illust{
+  width:clamp(112px,26vw,150px); height:auto; display:block;
+}
+.p-voice__whopill{
+  display:inline-block; padding:5px 16px; border-radius:999px;
+  background:var(--brand-tint); color:var(--ink);
+  font-size:14px; font-weight:900; white-space:nowrap;
+}
+.p-voice__whoshop{ font-size:12px; font-weight:900; color:var(--ink-light); }
+
+@media (min-width:768px){
+  .p-voice__intro{ flex-direction:row; align-items:flex-start; gap:26px; }
+  .p-voice__introtxt{ flex:1 1 auto; }
+  .p-voice__introfig{ align-self:flex-start; padding-top:6px; }
+}
+
 /* お客様・施工店舗 */
 .p-voice__who{ display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; }
 .p-voice__shop{
@@ -142,9 +177,36 @@
   background:var(--bg-gray); color:var(--ink-sub); font-size:11.5px; font-weight:900;
 }
 
-/* 案件番号（控えめに） */
-.p-voice__case{ font-size:11.5px; color:var(--ink-light); letter-spacing:.04em; }
+/* 案件番号（画像の下の右はしに、控えめに） */
+.p-voice__case{ font-size:11.5px; color:var(--ink-light); letter-spacing:.06em; }
 
 /* 案件番号でつながった施工事例 */
 .p-voice__works{ display:grid; gap:8px; margin-top:4px; }
 .p-voice__works a{ font-size:15px; font-weight:900; color:var(--brand-dark); }
+
+/* --------------------------------------------------------------------------
+   ほかのお客様の声（ページごとに違う顔ぶれが出ます）
+   -------------------------------------------------------------------------- */
+.p-voice__summary{
+  margin-top:20px; font-size:16px; line-height:2; color:var(--ink-sub);
+  background:var(--bg-soft); border-radius:var(--radius); padding:20px 18px;
+}
+.p-voice__rel{ display:grid; gap:12px; }
+.p-voice__relcard{
+  display:flex; align-items:center; gap:12px; text-decoration:none;
+  background:#fff; border:2px solid var(--border); border-radius:var(--radius);
+  padding:12px 14px; color:inherit;
+}
+.p-voice__relcard:hover{ border-color:var(--brand); }
+.p-voice__relcard .p-voice__illust{
+  flex:0 0 auto; width:48px; height:48px; border-radius:50%;
+  background:var(--brand-tint); object-fit:contain;
+}
+.p-voice__reltxt{ flex:1 1 auto; min-width:0; }
+.p-voice__relttl{ display:block; font-size:15px; font-weight:900; }
+.p-voice__relsub{ display:block; margin-top:2px; font-size:12.5px; color:var(--ink-sub); }
+.p-voice__relcard .c-starsrow{ flex:0 0 auto; }
+.p-voice__relcard .c-stars{ font-size:14px; }
+
+@media (min-width:768px){ .p-voice__rel{ grid-template-columns:repeat(2,1fr); } }
+.p-voice__sheetlead{ margin:-6px 0 12px; font-size:13.5px; line-height:1.9; color:var(--ink-sub); }
