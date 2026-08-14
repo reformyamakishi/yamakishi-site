@@ -237,3 +237,14 @@
   font-size:11.5px; font-weight:900; color:var(--ink-light);
 }
 .p-voice__cat.is-current .p-voice__catnum{ color:#fff; opacity:.8; }
+.p-voice__cats--area{ margin-top:22px; padding-top:20px; border-top:1px dashed var(--border); }
+
+/* 見出しの市町（例：金沢市｜オイルタンクのリフォーム） */
+.p-pagehead__city{ display:inline; }
+.p-pagehead__city::after{
+  content:"｜"; margin:0 -.1em 0 .05em; font-weight:900; color:var(--ink-light);
+}
+@media (max-width:520px){
+  .p-pagehead__city{ display:block; font-size:.62em; margin-bottom:2px; }
+  .p-pagehead__city::after{ content:none; }
+}
