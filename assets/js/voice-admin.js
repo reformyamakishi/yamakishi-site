@@ -547,6 +547,14 @@ window.YmkrfSurvey = {
       lastRead = R;
       $ocr.prop('disabled', false);
 
+      /* 満足度が空なら、目立つように知らせます
+         （点数の欄は Google に送っていないので、手で入力していただきます） */
+      var $sc = $('#ymkrf-score');
+      if ($sc.length && !$.trim($sc.val())) {
+        $sc.addClass('is-need');
+        $('#ymkrf-scoreneed').addClass('is-on');
+      }
+
       if (wantOcr) {
         wantOcr = false;
         runOcr(R);
@@ -611,6 +619,14 @@ window.YmkrfSurvey = {
         say('チェックは読み取れました。文字起こしの通信に失敗しました。手で入力してください。', 'is-ng');
       });
     }
+
+    /* 満足度が入力されたら、注意を消します */
+    $(document).on('input change', '#ymkrf-score', function () {
+      if ($.trim($(this).val()) !== '') {
+        $(this).removeClass('is-need');
+        $('#ymkrf-scoreneed').removeClass('is-on');
+      }
+    });
 
     /* プレビューを押すと、大きく出します（もう一度押すと閉じます） */
     $(document).on('click', '#ymkrf-preview img', function () {
