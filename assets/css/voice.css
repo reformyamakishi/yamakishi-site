@@ -5,13 +5,15 @@
    ========================================================================== */
 
 /* 平均点 */
-.p-voice__avg{
-  text-align:center; background:var(--brand-tint); border-radius:var(--radius-lg);
-  padding:22px 20px; border:2px solid var(--brand-tint2);
-}
-.p-voice__avgttl{ font-size:14px; font-weight:900; color:var(--ink-sub); margin-bottom:8px; }
+/* 満足度の平均（見出しのリード文のすぐ下。囲いはありません） */
+.p-voice__avg{ text-align:center; margin-top:22px; }
+.p-voice__avgttl{ font-size:14px; font-weight:900; color:var(--ink-sub); margin-bottom:6px; }
 .p-voice__avg .c-stars{ font-size:26px; }
-.p-voice__avgnum{ margin-top:8px; font-size:13px; color:var(--ink-sub); }
+.p-voice__avg .c-stars__score{ font-size:24px; color:var(--ink); vertical-align:0; }
+@media (min-width:768px){
+  .p-voice__avg .c-stars{ font-size:30px; }
+  .p-voice__avg .c-stars__score{ font-size:30px; }
+}
 
 /* 一覧 */
 .p-voice__grid--list{ display:grid; gap:18px; }
@@ -356,3 +358,23 @@
   .p-pagehead__city{ display:block; font-size:.62em; margin-bottom:2px; }
   .p-pagehead__city::after{ content:none; }
 }
+
+/* --------------------------------------------------------------------------
+   ページ送り（13件目からは2ページ目になります）
+   -------------------------------------------------------------------------- */
+.p-voice__grid + .navigation.pagination{ margin-top:34px; }
+.navigation.pagination .nav-links{
+  display:flex; flex-wrap:wrap; gap:8px; justify-content:center; align-items:center;
+}
+.navigation.pagination .page-numbers{
+  display:inline-flex; align-items:center; justify-content:center;
+  min-width:44px; height:44px; padding:0 14px; border-radius:999px;
+  background:#fff; border:2px solid var(--border);
+  font-size:15px; font-weight:900; color:var(--ink); text-decoration:none;
+}
+.navigation.pagination .page-numbers:hover{ border-color:var(--brand); color:var(--brand-dark); }
+.navigation.pagination .page-numbers.current{
+  background:var(--brand); border-color:var(--brand); color:#fff;
+}
+.navigation.pagination .page-numbers.dots{ border-color:transparent; min-width:24px; padding:0; }
+.navigation.pagination .screen-reader-text{ position:absolute; left:-9999px; }

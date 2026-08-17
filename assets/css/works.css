@@ -1,0 +1,124 @@
+@charset "UTF-8";
+/* ==========================================================================
+   works.css ─ 施工事例（一覧・詳細）
+   common.css の .p-works__grid / .p-work / .p-compare に足す形です。
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   絞り込みボタン（部位・エリア）
+   -------------------------------------------------------------------------- */
+.p-works__filter{ text-align:center; }
+.p-works__filterttl{
+  font-size:13px; font-weight:900; color:var(--ink-sub);
+  letter-spacing:.08em; margin-bottom:12px;
+}
+.p-works__filterlist{
+  list-style:none; margin:0; padding:0;
+  display:flex; flex-wrap:wrap; gap:8px; justify-content:center;
+}
+.p-works__fbtn{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:7px 15px; border-radius:999px; text-decoration:none;
+  background:#fff; border:2px solid var(--border);
+  color:var(--ink); font-size:13.5px; font-weight:900; line-height:1.4;
+}
+.p-works__fbtn:hover{ border-color:var(--brand); color:var(--brand-dark); }
+.p-works__fbtn.is-current{ background:var(--brand); border-color:var(--brand); color:#fff; }
+.p-works__fnum{ font-size:11.5px; font-weight:900; color:var(--ink-light); }
+.p-works__fbtn.is-current .p-works__fnum{ color:#fff; opacity:.8; }
+.p-works__filter--area{
+  margin-top:22px; padding-top:20px; border-top:1px dashed var(--border);
+}
+
+/* --------------------------------------------------------------------------
+   一覧のカード
+   -------------------------------------------------------------------------- */
+.p-work__thumb{ display:block; text-decoration:none; }
+.p-work__solo{ aspect-ratio:4/3; overflow:hidden; background:var(--bg-gray); }
+.p-work__solo img{ width:100%; height:100%; object-fit:cover; display:block; }
+.p-work__title a{ color:inherit; text-decoration:none; }
+.p-work__title a:hover{ color:var(--brand-dark); }
+
+/* --------------------------------------------------------------------------
+   詳細
+   -------------------------------------------------------------------------- */
+.p-work__badges{ display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin-bottom:10px; }
+.p-work__badge{
+  display:inline-block; padding:4px 12px; border-radius:999px;
+  background:var(--brand-tint); color:var(--brand-dark);
+  font-size:12.5px; font-weight:900;
+}
+.p-work__badge--a{ background:var(--bg-gray); color:var(--ink-sub); }
+.p-work__headshop{
+  margin:12px 0 0; font-size:17px; font-weight:900; color:var(--brand);
+  letter-spacing:.03em;
+}
+
+.p-work__hero{
+  border-radius:var(--radius-lg); overflow:hidden; border:2px solid var(--border);
+}
+.p-work__hero .p-compare{ aspect-ratio:16/10; }
+
+.p-work__h2{
+  margin:34px 0 14px; font-size:19px; font-weight:900;
+  padding-left:12px; border-left:5px solid var(--brand);
+}
+.p-work__h2--c{ text-align:center; border-left:0; padding-left:0; margin-bottom:22px; }
+
+.p-work__spec{ width:100%; border-collapse:collapse; }
+.p-work__spec th,
+.p-work__spec td{ padding:12px 8px; border-bottom:1px solid var(--border); text-align:left; }
+.p-work__spec th{ font-size:14.5px; font-weight:900; width:38%; color:var(--ink-sub); }
+.p-work__spec td{ font-size:16px; font-weight:800; }
+.p-work__price{ color:var(--brand-dark); font-size:19px !important; }
+.p-work__note{
+  margin-top:12px; font-size:13px; line-height:1.9; color:var(--ink-sub);
+}
+
+.p-work__body{ font-size:16px; line-height:2; }
+.p-work__body p{ margin:0 0 1.2em; }
+.p-work__body img{ max-width:100%; height:auto; border-radius:var(--radius); }
+.p-work__body h3{ margin:28px 0 10px; font-size:17px; font-weight:900; }
+
+/* 使った商品 */
+.p-work__prods{ display:grid; gap:12px; }
+.p-work__prod{
+  display:flex; align-items:center; gap:14px; text-decoration:none; color:inherit;
+  background:#fff; border:2px solid var(--border); border-radius:var(--radius); padding:12px 14px;
+}
+.p-work__prod:hover{ border-color:var(--brand); }
+.p-work__prodimg{ flex:0 0 auto; width:84px; height:64px; border-radius:8px; overflow:hidden; background:var(--bg-gray); }
+.p-work__prodimg img{ width:100%; height:100%; object-fit:contain; display:block; }
+.p-work__prodtxt{ flex:1 1 auto; min-width:0; }
+.p-work__prodname{ display:block; font-size:15.5px; font-weight:900; }
+.p-work__prodmore{ display:block; margin-top:3px; font-size:13px; font-weight:900; color:var(--brand-dark); }
+.p-work__prodmore::after{ content:" ›"; }
+
+/* お客様の声 */
+.p-work__voices{ display:grid; gap:12px; }
+.p-work__voice{
+  display:flex; align-items:center; gap:14px; text-decoration:none; color:inherit;
+  background:#fff; border:2px solid var(--border); border-radius:var(--radius); padding:14px;
+}
+.p-work__voice:hover{ border-color:var(--brand); }
+.p-work__voiceill{
+  flex:0 0 auto; width:64px; height:64px; border-radius:50%; overflow:hidden;
+  background:var(--brand-tint); display:block;
+}
+.p-work__voiceill img{ width:100%; height:100%; object-fit:contain; display:block; }
+.p-work__voicetxt{ flex:1 1 auto; min-width:0; }
+.p-work__voicetop{ display:block; }
+.p-work__voicequote{ display:block; margin-top:5px; font-size:15px; line-height:1.85; }
+.p-work__voicewho{ display:block; margin-top:5px; font-size:12.5px; font-weight:900; color:var(--ink-sub); }
+
+.p-work__case{
+  margin-top:26px; text-align:right;
+  font-size:11.5px; color:var(--ink-light); letter-spacing:.06em;
+}
+
+@media (min-width:768px){
+  .p-works__grid{ grid-template-columns:repeat(3,1fr); }
+  .p-work__prods{ grid-template-columns:repeat(2,1fr); }
+  .p-work__h2{ font-size:21px; }
+  .p-work__headshop{ font-size:20px; }
+}
