@@ -699,14 +699,14 @@ function ymkrf_case_link_cell( $post_id, $target_type ) {
 		return '<span style="color:#b26a00" title="同じ案件番号の' . esc_attr( $label ) . 'は、まだありません">未</span>';
 	}
 
-	$links = array();
-	foreach ( $ids as $id ) {
-		$t = trim( (string) get_post_field( 'post_title', $id ) );
-		if ( $t === '' ) $t = '（題名なし）';
-		$links[] = '<a href="' . esc_url( (string) get_edit_post_link( $id ) ) . '">' . esc_html( $t ) . '</a>';
-	}
-	return '<span style="color:#118a3d;font-weight:700">● 済</span>'
-	     . '<br><span style="font-size:11px;line-height:1.5">' . implode( '<br>', $links ) . '</span>';
+	/* 「● 済」だけを出します。押すと、つながっている相手の編集画面へ移ります。
+	   （題名まで出すと一覧が読みにくくなるため） */
+	$label = ( $target_type === 'ymkrf_works' ) ? '施工事例' : 'お客様の声';
+	$url   = (string) get_edit_post_link( (int) $ids[0] );
+	$title = trim( (string) get_post_field( 'post_title', (int) $ids[0] ) );
+
+	return '<a href="' . esc_url( $url ) . '" style="color:#118a3d;font-weight:700;text-decoration:none"'
+	     . ' title="' . esc_attr( $label . '「' . $title . '」をひらく' ) . '">● 済</a>';
 }
 
 add_filter( 'manage_ymkrf_voice_posts_columns', function ( $cols ) {
@@ -1226,6 +1226,10 @@ function ymkrf_voice_current_part() {
 add_action( 'pre_get_posts', function ( $q ) {
 	if ( is_admin() || ! $q->is_main_query() ) return;
 	if ( ! $q->is_post_type_archive( 'ymkrf_voice' ) ) return;
+
+	/* 1ページに出す件数。3列ならびに合わせて12件ずつにします。
+	   13件目からは自動で2ページ目になります（下に「前へ／次へ」が出ます）。 */
+	$q->set( 'posts_per_page', 12 );
 
 	/* 市町でしぼる（/voice/area/kanazawa/） */
 	$city = ymkrf_voice_city_from_roman( $q->get( 'ymkrf_varea' ) );

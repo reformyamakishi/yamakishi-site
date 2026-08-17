@@ -28,7 +28,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '1.2.5' );   // ファイル更新時はここを上げるとキャッシュが切れます
+if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '1.3.0' );   // ファイル更新時はここを上げるとキャッシュが切れます
 
 /* ============================================================
    1. CSS / JS の読み込み
@@ -71,6 +71,12 @@ add_action( 'wp_enqueue_scripts', function () {
 	/* お客様の声のページ */
 	if ( is_singular( 'ymkrf_voice' ) || is_post_type_archive( 'ymkrf_voice' ) ) {
 		wp_enqueue_style( 'ymkrf-voice', $dir . '/assets/css/voice.css', array( 'ymkrf-page' ), YMKRF_VER );
+	}
+
+	/* 施工事例のページ */
+	if ( is_singular( 'ymkrf_works' ) || is_post_type_archive( 'ymkrf_works' )
+	  || is_tax( array( 'ymkrf_works_cat', 'ymkrf_works_area' ) ) ) {
+		wp_enqueue_style( 'ymkrf-works', $dir . '/assets/css/works.css', array( 'ymkrf-page' ), YMKRF_VER );
 	}
 } );
 
@@ -161,16 +167,26 @@ add_filter( 'script_loader_tag', function ( $tag, $handle ) {
    ============================================================ */
 add_action( 'init', function () {
 
-	/* --- 施工事例 --- */
+	/* --- 施工事例 ---
+	   URLは「/works/部位/案件番号/」の形にします。
+	     例）/works/kitchen/2604-0180/
+	   %ymkrf_wpart% のところに、部位の英字が入ります（詳しくは inc/functions-works.php の2）。
+
+	   権限は施工事例だけの専用にしています。
+	   これで「施工事例スタッフ」の人に、ここだけをまかせられます。 */
+	add_rewrite_tag( '%ymkrf_wpart%', '([a-z0-9-]+)' );
+
 	register_post_type( 'ymkrf_works', array(
 		'label'        => '施工事例',
 		'public'       => true,
-		'has_archive'  => true,
+		'has_archive'  => 'works',   /* 一覧は /works/（部位は付けません） */
 		'menu_icon'    => 'dashicons-hammer',
 		'menu_position'=> 5,
-		'rewrite'      => array( 'slug' => 'works', 'with_front' => false ),
+		'rewrite'      => array( 'slug' => 'works/%ymkrf_wpart%', 'with_front' => false ),
 		'supports'     => array( 'title', 'editor', 'thumbnail', 'excerpt' ),
 		'show_in_rest' => true,
+		'capability_type' => array( 'ymkrf_work', 'ymkrf_works' ),
+		'map_meta_cap'    => true,
 	) );
 
 	/* 部位（キッチン／お風呂／トイレ …） */
@@ -179,6 +195,12 @@ add_action( 'init', function () {
 		'hierarchical' => true,
 		'rewrite'      => array( 'slug' => 'works', 'with_front' => false ),
 		'show_in_rest' => true,
+		'capabilities' => array(
+			'manage_terms' => 'manage_ymkrf_works_terms',
+			'edit_terms'   => 'manage_ymkrf_works_terms',
+			'delete_terms' => 'manage_ymkrf_works_terms',
+			'assign_terms' => 'edit_ymkrf_works',
+		),
 	) );
 
 	/* エリア（金沢市／小松市 …）＝ 地域検索の受け皿になります */
@@ -187,6 +209,12 @@ add_action( 'init', function () {
 		'hierarchical' => true,
 		'rewrite'      => array( 'slug' => 'works-area', 'with_front' => false ),
 		'show_in_rest' => true,
+		'capabilities' => array(
+			'manage_terms' => 'manage_ymkrf_works_terms',
+			'edit_terms'   => 'manage_ymkrf_works_terms',
+			'delete_terms' => 'manage_ymkrf_works_terms',
+			'assign_terms' => 'edit_ymkrf_works',
+		),
 	) );
 
 	/* --- お客様の声 ---

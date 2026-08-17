@@ -72,20 +72,16 @@ get_header(); ?>
         いただいたまま載せています。<br class="xs-only">良い評価も、そうでない評価も。
       </p>
     <?php endif; ?>
+
+    <?php if ( $avg ) : ?>
+      <?php /* 満足度の平均。囲いは付けず、リード文のすぐ下に置きます */ ?>
+      <div class="p-voice__avg">
+        <p class="p-voice__avgttl">いただいた満足度の平均</p>
+        <?php echo ymkrf_stars( $avg ); ?>
+      </div>
+    <?php endif; ?>
   </div>
 </div>
-
-<?php if ( $avg ) : ?>
-<section class="l-section l-section--tight">
-  <div class="l-wrap l-wrap--narrow">
-    <div class="p-voice__avg">
-      <p class="p-voice__avgttl">いただいた満足度の平均</p>
-      <?php echo ymkrf_stars( $avg ); ?>
-      <p class="p-voice__avgnum"><?php echo (int) $cnt; ?>件の平均</p>
-    </div>
-  </div>
-</section>
-<?php endif; ?>
 
 <?php if ( count( $vcats ) > 1 || count( $vareas ) > 1 ) : ?>
 <section class="l-section l-section--tight">
