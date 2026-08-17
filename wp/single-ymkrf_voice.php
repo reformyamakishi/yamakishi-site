@@ -77,7 +77,9 @@ while ( have_posts() ) : the_post();
     <?php endif; ?>
 
     <?php if ( $talk ) : ?>
-    <div class="p-voice__talk">
+    <div class="p-voice__talkbox">
+      <h2 class="p-voice__talkttl">お客様にうかがいました</h2>
+      <div class="p-voice__talk">
       <?php foreach ( $talk as $t ) : ?>
 
         <div class="p-voice__row p-voice__row--q">
@@ -96,6 +98,7 @@ while ( have_posts() ) : the_post();
         </div>
 
       <?php endforeach; ?>
+      </div>
     </div>
     <?php endif; ?>
 

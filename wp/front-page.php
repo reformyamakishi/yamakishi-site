@@ -653,23 +653,50 @@ get_header();
       <p class="c-head__lead">工事のあとに、実際にいただいたご感想です。</p>
     </div>
 
+    <?php
+    /* 登録されているお客様の声から、新しい3件を出します。
+       まだ1件も無いときは、この欄ごと出しません。 */
+    $ymkrf_voices = get_posts( array(
+      'post_type'      => 'ymkrf_voice',
+      'posts_per_page' => 3,
+      'post_status'    => 'publish',
+    ) );
+    ?>
+    <?php if ( $ymkrf_voices ) : ?>
     <div class="p-voice__grid">
-      <div class="p-voice__card" data-reveal>
-        <span class="c-starsrow"><span class="c-stars p-voice__stars" data-band="s" style="--rate:100%" role="img" aria-label="満足度 100点（5段階で5）"><span class="c-stars__base" aria-hidden="true">★★★★★</span><span class="c-stars__fill" aria-hidden="true">★★★★★</span></span><span class="c-stars__score">100点</span></span>
-        <p class="p-voice__text">［お客様アンケートの実際のコメントを掲載］見積りが総額で出てきたので、他社と比べやすかったです。職人さんも毎日きちんと片付けてくれて安心でした。</p>
-        <p class="p-voice__who"><span class="p-voice__avatar">K</span>金沢市／K様（40代）・キッチンリフォーム</p>
-      </div>
-      <div class="p-voice__card" data-reveal data-reveal-delay="80">
-        <span class="c-starsrow"><span class="c-stars p-voice__stars" data-band="s" style="--rate:95%" role="img" aria-label="満足度 95点（5段階で5）"><span class="c-stars__base" aria-hidden="true">★★★★★</span><span class="c-stars__fill" aria-hidden="true">★★★★★</span></span><span class="c-stars__score">95点</span></span>
-        <p class="p-voice__text">［お客様アンケートの実際のコメントを掲載］給湯器が急に壊れて困っていたところ、近くの店舗からすぐ来てくれました。補助金の書類も全部やってもらえて助かりました。</p>
-        <p class="p-voice__who"><span class="p-voice__avatar">N</span>福井市／N様（70代）・給湯器交換</p>
-      </div>
-      <div class="p-voice__card" data-reveal data-reveal-delay="160">
-        <span class="c-starsrow"><span class="c-stars p-voice__stars" data-band="b" style="--rate:80%" role="img" aria-label="満足度 80点（5段階で4）"><span class="c-stars__base" aria-hidden="true">★★★★★</span><span class="c-stars__fill" aria-hidden="true">★★★★★</span></span><span class="c-stars__score">80点</span></span>
-        <p class="p-voice__text">［お客様アンケートの実際のコメントを掲載］LINEで写真を送ったら、その日のうちに概算を教えてもらえました。無理に勧められることもなく、気楽に相談できました。</p>
-        <p class="p-voice__who"><span class="p-voice__avatar">Y</span>小松市／Y様（30代）・浴室リフォーム</p>
-      </div>
+      <?php $ymkrf_d = 0; foreach ( $ymkrf_voices as $ymkrf_v ) :
+        $vid   = $ymkrf_v->ID;
+        $vsc   = ymkrf_voice_score( $vid );
+        $vps   = ymkrf_voice_meta_array( $vid, '_ymkrf_parts' );
+        $vcust = ymkrf_voice_customer_label( $vid );
+        $vshop = ymkrf_voice_shop_name( $vid );
+        $vill  = ymkrf_voice_illust_img( $vid, 96 );
+      ?>
+      <a class="p-voice__card p-voice__card--link" href="<?php echo esc_url( get_permalink( $vid ) ); ?>"
+         data-reveal<?php if ( $ymkrf_d ) echo ' data-reveal-delay="' . (int) $ymkrf_d . '"'; ?>>
+        <div class="p-voice__top">
+          <?php if ( $vill ) : ?><span class="p-voice__illwrap"><?php echo $vill; ?></span><?php endif; ?>
+          <span class="p-voice__topin"><?php echo ymkrf_stars( $vsc ); ?></span>
+        </div>
+        <?php if ( $vps ) : ?>
+          <p class="p-voice__tags">
+            <?php foreach ( array_slice( $vps, 0, 3 ) as $vt ) : ?>
+              <span class="p-voice__tag"><?php echo esc_html( $vt ); ?></span>
+            <?php endforeach; ?>
+          </p>
+        <?php endif; ?>
+        <p class="p-voice__text"><?php echo esc_html( ymkrf_voice_excerpt( $vid, 100 ) ); ?></p>
+        <?php if ( $vcust || $vshop ) : ?>
+          <p class="p-voice__who">
+            <?php if ( $vcust ) : ?><span><?php echo esc_html( $vcust ); ?></span><?php endif; ?>
+            <?php if ( $vshop ) : ?><span class="p-voice__shop"><?php echo esc_html( $vshop ); ?>施工</span><?php endif; ?>
+          </p>
+        <?php endif; ?>
+        <span class="p-voice__more">くわしく見る</span>
+      </a>
+      <?php $ymkrf_d += 80; endforeach; ?>
     </div>
+    <?php endif; ?>
 
     <a class="c-more" href="<?php echo esc_url( home_url( '/voice/' ) ); ?>">お客様の声をもっと見る</a>
   </div>
