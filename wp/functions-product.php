@@ -204,6 +204,25 @@ add_filter( 'request', function ( $qv ) {
 	return $new;
 } );
 
+/* メーカーを足したいときは、ここに書き足してください。
+   いちど登録されたものは、そのままにします。
+   （数字を1つ上げると、次の表示のときに1回だけ登録し直します） */
+add_action( 'init', function () {
+	if ( get_option( 'ymkrf_maker_ver' ) === '2' ) return;
+
+	$makers = array(
+		'ykkap'       => 'YKK AP',
+		'woodone'     => 'WOODONE（ウッドワン）',
+		'nichiha'     => 'ニチハ',
+		'sankyoalumi' => '三協アルミ',
+	);
+	foreach ( $makers as $slug => $name ) {
+		if ( term_exists( $slug, 'ymkrf_maker' ) ) continue;
+		wp_insert_term( $name, 'ymkrf_maker', array( 'slug' => $slug ) );
+	}
+	update_option( 'ymkrf_maker_ver', '2' );
+}, 25 );
+
 /* 分類を足す・変える・消したときは、URLのルールを作り直します */
 foreach ( array( 'created', 'edited', 'delete' ) as $when ) {
 	add_action( $when . '_ymkrf_product_cat', function () {

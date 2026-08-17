@@ -107,6 +107,7 @@ add_action( 'init', function () {
 			'ykkap'          => 'YKK AP',
 			'nichiha'        => 'ニチハ',
 			'woodone'        => 'WOODONE（ウッドワン）',
+			'sankyoalumi'    => '三協アルミ',
 		),
 
 		/* スラッグは店舗ページのURLに合わせています */

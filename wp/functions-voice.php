@@ -267,6 +267,10 @@ function ymkrf_voice_metabox( $post ) {
 	      <td>
 	        <input type="number" name="_ymkrf_score" id="ymkrf-score" min="0" max="100"
 	               value="<?php echo esc_attr( $get( '_ymkrf_score' ) ); ?>" class="small-text"> 点
+	        <p class="ymkrf-voice__need" id="ymkrf-scoreneed">
+	          ↓ この切り抜きに点数が書かれていたら、<b>かならず上の欄に入力してください</b>。<br>
+	          空のままだと、③〜⑧の評価から計算した点数になります。
+	        </p>
 	        <div class="ymkrf-voice__crop" id="ymkrf-crop-score"></div>
 	        <p class="description">
 	          <b>アンケートに書かれた点数をそのまま入れてください。</b>ここが最優先で使われます。<br>
@@ -391,6 +395,11 @@ add_action( 'admin_enqueue_scripts', function ( $hook ) {
 	  .ymkrf-voice__checks label{display:inline-block;min-width:190px;margin:0 10px 8px 0}
 	  .ymkrf-voice__radios label{display:inline-block;margin:0 16px 6px 0}
 	  .ymkrf-voice__crop{margin-top:8px}
+	  /* 満足度が空のときに出す注意 */
+	  .ymkrf-voice__need{display:none;margin:8px 0 0;padding:9px 12px;border-radius:6px;
+	    background:#fff4e5;border:1px solid #e0b000;color:#7a4a00;font-size:13px;line-height:1.8}
+	  .ymkrf-voice__need.is-on{display:block}
+	  #ymkrf-score.is-need{background:#fffbe6;border-color:#e0b000;box-shadow:0 0 0 2px #e0b000 inset}
 	  .ymkrf-voice__crop img{max-width:100%;border:1px solid #dcdcde;background:#fff}
 	  .ymkrf-voice__table th{width:220px}
 	  .ymkrf-voice__ills{display:flex;flex-wrap:wrap;gap:8px;max-width:900px}
@@ -744,8 +753,17 @@ add_action( 'manage_ymkrf_voice_posts_custom_column', function ( $col, $post_id 
 			echo $v ? esc_html( $v ) : '<span style="color:#a7aaad">—</span>';
 			break;
 		case 'ymkrf_score':
-			$s = ymkrf_voice_score( $post_id );
-			echo $s ? esc_html( $s ) . '点' : '<span style="color:#a7aaad">—</span>';
+			$s   = ymkrf_voice_score( $post_id );
+			$raw = get_post_meta( $post_id, '_ymkrf_score', true );
+			if ( ! $s ) {
+				echo '<span style="color:#a7aaad">—</span>';
+			} elseif ( $raw === '' || $raw === null ) {
+				/* お客様が書かれた点数ではなく、③〜⑧から計算した点数です */
+				echo esc_html( $s ) . '点<br><span style="color:#b26a00;font-size:11px"'
+				   . ' title="アンケートに点数の記入が入力されていません。③〜⑧の評価から計算しています">自動計算</span>';
+			} else {
+				echo esc_html( $s ) . '点';
+			}
 			break;
 		case 'ymkrf_parts':
 			$p = ymkrf_voice_meta_array( $post_id, '_ymkrf_parts' );
