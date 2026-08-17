@@ -200,33 +200,6 @@
 }
 
 /* --------------------------------------------------------------------------
-   拡大表示（ライトボックス）
-   ※クリックしたときだけ開きます。ページを開いた瞬間に出るものではないので、
-     検索エンジンから嫌われる「じゃまな広告窓」にはあたりません。
-   -------------------------------------------------------------------------- */
-.c-lightbox{
-  position:fixed; inset:0; z-index:9999; display:none;
-  background:rgba(20,14,12,.88); padding:24px;
-  align-items:center; justify-content:center;
-}
-.c-lightbox.is-open{ display:flex; }
-.c-lightbox__img{
-  max-width:min(1200px,100%); max-height:calc(100vh - 120px);
-  width:auto; height:auto; border-radius:8px; background:#fff;
-  box-shadow:0 20px 60px rgba(0,0,0,.5);
-}
-.c-lightbox__cap{
-  position:absolute; left:0; right:0; bottom:22px; text-align:center;
-  color:#fff; font-size:13px; padding:0 20px;
-}
-.c-lightbox__close{
-  position:absolute; top:14px; right:16px; width:46px; height:46px;
-  border:0; border-radius:50%; background:rgba(255,255,255,.16); color:#fff;
-  font-size:26px; line-height:1; cursor:pointer;
-}
-.c-lightbox__close:hover{ background:rgba(255,255,255,.28); }
-
-/* --------------------------------------------------------------------------
    お客様イメージのイラスト
    -------------------------------------------------------------------------- */
 .p-voice__top{ display:flex; align-items:center; gap:12px; }

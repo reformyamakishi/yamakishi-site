@@ -607,6 +607,11 @@ address{ font-style:normal; }
 .p-compare{ position:relative; aspect-ratio:4/3; overflow:hidden; user-select:none; touch-action:pan-y; cursor:ew-resize; }
 .p-compare__layer{ position:absolute; inset:0; }
 .p-compare__layer img{ width:100%; height:100%; object-fit:cover; }
+/* 写真が枠より横に長いときの、切り取る位置。
+   Beforeは左側（スライダーで先に見える側）、Afterは右側を残します。
+   枠とぴったり同じ形の写真では、この指定は効きません（＝まんなかのまま）。 */
+.p-compare__layer--before img{ object-position:left center; }
+.p-compare__layer--after  img{ object-position:right center; }
 .p-compare__layer--before{ background:linear-gradient(135deg,#ded5cd,#c3b6ab); }
 .p-compare__layer--after {
   background:linear-gradient(135deg,#fff0e8,#ffd8c6);
@@ -698,3 +703,30 @@ address{ font-style:normal; }
   .p-fixcta,.p-pagetop,.p-hamburger,.p-subnav,.p-notice{ display:none!important; }
   body{ font-size:12pt; }
 }
+
+/* --------------------------------------------------------------------------
+   拡大表示（ライトボックス）※common.js の a.js-lightbox と対です
+   ※クリックしたときだけ開きます。ページを開いた瞬間に出るものではないので、
+     検索エンジンから嫌われる「じゃまな広告窓」にはあたりません。
+   -------------------------------------------------------------------------- */
+.c-lightbox{
+  position:fixed; inset:0; z-index:9999; display:none;
+  background:rgba(20,14,12,.88); padding:24px;
+  align-items:center; justify-content:center;
+}
+.c-lightbox.is-open{ display:flex; }
+.c-lightbox__img{
+  max-width:min(1200px,100%); max-height:calc(100vh - 120px);
+  width:auto; height:auto; border-radius:8px; background:#fff;
+  box-shadow:0 20px 60px rgba(0,0,0,.5);
+}
+.c-lightbox__cap{
+  position:absolute; left:0; right:0; bottom:22px; text-align:center;
+  color:#fff; font-size:13px; padding:0 20px;
+}
+.c-lightbox__close{
+  position:absolute; top:14px; right:16px; width:46px; height:46px;
+  border:0; border-radius:50%; background:rgba(255,255,255,.16); color:#fff;
+  font-size:26px; line-height:1; cursor:pointer;
+}
+.c-lightbox__close:hover{ background:rgba(255,255,255,.28); }

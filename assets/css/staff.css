@@ -1,0 +1,87 @@
+@charset "UTF-8";
+/* ==========================================================================
+   staff.css ─ スタッフ（一覧・1人のページ）
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   店舗でしぼる
+   -------------------------------------------------------------------------- */
+.p-staff__filter{ text-align:center; }
+.p-staff__filterttl{
+  font-size:13px; font-weight:900; color:var(--ink-sub);
+  letter-spacing:.08em; margin-bottom:12px;
+}
+.p-staff__filterlist{
+  list-style:none; margin:0; padding:0;
+  display:flex; flex-wrap:wrap; gap:8px; justify-content:center;
+}
+.p-staff__fbtn{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:7px 15px; border-radius:999px; text-decoration:none;
+  background:#fff; border:2px solid var(--border);
+  color:var(--ink); font-size:13.5px; font-weight:900; line-height:1.4;
+}
+.p-staff__fbtn:hover{ border-color:var(--brand); color:var(--brand-dark); }
+.p-staff__fbtn.is-current{ background:var(--brand); border-color:var(--brand); color:#fff; }
+
+/* --------------------------------------------------------------------------
+   店舗ごとのかたまり
+   -------------------------------------------------------------------------- */
+.p-staff__group{ margin-bottom:44px; }
+.p-staff__groupttl{
+  font-size:19px; font-weight:900; margin:0 0 16px;
+  padding-left:12px; border-left:5px solid var(--brand);
+}
+
+.p-staff__grid{ display:grid; gap:16px; grid-template-columns:1fr; }
+
+.p-staff{
+  display:flex; align-items:flex-start; gap:14px;
+  background:#fff; border:2px solid var(--border); border-radius:var(--radius);
+  padding:16px; text-decoration:none; color:inherit;
+}
+.p-staff:hover{ border-color:var(--brand); }
+.p-staff__face{
+  flex:0 0 auto; width:78px; height:78px; border-radius:50%; overflow:hidden;
+  background:var(--brand-tint); display:block;
+}
+.p-staff__face img{ width:100%; height:100%; object-fit:cover; display:block; }
+.p-staff__face img.is-chara{ object-fit:contain; padding:6px; }
+.p-staff__txt{ flex:1 1 auto; min-width:0; }
+.p-staff__shop{ display:block; font-size:12px; font-weight:900; color:var(--ink-sub); }
+.p-staff__role{ display:block; font-size:12.5px; font-weight:900; color:var(--brand-dark); margin-top:2px; }
+.p-staff__name{ display:block; margin-top:3px; font-size:18px; font-weight:900; }
+.p-staff__kana{ display:block; font-size:11.5px; font-weight:700; color:var(--ink-light); margin-top:2px; }
+.p-staff__word{ display:block; margin-top:8px; font-size:14px; line-height:1.9; }
+.p-staff__lic{
+  display:block; margin-top:8px; font-size:12px; line-height:1.8; color:var(--ink-sub);
+}
+
+.p-staff__empty{
+  text-align:center; font-size:15px; line-height:2; color:var(--ink-sub);
+}
+
+/* --------------------------------------------------------------------------
+   1人のページ
+   -------------------------------------------------------------------------- */
+.p-staffone__head{
+  display:flex; flex-direction:column; align-items:center; text-align:center; gap:14px;
+}
+.p-staffone__face{
+  width:150px; height:150px; border-radius:50%; overflow:hidden;
+  background:var(--brand-tint); display:block; border:4px solid #fff;
+  box-shadow:0 6px 20px rgba(0,0,0,.10);
+}
+.p-staffone__face img{ width:100%; height:100%; object-fit:cover; display:block; }
+.p-staffone__face img.is-chara{ object-fit:contain; padding:12px; }
+.p-staffone__spec{ width:100%; border-collapse:collapse; margin-top:26px; }
+.p-staffone__spec th,
+.p-staffone__spec td{ padding:12px 8px; border-bottom:1px solid var(--border); text-align:left; }
+.p-staffone__spec th{ font-size:14.5px; font-weight:900; width:34%; color:var(--ink-sub); }
+.p-staffone__spec td{ font-size:16px; font-weight:800; }
+
+@media (min-width:768px){
+  .p-staff__grid{ grid-template-columns:repeat(2,1fr); }
+  .p-staff__face{ width:92px; height:92px; }
+  .p-staff__groupttl{ font-size:21px; }
+}
