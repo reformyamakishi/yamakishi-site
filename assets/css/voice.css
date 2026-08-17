@@ -61,7 +61,24 @@
 /* --------------------------------------------------------------------------
    とんとこトンとお客様の会話
    -------------------------------------------------------------------------- */
-.p-voice__talk{ margin-top:26px; display:grid; gap:18px; }
+/* 会話ぜんたいを囲む枠 */
+.p-voice__talkbox{
+  margin-top:26px; background:#fff;
+  border:2px solid var(--brand-tint2); border-radius:var(--radius-lg);
+  padding:0 14px 20px; overflow:hidden;
+  box-shadow:0 6px 20px rgba(254,51,1,.05);
+}
+.p-voice__talkttl{
+  margin:0 -14px 18px; padding:11px 14px;
+  background:var(--brand-tint); color:var(--brand-dark);
+  font-size:15px; font-weight:900; letter-spacing:.04em;
+}
+@media (min-width:768px){
+  .p-voice__talkbox{ padding:0 22px 26px; }
+  .p-voice__talkttl{ margin:0 -22px 22px; padding:12px 22px; font-size:16px; }
+}
+
+.p-voice__talk{ display:grid; gap:18px; }
 .p-voice__row{ display:flex; align-items:flex-start; gap:12px; }
 .p-voice__row--a{ justify-content:flex-end; }
 
