@@ -115,16 +115,18 @@ get_header(); ?>
           $wprice = trim( (string) get_post_meta( $id, '_ymkrf_price', true ) );
           $wperi  = trim( (string) get_post_meta( $id, '_ymkrf_period', true ) );
           $wshop  = ymkrf_works_shop_name( $id );
+          $wstf   = ymkrf_works_staff_label( $id );
         ?>
         <article class="p-work" data-reveal<?php if ( $wi ) echo ' data-reveal-delay="' . (int) min( $wi * 80, 240 ) . '"'; ?>>
-          <a class="p-work__thumb" href="<?php the_permalink(); ?>" aria-label="<?php the_title_attribute(); ?>">
-            <?php echo ymkrf_works_compare( $id, $wi < 3 ); ?>
-          </a>
+          <?php /* 見くらべスライダーはリンクで囲みません。
+                   囲むと、左右に動かしたときにページが開いてしまうためです。 */ ?>
+          <div class="p-work__thumb"><?php echo ymkrf_works_compare( $id, $wi < 3 ); ?></div>
           <div class="p-work__body">
             <p class="p-work__meta">
               <?php foreach ( array_slice( $wcat, 0, 2 ) as $t ) : ?><span><?php echo esc_html( $t ); ?></span><?php endforeach; ?>
               <?php foreach ( array_slice( $warea, 0, 1 ) as $t ) : ?><span><?php echo esc_html( $t ); ?></span><?php endforeach; ?>
-              <?php if ( $wshop ) : ?><span><?php echo esc_html( $wshop ); ?>施工</span><?php endif; ?>
+              <?php if ( $wstf ) : ?><span><?php echo esc_html( $wstf ); ?></span>
+              <?php elseif ( $wshop ) : ?><span><?php echo esc_html( $wshop ); ?>施工</span><?php endif; ?>
             </p>
             <h2 class="p-work__title"><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h2>
             <?php if ( $wprice || $wperi ) : ?>

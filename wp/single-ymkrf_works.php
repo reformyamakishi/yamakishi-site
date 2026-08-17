@@ -17,8 +17,13 @@ while ( have_posts() ) : the_post();
   $wshop  = ymkrf_works_shop_name( $id );
   $wcase  = trim( (string) get_post_meta( $id, '_ymkrf_case_no', true ) );
   $wprods = ymkrf_works_products( $id );
+  $wptext = trim( (string) get_post_meta( $id, '_ymkrf_product_text', true ) );
   $wvoice = ymkrf_works_linked_voices( $id );
   $wrel   = ymkrf_works_related( $id, 3 );
+  $witems = ymkrf_works_items_html( $id );
+  $wgal   = ymkrf_works_gallery( $id );
+  $wstaff = (int) get_post_meta( $id, '_ymkrf_staff', true );
+  $wscom  = trim( (string) get_post_meta( $id, '_ymkrf_works_comment', true ) );
 ?>
 
 <nav class="p-breadcrumb" aria-label="パンくずリスト">
@@ -60,6 +65,12 @@ while ( have_posts() ) : the_post();
       <div class="p-work__hero"><?php echo $cmp; ?></div>
     <?php endif; ?>
 
+    <?php /* そのほかの写真。小さく並べて、押すと大きく開きます */ ?>
+    <?php if ( $wgal ) : ?>
+      <?php echo $wgal; ?>
+      <p class="p-work__thumbnote">写真をおすと、大きく見られます。</p>
+    <?php endif; ?>
+
     <?php /* 工事のデータ */ ?>
     <?php if ( $wprice || $wperi || $wdone || $wshop || $wcat || $warea ) : ?>
       <h2 class="p-work__h2">この工事のデータ</h2>
@@ -83,6 +94,11 @@ while ( have_posts() ) : the_post();
           <?php if ( $wshop ) : ?>
             <tr><th>担当した店舗</th><td><?php echo esc_html( $wshop ); ?></td></tr>
           <?php endif; ?>
+          <?php if ( $wstaff ) : ?>
+            <tr><th>営業担当</th>
+              <td><a class="p-work__stafflink" href="<?php echo esc_url( get_permalink( $wstaff ) ); ?>">
+                <?php echo esc_html( get_the_title( $wstaff ) ); ?></a></td></tr>
+          <?php endif; ?>
         </tbody>
       </table>
       <?php if ( $wprice ) : ?>
@@ -93,16 +109,22 @@ while ( have_posts() ) : the_post();
       <?php endif; ?>
     <?php endif; ?>
 
-    <?php /* 工事の内容（本文） */ ?>
+    <?php /* 工事の内容（おこなった工事＋本文） */ ?>
     <?php $wbody = trim( get_the_content() ); ?>
-    <?php if ( $wbody !== '' ) : ?>
+    <?php if ( $witems || $wbody !== '' ) : ?>
       <h2 class="p-work__h2">工事の内容</h2>
-      <div class="p-work__body"><?php the_content(); ?></div>
+      <div class="p-work__body">
+        <?php echo $witems; ?>
+        <?php if ( $wbody !== '' ) the_content(); ?>
+      </div>
     <?php endif; ?>
 
     <?php /* 使った商品 */ ?>
-    <?php if ( $wprods ) : ?>
+    <?php if ( $wprods || $wptext ) : ?>
       <h2 class="p-work__h2">この工事で使った商品</h2>
+      <?php if ( $wptext ) : ?>
+        <p class="p-work__ptext"><?php echo esc_html( $wptext ); ?></p>
+      <?php endif; ?>
       <div class="p-work__prods">
         <?php foreach ( $wprods as $pr ) :
           $pimg = get_the_post_thumbnail( $pr->ID, 'medium', array( 'loading' => 'lazy', 'alt' => '' ) ); ?>
@@ -115,6 +137,13 @@ while ( have_posts() ) : the_post();
           </a>
         <?php endforeach; ?>
       </div>
+    <?php endif; ?>
+
+    <?php /* この工事を担当した営業 */ ?>
+    <?php $wcard = function_exists( 'ymkrf_staff_card' ) ? ymkrf_staff_card( $wstaff, $wscom ) : ''; ?>
+    <?php if ( $wcard ) : ?>
+      <h2 class="p-work__h2">この工事を担当しました</h2>
+      <?php echo $wcard; ?>
     <?php endif; ?>
 
     <?php /* 同じ案件番号のお客様の声 */ ?>
@@ -156,9 +185,7 @@ while ( have_posts() ) : the_post();
         $rpr   = trim( (string) get_post_meta( $r->ID, '_ymkrf_price', true ) );
       ?>
       <article class="p-work">
-        <a class="p-work__thumb" href="<?php echo esc_url( get_permalink( $r ) ); ?>" aria-label="<?php echo esc_attr( get_the_title( $r ) ); ?>">
-          <?php echo ymkrf_works_compare( $r->ID ); ?>
-        </a>
+        <div class="p-work__thumb"><?php echo ymkrf_works_compare( $r->ID ); ?></div>
         <div class="p-work__body">
           <p class="p-work__meta">
             <?php foreach ( array_slice( $rcat, 0, 2 ) as $t ) : ?><span><?php echo esc_html( $t ); ?></span><?php endforeach; ?>

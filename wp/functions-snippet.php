@@ -28,7 +28,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '1.3.0' );   // ファイル更新時はここを上げるとキャッシュが切れます
+if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '1.4.6' );   // ファイル更新時はここを上げるとキャッシュが切れます
 
 /* ============================================================
    1. CSS / JS の読み込み
@@ -77,6 +77,12 @@ add_action( 'wp_enqueue_scripts', function () {
 	if ( is_singular( 'ymkrf_works' ) || is_post_type_archive( 'ymkrf_works' )
 	  || is_tax( array( 'ymkrf_works_cat', 'ymkrf_works_area' ) ) ) {
 		wp_enqueue_style( 'ymkrf-works', $dir . '/assets/css/works.css', array( 'ymkrf-page' ), YMKRF_VER );
+	}
+
+	/* スタッフのページ（施工事例のカードも使うので works.css も読みます） */
+	if ( is_singular( 'ymkrf_staff' ) || is_post_type_archive( 'ymkrf_staff' ) ) {
+		wp_enqueue_style( 'ymkrf-works', $dir . '/assets/css/works.css', array( 'ymkrf-page' ), YMKRF_VER );
+		wp_enqueue_style( 'ymkrf-staff', $dir . '/assets/css/staff.css', array( 'ymkrf-works' ), YMKRF_VER );
 	}
 } );
 
@@ -183,7 +189,9 @@ add_action( 'init', function () {
 		'menu_icon'    => 'dashicons-hammer',
 		'menu_position'=> 5,
 		'rewrite'      => array( 'slug' => 'works/%ymkrf_wpart%', 'with_front' => false ),
-		'supports'     => array( 'title', 'editor', 'thumbnail', 'excerpt' ),
+		/* 本文（エディター）は使いません。工事の内容は「施工データ」の
+		   「おこなった工事」に、写真は同じく「写真」に入れます。 */
+		'supports'     => array( 'title', 'thumbnail', 'excerpt' ),
 		'show_in_rest' => true,
 		'capability_type' => array( 'ymkrf_work', 'ymkrf_works' ),
 		'map_meta_cap'    => true,

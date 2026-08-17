@@ -18,6 +18,7 @@ require_once get_stylesheet_directory() . '/inc/functions-column.php';
 require_once get_stylesheet_directory() . '/inc/functions-voice.php';
 require_once get_stylesheet_directory() . '/inc/functions-works.php';
 require_once get_stylesheet_directory() . '/inc/functions-works-import.php';
+require_once get_stylesheet_directory() . '/inc/functions-staff.php';
 
 /* アイキャッチ画像を使えるようにする */
 add_action( 'after_setup_theme', function () {

@@ -89,8 +89,8 @@ placeholder="https://yamakishi-reform.jp/works/kitchen/3332/&#10;2601-0395"></te
 	  <h2>取り込むときの決まり</h2>
 	  <ul style="max-width:900px;line-height:2;list-style:disc;padding-left:1.4em">
 	    <li>取り込んだ事例は<b>下書き</b>になります。中身を見て、直してから公開してください。</li>
-	    <li>写真は、Before1枚目を「Before写真」、After1枚目を「アイキャッチ画像」にします。
-	        2枚目からは本文のうしろに並べます。</li>
+	    <li>写真は Before・After とも<b>5枚まで</b>取り込みます。
+	        1枚目が代表になり、2枚目からは見くらべスライダーの下に小さく並びます。</li>
 	    <li>同じURLをもう一度取り込むと、<b>前に取り込んだものを上書き</b>します（増えません）。</li>
 	    <li>お客様のことばは本文には入れません。<b>お客様の声</b>のほうに、同じ案件番号で登録してください。</li>
 	    <li>取り込めるのは <?php echo esc_html( YMKRF_IMPORT_HOST ); ?> のページだけです。</li>
@@ -153,6 +153,12 @@ function ymkrf_works_import_one( $url, $case_no = '' ) {
 	if ( $d['done'] )   update_post_meta( $id, '_ymkrf_done',   $d['done'] );
 	if ( $d['shop'] )   update_post_meta( $id, '_ymkrf_shop',   $d['shop'] );
 	if ( $d['initial'] ) update_post_meta( $id, '_ymkrf_initial', $d['initial'] );
+	if ( $d['spec'] )   update_post_meta( $id, '_ymkrf_product_text', $d['spec'] );
+
+	/* おこなった工事（1行に1つ）。編集画面の「おこなった工事」の欄に入ります */
+	if ( ! empty( $d['items'] ) ) {
+		update_post_meta( $id, '_ymkrf_work_items', implode( "\n", (array) $d['items'] ) );
+	}
 
 	if ( $d['cat'] )  wp_set_object_terms( $id, $d['cat'], 'ymkrf_works_cat' );
 	if ( $d['area'] ) wp_set_object_terms( $id, $d['area'], 'ymkrf_works_area' );
@@ -162,37 +168,23 @@ function ymkrf_works_import_one( $url, $case_no = '' ) {
 	require_once ABSPATH . 'wp-admin/includes/media.php';
 	require_once ABSPATH . 'wp-admin/includes/image.php';
 
+	/* Before・Afterとも、5枚まで取り込みます。
+	   1枚目が代表（Before写真／アイキャッチ画像）になります。 */
 	$n_img = 0;
-	if ( ! empty( $d['before'][0] ) ) {
-		$bid = ymkrf_works_import_image( $d['before'][0], $id, '施工前' );
-		if ( $bid ) { update_post_meta( $id, '_ymkrf_before_img', $bid ); $n_img++; }
-	}
-	if ( ! empty( $d['after'][0] ) ) {
-		$aid = ymkrf_works_import_image( $d['after'][0], $id, '施工後' );
-		if ( $aid ) { set_post_thumbnail( $id, $aid ); $n_img++; }
-	}
-
-	/* 2枚目からは本文のうしろに並べます */
-	$rest = array_merge( array_slice( (array) $d['before'], 1 ), array_slice( (array) $d['after'], 1 ) );
-	$more = '';
-	foreach ( $rest as $u ) {
-		$mid = ymkrf_works_import_image( $u, $id, '施工の様子' );
-		if ( ! $mid ) continue;
-		$n_img++;
-		$more .= "\n\n" . '<!-- wp:image {"id":' . (int) $mid . ',"sizeSlug":"large"} -->'
-		       . '<figure class="wp-block-image size-large">'
-		       . wp_get_attachment_image( $mid, 'large', false, array( 'alt' => '' ) )
-		       . '</figure><!-- /wp:image -->';
-	}
-	if ( $more !== '' ) {
-		wp_update_post( array( 'ID' => $id, 'post_content' => $d['body'] . $more ) );
+	foreach ( array( 'before', 'after' ) as $which ) {
+		$ids = array();
+		foreach ( array_slice( (array) $d[ $which ], 0, YMKRF_PHOTO_MAX ) as $u ) {
+			$mid = ymkrf_works_import_image( $u, $id, ( $which === 'before' ? '施工前' : '施工後' ) );
+			if ( $mid ) { $ids[] = $mid; $n_img++; }
+		}
+		if ( $ids ) ymkrf_works_photos_save( $id, $which, $ids );
 	}
 
 	/* 題名は、エリア・部位・頭文字がそろってから組み立てます
 	   （取り込みの途中では、まだ分類が付いていないため） */
-	$area  = ymkrf_works_area_name( $id );
-	$title = ( $area !== '' ? $area . '｜' : '' ) . ymkrf_works_title_from_terms( $id );
+	$title = ymkrf_works_auto_title( $id );
 	if ( $title !== get_post_field( 'post_title', $id ) ) {
+		update_post_meta( $id, '_ymkrf_auto_title', $title );
 		wp_update_post( array( 'ID' => $id, 'post_title' => $title ) );
 	}
 
@@ -287,22 +279,20 @@ function ymkrf_works_import_parse( $html, $url ) {
 			if ( $v !== '' ) $items[] = $v;
 		}
 	}
-	if ( $items ) {
-		$body .= '<!-- wp:heading {"level":3} --><h3>おこなった工事</h3><!-- /wp:heading -->' . "\n\n";
-		$body .= '<!-- wp:list --><ul>';
-		foreach ( $items as $v ) $body .= '<li>' . esc_html( $v ) . '</li>';
-		$body .= '</ul><!-- /wp:list -->' . "\n\n";
-	}
-	$spec = trim( $get( '商品仕様' ) );
-	if ( $spec !== '' ) {
-		$body .= '<!-- wp:heading {"level":3} --><h3>使った商品</h3><!-- /wp:heading -->' . "\n\n";
-		$body .= '<!-- wp:paragraph --><p>' . esc_html( preg_replace( '/\s+/u', ' ', $spec ) ) . '</p><!-- /wp:paragraph -->' . "\n\n";
-	}
+	/* 箇条書きは本文には入れず、「おこなった工事」の欄に入れます */
+	/* 商品仕様は本文に入れず、「使った商品」の欄に入れます */
+	$spec = trim( preg_replace( '/\s+/u', ' ', $get( '商品仕様' ) ) );
 
-	/* 写真（原寸のリンク先を使います） */
+	/* 写真（原寸のリンク先を使います）
+
+	   囲みの div は class="before-after-box" で、その中に
+	   class="before" と class="after" の div があります。
+	   「before」で探すと外側の箱まで当たってしまうので、
+	   class がちょうど before / after のものだけを見ます。 */
 	$pick = function ( $cls ) use ( $xp, $url ) {
 		$out = array();
-		foreach ( $xp->query( '//div[contains(@class,"' . $cls . '")]//a[@href]' ) as $a ) {
+		$q = '//div[contains(concat(" ",normalize-space(@class)," ")," ' . $cls . ' ")]//a[@href]';
+		foreach ( $xp->query( $q ) as $a ) {
 			$h = $a->getAttribute( 'href' );
 			if ( strpos( $h, '/uploads/' ) === false ) continue;
 			if ( strpos( $h, 'http' ) !== 0 ) $h = 'https://' . YMKRF_IMPORT_HOST . $h;
@@ -314,6 +304,7 @@ function ymkrf_works_import_parse( $html, $url ) {
 	return array(
 		'title'  => $title,
 		'body'   => trim( $body ),
+		'items'  => $items,
 		'price'  => $price,
 		'period' => trim( $get( '工期' ) ),
 		'done'   => trim( $get( '完工時期' ) ),
@@ -321,6 +312,7 @@ function ymkrf_works_import_parse( $html, $url ) {
 		'cat'    => $cat,
 		'area'   => $area,
 		'initial'=> $initial,
+		'spec'   => $spec,
 		'before' => $pick( 'before' ),
 		'after'  => $pick( 'after' ),
 	);
