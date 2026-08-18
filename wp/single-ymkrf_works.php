@@ -18,6 +18,7 @@ while ( have_posts() ) : the_post();
   $wcase  = trim( (string) get_post_meta( $id, '_ymkrf_case_no', true ) );
   $wprods = ymkrf_works_products( $id );
   $wptext = trim( (string) get_post_meta( $id, '_ymkrf_product_text', true ) );
+  $wopack = get_post_meta( $id, '_ymkrf_oldpack', true ) === '1';
   $wvoice = ymkrf_works_linked_voices( $id );
   $wrel   = ymkrf_works_related( $id, 3 );
   $witems = ymkrf_works_items_html( $id );
@@ -94,11 +95,7 @@ while ( have_posts() ) : the_post();
           <?php if ( $wshop ) : ?>
             <tr><th>担当した店舗</th><td><?php echo esc_html( $wshop ); ?></td></tr>
           <?php endif; ?>
-          <?php if ( $wstaff ) : ?>
-            <tr><th>営業担当</th>
-              <td><a class="p-work__stafflink" href="<?php echo esc_url( get_permalink( $wstaff ) ); ?>">
-                <?php echo esc_html( get_the_title( $wstaff ) ); ?></a></td></tr>
-          <?php endif; ?>
+          <?php /* 営業担当は、下の「この工事を担当しました」で顔写真といっしょに出します */ ?>
         </tbody>
       </table>
       <?php if ( $wprice ) : ?>
@@ -124,6 +121,9 @@ while ( have_posts() ) : the_post();
       <h2 class="p-work__h2">この工事で使った商品</h2>
       <?php if ( $wptext ) : ?>
         <p class="p-work__ptext"><?php echo esc_html( $wptext ); ?></p>
+      <?php endif; ?>
+      <?php if ( $wopack ) : ?>
+        <p class="p-work__oldpack">※こちらはヤマキシ旧パック商品となります</p>
       <?php endif; ?>
       <div class="p-work__prods">
         <?php foreach ( $wprods as $pr ) :
@@ -161,6 +161,7 @@ while ( have_posts() ) : the_post();
             <span class="p-work__voicetop"><?php echo ymkrf_stars( $vsc ); ?></span>
             <span class="p-work__voicequote"><?php echo esc_html( ymkrf_voice_excerpt( $v->ID, 70 ) ); ?></span>
             <?php if ( $vcust ) : ?><span class="p-work__voicewho"><?php echo esc_html( $vcust ); ?></span><?php endif; ?>
+            <span class="p-work__voicemore">このお客様の声を読む</span>
           </span>
         </a>
         <?php endforeach; ?>

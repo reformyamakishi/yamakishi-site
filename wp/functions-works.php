@@ -372,7 +372,8 @@ function ymkrf_works_metabox( $post ) {
 
 	$pgroups  = ymkrf_works_prod_groups();
 
-	$staffs   = function_exists( 'ymkrf_staff_list' ) ? ymkrf_staff_list() : array();
+	/* 営業をしない人（本部の事務など）は、ここには出しません */
+	$staffs   = function_exists( 'ymkrf_staff_sales_list' ) ? ymkrf_staff_sales_list() : array();
 	$staffcur = (int) $get( '_ymkrf_staff' );
 	$items    = ymkrf_works_items_text( $post->ID );
 	?>
@@ -443,8 +444,19 @@ function ymkrf_works_metabox( $post ) {
 	        <?php if ( $staffs ) : ?>
 	          <?php
 	          /* 画面に出すための一覧をつくります（JavaScriptで組み立てます） */
+	          $slist = $staffs;
+	          /* すでにえらばれている人が一覧に無いとき（あとから外した人など）は、
+	             消えてしまわないように足しておきます */
+	          if ( $staffcur ) {
+	            $has = false;
+	            foreach ( $slist as $st ) { if ( (int) $st->ID === $staffcur ) { $has = true; break; } }
+	            if ( ! $has ) {
+	              $sp = get_post( $staffcur );
+	              if ( $sp && $sp->post_type === 'ymkrf_staff' ) $slist[] = $sp;
+	            }
+	          }
 	          $sdata = array();
-	          foreach ( $staffs as $st ) {
+	          foreach ( $slist as $st ) {
 	            $sdata[] = array(
 	              'id'    => (int) $st->ID,
 	              'name'  => (string) get_the_title( $st ),
@@ -579,6 +591,12 @@ function ymkrf_works_metabox( $post ) {
 	                  <input type="text" id="_ymkrf_product_text" name="_ymkrf_product_text"
 	                         value="<?php echo esc_attr( $get( '_ymkrf_product_text' ) ); ?>"
 	                         class="large-text" placeholder="例：トクラス　Bbプラス">
+
+	                  <label class="ymkrf-works__oldpack">
+	                    <input type="checkbox" name="_ymkrf_oldpack" value="1"
+	                      <?php checked( (string) $get( '_ymkrf_oldpack' ), '1' ); ?>>
+	                    <span>※こちらはヤマキシ旧パック商品となります</span>
+	                  </label>
 	                </div>
 	              <?php endif; ?>
 	            </div>
@@ -631,6 +649,12 @@ add_action( 'admin_head', function () {
 	  .ymkrf-works__prods input{margin:2px 0 0}
 	  .ymkrf-works__pempty{margin:0;font-size:12px;color:#8c8f94;line-height:1.7}
 	  .ymkrf-works__ptext label{display:block;font-size:12px;color:#646970;margin-bottom:4px}
+	  .ymkrf-works__oldpack{
+	    display:grid !important;grid-template-columns:22px 1fr;align-items:center;
+	    margin:8px 0 0 !important;padding:6px 10px;
+	    border:1px solid #dcdcde;border-radius:6px;background:#fff;
+	    font-size:13px !important;color:#1d2327 !important;line-height:1.5}
+	  .ymkrf-works__oldpack input{margin:0}
 
 	  /* 写真（Before・施工中・After）を横に並べます */
 	  .ymkrf-photos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;max-width:1100px}
@@ -937,6 +961,9 @@ add_action( 'save_post_ymkrf_works', function ( $post_id ) {
 	                 '_ymkrf_product_text' ) as $k ) {
 		update_post_meta( $post_id, $k, isset( $_POST[ $k ] ) ? sanitize_text_field( $_POST[ $k ] ) : '' );
 	}
+
+	/* ヤマキシの旧パック商品かどうか */
+	update_post_meta( $post_id, '_ymkrf_oldpack', empty( $_POST['_ymkrf_oldpack'] ) ? '' : '1' );
 	/* 写真（Before・施工中・After）。それぞれ5枚まで。
 	   Beforeの1枚目は _ymkrf_before_img に、Afterの1枚目はアイキャッチ画像に入ります。 */
 	foreach ( ymkrf_works_photo_keys() as $which => $conf ) {
@@ -1624,13 +1651,148 @@ function ymkrf_works_related( $post_id, $num = 3 ) {
 
 /* ============================================================
    4. 管理画面の一覧
+
+   「お客様の声」の一覧と同じ並びにそろえています。
+
+     タイトル／案件番号／施工店舗／お客様／リフォーム箇所／お客様の声／日付
+
+   上のしぼり込みは、日付のかわりに
+   「リフォーム箇所」と「施工店舗」を出しています。
    ============================================================ */
+
+/* 列の並び。
+   inc/functions-voice.php で 案件番号 と お客様の声 が足されたあとに
+   組み立て直すので、順番は 20（あと）にしています。 */
+add_filter( 'manage_ymkrf_works_posts_columns', function ( $cols ) {
+	$new = array();
+	if ( isset( $cols['cb'] ) )    $new['cb']    = $cols['cb'];
+	if ( isset( $cols['title'] ) ) $new['title'] = $cols['title'];
+
+	$new['ymkrf_case']  = isset( $cols['ymkrf_case'] ) ? $cols['ymkrf_case'] : '案件番号';
+	$new['ymkrf_wshop'] = '施工店舗';
+	$new['ymkrf_wcust'] = 'お客様';
+	$new['ymkrf_wpart'] = 'リフォーム箇所';
+	$new['ymkrf_voice'] = isset( $cols['ymkrf_voice'] ) ? $cols['ymkrf_voice'] : 'お客様の声';
+
+	/* 残り（日付など）は、そのうしろに置きます */
+	foreach ( $cols as $k => $v ) {
+		if ( ! isset( $new[ $k ] ) ) $new[ $k ] = $v;
+	}
+	return $new;
+}, 20 );
+
+add_action( 'manage_ymkrf_works_posts_custom_column', function ( $col, $post_id ) {
+	$none = '<span style="color:#a7aaad">—</span>';
+
+	switch ( $col ) {
+		case 'ymkrf_wshop':
+			$v = ymkrf_works_shop_name( $post_id );
+			echo $v ? esc_html( $v ) : $none;
+			break;
+
+		case 'ymkrf_wcust':
+			$area = ymkrf_works_area_name( $post_id );
+			$ini  = trim( (string) get_post_meta( $post_id, '_ymkrf_initial', true ) );
+			$who  = trim( $area . ( $ini !== '' ? '　' . $ini . '様' : '' ) );
+			echo $who !== '' ? esc_html( $who ) : $none;
+			break;
+
+		case 'ymkrf_wpart':
+			$ts = get_the_terms( $post_id, 'ymkrf_works_cat' );
+			if ( ! $ts || is_wp_error( $ts ) ) { echo $none; break; }
+			$out = array();
+			foreach ( $ts as $t ) {
+				$out[] = '<a href="' . esc_url( add_query_arg( array(
+					'post_type'      => 'ymkrf_works',
+					'ymkrf_works_cat' => $t->slug,
+				), admin_url( 'edit.php' ) ) ) . '">' . esc_html( $t->name ) . '</a>';
+			}
+			echo implode( '／', $out );
+			break;
+	}
+}, 10, 2 );
+
+/* 見出しを押すと並べかえできる列（施工店舗） */
+add_filter( 'manage_edit-ymkrf_works_sortable_columns', function ( $cols ) {
+	$cols['ymkrf_wshop'] = 'ymkrf_wshop';
+	return $cols;
+}, 20 );
+
+add_action( 'pre_get_posts', function ( $q ) {
+	if ( ! is_admin() || ! $q->is_main_query() ) return;
+	if ( $q->get( 'post_type' ) !== 'ymkrf_works' ) return;
+
+	if ( $q->get( 'orderby' ) === 'ymkrf_wshop' ) {
+		$q->set( 'meta_key', '_ymkrf_shop' );
+		$q->set( 'orderby', 'meta_value' );
+	}
+} );
+
+/* 「すべての日付」のプルダウンは使わないので消します
+   （かわりに リフォーム箇所 と 施工店舗 を出します） */
+add_filter( 'disable_months_dropdown', function ( $disable, $post_type ) {
+	return ( $post_type === 'ymkrf_works' ) ? true : $disable;
+}, 10, 2 );
+
+add_action( 'restrict_manage_posts', function ( $post_type ) {
+	if ( $post_type !== 'ymkrf_works' ) return;
+
+	/* リフォーム箇所（トップページのリフォームメニューの順に出します） */
+	$now   = isset( $_GET['ymkrf_works_cat'] ) ? sanitize_title( wp_unslash( $_GET['ymkrf_works_cat'] ) ) : '';
+	$terms = get_terms( array( 'taxonomy' => 'ymkrf_works_cat', 'hide_empty' => false ) );
+	if ( $terms && ! is_wp_error( $terms ) ) {
+		$by = array();
+		foreach ( $terms as $t ) $by[ $t->slug ] = $t;
+
+		$sorted = array();
+		foreach ( array_keys( ymkrf_works_parts_master() ) as $slug ) {
+			if ( isset( $by[ $slug ] ) ) { $sorted[] = $by[ $slug ]; unset( $by[ $slug ] ); }
+		}
+		foreach ( $by as $t ) $sorted[] = $t;
+
+		echo '<select name="ymkrf_works_cat"><option value="">すべてのリフォーム箇所</option>';
+		foreach ( $sorted as $t ) {
+			echo '<option value="' . esc_attr( $t->slug ) . '" ' . selected( $now, $t->slug, false ) . '>'
+			   . esc_html( $t->name ) . '（' . (int) $t->count . '）</option>';
+		}
+		echo '</select>';
+	}
+
+	/* 施工店舗 */
+	$snow  = isset( $_GET['ymkrf_shop_filter'] ) ? sanitize_title( wp_unslash( $_GET['ymkrf_shop_filter'] ) ) : '';
+	$shops = get_terms( array( 'taxonomy' => 'ymkrf_shop', 'hide_empty' => false ) );
+	if ( $shops && ! is_wp_error( $shops ) ) {
+		echo '<select name="ymkrf_shop_filter"><option value="">すべての施工店舗</option>';
+		foreach ( $shops as $sh ) {
+			echo '<option value="' . esc_attr( $sh->slug ) . '" ' . selected( $snow, $sh->slug, false ) . '>'
+			   . esc_html( $sh->name ) . '</option>';
+		}
+		echo '</select>';
+	}
+} );
+
+/* 施工店舗のしぼり込み（リフォーム箇所は分類なので、WordPressがそのまま効かせます） */
+add_action( 'pre_get_posts', function ( $q ) {
+	if ( ! is_admin() || ! $q->is_main_query() ) return;
+	if ( $q->get( 'post_type' ) !== 'ymkrf_works' ) return;
+	if ( empty( $_GET['ymkrf_shop_filter'] ) ) return;
+
+	$q->set( 'meta_query', array( array(
+		'key'   => '_ymkrf_shop',
+		'value' => sanitize_title( wp_unslash( $_GET['ymkrf_shop_filter'] ) ),
+	) ) );
+} );
+
 add_action( 'admin_head', function () {
 	$s = get_current_screen();
 	if ( ! $s || $s->id !== 'edit-ymkrf_works' ) return;
 	echo '<style>
-	  .column-ymkrf_case{width:110px}
-	  .column-ymkrf_voice{width:170px}
+	  .column-ymkrf_case{width:100px}
+	  .column-ymkrf_wshop{width:110px}
+	  .column-ymkrf_wcust{width:130px}
+	  .column-ymkrf_wpart{width:180px}
+	  .column-ymkrf_voice{width:110px}
+	  .column-date{width:130px}
 	</style>';
 } );
 

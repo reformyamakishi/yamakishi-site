@@ -138,6 +138,21 @@ function ymkrf_staff_metabox( $post ) {
 	  </tr>
 
 	  <tr>
+	    <th>営業担当の名前に出す？</th>
+	    <td>
+	      <label class="ymkrf-staff__nosales">
+	        <input type="checkbox" name="_ymkrf_staff_nosales" value="1"
+	          <?php checked( (string) $get( '_ymkrf_staff_nosales' ), '1' ); ?>>
+	        <span>営業はしないので、施工事例の「営業担当」にはえらべなくする</span>
+	      </label>
+	      <p class="description">
+	        チェックを入れると、施工事例の入力画面の<b>営業担当の一覧に出てこなくなります</b>。<br>
+	        スタッフ紹介のページには、これまでどおり出ます。
+	      </p>
+	    </td>
+	  </tr>
+
+	  <tr>
 	    <th>よみがな</th>
 	    <td><input type="text" name="_ymkrf_staff_kana" value="<?php echo esc_attr( $get( '_ymkrf_staff_kana' ) ); ?>"
 	               class="regular-text" placeholder="例：やまぎし たろう"></td>
@@ -227,6 +242,10 @@ add_action( 'save_post_ymkrf_staff', function ( $post_id ) {
 	update_post_meta( $post_id, '_ymkrf_staff_word',
 		isset( $_POST['_ymkrf_staff_word'] )
 			? sanitize_textarea_field( wp_unslash( $_POST['_ymkrf_staff_word'] ) ) : '' );
+
+	/* 施工事例の「営業担当」にえらべなくするかどうか */
+	update_post_meta( $post_id, '_ymkrf_staff_nosales',
+		empty( $_POST['_ymkrf_staff_nosales'] ) ? '' : '1' );
 }, 10 );
 
 /* URLの文字を英字にそろえます。
@@ -294,6 +313,31 @@ function ymkrf_staff_list( $shop_slug = '' ) {
 	wp_reset_postdata();
 	return $out;
 }
+
+/** 施工事例の「営業担当」にえらべる人だけを取り出します */
+function ymkrf_staff_sales_list( $shop_slug = '' ) {
+	$out = array();
+	foreach ( ymkrf_staff_list( $shop_slug ) as $st ) {
+		if ( get_post_meta( $st->ID, '_ymkrf_staff_nosales', true ) === '1' ) continue;
+		$out[] = $st;
+	}
+	return $out;
+}
+
+/* 本部の中川さん・山田さんは営業をしないので、はじめから外しておきます。
+   （あとから、スタッフの入力画面でいつでも変えられます） */
+add_action( 'admin_init', function () {
+	if ( get_option( 'ymkrf_staff_nosales_ver' ) === '1' ) return;
+	if ( ! post_type_exists( 'ymkrf_staff' ) ) return;
+
+	foreach ( ymkrf_staff_list( 'honbu' ) as $st ) {
+		$name = (string) get_the_title( $st );
+		if ( mb_strpos( $name, '中川' ) === 0 || mb_strpos( $name, '山田' ) === 0 ) {
+			update_post_meta( $st->ID, '_ymkrf_staff_nosales', '1' );
+		}
+	}
+	update_option( 'ymkrf_staff_nosales_ver', '1' );
+}, 21 );
 
 /** 顔写真。無いときは、とんとこトンの絵を出します */
 function ymkrf_staff_face( $post_id, $size = 'thumbnail' ) {
@@ -472,6 +516,11 @@ add_action( 'admin_head', function () {
 	  .column-ymkrf_srole{width:auto}
 	  .wp-list-table.posts .column-title .row-actions{white-space:nowrap}
 	  .ymkrf-staff__table th{width:150px}
+	  .ymkrf-staff__nosales{
+	    display:grid;grid-template-columns:22px 1fr;align-items:center;
+	    padding:6px 10px;border:1px solid #dcdcde;border-radius:6px;background:#fff;
+	    font-size:13px;line-height:1.5;max-width:520px}
+	  .ymkrf-staff__nosales input{margin:0}
 	</style>';
 } );
 
