@@ -438,29 +438,37 @@ function ymkrf_works_metabox( $post ) {
 	    </tr>
 
 	    <tr>
-	      <th>営業担当</th>
+	      <th>営業担当 <span class="ymkrf-need">必須</span></th>
 	      <td>
 	        <?php if ( $staffs ) : ?>
-	          <select name="_ymkrf_staff" id="ymkrf-staff-sel">
-	            <option value="" data-shop="">（えらんでください）</option>
-	            <?php foreach ( $staffs as $st ) :
-	              $sshop = (string) get_post_meta( $st->ID, '_ymkrf_staff_shop', true );
-	              $sname = ymkrf_staff_shop_name( $st->ID ); ?>
-	              <option value="<?php echo (int) $st->ID; ?>" data-shop="<?php echo esc_attr( $sshop ); ?>"
-	                <?php selected( $staffcur, (int) $st->ID ); ?>>
-	                <?php echo esc_html( get_the_title( $st ) . ( $sname ? '（' . $sname . '）' : '' ) ); ?>
-	              </option>
-	            <?php endforeach; ?>
-	          </select>
+	          <?php
+	          /* 画面に出すための一覧をつくります（JavaScriptで組み立てます） */
+	          $sdata = array();
+	          foreach ( $staffs as $st ) {
+	            $sdata[] = array(
+	              'id'    => (int) $st->ID,
+	              'name'  => (string) get_the_title( $st ),
+	              'shop'  => (string) get_post_meta( $st->ID, '_ymkrf_staff_shop', true ),
+	              'sname' => (string) ymkrf_staff_shop_name( $st->ID ),
+	              'role'  => (string) get_post_meta( $st->ID, '_ymkrf_staff_role', true ),
+	            );
+	          }
+	          ?>
+	          <div class="ymkrf-pick" id="ymkrf-staff-pick">
+	            <input type="hidden" name="_ymkrf_staff" id="ymkrf-staff-val" value="<?php echo (int) $staffcur; ?>">
+	            <button type="button" class="button ymkrf-pick__btn" id="ymkrf-staff-btn">（えらんでください）</button>
+	            <div class="ymkrf-pick__menu" id="ymkrf-staff-menu" hidden></div>
+	          </div>
+	          <script>
+	            window.ymkrfStaffList  = <?php echo wp_json_encode( $sdata ); ?>;
+	            window.ymkrfStaffOrder = <?php echo wp_json_encode( array_keys( ymkrf_staff_shops() ) ); ?>;
+	          </script>
 	          <p class="description">
-	            上の「担当した店舗」をえらぶと、<b>その店舗の人だけ</b>に絞られます。<br>
-	            名前と顔写真は「スタッフ」で登録してください。
-	          </p>
-	        <?php else : ?>
-	          <input type="hidden" name="_ymkrf_staff" value="<?php echo (int) $staffcur; ?>">
-	          <p class="description">
-	            まだスタッフが登録されていません。<br>
-	            左のメニューの<b>「スタッフ」</b>から、名前と顔写真を登録してください。
+	            上の「担当した店舗」をえらぶと、<b>その店舗の人だけ</b>が出ます。<br>
+	            ほかの店舗や本部・工事部の人にするときは、いちばん下の
+	            <b>「その他」にマウスを乗せる</b>と、横に全員の名前が出ます。<br>
+	            名前と顔写真は「スタッフ」で登録してください。<br>
+	            <b>えらばないと公開できません。</b>
 	          </p>
 	        <?php endif; ?>
 	      </td>
@@ -663,6 +671,46 @@ add_action( 'admin_head', function () {
 
 	  /* おこなった工事 */
 	  .ymkrf-works__items{max-width:940px;font-size:14px;line-height:1.9}
+
+	  /* 営業担当のえらび方 */
+	  .ymkrf-pick{position:relative;display:inline-block}
+	  .ymkrf-pick__btn{min-width:260px;text-align:left}
+	  .ymkrf-pick__btn--set{font-weight:700}
+	  .ymkrf-pick__btn--need{border-color:#d63638;color:#d63638}
+	  .ymkrf-need{
+	    display:inline-block;margin-left:6px;padding:1px 6px;border-radius:3px;
+	    background:#d63638;color:#fff;font-size:10.5px;font-weight:700;vertical-align:2px}
+	  .ymkrf-pick__btn::after{content:" \25be";float:right;color:#787c82}
+	  .ymkrf-pick__menu{
+	    position:absolute;z-index:100;top:100%;left:0;margin-top:2px;
+	    min-width:260px;
+	    background:#fff;border:1px solid #c3c4c7;border-radius:6px;
+	    box-shadow:0 6px 20px rgba(0,0,0,.14);padding:4px}
+	  .ymkrf-pick__scroll{max-height:300px;overflow:auto}
+	  .ymkrf-pick__item{
+	    display:block;width:100%;text-align:left;border:0;background:none;cursor:pointer;
+	    padding:6px 10px;border-radius:4px;font-size:13.5px;line-height:1.5}
+	  .ymkrf-pick__item:hover{background:#fff2ee}
+	  .ymkrf-pick__item--none{color:#787c82}
+	  .ymkrf-pick__nm{font-weight:700}
+	  .ymkrf-pick__ro{margin-left:8px;font-size:11.5px;color:#787c82}
+	  .ymkrf-pick__empty{margin:6px 10px;font-size:12px;color:#a7aaad}
+	  .ymkrf-pick__more{
+	    position:relative;margin-top:4px;padding:7px 10px;border-top:1px solid #f0f0f1;
+	    font-size:13.5px;font-weight:700;color:#2271b1;cursor:default}
+	  .ymkrf-pick__more>span::after{content:" \25b8"}
+	  .ymkrf-pick__more:hover{background:#f6f7f7}
+	  .ymkrf-pick__sub{
+	    display:none;position:absolute;left:100%;top:-4px;margin-left:2px;
+	    width:520px;max-height:420px;overflow:auto;
+	    background:#fff;border:1px solid #c3c4c7;border-radius:6px;
+	    box-shadow:0 6px 20px rgba(0,0,0,.14);padding:8px}
+	  .ymkrf-pick__more:hover .ymkrf-pick__sub{display:block}
+	  .ymkrf-pick__gttl{
+	    margin:8px 0 4px;padding:0 6px;font-size:11.5px;font-weight:700;color:#646970;
+	    border-left:3px solid #fe3301;line-height:1.4}
+	  .ymkrf-pick__gttl:first-child{margin-top:0}
+	  .ymkrf-pick__grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 8px}
 	</style>';
 } );
 
@@ -752,23 +800,126 @@ add_action( 'admin_footer', function () {
 
 		Object.keys(window.ymkrfPhotos || {}).forEach(draw);
 
-		/* 担当した店舗をえらんだら、営業担当をその店舗の人だけにします */
-		var $shop = $('#ymkrf-shop-sel'), $staff = $('#ymkrf-staff-sel');
-		if ($shop.length && $staff.length) {
-			var all = $staff.find('option').clone();
-			function narrow() {
-				var s = $shop.val(), keep = $staff.val();
-				$staff.empty();
-				all.each(function () {
-					var d = $(this).data('shop') || '';
-					/* 本部の人は、どの店舗をえらんでも出します */
-					if (!s || !d || d === s || d === 'honbu') $staff.append($(this).clone());
-				});
-				if ($staff.find('option[value="' + keep + '"]').length) $staff.val(keep);
-				else $staff.val('');
+		/* ------------------------------------------------------------
+		   営業担当のえらび方
+
+		   ふだんは「担当した店舗」の人だけを出します。
+		   いちばん下の「その他」にマウスを乗せると、横に全員が出ます。
+		   ------------------------------------------------------------ */
+		var $pick = $('#ymkrf-staff-pick');
+		if ($pick.length && window.ymkrfStaffList) {
+
+			var LIST  = window.ymkrfStaffList;
+			var ORDER = window.ymkrfStaffOrder || [];
+			var $val  = $('#ymkrf-staff-val'), $btn = $('#ymkrf-staff-btn'), $menu = $('#ymkrf-staff-menu');
+			var $shopSel = $('#ymkrf-shop-sel');
+
+			function byId(id) {
+				for (var i = 0; i < LIST.length; i++) if (LIST[i].id === +id) return LIST[i];
+				return null;
 			}
-			$shop.on('change', narrow);
-			narrow();
+
+			function label(p) {
+				return p.name + (p.sname ? '（' + p.sname + '）' : '');
+			}
+
+			function drawBtn() {
+				var p = byId($val.val());
+				$btn.text(p ? label(p) : '（えらんでください）')
+					.toggleClass('ymkrf-pick__btn--set', !!p)
+					.toggleClass('ymkrf-pick__btn--need', !p);
+			}
+
+			function row(p) {
+				return $('<button type="button" class="ymkrf-pick__item">')
+					.attr('data-id', p.id)
+					.append($('<span class="ymkrf-pick__nm">').text(p.name))
+					.append(p.role ? $('<span class="ymkrf-pick__ro">').text(p.role) : null);
+			}
+
+			/* 全員を店舗ごとにまとめた枠 */
+			function allPanel() {
+				var $sub = $('<div class="ymkrf-pick__sub">');
+				var seen = {};
+				var order = ORDER.slice();
+				LIST.forEach(function (p) { if (order.indexOf(p.shop) < 0) order.push(p.shop); });
+
+				order.forEach(function (sh) {
+					var mem = LIST.filter(function (p) { return p.shop === sh; });
+					if (!mem.length || seen[sh]) return;
+					seen[sh] = 1;
+					$sub.append($('<p class="ymkrf-pick__gttl">').text(mem[0].sname || 'そのほか'));
+					var $g = $('<div class="ymkrf-pick__grid">');
+					mem.forEach(function (p) { $g.append(row(p)); });
+					$sub.append($g);
+				});
+				return $sub;
+			}
+
+			function build() {
+				var sh = $shopSel.length ? $shopSel.val() : '';
+				$menu.empty();
+
+				/* 名前のところだけスクロールさせます。
+				   「その他」を外に出しておかないと、横に開く枠が切れてしまいます。 */
+				var $scroll = $('<div class="ymkrf-pick__scroll">');
+
+				var mem = sh ? LIST.filter(function (p) { return p.shop === sh; }) : LIST;
+				mem.forEach(function (p) { $scroll.append(row(p)); });
+
+				if (sh && !mem.length) {
+					$scroll.append($('<p class="ymkrf-pick__empty">').text('この店舗のスタッフはまだ登録されていません。'));
+				}
+				$menu.append($scroll);
+
+				if (sh) {
+					$menu.append($('<div class="ymkrf-pick__more">')
+						.append($('<span>').text('その他（全員から選ぶ）'))
+						.append(allPanel()));
+				}
+			}
+
+			function open()  { build(); $menu.prop('hidden', false); }
+			function close() { $menu.prop('hidden', true); }
+
+			$btn.on('click', function (e) {
+				e.preventDefault();
+				if ($menu.prop('hidden')) open(); else close();
+			});
+
+			$menu.on('click', '.ymkrf-pick__item', function (e) {
+				e.preventDefault();
+				$val.val($(this).attr('data-id'));
+				drawBtn();
+				close();
+			});
+
+			/* 店舗を変えたら、選んでいた人がその店舗にいなければ外します */
+			$shopSel.on('change', function () {
+				var p = byId($val.val()), sh = $shopSel.val();
+				if (p && sh && p.shop !== sh) { $val.val(0); drawBtn(); }
+				if (!$menu.prop('hidden')) build();
+			});
+
+			$(document).on('click', function (e) {
+				if (!$(e.target).closest('#ymkrf-staff-pick').length) close();
+			});
+			$(document).on('keydown', function (e) {
+				if (e.key === 'Escape') close();
+			});
+
+			drawBtn();
+
+			/* 営業担当は必須です。えらんでいないと公開できません。
+			   （下書き保存は、書きかけを残せるように通します） */
+			$('#publish').on('click', function (e) {
+				if (byId($val.val())) return;
+				e.preventDefault();
+				window.alert('営業担当をえらんでください。');
+				$('html, body').animate({ scrollTop: $pick.offset().top - 120 }, 200);
+				$btn.trigger('focus');
+				open();
+			});
 		}
 	});
 	</script>

@@ -48,13 +48,55 @@ add_action( 'init', function () {
 }, 11 );
 
 
+/** 店舗ではない所属さき（本部・工事部）。
+ *  店舗分類（ymkrf_shop）には作りません。商品の展示店舗に出てしまうためです。
+ *  ここの人は、施工事例でどの店舗をえらんでも営業担当にえらべます。 */
+function ymkrf_staff_extra_shops() {
+	return array(
+		'honbu' => '本部',
+		'kouji' => '工事部',
+	);
+}
+
+/** 店舗を出す順番。トップページの「店舗・ショールーム」と同じ並びです */
+function ymkrf_staff_shop_order() {
+	return array(
+		'honbu',            /* 本部 */
+		'kouji',            /* 工事部 */
+		'tazuruhama',       /* 田鶴浜店 */
+		'nonoichi',         /* 金沢野々市店 */
+		'kawakita',         /* 川北店 */
+		'komathu',          /* 小松店 */
+		'shinkaga',         /* 新加賀店 */
+		'hakui',            /* 羽咋店 */
+		'tagami',           /* 金沢田上店 */
+		'higashikanazawa',  /* 東金沢店 */
+		'kahahothu',        /* 開発店 */
+		'kanadu',           /* 金津店 */
+		'asahi',            /* 朝日店 */
+	);
+}
+
 /** 所属さきの一覧。店舗のほかに「本部」を足しています
  *  （本部は店舗分類には作りません。商品の展示店舗に出てしまうためです） */
 function ymkrf_staff_shops() {
-	$out = array( 'honbu' => '本部' );
+
+	$names = array();
 	$terms = get_terms( array( 'taxonomy' => 'ymkrf_shop', 'hide_empty' => false ) );
 	if ( ! is_wp_error( $terms ) ) {
-		foreach ( (array) $terms as $t ) $out[ $t->slug ] = $t->name;
+		foreach ( (array) $terms as $t ) $names[ $t->slug ] = $t->name;
+	}
+
+	/* 決めた順に並べます */
+	$extra = ymkrf_staff_extra_shops();
+	$out   = array();
+	foreach ( ymkrf_staff_shop_order() as $slug ) {
+		if ( isset( $extra[ $slug ] ) )     $out[ $slug ] = $extra[ $slug ];
+		elseif ( isset( $names[ $slug ] ) ) $out[ $slug ] = $names[ $slug ];
+	}
+	/* 決めた順に無い店舗は、うしろに足します */
+	foreach ( $names as $slug => $name ) {
+		if ( ! isset( $out[ $slug ] ) ) $out[ $slug ] = $name;
 	}
 	return $out;
 }
@@ -90,7 +132,7 @@ function ymkrf_staff_metabox( $post ) {
 	      <p class="description">
 	        施工事例の「担当した店舗」でこの店舗をえらぶと、
 	        <b>営業担当のところにこの人が出てくる</b>ようになります。<br>
-	        <b>本部</b>の人は、どの店舗をえらんでも出てきます。
+	        <b>本部・工事部</b>の人は、どの店舗をえらんでも出てきます。
 	      </p>
 	    </td>
 	  </tr>
@@ -225,7 +267,10 @@ add_action( 'save_post_ymkrf_staff', function ( $post_id ) {
 function ymkrf_staff_shop_name( $post_id ) {
 	$slug = trim( (string) get_post_meta( $post_id, '_ymkrf_staff_shop', true ) );
 	if ( $slug === '' ) return '';
-	if ( $slug === 'honbu' ) return '本部';
+
+	$extra = ymkrf_staff_extra_shops();
+	if ( isset( $extra[ $slug ] ) ) return $extra[ $slug ];
+
 	$t = get_term_by( 'slug', $slug, 'ymkrf_shop' );
 	return ( $t && ! is_wp_error( $t ) ) ? $t->name : '';
 }
@@ -310,10 +355,84 @@ function ymkrf_staff_card( $staff_id, $comment = '' ) {
 	return $h;
 }
 
+/* ------------------------------------------------------------
+   3-b. 役職の序列
+
+   「役職」は文字なので、そのまま並べても意味のある順になりません。
+   （あいうえお順だと 課長 → 主任 → 店長 …）
+   そこで数字に置きかえて _ymkrf_staff_rank に保存し、その数字で並べます。
+   ------------------------------------------------------------ */
+function ymkrf_staff_role_rank( $role ) {
+	$t = trim( (string) $role );
+	if ( $t === '' ) return 900;
+
+	/* 上から順に見ます。「副店長」は「店長」より先に見る必要があります */
+	$table = array(
+		array( '/会長/u',              1 ),
+		array( '/代表取締役社長|^社長/u', 5 ),
+		array( '/副社長/u',           10 ),
+		array( '/専務/u',             15 ),
+		array( '/常務/u',             20 ),
+		array( '/取締役/u',           25 ),
+		array( '/部長/u',             30 ),
+		array( '/次長/u',             35 ),
+		array( '/副店長/u',           45 ),
+		array( '/店長/u',             40 ),
+		array( '/課長/u',             50 ),
+		array( '/係長/u',             55 ),
+		array( '/主任/u',             60 ),
+		array( '/サブチーフ/u',        80 ),
+		array( '/チーフ/u',           70 ),
+		array( '/リーダー/u',          75 ),
+	);
+	foreach ( $table as $r ) {
+		if ( preg_match( $r[0], $t ) ) return $r[1];
+	}
+	return 900;
+}
+
+/** 役職の数字を保存しなおします（保存のたびに自動で走ります） */
+function ymkrf_staff_update_rank( $post_id ) {
+	update_post_meta( $post_id, '_ymkrf_staff_rank',
+		ymkrf_staff_role_rank( get_post_meta( $post_id, '_ymkrf_staff_role', true ) ) );
+}
+add_action( 'save_post_ymkrf_staff', 'ymkrf_staff_update_rank', 30 );
+
+/** 所属店舗の並び順（本部 → 各店舗）の何番目か */
+function ymkrf_staff_shop_rank( $slug ) {
+	$i = array_search( (string) $slug, array_keys( ymkrf_staff_shops() ), true );
+	return ( $i === false ) ? 900 : (int) $i;
+}
+
+/** 店舗の数字を保存しなおします */
+function ymkrf_staff_update_shop_rank( $post_id ) {
+	update_post_meta( $post_id, '_ymkrf_staff_shoprank',
+		ymkrf_staff_shop_rank( get_post_meta( $post_id, '_ymkrf_staff_shop', true ) ) );
+}
+add_action( 'save_post_ymkrf_staff', 'ymkrf_staff_update_shop_rank', 31 );
+
+/* すでに登録ずみの人にも1回だけ入れます（数字を上げると、もう一度だけ走ります） */
+add_action( 'admin_init', function () {
+	if ( get_option( 'ymkrf_staff_rank_ver' ) === '3' ) return;
+	if ( ! post_type_exists( 'ymkrf_staff' ) ) return;
+
+	$ids = get_posts( array(
+		'post_type' => 'ymkrf_staff', 'posts_per_page' => -1,
+		'fields' => 'ids', 'post_status' => 'any',
+	) );
+	foreach ( (array) $ids as $id ) {
+		ymkrf_staff_update_rank( $id );
+		ymkrf_staff_update_shop_rank( $id );
+	}
+	update_option( 'ymkrf_staff_rank_ver', '3' );
+}, 20 );
+
+
 /* ============================================================
    4. 管理画面の一覧
    ============================================================ */
 add_filter( 'manage_ymkrf_staff_posts_columns', function ( $cols ) {
+	unset( $cols['date'] );   /* 日付は使いません */
 	$new = array();
 	foreach ( $cols as $k => $v ) {
 		if ( $k === 'title' ) $new['ymkrf_face'] = '顔写真';
@@ -345,8 +464,88 @@ add_action( 'admin_head', function () {
 	$s = get_current_screen();
 	if ( ! $s || $s->post_type !== 'ymkrf_staff' ) return;
 	echo '<style>
-	  .column-ymkrf_face{width:70px}
-	  .column-ymkrf_sshop,.column-ymkrf_srole{width:160px}
+	  /* 名前と所属店舗が離れすぎないよう、幅を決めて左に寄せます。
+	     いちばん右（役職）だけ、あまった幅を受け持ちます。 */
+	  .column-ymkrf_face{width:64px}
+	  .column-title{width:180px}
+	  .column-ymkrf_sshop{width:130px}
+	  .column-ymkrf_srole{width:auto}
+	  .wp-list-table.posts .column-title .row-actions{white-space:nowrap}
 	  .ymkrf-staff__table th{width:150px}
 	</style>';
+} );
+
+
+/* ------------------------------------------------------------
+   4-b. 「所属店舗」「役職」の見出しをクリックで並べ替え
+
+   ふだんは 店舗の順（本部 → 田鶴浜店 → …）→ 役職の高い順 に並びます。
+   ------------------------------------------------------------ */
+add_filter( 'manage_edit-ymkrf_staff_sortable_columns', function ( $cols ) {
+	$cols['ymkrf_sshop'] = 'ymkrf_sshop';
+	$cols['ymkrf_srole'] = 'ymkrf_srole';
+	return $cols;
+} );
+
+add_filter( 'posts_clauses', function ( $clauses, $q ) {
+
+	if ( ! is_admin() || ! $q->is_main_query() ) return $clauses;
+	if ( $q->get( 'post_type' ) !== 'ymkrf_staff' ) return $clauses;
+
+	global $wpdb;
+
+	$by    = (string) $q->get( 'orderby' );
+	$order = ( strtoupper( (string) $q->get( 'order' ) ) === 'DESC' ) ? 'DESC' : 'ASC';
+
+	/* 日付順・名前順などを選んでいるときは、さわりません */
+	if ( $by !== '' && ! in_array( $by, array( 'ymkrf_sshop', 'ymkrf_srole' ), true ) ) {
+		return $clauses;
+	}
+	if ( $by === '' ) $order = 'ASC';   /* 見出しを押していないときの既定 */
+
+	$clauses['join'] .= " LEFT JOIN {$wpdb->postmeta} AS ymkrf_sr"
+	                  . " ON ( ymkrf_sr.post_id = {$wpdb->posts}.ID AND ymkrf_sr.meta_key = '_ymkrf_staff_rank' )";
+	$clauses['join'] .= " LEFT JOIN {$wpdb->postmeta} AS ymkrf_sp"
+	                  . " ON ( ymkrf_sp.post_id = {$wpdb->posts}.ID AND ymkrf_sp.meta_key = '_ymkrf_staff_shoprank' )";
+
+	$shop = "CAST( COALESCE( NULLIF( ymkrf_sp.meta_value, '' ), 900 ) AS SIGNED )";
+	$rank = "CAST( COALESCE( NULLIF( ymkrf_sr.meta_value, '' ), 900 ) AS SIGNED )";
+
+	if ( $by === 'ymkrf_srole' ) {
+		/* 役職の見出しを押したとき。同じ役職なら店舗の順 */
+		$clauses['orderby'] = "{$rank} {$order}, {$shop} ASC, {$wpdb->posts}.menu_order ASC, {$wpdb->posts}.post_title ASC";
+	} else {
+		/* 既定＝店舗の順。同じ店舗なら役職の高い順 */
+		$clauses['orderby'] = "{$shop} {$order}, {$rank} ASC, {$wpdb->posts}.menu_order ASC, {$wpdb->posts}.post_title ASC";
+	}
+
+	return $clauses;
+}, 10, 2 );
+
+/* 「すべての日付」のプルダウンは使わないので消します（かわりに店舗を出します） */
+add_filter( 'disable_months_dropdown', function ( $disable, $post_type ) {
+	return ( $post_type === 'ymkrf_staff' ) ? true : $disable;
+}, 10, 2 );
+
+/* 店舗でしぼり込むプルダウン */
+add_action( 'restrict_manage_posts', function ( $post_type ) {
+	if ( $post_type !== 'ymkrf_staff' ) return;
+	$now = isset( $_GET['ymkrf_shop_filter'] ) ? sanitize_key( $_GET['ymkrf_shop_filter'] ) : '';
+	echo '<select name="ymkrf_shop_filter"><option value="">すべての店舗</option>';
+	foreach ( ymkrf_staff_shops() as $slug => $name ) {
+		echo '<option value="' . esc_attr( $slug ) . '" ' . selected( $now, $slug, false ) . '>'
+		   . esc_html( $name ) . '</option>';
+	}
+	echo '</select>';
+} );
+
+add_action( 'pre_get_posts', function ( $q ) {
+	if ( ! is_admin() || ! $q->is_main_query() ) return;
+	if ( $q->get( 'post_type' ) !== 'ymkrf_staff' ) return;
+	if ( empty( $_GET['ymkrf_shop_filter'] ) ) return;
+
+	$q->set( 'meta_query', array( array(
+		'key'   => '_ymkrf_staff_shop',
+		'value' => sanitize_key( $_GET['ymkrf_shop_filter'] ),
+	) ) );
 } );
