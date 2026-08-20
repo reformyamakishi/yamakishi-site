@@ -241,9 +241,9 @@ add_action( 'init', function () {
 	   13 … スタッフ（/staff/）を足したため
 	   14 … 代表挨拶ページ（/message/）を足したため
 	   15 … 会社概要ページ（/company/）を足したため */
-	if ( get_option( 'ymkrf_rewrite_ver' ) === '18' ) return;
+	if ( get_option( 'ymkrf_rewrite_ver' ) === '19' ) return;
 	flush_rewrite_rules( false );
-	update_option( 'ymkrf_rewrite_ver', '18' );
+	update_option( 'ymkrf_rewrite_ver', '19' );
 }, 99 );
 
 

@@ -28,7 +28,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '1.7.3' );   // ファイル更新時はここを上げるとキャッシュが切れます
+if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '1.8.0' );   // ファイル更新時はここを上げるとキャッシュが切れます
 
 /* ============================================================
    1. CSS / JS の読み込み
@@ -58,7 +58,8 @@ add_action( 'wp_enqueue_scripts', function () {
 	           || ( function_exists( 'ymkrf_is_company' ) && ymkrf_is_company() )
 	           || ( function_exists( 'ymkrf_is_warranty' ) && ymkrf_is_warranty() )
 	           || ( function_exists( 'ymkrf_is_flow' ) && ymkrf_is_flow() )
-	           || ( function_exists( 'ymkrf_is_faq' ) && ymkrf_is_faq() );
+	           || ( function_exists( 'ymkrf_is_faq' ) && ymkrf_is_faq() )
+	           || ( function_exists( 'ymkrf_is_shops' ) && ymkrf_is_shops() );
 	$is_top = is_front_page() && ! $is_special;
 
 	if ( $is_top ) {
@@ -96,6 +97,12 @@ add_action( 'wp_enqueue_scripts', function () {
 	if ( function_exists( 'ymkrf_is_faq' ) && ymkrf_is_faq() ) {
 		wp_enqueue_style( 'ymkrf-lp', $dir . '/assets/css/lp.css', array( 'ymkrf-page' ), YMKRF_VER );
 		wp_enqueue_style( 'ymkrf-faq', $dir . '/assets/css/faq.css', array( 'ymkrf-lp' ), YMKRF_VER );
+	}
+
+	/* 店舗・対応エリアのページ（CTAの見た目は lp.css を使っています） */
+	if ( function_exists( 'ymkrf_is_shops' ) && ymkrf_is_shops() ) {
+		wp_enqueue_style( 'ymkrf-lp', $dir . '/assets/css/lp.css', array( 'ymkrf-page' ), YMKRF_VER );
+		wp_enqueue_style( 'ymkrf-shops', $dir . '/assets/css/shops.css', array( 'ymkrf-lp' ), YMKRF_VER );
 	}
 
 	/* お客様の声のページ */
@@ -185,6 +192,12 @@ add_action( 'template_redirect', function () {
 	/* /system/（施工体制）だけは、そのページの中の「営業・施工体制」の節に着地させます */
 	if ( $path === 'system' ) {
 		wp_redirect( home_url( '/about/' ) . '#system', 301 );
+		exit;
+	}
+
+	/* 対応エリアは、店舗ページに1枚でまとめました */
+	if ( $path === 'area' ) {
+		wp_redirect( home_url( '/shops/' ), 301 );
 		exit;
 	}
 
@@ -432,6 +445,54 @@ add_filter( 'document_title_parts', function ( $parts ) {
 if ( ! function_exists( 'ymkrf_is_faq' ) ) :
 function ymkrf_is_faq() {
 	return (bool) get_query_var( 'ymkrf_faq' );
+}
+endif;
+
+
+/* ============================================================
+   1-8. 店舗・対応エリアのページ（/shops/）のURL
+        「対応エリア」も1枚にまとめています。/area/ はここへ送ります。
+   ============================================================ */
+add_action( 'init', function () {
+	add_rewrite_rule( '^shops/?$', 'index.php?ymkrf_shops=1', 'top' );
+}, 20 );
+
+add_filter( 'query_vars', function ( $vars ) {
+	$vars[] = 'ymkrf_shops';
+	return $vars;
+} );
+
+add_filter( 'template_include', function ( $tpl ) {
+	if ( ! get_query_var( 'ymkrf_shops' ) ) return $tpl;
+	$found = locate_template( 'ymkrf-shops.php' );
+	return $found ? $found : $tpl;
+} );
+
+add_action( 'wp', function () {
+	if ( ! get_query_var( 'ymkrf_shops' ) ) return;
+	global $wp_query;
+	$wp_query->is_404        = false;
+	$wp_query->is_home       = false;
+	$wp_query->is_front_page = false;
+	$wp_query->is_page       = false;
+	$wp_query->is_singular   = false;
+	$wp_query->is_archive    = false;
+	$wp_query->is_post_type_archive = false;
+	status_header( 200 );
+} );
+
+add_filter( 'document_title_parts', function ( $parts ) {
+	if ( get_query_var( 'ymkrf_shops' ) ) {
+		$parts['title'] = '店舗・対応エリア｜石川県・福井県に11店舗（金沢市・小松市・福井市ほか）';
+		unset( $parts['tagline'] );
+	}
+	return $parts;
+} );
+
+/* 店舗ページかどうか。CSSの読み分けなどで使います。 */
+if ( ! function_exists( 'ymkrf_is_shops' ) ) :
+function ymkrf_is_shops() {
+	return (bool) get_query_var( 'ymkrf_shops' );
 }
 endif;
 

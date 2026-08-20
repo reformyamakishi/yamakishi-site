@@ -185,7 +185,7 @@ get_header();
     </div>
 
     <p class="p-lpnext">
-      <a class="p-lpnext__link" href="<?php echo esc_url( home_url( '/area/' ) ); ?>">
+      <a class="p-lpnext__link" href="<?php echo esc_url( home_url( '/shops/' ) ); ?>">
         <span class="p-lpnext__ttl">店舗・対応エリアを見る</span>
         <span class="p-lpnext__txt">住所・電話番号・営業時間と、お伺いできる市町村をのせています</span>
       </a>
@@ -231,7 +231,7 @@ get_header();
       <li><a href="<?php echo esc_url( home_url( '/staff/' ) ); ?>">スタッフ紹介</a><span>各店の営業担当の顔ぶれ</span></li>
       <li><a href="<?php echo esc_url( home_url( '/works/' ) ); ?>">施工事例</a><span>Before・Afterと、かかった費用</span></li>
       <li><a href="<?php echo esc_url( home_url( '/voice/' ) ); ?>">お客様の声</a><span>アンケート「仕事の通信簿」</span></li>
-      <li><a href="<?php echo esc_url( home_url( '/area/' ) ); ?>">店舗・エリア</a><span>石川県・福井県に11店舗</span></li>
+      <li><a href="<?php echo esc_url( home_url( '/shops/' ) ); ?>">店舗・エリア</a><span>石川県・福井県に11店舗</span></li>
     </ul>
   </div>
 </section>

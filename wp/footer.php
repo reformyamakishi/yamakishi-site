@@ -44,8 +44,7 @@ $home  = home_url( '/' );
         <ul>
           <li><a href="<?php echo esc_url( get_post_type_archive_link( 'works' ) ); ?>">施工事例</a></li>
           <li><a href="<?php echo esc_url( get_post_type_archive_link( 'voice' ) ); ?>">お客様の声</a></li>
-          <li><a href="<?php echo esc_url( $home . 'shops/' ); ?>">店舗・ショールーム</a></li>
-          <li><a href="<?php echo esc_url( $home . 'area/' ); ?>">対応エリア</a></li>
+          <li><a href="<?php echo esc_url( $home . 'shops/' ); ?>">店舗・対応エリア</a></li>
           <li><a href="<?php echo esc_url( $home . 'flow/' ); ?>">リフォームの流れ</a></li>
           <li><a href="<?php echo esc_url( $home . 'flyer/' ); ?>">イベント・チラシ</a></li>
           <li><a href="<?php echo esc_url( $home . 'blog/' ); ?>">スタッフブログ</a></li>
