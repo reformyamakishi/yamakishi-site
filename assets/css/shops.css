@@ -93,39 +93,51 @@
 .p-shop__noimg span{ font-size:12.5px; font-weight:900; color:var(--brand-dark); }
 
 /* --------------------------------------------------------------------------
-   お知らせの吹き出し（外観写真の上でふわふわ浮きます）
+   お知らせの帯（外観写真の下ふちに、そっと重ねます）
    ここに置くことで、お知らせのあるお店とないお店でカードの高さがそろいます。
+   写真をなるべく隠さないよう、帯は文字の高さぶんだけにしています。
    -------------------------------------------------------------------------- */
 .p-shop__bubble{
-  position:absolute; z-index:2; left:10px; right:10px; top:10px; margin:0;
-  background:#fff; color:var(--ink);
-  border:2px solid var(--brand); border-radius:12px;
-  padding:7px 11px; font-size:12px; font-weight:900; line-height:1.55;
-  box-shadow:0 5px 16px rgba(0,0,0,.22);
-  animation:ymkrf-bubble 3.4s ease-in-out infinite;
+  position:absolute; z-index:2; left:0; right:0; bottom:0; margin:0;
+  border-radius:0 0 10px 10px;
+  padding:11px 9px 7px;
+  background:linear-gradient(180deg,
+    rgba(43,35,32,0)   0%,
+    rgba(43,35,32,.40) 38%,
+    rgba(43,35,32,.74) 100%);
+  color:#fff; font-size:11px; line-height:1.45;
+  display:flex; align-items:baseline; gap:4px;
 }
-/* 吹き出しのしっぽ（下向き。お店を指しています） */
-.p-shop__bubble::before,
-.p-shop__bubble::after{
-  content:""; position:absolute; left:20px; width:0; height:0;
-  border-style:solid; border-color:transparent;
+.p-shop__bubble i{
+  flex:0 0 auto; font-style:normal;
+  font-size:8.5px; font-weight:900; letter-spacing:.05em;
+  background:var(--brand); color:#fff; border-radius:999px; padding:2px 5px;
 }
-.p-shop__bubble::before{
-  bottom:-11px; border-width:11px 9px 0; border-top-color:var(--brand);
+.p-shop__bubble span{
+  flex:1 1 auto; font-weight:700; letter-spacing:-.01em;
+  text-shadow:0 1px 3px rgba(0,0,0,.5);
 }
-.p-shop__bubble::after{
-  bottom:-7px; border-width:8px 6px 0; border-top-color:#fff; left:23px;
+
+/* オープン前のお店は、ブランドカラーでもう少し目立たせます */
+.p-shop__bubble.is-soon{
+  background:linear-gradient(180deg,
+    rgba(147,28,0,0)   0%,
+    rgba(201,40,0,.55) 42%,
+    rgba(201,40,0,.88) 100%);
 }
-.p-shop__bubble.is-soon{ background:var(--brand); border-color:var(--brand); color:#fff; }
-.p-shop__bubble.is-soon::before{ border-top-color:var(--brand); }
-.p-shop__bubble.is-soon::after{ border-top-color:var(--brand); }
+.p-shop__bubble.is-soon i{ background:#fff; color:var(--brand-dark); }
+
+/* 文字だけ、ゆっくりふわっと動かします（帯は写真のふちに固定したままです） */
+.p-shop__bubble i,
+.p-shop__bubble span{ animation:ymkrf-bubble 4.6s ease-in-out infinite; }
 
 @keyframes ymkrf-bubble{
   0%,100%{ transform:translateY(0); }
-  50%    { transform:translateY(-5px); }
+  50%    { transform:translateY(-2.5px); }
 }
 @media (prefers-reduced-motion:reduce){
-  .p-shop__bubble{ animation:none; }
+  .p-shop__bubble i,
+  .p-shop__bubble span{ animation:none; }
 }
 
 .p-shop__table{ width:100%; border-collapse:collapse; }
@@ -151,6 +163,11 @@
   font-size:13px; font-weight:900; color:var(--brand-dark);
 }
 .p-shop__map::after{ content:" ›"; }
+/* 市や町の名前が、途中で改行されないようにします
+   （「宝達志水／町」のように切れてしまうのを防ぎます） */
+.p-shop__area{ display:inline-block; white-space:nowrap; }
+.p-shop__sep{ color:var(--ink-light); }
+
 .p-shop__hnote,
 .p-shop__todo{
   display:block; font-size:12.5px; color:var(--ink-light); line-height:1.7;

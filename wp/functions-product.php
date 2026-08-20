@@ -240,10 +240,11 @@ add_action( 'init', function () {
 	   12 … 施工事例のURLを /works/部位/案件番号/ に変えたため
 	   13 … スタッフ（/staff/）を足したため
 	   14 … 代表挨拶ページ（/message/）を足したため
-	   15 … 会社概要ページ（/company/）を足したため */
-	if ( get_option( 'ymkrf_rewrite_ver' ) === '19' ) return;
+	   15 … 会社概要ページ（/company/）を足したため
+	   20 … プライバシーポリシー（/privacy/）を足したため */
+	if ( get_option( 'ymkrf_rewrite_ver' ) === '20' ) return;
 	flush_rewrite_rules( false );
-	update_option( 'ymkrf_rewrite_ver', '19' );
+	update_option( 'ymkrf_rewrite_ver', '20' );
 }, 99 );
 
 

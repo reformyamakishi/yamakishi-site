@@ -1670,7 +1670,7 @@ add_filter( 'manage_ymkrf_works_posts_columns', function ( $cols ) {
 
 	$new['ymkrf_case']  = isset( $cols['ymkrf_case'] ) ? $cols['ymkrf_case'] : '案件番号';
 	$new['ymkrf_wshop'] = '施工店舗';
-	$new['ymkrf_wcust'] = 'お客様';
+	$new['ymkrf_wstaff'] = '担当';
 	$new['ymkrf_wpart'] = 'リフォーム箇所';
 	$new['ymkrf_voice'] = isset( $cols['ymkrf_voice'] ) ? $cols['ymkrf_voice'] : 'お客様の声';
 
@@ -1689,12 +1689,8 @@ add_action( 'manage_ymkrf_works_posts_custom_column', function ( $col, $post_id 
 			$v = ymkrf_works_shop_name( $post_id );
 			echo $v ? esc_html( $v ) : $none;
 			break;
-
-		case 'ymkrf_wcust':
-			$area = ymkrf_works_area_name( $post_id );
-			$ini  = trim( (string) get_post_meta( $post_id, '_ymkrf_initial', true ) );
-			$who  = trim( $area . ( $ini !== '' ? '　' . $ini . '様' : '' ) );
-			echo $who !== '' ? esc_html( $who ) : $none;
+		case 'ymkrf_wstaff':
+			echo ymkrf_staff_admin_cell( (int) get_post_meta( $post_id, '_ymkrf_staff', true ) );
 			break;
 
 		case 'ymkrf_wpart':
@@ -1789,7 +1785,7 @@ add_action( 'admin_head', function () {
 	echo '<style>
 	  .column-ymkrf_case{width:100px}
 	  .column-ymkrf_wshop{width:110px}
-	  .column-ymkrf_wcust{width:130px}
+	  .column-ymkrf_wstaff{width:130px}
 	  .column-ymkrf_wpart{width:180px}
 	  .column-ymkrf_voice{width:110px}
 	  .column-date{width:130px}

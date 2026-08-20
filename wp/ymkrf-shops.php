@@ -39,6 +39,18 @@ $shops = array(
 
 	/* ---------------- 石川県 ---------------- */
 	array(
+		'pref' => '石川県', 'slug' => 'higashikanazawa', 'name' => '東金沢店',
+		'tel'  => '',
+		'addr' => '石川県金沢市大樋町',
+		'hours' => '', 'hnote' => '',
+		'closed' => '',
+		'areas' => array( '金沢市' ),
+		'sr' => false, 'srnote' => '',
+		'ld' => array(),
+		'soon' => '2026年10月31日（土）グランドオープン！',
+		'pos'  => '50% 22%',   /* 写真の見せたい位置（上のほうを見せます） */
+	),
+	array(
 		'pref' => '石川県', 'slug' => 'tazuruhama', 'name' => '田鶴浜店',
 		'tel'  => '0767-68-6600',
 		'addr' => '石川県七尾市高田町ほ部34番地',
@@ -48,7 +60,18 @@ $shops = array(
 		'sr' => true,
 		'srnote' => '',
 		'ld' => array( 'Mo-Su 08:00-21:00' ),
-		'topic' => '2026年10月、復興した新しいリフォームコーナーがオープン！',
+		'topic' => '2026年10月 リフォームコーナーが復興オープン！',
+	),
+	array(
+		'pref' => '石川県', 'slug' => 'shinkaga', 'name' => '新加賀店',
+		'tel'  => '0761-74-0017',
+		'addr' => '石川県加賀市桑原町ホ48-1',
+		'hours' => '8:00〜21:00', 'hnote' => '',
+		'closed' => '年中無休',
+		'areas' => array( '加賀市' ),
+		'sr' => true, 'srnote' => '',
+		'ld' => array( 'Mo-Su 08:00-21:00' ),
+		'topic' => '2026年10月 リフォームコーナーがリニューアル！',
 	),
 	array(
 		'pref' => '石川県', 'slug' => 'hakui', 'name' => '羽咋店',
@@ -69,18 +92,6 @@ $shops = array(
 		'areas' => array( '金沢市' ),
 		'sr' => true, 'srnote' => 'エコキュートと外壁塗装の専門店です。',
 		'ld' => array( 'Mo-Su 10:00-17:00' ),
-	),
-	array(
-		'pref' => '石川県', 'slug' => 'higashikanazawa', 'name' => '東金沢店',
-		'tel'  => '',
-		'addr' => '石川県金沢市大樋町',
-		'hours' => '', 'hnote' => '',
-		'closed' => '',
-		'areas' => array( '金沢市' ),
-		'sr' => false, 'srnote' => '',
-		'ld' => array(),
-		'soon' => '2026年10月31日（土）グランドオープン！',
-		'pos'  => '50% 22%',   /* 写真の見せたい位置（上のほうを見せます） */
 	),
 	array(
 		'pref' => '石川県', 'slug' => 'nonoichi', 'name' => '金沢野々市店',
@@ -111,17 +122,6 @@ $shops = array(
 		'areas' => array( '小松市', '能美市' ),
 		'sr' => true, 'srnote' => '',
 		'ld' => array( 'Mo-We 10:00-18:00', 'Th 10:00-17:00', 'Fr-Su 10:00-18:00' ),
-	),
-	array(
-		'pref' => '石川県', 'slug' => 'shinkaga', 'name' => '新加賀店',
-		'tel'  => '0761-74-0017',
-		'addr' => '石川県加賀市桑原町ホ48-1',
-		'hours' => '8:00〜21:00', 'hnote' => '',
-		'closed' => '年中無休',
-		'areas' => array( '加賀市' ),
-		'sr' => true, 'srnote' => '',
-		'ld' => array( 'Mo-Su 08:00-21:00' ),
-		'topic' => '2026年10月、リフォームコーナーがリニューアル！',
 	),
 
 	/* ---------------- 福井県 ---------------- */
@@ -261,8 +261,8 @@ get_header();
                 <span class="p-city__name"><?php echo esc_html( $city ); ?></span>
                 <span class="p-city__shop"><?php
                   $ns = array();
-                  foreach ( $slugs as $sg ) $ns[] = $byslug[ $sg ];
-                  echo esc_html( implode( '／', $ns ) );
+                  foreach ( $slugs as $sg ) $ns[] = '<span class="p-shop__area">' . esc_html( $byslug[ $sg ] ) . '</span>';
+                  echo implode( '<span class="p-shop__sep">／</span>', $ns );
                 ?></span>
               </a>
             </li>
@@ -344,7 +344,9 @@ foreach ( $shops as $s ) :
 		$bubble = ! empty( $s['soon'] ) ? $s['soon'] : ( ! empty( $s['topic'] ) ? $s['topic'] : '' );
 		?>
       <?php if ( $bubble !== '' ) : ?>
-        <p class="p-shop__bubble<?php echo ! empty( $s['soon'] ) ? ' is-soon' : ''; ?>"><?php echo esc_html( $bubble ); ?></p>
+        <p class="p-shop__bubble<?php echo ! empty( $s['soon'] ) ? ' is-soon' : ''; ?>">
+          <i><?php echo ! empty( $s['soon'] ) ? 'OPEN' : 'NEWS'; ?></i><span><?php echo esc_html( $bubble ); ?></span>
+        </p>
       <?php endif; ?>
       </div>
 
@@ -392,8 +394,14 @@ foreach ( $shops as $s ) :
             <tr><th>定休日</th><td><?php echo esc_html( $s['closed'] ); ?></td></tr>
           <?php endif; ?>
           <tr>
-            <th>主な担当地域</th>
-            <td><?php echo esc_html( implode( '／', $s['areas'] ) ); ?></td>
+            <th>エリア</th>
+            <td><?php
+              /* 市町の名前の途中で改行されないよう、1つずつ nowrap の枠に入れます。
+                 「／」は枠の外に置いてあるので、そこでだけ折り返します。 */
+              $parts = array();
+              foreach ( $s['areas'] as $a ) $parts[] = '<span class="p-shop__area">' . esc_html( $a ) . '</span>';
+              echo implode( '<span class="p-shop__sep">／</span>', $parts );
+            ?></td>
           </tr>
         </tbody>
       </table>

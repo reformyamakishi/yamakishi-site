@@ -314,7 +314,7 @@ function ymkrf_voice_metabox( $post ) {
 	      <td>
 	        <?php $cur_shop = (string) $get( '_ymkrf_shop' );
 	        $shops = get_terms( array( 'taxonomy' => 'ymkrf_shop', 'hide_empty' => false ) ); ?>
-	        <select name="_ymkrf_shop">
+	        <select name="_ymkrf_shop" id="ymkrf-vshop-sel">
 	          <option value="">（えらんでください）</option>
 	          <?php if ( ! is_wp_error( $shops ) ) foreach ( (array) $shops as $sh ) : ?>
 	            <option value="<?php echo esc_attr( $sh->slug ); ?>" <?php selected( $cur_shop, $sh->slug ); ?>>
@@ -322,6 +322,59 @@ function ymkrf_voice_metabox( $post ) {
 	          <?php endforeach; ?>
 	        </select>
 	        <p class="description">工事を担当した店舗です。ページに出ます。</p>
+	      </td>
+	    </tr>
+	    <tr>
+	      <th>担当スタッフ</th>
+	      <td>
+	        <?php
+	        /* 施工事例の登録ページと同じえらび方です。
+	           上の「施工した店舗」をえらぶと、その店舗の人だけが出ます。 */
+	        $vstaffs   = function_exists( 'ymkrf_staff_sales_list' ) ? ymkrf_staff_sales_list() : array();
+	        $vstaffcur = (int) $get( '_ymkrf_staff' );
+	        /* すでにえらばれている人が一覧に無いとき（あとから外した人など）は、
+	           消えてしまわないように足しておきます */
+	        if ( $vstaffcur ) {
+	          $has = false;
+	          foreach ( $vstaffs as $st ) { if ( (int) $st->ID === $vstaffcur ) { $has = true; break; } }
+	          if ( ! $has ) {
+	            $sp = get_post( $vstaffcur );
+	            if ( $sp && $sp->post_type === 'ymkrf_staff' ) $vstaffs[] = $sp;
+	          }
+	        }
+	        ?>
+	        <?php if ( $vstaffs ) : ?>
+	          <?php
+	          $vsdata = array();
+	          foreach ( $vstaffs as $st ) {
+	            $vsdata[] = array(
+	              'id'    => (int) $st->ID,
+	              'name'  => (string) get_the_title( $st ),
+	              'shop'  => (string) get_post_meta( $st->ID, '_ymkrf_staff_shop', true ),
+	              'sname' => function_exists( 'ymkrf_staff_shop_name' ) ? (string) ymkrf_staff_shop_name( $st->ID ) : '',
+	              'role'  => (string) get_post_meta( $st->ID, '_ymkrf_staff_role', true ),
+	            );
+	          }
+	          ?>
+	          <div class="ymkrf-pick" id="ymkrf-vstaff-pick">
+	            <input type="hidden" name="_ymkrf_staff" id="ymkrf-vstaff-val" value="<?php echo (int) $vstaffcur; ?>">
+	            <button type="button" class="button ymkrf-pick__btn" id="ymkrf-vstaff-btn">（えらんでください）</button>
+	            <div class="ymkrf-pick__menu" id="ymkrf-vstaff-menu" hidden></div>
+	            <button type="button" class="button-link ymkrf-pick__clear" id="ymkrf-vstaff-clear">えらび直す（空にする）</button>
+	          </div>
+	          <script>
+	            window.ymkrfVStaffList  = <?php echo wp_json_encode( $vsdata ); ?>;
+	            window.ymkrfVStaffOrder = <?php echo wp_json_encode( function_exists( 'ymkrf_staff_shops' ) ? array_keys( ymkrf_staff_shops() ) : array() ); ?>;
+	          </script>
+	          <p class="description">
+	            上の「施工した店舗」をえらぶと、<b>その店舗の人だけ</b>が出ます。<br>
+	            ほかの店舗や本部・工事部の人にするときは、いちばん下の
+	            <b>「その他」にマウスを乗せる</b>と、横に全員の名前が出ます。<br>
+	            名前と顔写真は「スタッフ」で登録してください。空のままでもかまいません。
+	          </p>
+	        <?php else : ?>
+	          <p class="description">スタッフがまだ登録されていません。</p>
+	        <?php endif; ?>
 	      </td>
 	    </tr>
 	    <tr>
@@ -443,6 +496,11 @@ add_action( 'save_post_ymkrf_voice', function ( $post_id ) {
 	}
 	foreach ( array( '_ymkrf_survey_id', '_ymkrf_survey_pub_id' ) as $k ) {
 		update_post_meta( $post_id, $k, isset( $_POST[ $k ] ) ? (int) $_POST[ $k ] : 0 );
+	}
+
+	/* 担当スタッフ（スタッフの投稿ID。0なら未設定） */
+	if ( isset( $_POST['_ymkrf_staff'] ) ) {
+		update_post_meta( $post_id, '_ymkrf_staff', (int) $_POST['_ymkrf_staff'] );
 	}
 
 	/* 題名が空なら、内容から自動でつけます */
@@ -709,12 +767,156 @@ function ymkrf_case_link_cell( $post_id, $target_type ) {
 	     . ' title="' . esc_attr( $label . '「' . $title . '」をひらく' ) . '">● 済</a>';
 }
 
+/* ============================================================
+   担当スタッフのえらび方（施工事例の登録ページと同じ見た目・同じ動きです）
+   ============================================================ */
+add_action( 'admin_head', function () {
+	$sc = get_current_screen();
+	if ( ! $sc || $sc->post_type !== 'ymkrf_voice' ) return;
+	if ( ! in_array( $sc->base, array( 'post' ), true ) ) return;
+	echo '<style>
+	  .ymkrf-pick{position:relative;display:inline-block}
+	  .ymkrf-pick__btn{min-width:260px;text-align:left}
+	  .ymkrf-pick__btn--set{font-weight:700}
+	  .ymkrf-pick__btn::after{content:" \25be";float:right;color:#787c82}
+	  .ymkrf-pick__clear{margin-left:10px;font-size:12px;color:#787c82;text-decoration:underline;cursor:pointer}
+	  .ymkrf-pick__menu{
+	    position:absolute;z-index:100;top:100%;left:0;margin-top:2px;
+	    min-width:260px;background:#fff;border:1px solid #c3c4c7;border-radius:6px;
+	    box-shadow:0 6px 20px rgba(0,0,0,.14);padding:4px}
+	  .ymkrf-pick__scroll{max-height:300px;overflow:auto}
+	  .ymkrf-pick__item{
+	    display:block;width:100%;text-align:left;border:0;background:none;cursor:pointer;
+	    padding:6px 10px;border-radius:4px;font-size:13.5px;line-height:1.5}
+	  .ymkrf-pick__item:hover{background:#fff2ee}
+	  .ymkrf-pick__nm{font-weight:700}
+	  .ymkrf-pick__ro{margin-left:8px;font-size:11.5px;color:#787c82}
+	  .ymkrf-pick__empty{margin:6px 10px;font-size:12px;color:#a7aaad}
+	  .ymkrf-pick__more{
+	    position:relative;margin-top:4px;padding:7px 10px;border-top:1px solid #f0f0f1;
+	    font-size:13.5px;font-weight:700;color:#2271b1;cursor:default}
+	  .ymkrf-pick__more>span::after{content:" \25b8"}
+	  .ymkrf-pick__more:hover{background:#f6f7f7}
+	  .ymkrf-pick__sub{
+	    display:none;position:absolute;left:100%;top:-4px;margin-left:2px;
+	    width:520px;max-height:420px;overflow:auto;
+	    background:#fff;border:1px solid #c3c4c7;border-radius:6px;
+	    box-shadow:0 6px 20px rgba(0,0,0,.14);padding:8px}
+	  .ymkrf-pick__more:hover .ymkrf-pick__sub{display:block}
+	  .ymkrf-pick__gttl{
+	    margin:8px 0 4px;padding:0 6px;font-size:11.5px;font-weight:700;color:#646970;
+	    border-left:3px solid #fe3301;line-height:1.4}
+	  .ymkrf-pick__gttl:first-child{margin-top:0}
+	  .ymkrf-pick__grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 8px}
+	</style>';
+} );
+
+add_action( 'admin_footer', function () {
+	$sc = get_current_screen();
+	if ( ! $sc || $sc->post_type !== 'ymkrf_voice' ) return;
+	if ( ! in_array( $sc->base, array( 'post' ), true ) ) return;
+	?>
+	<script>
+	jQuery(function ($) {
+		var $pick = $('#ymkrf-vstaff-pick');
+		if (!$pick.length || !window.ymkrfVStaffList) return;
+
+		var LIST  = window.ymkrfVStaffList;
+		var ORDER = window.ymkrfVStaffOrder || [];
+		var $val  = $('#ymkrf-vstaff-val'), $btn = $('#ymkrf-vstaff-btn'), $menu = $('#ymkrf-vstaff-menu');
+		var $shopSel = $('#ymkrf-vshop-sel');
+
+		function byId(id) {
+			for (var i = 0; i < LIST.length; i++) if (LIST[i].id === +id) return LIST[i];
+			return null;
+		}
+		function label(p) { return p.name + (p.sname ? '（' + p.sname + '）' : ''); }
+
+		function drawBtn() {
+			var p = byId($val.val());
+			$btn.text(p ? label(p) : '（えらんでください）')
+				.toggleClass('ymkrf-pick__btn--set', !!p);
+			$('#ymkrf-vstaff-clear').toggle(!!p);
+		}
+		function row(p) {
+			return $('<button type="button" class="ymkrf-pick__item">')
+				.attr('data-id', p.id)
+				.append($('<span class="ymkrf-pick__nm">').text(p.name))
+				.append(p.role ? $('<span class="ymkrf-pick__ro">').text(p.role) : null);
+		}
+		/* 全員を店舗ごとにまとめた枠 */
+		function allPanel() {
+			var $sub = $('<div class="ymkrf-pick__sub">'), seen = {};
+			var order = ORDER.slice();
+			LIST.forEach(function (p) { if (order.indexOf(p.shop) < 0) order.push(p.shop); });
+			order.forEach(function (sh) {
+				var mem = LIST.filter(function (p) { return p.shop === sh; });
+				if (!mem.length || seen[sh]) return;
+				seen[sh] = 1;
+				$sub.append($('<p class="ymkrf-pick__gttl">').text(mem[0].sname || 'そのほか'));
+				var $g = $('<div class="ymkrf-pick__grid">');
+				mem.forEach(function (p) { $g.append(row(p)); });
+				$sub.append($g);
+			});
+			return $sub;
+		}
+		function build() {
+			var sh = $shopSel.length ? $shopSel.val() : '';
+			$menu.empty();
+			var $scroll = $('<div class="ymkrf-pick__scroll">');
+			var mem = sh ? LIST.filter(function (p) { return p.shop === sh; }) : LIST;
+			mem.forEach(function (p) { $scroll.append(row(p)); });
+			if (sh && !mem.length) {
+				$scroll.append($('<p class="ymkrf-pick__empty">').text('この店舗のスタッフはまだ登録されていません。'));
+			}
+			$menu.append($scroll);
+			if (sh) {
+				$menu.append($('<div class="ymkrf-pick__more">')
+					.append($('<span>').text('その他（全員から選ぶ）'))
+					.append(allPanel()));
+			}
+		}
+		function open()  { build(); $menu.prop('hidden', false); }
+		function close() { $menu.prop('hidden', true); }
+
+		$btn.on('click', function (e) {
+			e.preventDefault();
+			if ($menu.prop('hidden')) open(); else close();
+		});
+		$menu.on('click', '.ymkrf-pick__item', function (e) {
+			e.preventDefault();
+			$val.val($(this).attr('data-id'));
+			drawBtn();
+			close();
+		});
+		$('#ymkrf-vstaff-clear').on('click', function (e) {
+			e.preventDefault();
+			$val.val(0); drawBtn(); close();
+		});
+		/* 店舗を変えたら、えらんでいた人がその店舗にいなければ外します */
+		$shopSel.on('change', function () {
+			var p = byId($val.val()), sh = $shopSel.val();
+			if (p && sh && p.shop !== sh) { $val.val(0); drawBtn(); }
+			if (!$menu.prop('hidden')) build();
+		});
+		$(document).on('click', function (e) {
+			if (!$(e.target).closest('#ymkrf-vstaff-pick').length) close();
+		});
+		$(document).on('keydown', function (e) { if (e.key === 'Escape') close(); });
+
+		drawBtn();
+	});
+	</script>
+	<?php
+} );
+
 add_filter( 'manage_ymkrf_voice_posts_columns', function ( $cols ) {
 	$new = array();
 	foreach ( $cols as $k => $v ) {
 		if ( $k === 'title' ) {
 			$new['title'] = '案件番号';        /* 見出しだけ差しかえます */
 			$new['ymkrf_shop']  = '施工店舗';
+			$new['ymkrf_vstaff'] = '担当';
 			$new['ymkrf_cust']  = 'お客様';
 			$new['ymkrf_score'] = '満足度';
 			$new['ymkrf_parts'] = '工事箇所';
@@ -742,6 +944,9 @@ add_action( 'manage_ymkrf_voice_posts_custom_column', function ( $col, $post_id 
 		case 'ymkrf_shop':
 			$v = ymkrf_voice_shop_name( $post_id );
 			echo $v ? esc_html( $v ) : '<span style="color:#a7aaad">—</span>';
+			break;
+		case 'ymkrf_vstaff':
+			echo ymkrf_staff_admin_cell( (int) get_post_meta( $post_id, '_ymkrf_staff', true ) );
 			break;
 		case 'ymkrf_cust':
 			$v = ymkrf_voice_customer_label( $post_id );
@@ -848,6 +1053,7 @@ add_action( 'admin_head', function () {
 		echo '<style>
 		  .column-title{width:130px}
 		  .column-ymkrf_shop{width:110px}
+		  .column-ymkrf_vstaff{width:130px}
 		  .column-ymkrf_cust{width:170px}
 		  .column-ymkrf_score{width:80px}
 		  .column-ymkrf_parts{width:170px}

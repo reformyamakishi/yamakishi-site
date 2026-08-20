@@ -598,3 +598,38 @@ add_action( 'pre_get_posts', function ( $q ) {
 		'value' => sanitize_key( $_GET['ymkrf_shop_filter'] ),
 	) ) );
 } );
+
+
+/* ============================================================
+   管理画面の一覧に出す「担当」のマス
+   施工事例・お客様の声の一覧で使います（顔写真＋名前）。
+   ============================================================ */
+if ( ! function_exists( 'ymkrf_staff_admin_cell' ) ) :
+function ymkrf_staff_admin_cell( $staff_id ) {
+	$none = '<span style="color:#a7aaad">—</span>';
+	$staff_id = (int) $staff_id;
+	if ( ! $staff_id ) return $none;
+
+	$p = get_post( $staff_id );
+	if ( ! $p || $p->post_type !== 'ymkrf_staff' ) return $none;
+
+	$name = trim( (string) get_the_title( $p ) );
+	if ( $name === '' ) return $none;
+
+	$out = '';
+	$thumb = get_the_post_thumbnail_url( $staff_id, 'thumbnail' );
+	if ( $thumb ) {
+		$out .= '<img src="' . esc_url( $thumb ) . '" alt=""'
+		     . ' style="width:26px;height:26px;border-radius:50%;object-fit:cover;'
+		     . 'vertical-align:-8px;margin-right:6px">';
+	}
+	$out .= '<a href="' . esc_url( (string) get_edit_post_link( $staff_id ) ) . '"'
+	     . ' style="text-decoration:none">' . esc_html( $name ) . '</a>';
+
+	$shop = function_exists( 'ymkrf_staff_shop_name' ) ? (string) ymkrf_staff_shop_name( $staff_id ) : '';
+	if ( $shop !== '' ) {
+		$out .= '<br><span style="font-size:11px;color:#787c82">' . esc_html( $shop ) . '</span>';
+	}
+	return $out;
+}
+endif;

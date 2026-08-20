@@ -28,7 +28,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '1.9.3' );   // ファイル更新時はここを上げるとキャッシュが切れます
+if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '2.0.0' );   // ファイル更新時はここを上げるとキャッシュが切れます
 
 /* ============================================================
    1. CSS / JS の読み込み
@@ -59,7 +59,8 @@ add_action( 'wp_enqueue_scripts', function () {
 	           || ( function_exists( 'ymkrf_is_warranty' ) && ymkrf_is_warranty() )
 	           || ( function_exists( 'ymkrf_is_flow' ) && ymkrf_is_flow() )
 	           || ( function_exists( 'ymkrf_is_faq' ) && ymkrf_is_faq() )
-	           || ( function_exists( 'ymkrf_is_shops' ) && ymkrf_is_shops() );
+	           || ( function_exists( 'ymkrf_is_shops' ) && ymkrf_is_shops() )
+	           || ( function_exists( 'ymkrf_is_privacy' ) && ymkrf_is_privacy() );
 	$is_top = is_front_page() && ! $is_special;
 
 	if ( $is_top ) {
@@ -103,6 +104,11 @@ add_action( 'wp_enqueue_scripts', function () {
 	if ( function_exists( 'ymkrf_is_shops' ) && ymkrf_is_shops() ) {
 		wp_enqueue_style( 'ymkrf-lp', $dir . '/assets/css/lp.css', array( 'ymkrf-page' ), YMKRF_VER );
 		wp_enqueue_style( 'ymkrf-shops', $dir . '/assets/css/shops.css', array( 'ymkrf-lp' ), YMKRF_VER );
+	}
+
+	/* プライバシーポリシーのページ */
+	if ( function_exists( 'ymkrf_is_privacy' ) && ymkrf_is_privacy() ) {
+		wp_enqueue_style( 'ymkrf-privacy', $dir . '/assets/css/privacy.css', array( 'ymkrf-page' ), YMKRF_VER );
 	}
 
 	/* お客様の声のページ */
@@ -493,6 +499,52 @@ add_filter( 'document_title_parts', function ( $parts ) {
 if ( ! function_exists( 'ymkrf_is_shops' ) ) :
 function ymkrf_is_shops() {
 	return (bool) get_query_var( 'ymkrf_shops' );
+}
+endif;
+
+/* ============================================================
+   1-9. プライバシーポリシーのページ（/privacy/）のURL
+   ============================================================ */
+add_action( 'init', function () {
+	add_rewrite_rule( '^privacy/?$', 'index.php?ymkrf_privacy=1', 'top' );
+}, 20 );
+
+add_filter( 'query_vars', function ( $vars ) {
+	$vars[] = 'ymkrf_privacy';
+	return $vars;
+} );
+
+add_filter( 'template_include', function ( $tpl ) {
+	if ( ! get_query_var( 'ymkrf_privacy' ) ) return $tpl;
+	$found = locate_template( 'ymkrf-privacy.php' );
+	return $found ? $found : $tpl;
+} );
+
+add_action( 'wp', function () {
+	if ( ! get_query_var( 'ymkrf_privacy' ) ) return;
+	global $wp_query;
+	$wp_query->is_404        = false;
+	$wp_query->is_home       = false;
+	$wp_query->is_front_page = false;
+	$wp_query->is_page       = false;
+	$wp_query->is_singular   = false;
+	$wp_query->is_archive    = false;
+	$wp_query->is_post_type_archive = false;
+	status_header( 200 );
+} );
+
+add_filter( 'document_title_parts', function ( $parts ) {
+	if ( get_query_var( 'ymkrf_privacy' ) ) {
+		$parts['title'] = 'プライバシーポリシー（個人情報保護方針）';
+		unset( $parts['tagline'] );
+	}
+	return $parts;
+} );
+
+/* プライバシーポリシーのページかどうか。CSSの読み分けなどで使います。 */
+if ( ! function_exists( 'ymkrf_is_privacy' ) ) :
+function ymkrf_is_privacy() {
+	return (bool) get_query_var( 'ymkrf_privacy' );
 }
 endif;
 
