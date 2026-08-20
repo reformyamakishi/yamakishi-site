@@ -1,0 +1,125 @@
+@charset "UTF-8";
+/* ==========================================================================
+   news.css ─ お知らせ（/news/）
+   page.css のあとに読み込みます。
+   一覧の基本の形（.p-news）は home.css にもありますが、
+   お知らせのページは page.css しか読まないので、ここに書いてあります。
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   種類でしぼり込むボタン
+   -------------------------------------------------------------------------- */
+.p-newsnav{
+  display:flex; flex-wrap:wrap; gap:8px; margin-bottom:22px;
+}
+.p-newsnav__btn{
+  display:inline-block; text-decoration:none; color:var(--ink);
+  background:#fff; border:2px solid var(--border); border-radius:999px;
+  padding:7px 16px; font-size:13.5px; font-weight:900;
+}
+.p-newsnav__btn:hover{ border-color:var(--brand); background:var(--brand-tint); }
+.p-newsnav__btn.is-on{ background:var(--brand); border-color:var(--brand); color:#fff; }
+
+/* --------------------------------------------------------------------------
+   一覧
+   -------------------------------------------------------------------------- */
+.p-news{
+  list-style:none; margin:0; padding:0;
+  background:#fff; border:2px solid var(--border); border-radius:var(--radius); overflow:hidden;
+}
+.p-news__item + .p-news__item{ border-top:1px solid var(--border); }
+.p-news__link{
+  display:flex; flex-wrap:wrap; align-items:center; gap:6px 14px;
+  padding:16px 20px; text-decoration:none; color:var(--ink); transition:background .18s;
+}
+.p-news__link:hover{ background:var(--brand-tint); }
+.p-news__date{
+  font-size:13.5px; font-weight:800; color:var(--ink-sub); font-variant-numeric:tabular-nums;
+}
+.p-news__cat{
+  display:inline-block; text-decoration:none;
+  background:var(--brand-tint); color:var(--brand-dark);
+  font-size:11.5px; font-weight:900; padding:3px 11px; border-radius:999px;
+  white-space:nowrap;
+}
+/* 種類ごとの色分け（ひかえめに） */
+.p-news__cat--event{   background:#fff6e3; color:#8a5a00; }
+.p-news__cat--hojokin{ background:#e9f3ff; color:#1b5a94; }
+.p-news__cat--eigyo{   background:var(--bg-gray); color:var(--ink-sub); }
+
+.p-news__title{ flex-basis:100%; font-size:15.5px; font-weight:800; line-height:1.7; }
+.p-news__pin{
+  display:inline-block; vertical-align:1px; margin-right:7px;
+  background:var(--brand); color:#fff; border-radius:4px;
+  padding:2px 7px; font-size:11px; font-weight:900;
+}
+.p-news__shop{
+  display:inline-block; margin-left:8px;
+  font-size:12px; font-weight:900; color:var(--ink-light);
+}
+.p-news__shop::before{ content:"／"; margin-right:2px; }
+
+.p-news__none{
+  margin:0; padding:34px 20px; text-align:center;
+  background:var(--bg-gray); border-radius:var(--radius);
+  font-size:15px; color:var(--ink-sub);
+}
+
+/* --------------------------------------------------------------------------
+   ページ送り
+   -------------------------------------------------------------------------- */
+.p-pager{
+  display:flex; flex-wrap:wrap; justify-content:center; gap:6px; margin-top:26px;
+}
+.p-pager a,
+.p-pager .current{
+  display:inline-block; min-width:38px; text-align:center;
+  padding:8px 12px; border-radius:8px;
+  font-size:14px; font-weight:900; text-decoration:none;
+}
+.p-pager a{ background:#fff; border:2px solid var(--border); color:var(--ink); }
+.p-pager a:hover{ border-color:var(--brand); background:var(--brand-tint); }
+.p-pager .current{ background:var(--brand); color:#fff; border:2px solid var(--brand); }
+
+/* --------------------------------------------------------------------------
+   1件ずつのページ
+   -------------------------------------------------------------------------- */
+.p-newshead{ margin-bottom:22px; }
+.p-newshead__meta{
+  display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin:0 0 10px;
+  font-size:13.5px; font-weight:800; color:var(--ink-sub); font-variant-numeric:tabular-nums;
+}
+.p-newshead__title{
+  margin:0; font-size:clamp(21px,5vw,29px); font-weight:900; line-height:1.55;
+}
+.p-newshead__shop{ margin:10px 0 0; font-size:13.5px; font-weight:900; }
+.p-newshead__shop a{ color:var(--brand-dark); }
+
+.p-newsimg{ margin:0 0 22px; border-radius:var(--radius); overflow:hidden; }
+.p-newsimg img{ display:block; width:100%; height:auto; }
+
+.p-newsbody{ font-size:15.5px; line-height:2.05; }
+.p-newsbody p{ margin:0 0 1.4em; }
+.p-newsbody h2{
+  margin:2em 0 .8em; font-size:clamp(18px,4.2vw,22px); font-weight:900; line-height:1.6;
+  padding-left:12px; border-left:5px solid var(--brand);
+}
+.p-newsbody h3{ margin:1.8em 0 .6em; font-size:17px; font-weight:900; }
+.p-newsbody ul,
+.p-newsbody ol{ margin:0 0 1.4em; padding-left:1.4em; }
+.p-newsbody li{ margin-bottom:.5em; }
+.p-newsbody img{ max-width:100%; height:auto; border-radius:12px; }
+.p-newsbody a{ color:var(--brand-dark); font-weight:700; }
+
+.p-newsback{ margin:30px 0 0; text-align:center; }
+.p-newsback a{
+  display:inline-block; text-decoration:none;
+  background:var(--bg-gray); border-radius:999px; padding:11px 26px;
+  font-size:14px; font-weight:900; color:var(--ink);
+}
+.p-newsback a:hover{ background:var(--brand); color:#fff; }
+
+@media (min-width:768px){
+  .p-news__link{ flex-wrap:nowrap; padding:18px 24px; }
+  .p-news__title{ flex-basis:auto; }
+}
