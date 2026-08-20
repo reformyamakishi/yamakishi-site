@@ -81,3 +81,116 @@
   .p-msghero__cap{ padding:80px 30px 24px; }
   .p-msg__links{ grid-template-columns:repeat(2,1fr); }
 }
+
+/* ==========================================================================
+   会社概要（/company/）
+   ========================================================================== */
+
+/* 数字で見るヤマキシ */
+.p-compnum{
+  list-style:none; margin:0 0 34px; padding:0;
+  display:grid; grid-template-columns:repeat(2,1fr); gap:12px;
+}
+.p-compnum li{
+  background:#fff; border:2px solid var(--border); border-radius:var(--radius);
+  padding:18px 12px; text-align:center;
+}
+.p-compnum__n{
+  font-size:clamp(30px,8vw,42px); font-weight:900; color:var(--brand);
+  line-height:1.1; letter-spacing:-.02em;
+}
+.p-compnum__u{ font-size:14px; font-weight:900; margin-left:3px; }
+.p-compnum__t{
+  display:block; margin-top:6px; font-size:12px; font-weight:800; color:var(--ink-sub);
+  line-height:1.6;
+}
+
+.p-comp__lead{ font-size:16px; line-height:2.05; }
+.p-comp__lead b{ font-weight:900; color:var(--brand-dark); }
+
+/* 会社概要の表 */
+.p-comp__table{ width:100%; border-collapse:collapse; background:#fff;
+  border-radius:var(--radius); overflow:hidden; }
+.p-comp__table th,
+.p-comp__table td{
+  padding:14px 16px; border-bottom:1px solid var(--border);
+  text-align:left; font-size:15px; line-height:1.85; vertical-align:top;
+}
+.p-comp__table th{
+  width:34%; font-weight:900; color:var(--ink-sub); background:var(--bg-gray);
+  white-space:nowrap;
+}
+.p-comp__table tr:last-child th,
+.p-comp__table tr:last-child td{ border-bottom:0; }
+.p-comp__todo{
+  display:inline-block; margin-left:8px; font-size:12px; color:var(--ink-light);
+}
+.p-comp__note{ margin-top:14px; font-size:13px; line-height:1.9; color:var(--ink-sub); }
+
+/* 店舗 */
+.p-compshop{ display:grid; gap:14px; }
+.p-compshop__group{
+  background:#fff; border:2px solid var(--border); border-radius:var(--radius); padding:16px 18px;
+}
+.p-compshop__pref{
+  margin:0 0 10px; font-size:16px; font-weight:900; color:var(--brand-dark);
+}
+.p-compshop__pref span{ font-size:12.5px; font-weight:900; color:var(--ink-light); }
+.p-compshop__list{
+  list-style:none; margin:0; padding:0; display:flex; flex-wrap:wrap; gap:6px 8px;
+}
+.p-compshop__list li{
+  background:var(--brand-tint); border-radius:999px; padding:5px 13px;
+  font-size:13.5px; font-weight:900;
+}
+
+/* 沿革の上に置く、むかしの写真 */
+.p-comphist__old{
+  margin:0 auto 34px; max-width:340px; text-align:center;
+}
+.p-comphist__old picture{ display:block; }
+.p-comphist__old img{
+  width:100%; height:auto; display:block;
+  border-radius:var(--radius); border:6px solid #fff;
+  box-shadow:0 8px 24px rgba(43,35,32,.16);
+}
+.p-comphist__old figcaption{
+  margin-top:12px; font-size:13px; line-height:1.85; color:var(--ink-sub);
+}
+
+/* 沿革 */
+.p-comphist{ list-style:none; margin:0; padding:0; position:relative; }
+.p-comphist::before{
+  content:""; position:absolute; left:6px; top:8px; bottom:8px;
+  width:2px; background:var(--border);
+}
+.p-comphist li{
+  position:relative; padding:0 0 22px 26px; margin:0;
+}
+.p-comphist li::before{
+  content:""; position:absolute; left:0; top:7px;
+  width:14px; height:14px; border-radius:50%;
+  background:#fff; border:3px solid var(--border);
+}
+.p-comphist li.is-reform::before{ border-color:var(--brand); background:var(--brand); }
+.p-comphist__y{
+  display:block; font-size:14px; font-weight:900; color:var(--ink-light); letter-spacing:.04em;
+}
+.p-comphist li.is-reform .p-comphist__y{ color:var(--brand); }
+.p-comphist__t{
+  display:block; margin-top:3px; font-size:15px; line-height:1.85;
+}
+.p-comphist__t b{ font-weight:900; color:var(--brand-dark); }
+
+@media (min-width:768px){
+  .p-compnum{ grid-template-columns:repeat(4,1fr); }
+  .p-compshop{ grid-template-columns:repeat(2,1fr); align-items:start; }
+  .p-comp__table th{ width:26%; }
+  .p-comphist li{ padding-left:120px; }
+  .p-comphist::before{ left:82px; }
+  .p-comphist li::before{ left:76px; }
+  .p-comphist__y{
+    position:absolute; left:0; top:5px; width:70px; text-align:right; font-size:15px;
+  }
+  .p-comphist__t{ margin-top:0; }
+}
