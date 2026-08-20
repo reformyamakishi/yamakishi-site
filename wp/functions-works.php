@@ -107,7 +107,7 @@ function ymkrf_works_parts_master() {
 		'boiler'     => array( '給湯器',              '給湯器交換の事例' ),
 		'oiltank'    => array( 'オイルタンク',        'オイルタンク工事の事例' ),
 		'ecocute'    => array( 'エコキュート',        'エコキュート交換の事例' ),
-		'ih'         => array( 'IH',                  'IHクッキングヒーター交換の事例' ),
+		'ih'         => array( 'IH・ガスコンロ',       'IH・ガスコンロ交換の事例' ),
 		'interior'   => array( '内装・クロス・床',    '内装リフォーム事例' ),
 		'renovation' => array( '内装・改装',          '内装・改装の事例' ),
 		'window'     => array( '窓・断熱',            '窓・断熱リフォーム事例' ),
@@ -140,7 +140,7 @@ function ymkrf_works_part_title_word( $name ) {
 /* 足りない項目を作り、名前が変わったものは付けかえます
    （数字を上げると、もう一度だけ走ります） */
 add_action( 'admin_init', function () {
-	if ( get_option( 'ymkrf_works_cat_ver' ) === '3' ) return;
+	if ( get_option( 'ymkrf_works_cat_ver' ) === '4' ) return;
 	if ( ! taxonomy_exists( 'ymkrf_works_cat' ) ) return;
 
 	foreach ( ymkrf_works_parts_names() as $slug => $name ) {
@@ -163,7 +163,7 @@ add_action( 'admin_init', function () {
 		}
 	}
 
-	update_option( 'ymkrf_works_cat_ver', '3' );
+	update_option( 'ymkrf_works_cat_ver', '4' );
 } );
 
 /** 箇所の項目を、決めた順に並べて返します */

@@ -28,7 +28,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '1.4.9' );   // ファイル更新時はここを上げるとキャッシュが切れます
+if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '1.5.5' );   // ファイル更新時はここを上げるとキャッシュが切れます
 
 /* ============================================================
    1. CSS / JS の読み込み
@@ -53,7 +53,8 @@ add_action( 'wp_enqueue_scripts', function () {
 	/* 4点パック・こだわりのページは、WordPressから見ると「指定のないページ」なので
 	   そのままではトップページ扱いになってしまいます。ここで除きます。 */
 	$is_special = ( function_exists( 'ymkrf_is_pack4' ) && ymkrf_is_pack4() )
-	           || ( function_exists( 'ymkrf_is_about' ) && ymkrf_is_about() );
+	           || ( function_exists( 'ymkrf_is_about' ) && ymkrf_is_about() )
+	           || ( function_exists( 'ymkrf_is_message' ) && ymkrf_is_message() );
 	$is_top = is_front_page() && ! $is_special;
 
 	if ( $is_top ) {
@@ -66,6 +67,12 @@ add_action( 'wp_enqueue_scripts', function () {
 	/* こだわりページだけ、専用のCSSを1枚足します */
 	if ( function_exists( 'ymkrf_is_about' ) && ymkrf_is_about() ) {
 		wp_enqueue_style( 'ymkrf-lp', $dir . '/assets/css/lp.css', array( 'ymkrf-page' ), YMKRF_VER );
+	}
+
+	/* 代表挨拶のページ（CTAの見た目は lp.css を使っています） */
+	if ( function_exists( 'ymkrf_is_message' ) && ymkrf_is_message() ) {
+		wp_enqueue_style( 'ymkrf-lp', $dir . '/assets/css/lp.css', array( 'ymkrf-page' ), YMKRF_VER );
+		wp_enqueue_style( 'ymkrf-company', $dir . '/assets/css/company.css', array( 'ymkrf-lp' ), YMKRF_VER );
 	}
 
 	/* お客様の声のページ */
@@ -158,6 +165,54 @@ add_action( 'template_redirect', function () {
 		exit;
 	}
 } );
+
+
+/* ============================================================
+   1-3. 代表挨拶ページ（/message/）のURL
+        こだわりページ（1-2）とまったく同じやり方です。
+   ============================================================ */
+add_action( 'init', function () {
+	add_rewrite_rule( '^message/?$', 'index.php?ymkrf_message=1', 'top' );
+}, 20 );
+
+add_filter( 'query_vars', function ( $vars ) {
+	$vars[] = 'ymkrf_message';
+	return $vars;
+} );
+
+add_filter( 'template_include', function ( $tpl ) {
+	if ( ! get_query_var( 'ymkrf_message' ) ) return $tpl;
+	$found = locate_template( 'ymkrf-message.php' );
+	return $found ? $found : $tpl;
+} );
+
+add_action( 'wp', function () {
+	if ( ! get_query_var( 'ymkrf_message' ) ) return;
+	global $wp_query;
+	$wp_query->is_404        = false;
+	$wp_query->is_home       = false;
+	$wp_query->is_front_page = false;
+	$wp_query->is_page       = false;
+	$wp_query->is_singular   = false;
+	$wp_query->is_archive    = false;
+	$wp_query->is_post_type_archive = false;
+	status_header( 200 );
+} );
+
+add_filter( 'document_title_parts', function ( $parts ) {
+	if ( get_query_var( 'ymkrf_message' ) ) {
+		$parts['title'] = '代表挨拶｜株式会社山岸 代表取締役 山岸信治';
+		unset( $parts['tagline'] );
+	}
+	return $parts;
+} );
+
+/* 代表挨拶ページかどうか。CSSの読み分けなどで使います。 */
+if ( ! function_exists( 'ymkrf_is_message' ) ) :
+function ymkrf_is_message() {
+	return (bool) get_query_var( 'ymkrf_message' );
+}
+endif;
 
 /* defer 属性を付けて描画をブロックしないようにする */
 add_filter( 'script_loader_tag', function ( $tag, $handle ) {

@@ -237,10 +237,12 @@ add_action( 'init', function () {
 	   9 … お客様の声のURLを /voice/工事箇所/案件番号/ に変えたため
 	   10 … 工事箇所ごとの一覧（/voice/oiltank/）の作りを直したため
 	   11 … 地域ごとの一覧（/voice/area/kanazawa/）を足したため
-	   12 … 施工事例のURLを /works/部位/案件番号/ に変えたため */
-	if ( get_option( 'ymkrf_rewrite_ver' ) === '13' ) return;
+	   12 … 施工事例のURLを /works/部位/案件番号/ に変えたため
+	   13 … スタッフ（/staff/）を足したため
+	   14 … 代表挨拶ページ（/message/）を足したため */
+	if ( get_option( 'ymkrf_rewrite_ver' ) === '14' ) return;
 	flush_rewrite_rules( false );
-	update_option( 'ymkrf_rewrite_ver', '13' );
+	update_option( 'ymkrf_rewrite_ver', '14' );
 }, 99 );
 
 

@@ -1,0 +1,83 @@
+@charset "UTF-8";
+/* ==========================================================================
+   company.css ─ 代表挨拶（/message/）・会社概要まわり
+   page.css のあとに読み込みます。
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   代表の写真
+   -------------------------------------------------------------------------- */
+.p-msghero{ margin-top:-18px; }
+.p-msghero__fig{
+  margin:0; position:relative;
+  border-radius:var(--radius-lg); overflow:hidden;
+  box-shadow:0 10px 30px rgba(43,35,32,.10);
+}
+.p-msghero__fig img{ width:100%; height:auto; display:block; }
+
+/* 写真の下のほうに、うっすら黒を重ねて名前を読みやすくします */
+.p-msghero__cap{
+  position:absolute; left:0; right:0; bottom:0;
+  padding:56px 22px 18px;
+  background:linear-gradient(to top, rgba(20,16,14,.72), rgba(20,16,14,0));
+  color:#fff; text-align:right;
+}
+.p-msghero__role{
+  display:block; font-size:12.5px; font-weight:900; letter-spacing:.08em; opacity:.9;
+}
+.p-msghero__name{
+  display:block; margin-top:3px;
+  font-size:clamp(19px,4.4vw,26px); font-weight:900; letter-spacing:.06em;
+}
+
+/* --------------------------------------------------------------------------
+   本文
+   -------------------------------------------------------------------------- */
+.p-msg{ font-size:16.5px; line-height:2.05; }
+.p-msg p{ margin:0 0 1.5em; }
+.p-msg b{ font-weight:900; color:var(--brand-dark); }
+
+.p-msg__lead{
+  font-size:clamp(18px,4.4vw,22px); font-weight:900; line-height:1.85;
+  margin-bottom:1.6em !important;
+}
+
+.p-msg__h2{
+  margin:38px 0 16px; font-size:clamp(18px,4.4vw,21px); font-weight:900;
+  padding-left:14px; border-left:5px solid var(--brand); line-height:1.55;
+}
+
+/* 署名 */
+.p-msg__sign{
+  margin-top:38px !important; padding-top:24px;
+  border-top:1px dashed var(--border);
+  text-align:right; line-height:1.6;
+}
+.p-msg__signco{ display:block; font-size:14px; font-weight:900; color:var(--ink-sub); }
+.p-msg__signrole{ display:block; margin-top:4px; font-size:13px; font-weight:900; color:var(--ink-sub); }
+.p-msg__signname{
+  display:block; margin-top:6px;
+  font-size:clamp(21px,5vw,26px); font-weight:900; letter-spacing:.08em;
+}
+
+/* --------------------------------------------------------------------------
+   下のリンク
+   -------------------------------------------------------------------------- */
+.p-msg__links{ display:grid; gap:12px; margin-top:38px; }
+.p-msg__link{
+  display:block; text-decoration:none; color:inherit;
+  background:#fff; border:2px solid var(--border); border-radius:var(--radius);
+  padding:16px 44px 16px 18px; position:relative;
+}
+.p-msg__link:hover{ border-color:var(--brand); }
+.p-msg__link::after{
+  content:"›"; position:absolute; right:18px; top:50%; transform:translateY(-50%);
+  font-size:22px; font-weight:900; color:var(--brand);
+}
+.p-msg__linkttl{ display:block; font-size:16.5px; font-weight:900; }
+.p-msg__linktxt{ display:block; margin-top:4px; font-size:13.5px; color:var(--ink-sub); line-height:1.7; }
+
+@media (min-width:768px){
+  .p-msghero__cap{ padding:80px 30px 24px; }
+  .p-msg__links{ grid-template-columns:repeat(2,1fr); }
+}

@@ -214,6 +214,193 @@
 }
 
 /* --------------------------------------------------------------------------
+   営業・施工体制（分離発注システム）
+   -------------------------------------------------------------------------- */
+.p-lpsys__lead{
+  max-width:900px; margin:0 auto 40px;
+  font-size:16px; line-height:2;
+}
+.p-lpsys__lead p{ margin:0 0 1.2em; }
+.p-lpsys__lead p:last-child{ margin-bottom:0; }
+.p-lpsys__lead b{ font-weight:900; color:var(--brand-dark); }
+
+.p-lpsys__h3{
+  max-width:900px; margin:0 auto 12px;
+  font-size:clamp(18px,4.4vw,22px); font-weight:900;
+  padding-left:14px; border-left:5px solid var(--brand);
+}
+.p-lpsys__note{
+  max-width:900px; margin:0 auto 26px;
+  font-size:15.5px; line-height:2; color:var(--ink-sub);
+}
+.p-lpsys__note b{ font-weight:900; color:var(--brand-dark); }
+
+.p-lpsys{ display:grid; gap:18px; max-width:900px; margin-inline:auto; }
+.p-lpsys__card{
+  background:#fff; border:2px solid var(--border); border-radius:var(--radius-lg);
+  padding:22px 18px 20px;
+}
+.p-lpsys__card--ymk{ border-color:var(--brand); background:var(--brand-tint); }
+
+.p-lpsys__ttl{
+  margin:0 0 16px; text-align:center;
+  font-size:15.5px; font-weight:900; letter-spacing:.04em; color:var(--ink-sub);
+}
+.p-lpsys__card--ymk .p-lpsys__ttl{ color:var(--brand-dark); }
+
+/* 上から下へ流れる図。矢印はCSSの三角形で描いています */
+.p-lpsys__flow{ list-style:none; margin:0; padding:0; display:grid; gap:22px; }
+.p-lpsys__step{
+  position:relative; text-align:center;
+  background:var(--bg-gray); color:var(--ink);
+  border-radius:12px; padding:12px 12px;
+  font-size:14.5px; font-weight:900; line-height:1.55;
+}
+.p-lpsys__step small{ display:block; margin-top:3px; font-size:11.5px; font-weight:800; opacity:.85; }
+/* 下向きの矢印 */
+.p-lpsys__step + .p-lpsys__step::before{
+  content:""; position:absolute; left:50%; top:-17px; transform:translateX(-50%);
+  border-left:9px solid transparent; border-right:9px solid transparent;
+  border-top:12px solid var(--border);
+}
+.p-lpsys__card--ymk .p-lpsys__step{ background:#fff; border:2px solid var(--brand-tint2); }
+.p-lpsys__card--ymk .p-lpsys__step + .p-lpsys__step::before{ border-top-color:var(--brand); }
+/* ヤマキシ本体（＝営業担当が現場も管理） */
+.p-lpsys__step--me{
+  background:var(--brand) !important; border-color:var(--brand) !important; color:#fff;
+  font-size:16px;
+}
+/* 下請け工務店（ここでコストと伝わりにくさが増えます） */
+.p-lpsys__step--sub{ background:#6b5f59; color:#fff; }
+
+.p-lpsys__res{
+  margin:18px 0 0; padding-top:16px; border-top:1px dashed var(--border);
+  font-size:14.5px; line-height:1.95; color:var(--ink-sub);
+}
+.p-lpsys__res b{ font-weight:900; color:var(--ink); }
+.p-lpsys__res--good b{ color:var(--brand-dark); }
+
+/* --------------------------------------------------------------------------
+   パック価格のしくみ（商品代 ＋ 標準工事費 ＝ パック価格）
+   -------------------------------------------------------------------------- */
+.p-lpprice{
+  max-width:900px; margin:26px auto 0;
+  background:#fff; border:2px solid var(--brand); border-radius:var(--radius-lg);
+  padding:22px 18px 20px;
+}
+.p-lpprice__ttl{
+  margin:0 0 16px; text-align:center;
+  font-size:15.5px; font-weight:900; color:var(--brand-dark); letter-spacing:.04em;
+}
+.p-lpprice__calc{
+  display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:8px 10px;
+}
+.p-lpprice__item{
+  display:inline-flex; align-items:baseline; justify-content:center;
+  background:var(--bg-gray); border-radius:12px; padding:12px 16px;
+  font-size:15px; font-weight:900; line-height:1.5; white-space:nowrap;
+}
+.p-lpprice__item small{ font-size:11.5px; font-weight:800; margin-left:2px; }
+.p-lpprice__item--sum{
+  background:var(--brand); color:#fff; font-size:17px; padding:14px 20px;
+}
+.p-lpprice__op{ font-size:19px; font-weight:900; color:var(--brand); }
+.p-lpprice__note{
+  margin:16px 0 0; padding-top:14px; border-top:1px dashed var(--border);
+  font-size:14px; line-height:1.95; color:var(--ink-sub);
+}
+.p-lpprice__note b{ font-weight:900; color:var(--ink); }
+
+/* --------------------------------------------------------------------------
+   節の終わりの「次に見る」リンク
+   -------------------------------------------------------------------------- */
+.p-lpnext{ max-width:900px; margin:28px auto 0; }
+.p-lpnext__link{
+  display:block; position:relative; text-decoration:none; color:inherit;
+  background:#fff; border:2px solid var(--border); border-radius:var(--radius);
+  padding:16px 46px 16px 18px;
+}
+.p-lpnext__link:hover{ border-color:var(--brand); background:var(--brand-tint); }
+.p-lpnext__link::after{
+  content:"›"; position:absolute; right:18px; top:50%; transform:translateY(-50%);
+  font-size:24px; font-weight:900; color:var(--brand);
+}
+.p-lpnext__ttl{ display:block; font-size:16px; font-weight:900; color:var(--brand-dark); }
+.p-lpnext__txt{ display:block; margin-top:4px; font-size:13.5px; line-height:1.75; color:var(--ink-sub); }
+
+/* --------------------------------------------------------------------------
+   いちばん下の、関連ページ
+   -------------------------------------------------------------------------- */
+.p-lprel__h2{
+  text-align:center; font-size:clamp(18px,4.4vw,21px); font-weight:900; margin:0 0 20px;
+}
+.p-lprel{ list-style:none; margin:0; padding:0; display:grid; gap:10px; }
+.p-lprel li{
+  background:#fff; border:2px solid var(--border); border-radius:var(--radius);
+  padding:14px 16px;
+}
+.p-lprel li:hover{ border-color:var(--brand); }
+.p-lprel a{
+  display:block; font-size:16px; font-weight:900;
+  color:var(--brand-dark); text-decoration:none;
+}
+.p-lprel a::after{ content:" ›"; }
+.p-lprel span{ display:block; margin-top:3px; font-size:13px; color:var(--ink-sub); line-height:1.7; }
+
+/* --------------------------------------------------------------------------
+   本物の写真
+   -------------------------------------------------------------------------- */
+.p-lpphoto{ margin:30px auto 0; max-width:1100px; }
+.p-lpphoto--narrow{ max-width:900px; }
+.p-lpphoto picture{ display:block; }
+.p-lpphoto img{
+  width:100%; height:auto; display:block;
+  border-radius:var(--radius-lg); box-shadow:0 8px 24px rgba(43,35,32,.10);
+}
+.p-lpphoto figcaption{
+  margin-top:10px; font-size:13px; line-height:1.85; color:var(--ink-light);
+  text-align:center;
+}
+
+/* 自社の職人の写真（小さく並べます） */
+.p-lppros__ttl{
+  max-width:900px; margin:34px auto 12px; text-align:center;
+  font-size:15.5px; font-weight:900; color:var(--brand-dark); letter-spacing:.03em;
+}
+.p-lppros{
+  list-style:none; margin:0 auto; padding:0; max-width:900px;
+  display:grid; grid-template-columns:repeat(3,1fr); gap:8px;
+}
+.p-lppros li{ margin:0; }
+.p-lppros img{
+  width:100%; height:auto; display:block; aspect-ratio:1/1; object-fit:cover;
+  border-radius:12px;
+}
+.p-lppros__note{
+  max-width:900px; margin:12px auto 0; text-align:center;
+  font-size:13px; line-height:1.85; color:var(--ink-light);
+}
+
+/* 工期の下に並べる、仕上がりの写真 */
+.p-lpfin__ttl{
+  margin:30px 0 12px; text-align:center;
+  font-size:15.5px; font-weight:900; color:var(--brand-dark); letter-spacing:.03em;
+}
+.p-lpfin{
+  list-style:none; margin:0 auto; padding:0; max-width:900px;
+  display:grid; grid-template-columns:repeat(3,1fr); gap:10px;
+}
+.p-lpfin li{ margin:0; }
+.p-lpfin img{
+  width:100%; height:auto; display:block; aspect-ratio:3/2; object-fit:cover;
+  border-radius:12px;
+}
+.p-lpfin span{
+  display:block; margin-top:6px; text-align:center;
+  font-size:12.5px; font-weight:900; color:var(--ink-sub);
+}
+
+/* --------------------------------------------------------------------------
    画面が広いとき
    -------------------------------------------------------------------------- */
 @media (min-width:768px){
@@ -228,6 +415,14 @@
   .p-lp3{ grid-template-columns:repeat(3,1fr); align-items:start; gap:24px; }
   .p-lp3__card{ padding:30px 24px 24px; }
   .p-lpfield{ grid-template-columns:repeat(3,1fr); }
+  .p-lpsys{ grid-template-columns:repeat(2,1fr); align-items:start; gap:24px; }
+  .p-lpsys__card{ padding:26px 24px 22px; }
+  .p-lpprice{ padding:28px 30px 24px; }
+  .p-lpprice__item{ font-size:17px; padding:14px 22px; }
+  .p-lpprice__item--sum{ font-size:20px; padding:16px 26px; }
+  .p-lprel{ grid-template-columns:repeat(3,1fr); }
+  .p-lppros{ grid-template-columns:repeat(6,1fr); gap:10px; }
+  .p-lpphoto{ margin-top:36px; }
 }
 @media (min-width:1024px){
   .p-lpcommit{ grid-template-columns:repeat(3,1fr); }
