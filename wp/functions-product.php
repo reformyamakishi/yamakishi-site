@@ -239,10 +239,11 @@ add_action( 'init', function () {
 	   11 … 地域ごとの一覧（/voice/area/kanazawa/）を足したため
 	   12 … 施工事例のURLを /works/部位/案件番号/ に変えたため
 	   13 … スタッフ（/staff/）を足したため
-	   14 … 代表挨拶ページ（/message/）を足したため */
-	if ( get_option( 'ymkrf_rewrite_ver' ) === '14' ) return;
+	   14 … 代表挨拶ページ（/message/）を足したため
+	   15 … 会社概要ページ（/company/）を足したため */
+	if ( get_option( 'ymkrf_rewrite_ver' ) === '17' ) return;
 	flush_rewrite_rules( false );
-	update_option( 'ymkrf_rewrite_ver', '14' );
+	update_option( 'ymkrf_rewrite_ver', '17' );
 }, 99 );
 
 

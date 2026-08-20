@@ -423,7 +423,7 @@ get_header();
 </section>
 
 <!-- =========== 工期の目安 =========== -->
-<section class="l-section l-section--soft">
+<section class="l-section l-section--soft" id="speed">
   <div class="l-wrap">
     <div class="c-head">
       <span class="c-head__en">SPEED</span>
@@ -543,6 +543,13 @@ get_header();
         <small>※工事保証の期間は5年間です。</small>
       </div>
     </div>
+
+    <p class="p-lpnext">
+      <a class="p-lpnext__link" href="<?php echo esc_url( home_url( '/warranty/' ) ); ?>">
+        <span class="p-lpnext__ttl">保証について、くわしく見る</span>
+        <span class="p-lpnext__txt">保証書の見本、延長保証の期間と金額の考え方までのせています</span>
+      </a>
+    </p>
   </div>
 </section>
 

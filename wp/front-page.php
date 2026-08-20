@@ -789,7 +789,7 @@ get_header();
         <span><span class="p-shop__name">金沢田上店</span><span class="p-shop__info">石川県金沢市／10:00〜17:00</span></span><span class="p-shop__arrow">›</span></a></li>
       <li><a class="p-shop p-shop--soon" href="<?php echo esc_url( home_url( '/shops/higashikanazawa/' ) ); ?>">
         <svg class="p-shop__pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
-        <span><span class="p-shop__name">東金沢店<span class="p-shop__badge">10月24日（土）オープン</span></span><span class="p-shop__info">石川県金沢市大樋町</span></span><span class="p-shop__arrow">›</span></a></li>
+        <span><span class="p-shop__name">東金沢店<span class="p-shop__badge">10月31日（土）オープン</span></span><span class="p-shop__info">石川県金沢市大樋町</span></span><span class="p-shop__arrow">›</span></a></li>
     </ul>
 
     <ul class="p-shops__list" data-shoplist="fukui" hidden>

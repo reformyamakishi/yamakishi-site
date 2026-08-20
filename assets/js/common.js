@@ -245,6 +245,27 @@
       window.scrollTo({ top: top, behavior: reduceMotion ? 'auto' : 'smooth' });
       history.replaceState(null, '', id);
     });
+
+    /* 別のページから #○○ 付きで来たとき。
+       写真の読み込みやスクロール演出で高さが変わるので、
+       いったん落ち着いてからもう一度きちんと合わせます。
+       （例：フッターの「施工体制」→ /about/#system） */
+    if (location.hash && location.hash.length > 1) {
+      var goHash = function () {
+        var target;
+        try { target = document.querySelector(location.hash); } catch (err) { return; }
+        if (!target) return;
+        var h = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-h'), 10) || 72;
+        /* 'auto' だとCSSの scroll-behavior:smooth が効いてしまい、
+           続けて呼んだときに打ち消し合うので 'instant' にします */
+        window.scrollTo({ top: target.getBoundingClientRect().top + window.scrollY - h - 12, behavior: 'instant' });
+      };
+      window.addEventListener('load', function () {
+        goHash();
+        setTimeout(goHash, 200);
+        setTimeout(goHash, 600);
+      });
+    }
   }
 
   /* ------------------------------------------------------------------

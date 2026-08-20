@@ -1,0 +1,55 @@
+@charset "UTF-8";
+/* ==========================================================================
+   flow.css ─ リフォームの流れ（/flow/）
+   page.css のあとに読み込みます。
+   ========================================================================== */
+
+/* 3つのまとまりの見出し */
+.p-flow__group{
+  display:flex; align-items:center; gap:12px;
+  margin:0 0 18px; padding-top:6px;
+}
+.p-flow__group:not(:first-child){ margin-top:46px; }
+.p-flow__chara{
+  flex:0 0 auto; width:auto; height:clamp(56px,13vw,74px); display:block;
+}
+.p-flow__grouptitle{
+  margin:0; font-size:clamp(17px,4.4vw,21px); font-weight:900; line-height:1.5;
+}
+
+/* 9つのステップ */
+.p-flow{ list-style:none; margin:0; padding:0; position:relative; }
+.p-flow__item{
+  position:relative; display:grid; grid-template-columns:46px 1fr; gap:14px;
+  padding-bottom:22px; margin:0;
+}
+/* 番号どうしを線でつなぎます */
+.p-flow__item:not(:last-child)::before{
+  content:""; position:absolute; left:22px; top:46px; bottom:0;
+  width:2px; background:var(--brand-tint2);
+}
+.p-flow__no{
+  position:relative; z-index:1;
+  width:46px; height:46px; border-radius:50%;
+  background:var(--brand); color:#fff;
+  font-size:21px; font-weight:900; line-height:46px; text-align:center;
+}
+.p-flow__body{
+  background:#fff; border:2px solid var(--border); border-radius:var(--radius);
+  padding:16px 18px;
+}
+.p-flow__ttl{ margin:0 0 8px; font-size:18px; font-weight:900; }
+.p-flow__txt{ margin:0; font-size:15.5px; line-height:1.95; }
+.p-flow__note{
+  margin:10px 0 0 !important; padding-top:10px;
+  border-top:1px dashed var(--border);
+  font-size:13.5px; line-height:1.85; color:var(--brand-dark); font-weight:800;
+}
+
+@media (min-width:768px){
+  .p-flow__item{ grid-template-columns:56px 1fr; gap:20px; padding-bottom:26px; }
+  .p-flow__no{ width:56px; height:56px; line-height:56px; font-size:25px; }
+  .p-flow__item:not(:last-child)::before{ left:27px; top:56px; }
+  .p-flow__body{ padding:20px 24px; }
+  .p-flow__ttl{ font-size:20px; }
+}

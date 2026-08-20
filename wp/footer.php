@@ -30,7 +30,7 @@ $home  = home_url( '/' );
         <ul>
           <li><a href="<?php echo esc_url( $home . 'company/' ); ?>">会社概要</a></li>
           <li><a href="<?php echo esc_url( $home . 'about/' ); ?>">こだわり・特徴</a></li>
-          <li><a href="<?php echo esc_url( $home . 'system/' ); ?>">施工体制</a></li>
+          <li><a href="<?php echo esc_url( $home . 'about/' ); ?>#system">施工体制</a></li>
           <li><a href="<?php echo esc_url( $home . 'warranty/' ); ?>">保証について</a></li>
           <li><a href="<?php echo esc_url( $home . 'staff/' ); ?>">スタッフ紹介</a></li>
           <li><a href="<?php echo esc_url( $home . 'message/' ); ?>">代表あいさつ</a></li>

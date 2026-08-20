@@ -28,7 +28,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '1.5.5' );   // ファイル更新時はここを上げるとキャッシュが切れます
+if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '1.7.1' );   // ファイル更新時はここを上げるとキャッシュが切れます
 
 /* ============================================================
    1. CSS / JS の読み込み
@@ -54,7 +54,10 @@ add_action( 'wp_enqueue_scripts', function () {
 	   そのままではトップページ扱いになってしまいます。ここで除きます。 */
 	$is_special = ( function_exists( 'ymkrf_is_pack4' ) && ymkrf_is_pack4() )
 	           || ( function_exists( 'ymkrf_is_about' ) && ymkrf_is_about() )
-	           || ( function_exists( 'ymkrf_is_message' ) && ymkrf_is_message() );
+	           || ( function_exists( 'ymkrf_is_message' ) && ymkrf_is_message() )
+	           || ( function_exists( 'ymkrf_is_company' ) && ymkrf_is_company() )
+	           || ( function_exists( 'ymkrf_is_warranty' ) && ymkrf_is_warranty() )
+	           || ( function_exists( 'ymkrf_is_flow' ) && ymkrf_is_flow() );
 	$is_top = is_front_page() && ! $is_special;
 
 	if ( $is_top ) {
@@ -69,10 +72,23 @@ add_action( 'wp_enqueue_scripts', function () {
 		wp_enqueue_style( 'ymkrf-lp', $dir . '/assets/css/lp.css', array( 'ymkrf-page' ), YMKRF_VER );
 	}
 
-	/* 代表挨拶のページ（CTAの見た目は lp.css を使っています） */
-	if ( function_exists( 'ymkrf_is_message' ) && ymkrf_is_message() ) {
+	/* 代表挨拶・会社概要のページ（CTAの見た目は lp.css を使っています） */
+	if ( ( function_exists( 'ymkrf_is_message' ) && ymkrf_is_message() )
+	  || ( function_exists( 'ymkrf_is_company' ) && ymkrf_is_company() ) ) {
 		wp_enqueue_style( 'ymkrf-lp', $dir . '/assets/css/lp.css', array( 'ymkrf-page' ), YMKRF_VER );
 		wp_enqueue_style( 'ymkrf-company', $dir . '/assets/css/company.css', array( 'ymkrf-lp' ), YMKRF_VER );
+	}
+
+	/* 保証についてのページ（CTAの見た目は lp.css を使っています） */
+	if ( function_exists( 'ymkrf_is_warranty' ) && ymkrf_is_warranty() ) {
+		wp_enqueue_style( 'ymkrf-lp', $dir . '/assets/css/lp.css', array( 'ymkrf-page' ), YMKRF_VER );
+		wp_enqueue_style( 'ymkrf-warranty', $dir . '/assets/css/warranty.css', array( 'ymkrf-lp' ), YMKRF_VER );
+	}
+
+	/* リフォームの流れのページ（CTAの見た目は lp.css を使っています） */
+	if ( function_exists( 'ymkrf_is_flow' ) && ymkrf_is_flow() ) {
+		wp_enqueue_style( 'ymkrf-lp', $dir . '/assets/css/lp.css', array( 'ymkrf-page' ), YMKRF_VER );
+		wp_enqueue_style( 'ymkrf-flow', $dir . '/assets/css/flow.css', array( 'ymkrf-lp' ), YMKRF_VER );
 	}
 
 	/* お客様の声のページ */
@@ -132,7 +148,7 @@ add_action( 'wp', function () {
 /* ブラウザのタブに出る題名 */
 add_filter( 'document_title_parts', function ( $parts ) {
 	if ( get_query_var( 'ymkrf_about' ) ) {
-		$parts['title'] = 'ヤマキシのこだわり・特徴｜安い・早い・安心のリフォーム';
+		$parts['title'] = 'ヤマキシのこだわり・特徴と施工体制｜安い・早い・安心のリフォーム';
 		unset( $parts['tagline'] );
 	}
 	return $parts;
@@ -159,7 +175,13 @@ add_action( 'template_redirect', function () {
 		elseif ( strpos( $path, $base . '/' ) === 0 )     $path = substr( $path, strlen( $base ) + 1 );
 	}
 
-	$old = array( 'concept', 'system', 'lp/seikatsu-kaizen' );
+	/* /system/（施工体制）だけは、そのページの中の「営業・施工体制」の節に着地させます */
+	if ( $path === 'system' ) {
+		wp_redirect( home_url( '/about/' ) . '#system', 301 );
+		exit;
+	}
+
+	$old = array( 'concept', 'lp/seikatsu-kaizen' );
 	if ( in_array( $path, $old, true ) ) {
 		wp_redirect( home_url( '/about/' ), 301 );
 		exit;
@@ -211,6 +233,150 @@ add_filter( 'document_title_parts', function ( $parts ) {
 if ( ! function_exists( 'ymkrf_is_message' ) ) :
 function ymkrf_is_message() {
 	return (bool) get_query_var( 'ymkrf_message' );
+}
+endif;
+
+
+/* ============================================================
+   1-4. 会社概要ページ（/company/）のURL
+        こだわりページ（1-2）とまったく同じやり方です。
+   ============================================================ */
+add_action( 'init', function () {
+	add_rewrite_rule( '^company/?$', 'index.php?ymkrf_company=1', 'top' );
+}, 20 );
+
+add_filter( 'query_vars', function ( $vars ) {
+	$vars[] = 'ymkrf_company';
+	return $vars;
+} );
+
+add_filter( 'template_include', function ( $tpl ) {
+	if ( ! get_query_var( 'ymkrf_company' ) ) return $tpl;
+	$found = locate_template( 'ymkrf-company.php' );
+	return $found ? $found : $tpl;
+} );
+
+add_action( 'wp', function () {
+	if ( ! get_query_var( 'ymkrf_company' ) ) return;
+	global $wp_query;
+	$wp_query->is_404        = false;
+	$wp_query->is_home       = false;
+	$wp_query->is_front_page = false;
+	$wp_query->is_page       = false;
+	$wp_query->is_singular   = false;
+	$wp_query->is_archive    = false;
+	$wp_query->is_post_type_archive = false;
+	status_header( 200 );
+} );
+
+add_filter( 'document_title_parts', function ( $parts ) {
+	if ( get_query_var( 'ymkrf_company' ) ) {
+		$parts['title'] = '会社概要｜株式会社山岸（リフォームヤマキシ）';
+		unset( $parts['tagline'] );
+	}
+	return $parts;
+} );
+
+/* 会社概要ページかどうか。CSSの読み分けなどで使います。 */
+if ( ! function_exists( 'ymkrf_is_company' ) ) :
+function ymkrf_is_company() {
+	return (bool) get_query_var( 'ymkrf_company' );
+}
+endif;
+
+
+/* ============================================================
+   1-5. 保証についてのページ（/warranty/）のURL
+        こだわりページ（1-2）とまったく同じやり方です。
+   ============================================================ */
+add_action( 'init', function () {
+	add_rewrite_rule( '^warranty/?$', 'index.php?ymkrf_warranty=1', 'top' );
+}, 20 );
+
+add_filter( 'query_vars', function ( $vars ) {
+	$vars[] = 'ymkrf_warranty';
+	return $vars;
+} );
+
+add_filter( 'template_include', function ( $tpl ) {
+	if ( ! get_query_var( 'ymkrf_warranty' ) ) return $tpl;
+	$found = locate_template( 'ymkrf-warranty.php' );
+	return $found ? $found : $tpl;
+} );
+
+add_action( 'wp', function () {
+	if ( ! get_query_var( 'ymkrf_warranty' ) ) return;
+	global $wp_query;
+	$wp_query->is_404        = false;
+	$wp_query->is_home       = false;
+	$wp_query->is_front_page = false;
+	$wp_query->is_page       = false;
+	$wp_query->is_singular   = false;
+	$wp_query->is_archive    = false;
+	$wp_query->is_post_type_archive = false;
+	status_header( 200 );
+} );
+
+add_filter( 'document_title_parts', function ( $parts ) {
+	if ( get_query_var( 'ymkrf_warranty' ) ) {
+		$parts['title'] = 'リフォームの保証について｜工事保証5年＋メーカー延長保証 最長10年';
+		unset( $parts['tagline'] );
+	}
+	return $parts;
+} );
+
+/* 保証ページかどうか。CSSの読み分けなどで使います。 */
+if ( ! function_exists( 'ymkrf_is_warranty' ) ) :
+function ymkrf_is_warranty() {
+	return (bool) get_query_var( 'ymkrf_warranty' );
+}
+endif;
+
+
+/* ============================================================
+   1-6. リフォームの流れのページ（/flow/）のURL
+        こだわりページ（1-2）とまったく同じやり方です。
+   ============================================================ */
+add_action( 'init', function () {
+	add_rewrite_rule( '^flow/?$', 'index.php?ymkrf_flow=1', 'top' );
+}, 20 );
+
+add_filter( 'query_vars', function ( $vars ) {
+	$vars[] = 'ymkrf_flow';
+	return $vars;
+} );
+
+add_filter( 'template_include', function ( $tpl ) {
+	if ( ! get_query_var( 'ymkrf_flow' ) ) return $tpl;
+	$found = locate_template( 'ymkrf-flow.php' );
+	return $found ? $found : $tpl;
+} );
+
+add_action( 'wp', function () {
+	if ( ! get_query_var( 'ymkrf_flow' ) ) return;
+	global $wp_query;
+	$wp_query->is_404        = false;
+	$wp_query->is_home       = false;
+	$wp_query->is_front_page = false;
+	$wp_query->is_page       = false;
+	$wp_query->is_singular   = false;
+	$wp_query->is_archive    = false;
+	$wp_query->is_post_type_archive = false;
+	status_header( 200 );
+} );
+
+add_filter( 'document_title_parts', function ( $parts ) {
+	if ( get_query_var( 'ymkrf_flow' ) ) {
+		$parts['title'] = 'リフォームの流れ｜ご相談から工事・アフターサポートまで9ステップ';
+		unset( $parts['tagline'] );
+	}
+	return $parts;
+} );
+
+/* 流れのページかどうか。CSSの読み分けなどで使います。 */
+if ( ! function_exists( 'ymkrf_is_flow' ) ) :
+function ymkrf_is_flow() {
+	return (bool) get_query_var( 'ymkrf_flow' );
 }
 endif;
 
