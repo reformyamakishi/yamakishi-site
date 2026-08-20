@@ -1,0 +1,118 @@
+@charset "UTF-8";
+/* ==========================================================================
+   shops.css ─ 店舗・対応エリア（/shops/）
+   page.css のあとに読み込みます。
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   お住まいの市町から探す
+   -------------------------------------------------------------------------- */
+.p-city{ margin-bottom:22px; }
+.p-city__pref{
+  margin:0 0 10px; font-size:16px; font-weight:900; color:var(--brand-dark);
+  padding-left:12px; border-left:5px solid var(--brand);
+}
+.p-city__list{
+  list-style:none; margin:0; padding:0;
+  display:grid; grid-template-columns:repeat(2,1fr); gap:8px;
+}
+.p-city__list a{
+  display:block; text-decoration:none; color:inherit;
+  background:#fff; border:2px solid var(--border); border-radius:var(--radius);
+  padding:11px 14px;
+}
+.p-city__list a:hover{ border-color:var(--brand); background:var(--brand-tint); }
+.p-city__name{ display:block; font-size:15.5px; font-weight:900; }
+.p-city__shop{
+  display:block; margin-top:2px; font-size:12px; color:var(--ink-light); line-height:1.6;
+}
+.p-city__note{
+  margin-top:18px; font-size:14px; line-height:1.95; color:var(--ink-sub);
+}
+
+/* --------------------------------------------------------------------------
+   お店のカード
+   -------------------------------------------------------------------------- */
+.p-shop{
+  background:#fff; border:2px solid var(--border); border-radius:var(--radius-lg);
+  padding:20px 18px; margin-bottom:16px;
+  scroll-margin-top:calc(var(--header-h) + 16px);
+}
+.p-shop:last-child{ margin-bottom:0; }
+.p-shop--soon{ border-style:dashed; background:var(--bg-gray); }
+
+.p-shop__head{
+  display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin-bottom:14px;
+}
+.p-shop__name{ margin:0; font-size:clamp(19px,4.6vw,23px); font-weight:900; }
+.p-shop__badge{
+  display:inline-block; background:var(--brand-tint); color:var(--brand-dark);
+  border-radius:999px; padding:4px 13px; font-size:12.5px; font-weight:900;
+}
+.p-shop__badge--soon{ background:var(--brand); color:#fff; }
+
+.p-shop__table{ width:100%; border-collapse:collapse; }
+.p-shop__table th,
+.p-shop__table td{
+  padding:10px 0; border-bottom:1px dashed var(--border);
+  text-align:left; font-size:15px; line-height:1.8; vertical-align:top;
+}
+.p-shop__table th{
+  width:104px; font-weight:900; color:var(--ink-sub); font-size:13.5px; white-space:nowrap;
+  padding-right:10px;
+}
+.p-shop__table tr:last-child th,
+.p-shop__table tr:last-child td{ border-bottom:0; }
+
+.p-shop__tel{
+  font-size:20px; font-weight:900; color:var(--brand-dark); text-decoration:none;
+  letter-spacing:.02em;
+}
+.p-shop__tel:hover{ text-decoration:underline; }
+.p-shop__map{
+  display:inline-block; margin-left:8px; white-space:nowrap;
+  font-size:13px; font-weight:900; color:var(--brand-dark);
+}
+.p-shop__map::after{ content:" ›"; }
+.p-shop__hnote,
+.p-shop__todo{
+  display:block; font-size:12.5px; color:var(--ink-light); line-height:1.7;
+}
+.p-shop__srnote{
+  margin:12px 0 0; padding:10px 14px; border-radius:10px;
+  background:var(--brand-tint); font-size:13px; line-height:1.85;
+}
+
+.p-shop__links{
+  list-style:none; margin:14px 0 0; padding:0;
+  display:flex; flex-wrap:wrap; gap:8px;
+}
+.p-shop__links a{
+  display:inline-block; text-decoration:none;
+  background:var(--bg-gray); border-radius:999px; padding:7px 15px;
+  font-size:13px; font-weight:900; color:var(--ink);
+}
+.p-shop__links a:hover{ background:var(--brand); color:#fff; }
+
+/* --------------------------------------------------------------------------
+   お店が近いと、こんなに違います
+   -------------------------------------------------------------------------- */
+.p-shopwhy{ display:grid; gap:14px; }
+.p-shopwhy__card{
+  background:#fff; border:2px solid var(--border); border-radius:var(--radius-lg);
+  padding:22px 20px; text-align:center;
+}
+.p-shopwhy__n{ margin:0 !important; line-height:1; color:var(--brand); font-weight:900; }
+.p-shopwhy__n b{ font-size:clamp(40px,10vw,52px); }
+.p-shopwhy__n span{ font-size:17px; margin-left:3px; }
+.p-shopwhy__t{
+  margin:12px 0 8px !important; font-size:16.5px; font-weight:900; line-height:1.6;
+}
+.p-shopwhy__card p{ margin:0; font-size:14.5px; line-height:1.95; color:var(--ink-sub); text-align:left; }
+
+@media (min-width:768px){
+  .p-city__list{ grid-template-columns:repeat(4,1fr); }
+  .p-shop{ padding:26px 28px; }
+  .p-shop__table th{ width:130px; font-size:14px; }
+  .p-shopwhy{ grid-template-columns:repeat(3,1fr); align-items:start; }
+}
