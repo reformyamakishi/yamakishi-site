@@ -877,30 +877,24 @@ get_header();
       <h2 class="c-head__title">お知らせ・イベント情報</h2>
     </div>
 
-    <!-- ▼ ここから WordPress のループ（wp/front-page.php を参照） -->
-    <ul class="p-news" data-reveal>
-      <li class="p-news__item"><a class="p-news__link" href="<?php echo esc_url( home_url( '/news/' ) ); ?>">
-        <time class="p-news__date" datetime="2026-07-11">2026.07.11</time>
-        <span class="p-news__cat">イベント</span>
-        <span class="p-news__title">羽咋店・金沢田上店で大感謝祭を開催します</span>
-      </a></li>
-      <li class="p-news__item"><a class="p-news__link" href="<?php echo esc_url( home_url( '/news/' ) ); ?>">
-        <time class="p-news__date" datetime="2026-06-20">2026.06.20</time>
-        <span class="p-news__cat">補助金</span>
-        <span class="p-news__title">窓リフォーム補助金（最大100万円）2026年度の受付が始まりました</span>
-      </a></li>
-      <li class="p-news__item"><a class="p-news__link" href="<?php echo esc_url( home_url( '/news/' ) ); ?>">
-        <time class="p-news__date" datetime="2026-06-02">2026.06.02</time>
-        <span class="p-news__cat">講座</span>
-        <span class="p-news__title">太陽光・蓄電池 補助金活用講座を小松市民センターで開催</span>
-      </a></li>
-      <li class="p-news__item"><a class="p-news__link" href="<?php echo esc_url( home_url( '/news/' ) ); ?>">
-        <time class="p-news__date" datetime="2026-05-15">2026.05.15</time>
-        <span class="p-news__cat">お知らせ</span>
-        <span class="p-news__title">給湯器の故障が増える季節です。お早めにご相談ください</span>
-      </a></li>
-    </ul>
-    <!-- ▲ ループここまで -->
+    <?php
+    /* お知らせは、ダッシュボードの「お知らせ」から入れた記事を自動で出します。
+       「重要」にチェックを入れたものが、いちばん上に来ます。 */
+    $news = function_exists( 'ymkrf_news_query' ) ? ymkrf_news_query( 4 ) : null;
+    ?>
+    <?php if ( $news && $news->have_posts() ) : ?>
+      <ul class="p-news" data-reveal>
+        <?php while ( $news->have_posts() ) : $news->the_post(); ?>
+          <?php ymkrf_news_row( get_the_ID() ); ?>
+        <?php endwhile; wp_reset_postdata(); ?>
+      </ul>
+    <?php else : ?>
+      <ul class="p-news" data-reveal>
+        <li class="p-news__item"><span class="p-news__link">
+          <span class="p-news__title">お知らせは、いまのところありません。</span>
+        </span></li>
+      </ul>
+    <?php endif; ?>
 
     <a class="c-more" href="<?php echo esc_url( home_url( '/news/' ) ); ?>">お知らせ一覧へ</a>
   </div>

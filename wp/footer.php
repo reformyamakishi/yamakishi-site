@@ -46,8 +46,9 @@ $home  = home_url( '/' );
           <li><a href="<?php echo esc_url( get_post_type_archive_link( 'voice' ) ); ?>">お客様の声</a></li>
           <li><a href="<?php echo esc_url( $home . 'shops/' ); ?>">店舗・対応エリア</a></li>
           <li><a href="<?php echo esc_url( $home . 'flow/' ); ?>">リフォームの流れ</a></li>
+          <li><a href="<?php echo esc_url( $home . 'news/' ); ?>">お知らせ</a></li>
           <li><a href="<?php echo esc_url( $home . 'flyer/' ); ?>">イベント・チラシ</a></li>
-          <li><a href="<?php echo esc_url( $home . 'blog/' ); ?>">スタッフブログ</a></li>
+          <li><a href="<?php echo esc_url( $home . 'column/' ); ?>">コラム・お役立ち情報</a></li>
           <li><a href="<?php echo esc_url( $home . 'faq/' ); ?>">よくあるご質問</a></li>
         </ul>
       </div>

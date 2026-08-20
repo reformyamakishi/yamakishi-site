@@ -1276,3 +1276,32 @@ a.p-pack__item:hover{ border-color:var(--brand); transform:translateY(-4px); box
   font-size:12.5px; line-height:1.8; color:var(--ink-sub);
   text-indent:-1em; padding-left:1em;
 }
+
+/* --------------------------------------------------------------------------
+   コラム：この記事を書いた人
+   -------------------------------------------------------------------------- */
+.p-colwriter{
+  display:flex; align-items:center; gap:14px;
+  margin:34px 0 0; padding:18px 20px;
+  background:var(--bg-gray); border-radius:var(--radius);
+}
+.p-colwriter__ph{
+  flex:0 0 auto; width:72px; height:72px; border-radius:50%;
+  object-fit:cover; background:#fff;
+}
+.p-colwriter__body{ flex:1 1 auto; min-width:0; }
+.p-colwriter__lab{
+  margin:0 0 3px !important; font-size:11.5px; font-weight:900;
+  color:var(--ink-light); letter-spacing:.06em;
+}
+.p-colwriter__name{ margin:0 !important; font-size:17px; font-weight:900; line-height:1.4; }
+.p-colwriter__name a{ color:inherit; text-decoration:none; }
+.p-colwriter__name a:hover{ color:var(--brand-dark); text-decoration:underline; }
+.p-colwriter__shop{
+  margin:3px 0 0 !important; font-size:12.5px; color:var(--ink-sub); line-height:1.6;
+}
+
+@media (min-width:768px){
+  .p-colwriter{ padding:22px 26px; gap:18px; }
+  .p-colwriter__ph{ width:88px; height:88px; }
+}

@@ -46,6 +46,7 @@ while ( have_posts() ) : the_post();
 
   <div class="l-wrap l-wrap--narrow">
     <div class="p-colart__body"><?php the_content(); ?></div>
+    <?php if ( function_exists( 'ymkrf_column_writer' ) ) ymkrf_column_writer(); ?>
   </div>
 
 </article>

@@ -201,3 +201,100 @@ function ymkrf_column_section( $slug, $catname, $number = 3 ) {
 	wp_reset_postdata();
 }
 endif;
+
+
+/* ============================================================
+   9. 書いた人（スタッフ）
+      「スタッフブログ」を別に作らず、このコラムを読みものの入れ物に
+      1本化したため、記事に書いた人の顔と名前を出せるようにしています。
+   ============================================================ */
+
+/* 昔ながらの編集画面にします（右の「書いた人」が埋もれないように） */
+add_filter( 'use_block_editor_for_post_type', function ( $use, $type ) {
+	return ( $type === 'ymkrf_column' ) ? false : $use;
+}, 10, 2 );
+
+add_action( 'add_meta_boxes', function () {
+	add_meta_box( 'ymkrf_column_writer', '書いた人',
+		'ymkrf_column_writer_box', 'ymkrf_column', 'side', 'high' );
+} );
+
+function ymkrf_column_writer_box( $post ) {
+	wp_nonce_field( 'ymkrf_column_save', 'ymkrf_column_nonce' );
+	$cur = (int) get_post_meta( $post->ID, '_ymkrf_staff', true );
+
+	$list = function_exists( 'ymkrf_staff_list' ) ? ymkrf_staff_list() : array();
+	/* すでにえらばれている人が一覧に無いときも、消えないように足します */
+	if ( $cur ) {
+		$has = false;
+		foreach ( $list as $st ) { if ( (int) $st->ID === $cur ) { $has = true; break; } }
+		if ( ! $has ) {
+			$sp = get_post( $cur );
+			if ( $sp && $sp->post_type === 'ymkrf_staff' ) $list[] = $sp;
+		}
+	}
+	?>
+	<?php if ( $list ) : ?>
+		<select name="_ymkrf_staff" style="width:100%">
+			<option value="0">（出さない）</option>
+			<?php foreach ( $list as $st ) :
+				$shop = function_exists( 'ymkrf_staff_shop_name' ) ? ymkrf_staff_shop_name( $st->ID ) : ''; ?>
+				<option value="<?php echo (int) $st->ID; ?>" <?php selected( $cur, (int) $st->ID ); ?>>
+					<?php echo esc_html( get_the_title( $st ) . ( $shop ? '（' . $shop . '）' : '' ) ); ?>
+				</option>
+			<?php endforeach; ?>
+		</select>
+		<p class="description">
+			記事の下に、<b>顔写真と名前</b>が出ます。空（出さない）でもかまいません。<br>
+			名前と顔写真は「スタッフ」で登録してください。
+		</p>
+	<?php else : ?>
+		<p class="description">スタッフがまだ登録されていません。</p>
+	<?php endif; ?>
+	<?php
+}
+
+add_action( 'save_post_ymkrf_column', function ( $post_id ) {
+	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
+	if ( ! isset( $_POST['ymkrf_column_nonce'] ) ||
+	     ! wp_verify_nonce( $_POST['ymkrf_column_nonce'], 'ymkrf_column_save' ) ) return;
+	if ( ! current_user_can( 'edit_post', $post_id ) ) return;
+	if ( isset( $_POST['_ymkrf_staff'] ) ) {
+		update_post_meta( $post_id, '_ymkrf_staff', (int) $_POST['_ymkrf_staff'] );
+	}
+} );
+
+/** 記事の下に出す「書いた人」の枠。書いた人がいなければ何も出しません。 */
+if ( ! function_exists( 'ymkrf_column_writer' ) ) :
+function ymkrf_column_writer( $post_id = 0 ) {
+	$post_id = $post_id ? (int) $post_id : get_the_ID();
+	$sid = (int) get_post_meta( $post_id, '_ymkrf_staff', true );
+	if ( ! $sid ) return;
+	$sp = get_post( $sid );
+	if ( ! $sp || $sp->post_type !== 'ymkrf_staff' ) return;
+
+	$name = trim( (string) get_the_title( $sp ) );
+	if ( $name === '' ) return;
+	$shop  = function_exists( 'ymkrf_staff_shop_name' ) ? (string) ymkrf_staff_shop_name( $sid ) : '';
+	$role  = trim( (string) get_post_meta( $sid, '_ymkrf_staff_role', true ) );
+	$thumb = get_the_post_thumbnail_url( $sid, 'medium' );
+	?>
+	<div class="p-colwriter">
+	  <?php if ( $thumb ) : ?>
+	    <img class="p-colwriter__ph" src="<?php echo esc_url( $thumb ); ?>"
+	         width="88" height="88" alt="" loading="lazy" decoding="async">
+	  <?php endif; ?>
+	  <div class="p-colwriter__body">
+	    <p class="p-colwriter__lab">この記事を書いた人</p>
+	    <p class="p-colwriter__name">
+	      <a href="<?php echo esc_url( get_permalink( $sid ) ); ?>"><?php echo esc_html( $name ); ?></a>
+	    </p>
+	    <?php if ( $shop !== '' || $role !== '' ) : ?>
+	      <p class="p-colwriter__shop"><?php
+	        echo esc_html( trim( $shop . ( $role !== '' ? '　' . $role : '' ) ) ); ?></p>
+	    <?php endif; ?>
+	  </div>
+	</div>
+	<?php
+}
+endif;

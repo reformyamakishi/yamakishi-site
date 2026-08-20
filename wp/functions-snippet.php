@@ -28,7 +28,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '2.0.0' );   // ファイル更新時はここを上げるとキャッシュが切れます
+if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '2.1.7' );   // ファイル更新時はここを上げるとキャッシュが切れます
 
 /* ============================================================
    1. CSS / JS の読み込み
@@ -198,6 +198,12 @@ add_action( 'template_redirect', function () {
 	/* /system/（施工体制）だけは、そのページの中の「営業・施工体制」の節に着地させます */
 	if ( $path === 'system' ) {
 		wp_redirect( home_url( '/about/' ) . '#system', 301 );
+		exit;
+	}
+
+	/* スタッフブログは作らず、「コラム（お役立ち情報）」1本にまとめました */
+	if ( $path === 'blog' ) {
+		wp_redirect( home_url( '/column/' ), 301 );
 		exit;
 	}
 
@@ -547,6 +553,151 @@ function ymkrf_is_privacy() {
 	return (bool) get_query_var( 'ymkrf_privacy' );
 }
 endif;
+
+/* ============================================================
+   1-10. コメントは使いません
+        リフォーム会社のサイトでコメント欄を開けておくと、
+        迷惑コメント（スパム）の的になるだけなので、全部閉じます。
+        2026/08/20 ユーザー判断。
+   ============================================================ */
+
+/* これから書く記事に、コメント欄を作らない */
+add_action( 'init', function () {
+	foreach ( get_post_types() as $t ) {
+		if ( post_type_supports( $t, 'comments' ) ) {
+			remove_post_type_support( $t, 'comments' );
+			remove_post_type_support( $t, 'trackbacks' );
+		}
+	}
+}, 100 );
+
+/* すでにある記事のコメント欄も閉じて、たまっているコメントも出さない */
+add_filter( 'comments_open',  '__return_false', 20 );
+add_filter( 'pings_open',     '__return_false', 20 );
+add_filter( 'comments_array', '__return_empty_array', 20 );
+
+/* 管理画面から「コメント」を消す */
+add_action( 'admin_menu', function () {
+	remove_menu_page( 'edit-comments.php' );
+}, 999 );
+
+add_action( 'admin_bar_menu', function ( $bar ) {
+	$bar->remove_node( 'comments' );
+}, 999 );
+
+add_action( 'admin_init', function () {
+	/* コメントの画面をひらこうとしたら、ダッシュボードにもどします */
+	if ( isset( $GLOBALS['pagenow'] ) && $GLOBALS['pagenow'] === 'edit-comments.php' ) {
+		wp_safe_redirect( admin_url() );
+		exit;
+	}
+	/* 編集画面の「ディスカッション」「コメント」の欄も消します */
+	foreach ( get_post_types() as $t ) {
+		remove_meta_box( 'commentsdiv',       $t, 'normal' );
+		remove_meta_box( 'commentstatusdiv',  $t, 'normal' );
+		remove_meta_box( 'trackbacksdiv',     $t, 'normal' );
+	}
+} );
+
+/* ============================================================
+   1-11. 「投稿」は使いません
+        「投稿」はWordPress本体の機能なので、取り除くことはできません。
+        そのかわり、管理画面から隠して、URLは「お知らせ」に飛ばします。
+        こうしておけば、まちがって投稿に書いてしまっても、
+        デザインの当たっていないページがお客様に見えることはありません。
+        2026/08/20 ユーザー判断。書きものは「お知らせ」と「コラム」の2つだけです。
+   ============================================================ */
+
+/* 管理画面の左メニューから「投稿」を隠す */
+add_action( 'admin_menu', function () {
+	remove_menu_page( 'edit.php' );                                   /* 投稿一覧・新規追加 */
+	remove_submenu_page( 'edit.php', 'edit-tags.php?taxonomy=category' );
+	remove_submenu_page( 'edit.php', 'edit-tags.php?taxonomy=post_tag' );
+}, 999 );
+
+/* 上のバーの「＋新規 → 投稿」も消す */
+add_action( 'admin_bar_menu', function ( $bar ) {
+	$bar->remove_node( 'new-post' );
+}, 999 );
+
+/* 投稿の画面をURLで直接ひらこうとしたら、お知らせにもどします */
+add_action( 'admin_init', function () {
+	if ( ! isset( $GLOBALS['pagenow'] ) ) return;
+	$now  = $GLOBALS['pagenow'];
+	$type = isset( $_GET['post_type'] ) ? sanitize_key( $_GET['post_type'] ) : 'post';
+	$tax  = isset( $_GET['taxonomy'] )  ? sanitize_key( $_GET['taxonomy'] )  : '';
+
+	$is_post_screen =
+		   ( in_array( $now, array( 'edit.php', 'post-new.php' ), true ) && $type === 'post' )
+		|| ( $now === 'edit-tags.php' && in_array( $tax, array( 'category', 'post_tag' ), true ) );
+
+	/* 既存の1件を編集しにきた場合だけは通します（中身を移したり消したりできるように） */
+	if ( $now === 'post.php' ) return;
+
+	if ( $is_post_screen ) {
+		wp_safe_redirect( admin_url( 'edit.php?post_type=ymkrf_news' ) );
+		exit;
+	}
+} );
+
+/* サイト側：投稿・カテゴリー・タグ・投稿の年月別ページは、すべてお知らせへ */
+add_action( 'template_redirect', function () {
+	if ( is_admin() ) return;
+	if ( is_singular( 'post' ) || is_category() || is_tag() || is_date() || is_author()
+	     || ( is_home() && ! is_front_page() ) ) {
+		wp_safe_redirect( home_url( '/news/' ), 301 );
+		exit;
+	}
+}, 1 );
+
+/* ============================================================
+   1-12. ダッシュボード（管理画面のトップ）の片づけ
+        「投稿」を使わないので、投稿まわりのパネルを消して、
+        かわりに「どこに書けばいいか」が分かるパネルを出します。
+   ============================================================ */
+add_action( 'wp_dashboard_setup', function () {
+	/* いらないパネルを消します */
+	remove_meta_box( 'dashboard_quick_press',   'dashboard', 'side' );   /* クイックドラフト（投稿ができてしまう） */
+	remove_meta_box( 'dashboard_primary',       'dashboard', 'side' );   /* WordPressイベントとニュース */
+	remove_meta_box( 'dashboard_activity',      'dashboard', 'normal' ); /* アクティビティ（投稿とコメント） */
+	remove_meta_box( 'dashboard_right_now',     'dashboard', 'normal' ); /* 概要（投稿数・コメント数） */
+	remove_meta_box( 'dashboard_incoming_links','dashboard', 'normal' );
+	remove_meta_box( 'dashboard_plugins',       'dashboard', 'normal' );
+	remove_meta_box( 'dashboard_recent_drafts', 'dashboard', 'side' );
+	remove_meta_box( 'dashboard_recent_comments','dashboard','normal' );
+
+	wp_add_dashboard_widget( 'ymkrf_dash', 'リフォームヤマキシ　書くところ', 'ymkrf_dashboard_widget' );
+} );
+
+function ymkrf_dashboard_widget() {
+	$items = array(
+		array( 'ymkrf_news',    'お知らせ',     '新しいお店・補助金・営業時間など、日付もののお知らせ' ),
+		array( 'ymkrf_column',  'コラム',       'ずっと読まれる解説記事。スタッフブログもここに書きます' ),
+		array( 'ymkrf_works',   '施工事例',     'Before / After と、かかった費用' ),
+		array( 'ymkrf_voice',   'お客様の声',   'アンケート（仕事の通信簿）の登録' ),
+		array( 'ymkrf_staff',   'スタッフ',     '名前・顔写真・店舗' ),
+		array( 'ymkrf_product', '商品',         'キッチン・お風呂・トイレ・洗面化粧台' ),
+	);
+	echo '<p style="margin:0 0 12px;color:#646970">'
+	   . 'サイトに出るのは、この6つに書いたものだけです。'
+	   . '<b>「投稿」は使いません</b>（メニューから隠してあります）。</p>';
+	echo '<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">';
+	foreach ( $items as $it ) {
+		list( $type, $name, $desc ) = $it;
+		$n = wp_count_posts( $type );
+		$c = $n ? (int) $n->publish : 0;
+		printf(
+			'<a href="%s" style="display:block;padding:10px 12px;border:1px solid #dcdcde;border-radius:6px;'
+			. 'background:#fff;text-decoration:none;color:#1d2327">'
+			. '<b style="font-size:13.5px">%s</b>'
+			. '<span style="float:right;color:#fe3301;font-weight:700">%d</span>'
+			. '<span style="display:block;margin-top:3px;font-size:11.5px;color:#787c82;line-height:1.5">%s</span></a>',
+			esc_url( admin_url( 'edit.php?post_type=' . $type ) ),
+			esc_html( $name ), $c, esc_html( $desc )
+		);
+	}
+	echo '</div>';
+}
 
 /* defer 属性を付けて描画をブロックしないようにする */
 add_filter( 'script_loader_tag', function ( $tag, $handle ) {
