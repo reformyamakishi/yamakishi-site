@@ -28,7 +28,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '1.7.1' );   // ファイル更新時はここを上げるとキャッシュが切れます
+if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '1.7.3' );   // ファイル更新時はここを上げるとキャッシュが切れます
 
 /* ============================================================
    1. CSS / JS の読み込み
@@ -57,7 +57,8 @@ add_action( 'wp_enqueue_scripts', function () {
 	           || ( function_exists( 'ymkrf_is_message' ) && ymkrf_is_message() )
 	           || ( function_exists( 'ymkrf_is_company' ) && ymkrf_is_company() )
 	           || ( function_exists( 'ymkrf_is_warranty' ) && ymkrf_is_warranty() )
-	           || ( function_exists( 'ymkrf_is_flow' ) && ymkrf_is_flow() );
+	           || ( function_exists( 'ymkrf_is_flow' ) && ymkrf_is_flow() )
+	           || ( function_exists( 'ymkrf_is_faq' ) && ymkrf_is_faq() );
 	$is_top = is_front_page() && ! $is_special;
 
 	if ( $is_top ) {
@@ -89,6 +90,12 @@ add_action( 'wp_enqueue_scripts', function () {
 	if ( function_exists( 'ymkrf_is_flow' ) && ymkrf_is_flow() ) {
 		wp_enqueue_style( 'ymkrf-lp', $dir . '/assets/css/lp.css', array( 'ymkrf-page' ), YMKRF_VER );
 		wp_enqueue_style( 'ymkrf-flow', $dir . '/assets/css/flow.css', array( 'ymkrf-lp' ), YMKRF_VER );
+	}
+
+	/* よくあるご質問のページ（CTAの見た目は lp.css を使っています） */
+	if ( function_exists( 'ymkrf_is_faq' ) && ymkrf_is_faq() ) {
+		wp_enqueue_style( 'ymkrf-lp', $dir . '/assets/css/lp.css', array( 'ymkrf-page' ), YMKRF_VER );
+		wp_enqueue_style( 'ymkrf-faq', $dir . '/assets/css/faq.css', array( 'ymkrf-lp' ), YMKRF_VER );
 	}
 
 	/* お客様の声のページ */
@@ -377,6 +384,54 @@ add_filter( 'document_title_parts', function ( $parts ) {
 if ( ! function_exists( 'ymkrf_is_flow' ) ) :
 function ymkrf_is_flow() {
 	return (bool) get_query_var( 'ymkrf_flow' );
+}
+endif;
+
+
+/* ============================================================
+   1-7. よくあるご質問のページ（/faq/）のURL
+        こだわりページ（1-2）とまったく同じやり方です。
+   ============================================================ */
+add_action( 'init', function () {
+	add_rewrite_rule( '^faq/?$', 'index.php?ymkrf_faq=1', 'top' );
+}, 20 );
+
+add_filter( 'query_vars', function ( $vars ) {
+	$vars[] = 'ymkrf_faq';
+	return $vars;
+} );
+
+add_filter( 'template_include', function ( $tpl ) {
+	if ( ! get_query_var( 'ymkrf_faq' ) ) return $tpl;
+	$found = locate_template( 'ymkrf-faq.php' );
+	return $found ? $found : $tpl;
+} );
+
+add_action( 'wp', function () {
+	if ( ! get_query_var( 'ymkrf_faq' ) ) return;
+	global $wp_query;
+	$wp_query->is_404        = false;
+	$wp_query->is_home       = false;
+	$wp_query->is_front_page = false;
+	$wp_query->is_page       = false;
+	$wp_query->is_singular   = false;
+	$wp_query->is_archive    = false;
+	$wp_query->is_post_type_archive = false;
+	status_header( 200 );
+} );
+
+add_filter( 'document_title_parts', function ( $parts ) {
+	if ( get_query_var( 'ymkrf_faq' ) ) {
+		$parts['title'] = 'よくあるご質問｜見積り・追加費用・保証・工事のことまで';
+		unset( $parts['tagline'] );
+	}
+	return $parts;
+} );
+
+/* よくあるご質問のページかどうか。CSSの読み分けなどで使います。 */
+if ( ! function_exists( 'ymkrf_is_faq' ) ) :
+function ymkrf_is_faq() {
+	return (bool) get_query_var( 'ymkrf_faq' );
 }
 endif;
 

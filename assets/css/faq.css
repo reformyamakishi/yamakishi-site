@@ -1,0 +1,90 @@
+@charset "UTF-8";
+/* ==========================================================================
+   faq.css ─ よくあるご質問（/faq/）
+   お客様がたずねて、とんとこトンが答える会話の形です。
+   page.css のあとに読み込みます。
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   目次
+   -------------------------------------------------------------------------- */
+.p-qanav__ttl{
+  margin:0 0 12px; text-align:center;
+  font-size:14px; font-weight:900; color:var(--ink-sub); letter-spacing:.06em;
+}
+.p-qanav{
+  list-style:none; margin:0; padding:0;
+  display:grid; grid-template-columns:repeat(2,1fr); gap:8px;
+}
+.p-qanav a{
+  display:flex; align-items:center; justify-content:space-between; gap:8px;
+  background:#fff; border:2px solid var(--border); border-radius:999px;
+  padding:11px 16px; text-decoration:none; color:var(--ink);
+  font-size:13.5px; font-weight:900; line-height:1.4;
+}
+.p-qanav a:hover{ border-color:var(--brand); background:var(--brand-tint); }
+.p-qanav a span{
+  flex:0 0 auto; min-width:22px; height:22px; border-radius:999px;
+  background:var(--brand); color:#fff;
+  font-size:11.5px; line-height:22px; text-align:center;
+}
+
+/* --------------------------------------------------------------------------
+   会話
+   -------------------------------------------------------------------------- */
+.p-qa{ display:grid; gap:26px; }
+.p-qa__set{
+  display:grid; gap:12px;
+  padding-bottom:26px; border-bottom:1px dashed var(--border);
+}
+.p-qa__set:last-child{ padding-bottom:0; border-bottom:0; }
+
+.p-qa__row{ display:flex; align-items:flex-start; gap:10px; }
+.p-qa__row--a{ justify-content:flex-end; }
+
+/* 顔（お客様のイラスト／とんとこトン） */
+.p-qa__face{
+  flex:0 0 auto; width:48px; height:48px; border-radius:50%;
+  background:#fff; border:2px solid var(--border); overflow:hidden;
+  display:block;
+}
+.p-qa__face img{ width:100%; height:100%; object-fit:contain; display:block; }
+.p-qa__face--ton{ border-color:var(--brand); background:var(--brand-tint); }
+
+/* ふきだし */
+.p-qa__bubble{
+  position:relative; margin:0; max-width:calc(100% - 62px);
+  padding:14px 18px; border-radius:16px;
+  font-size:15.5px; line-height:1.95;
+}
+.p-qa__bubble b{ font-weight:900; }
+/* ふきだしの三角 */
+.p-qa__bubble::before{
+  content:""; position:absolute; top:16px;
+  border-top:7px solid transparent; border-bottom:7px solid transparent;
+}
+
+/* 質問（お客様・左） */
+.p-qa__bubble--q{
+  background:#fff; border:2px solid var(--border);
+  font-weight:900;
+}
+.p-qa__bubble--q::before{
+  left:-8px; border-right:8px solid var(--border);
+}
+
+/* 答え（とんとこトン・右） */
+.p-qa__bubble--a{
+  background:var(--brand-tint); border:2px solid var(--brand-tint2);
+}
+.p-qa__bubble--a b{ color:var(--brand-dark); }
+.p-qa__bubble--a::before{
+  right:-8px; border-left:8px solid var(--brand-tint2);
+}
+
+@media (min-width:768px){
+  .p-qanav{ grid-template-columns:repeat(3,1fr); gap:10px; }
+  .p-qanav a{ font-size:14px; padding:12px 18px; }
+  .p-qa__face{ width:56px; height:56px; }
+  .p-qa__bubble{ max-width:calc(100% - 96px); padding:16px 22px; font-size:16px; }
+}
