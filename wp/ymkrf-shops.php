@@ -32,6 +32,8 @@ $asset = get_stylesheet_directory_uri();
      srnote   … ショールームについての但し書き
      ld       … 検索エンジン用の営業時間（Mo=月 Tu=火 We=水 Th=木 Fr=金 Sa=土 Su=日）
      soon     … まだ開いていないお店
+     topic    … そのお店の新しいお知らせ（外観写真の上に吹き出しで出ます）
+     pos      … 外観写真の見せたい位置（例 '50% 22%'。空なら中央）
    ------------------------------------------------------------------ */
 $shops = array(
 
@@ -44,8 +46,9 @@ $shops = array(
 		'closed' => '年中無休',
 		'areas' => array( '七尾市', '志賀町（一部）' ),
 		'sr' => true,
-		'srnote' => '地震の影響でショールームは閉鎖中ですが、リフォームのご相談は受け付けています。',
+		'srnote' => '',
 		'ld' => array( 'Mo-Su 08:00-21:00' ),
+		'topic' => '2026年10月、復興した新しいリフォームコーナーがオープン！',
 	),
 	array(
 		'pref' => '石川県', 'slug' => 'hakui', 'name' => '羽咋店',
@@ -68,16 +71,6 @@ $shops = array(
 		'ld' => array( 'Mo-Su 10:00-17:00' ),
 	),
 	array(
-		'pref' => '石川県', 'slug' => 'nonoichi', 'name' => '金沢野々市店',
-		'tel'  => '076-294-6101',
-		'addr' => '石川県野々市市本町6丁目12-70',
-		'hours' => '10:00〜18:00', 'hnote' => '毎週(水)は17:00閉店',
-		'closed' => '年中無休 ※盆・年末年始を除く',
-		'areas' => array( '金沢市', '野々市市', '白山市' ),
-		'sr' => true, 'srnote' => '',
-		'ld' => array( 'Mo-Tu 10:00-18:00', 'We 10:00-17:00', 'Th-Su 10:00-18:00' ),
-	),
-	array(
 		'pref' => '石川県', 'slug' => 'higashikanazawa', 'name' => '東金沢店',
 		'tel'  => '',
 		'addr' => '石川県金沢市大樋町',
@@ -86,7 +79,18 @@ $shops = array(
 		'areas' => array( '金沢市' ),
 		'sr' => false, 'srnote' => '',
 		'ld' => array(),
-		'soon' => '2026年10月31日（土）オープン予定',
+		'soon' => '2026年10月31日（土）グランドオープン！',
+		'pos'  => '50% 22%',   /* 写真の見せたい位置（上のほうを見せます） */
+	),
+	array(
+		'pref' => '石川県', 'slug' => 'nonoichi', 'name' => '金沢野々市店',
+		'tel'  => '076-294-6101',
+		'addr' => '石川県野々市市本町6丁目12-70',
+		'hours' => '10:00〜18:00', 'hnote' => '毎週(水)は17:00閉店',
+		'closed' => '年中無休 ※盆・年末年始を除く',
+		'areas' => array( '金沢市', '野々市市', '白山市' ),
+		'sr' => true, 'srnote' => '',
+		'ld' => array( 'Mo-Tu 10:00-18:00', 'We 10:00-17:00', 'Th-Su 10:00-18:00' ),
 	),
 	array(
 		'pref' => '石川県', 'slug' => 'kawakita', 'name' => '川北店',
@@ -117,6 +121,7 @@ $shops = array(
 		'areas' => array( '加賀市' ),
 		'sr' => true, 'srnote' => '',
 		'ld' => array( 'Mo-Su 08:00-21:00' ),
+		'topic' => '2026年10月、リフォームコーナーがリニューアル！',
 	),
 
 	/* ---------------- 福井県 ---------------- */
@@ -208,6 +213,7 @@ foreach ( $shops as $s ) {
 		'areaServed'   => array_map( function ( $c ) { return array( '@type' => 'City', 'name' => $c ); },
 		                             array_map( function ( $a ) { return str_replace( array( '（一部）' ), '', $a ); }, $s['areas'] ) ),
 		'url'          => home_url( '/shops/#' . $s['slug'] ),
+		'image'        => get_stylesheet_directory_uri() . '/assets/img/shops/' . $s['slug'] . '.jpg',
 	);
 	$ld[] = $one;
 }
@@ -277,27 +283,72 @@ get_header();
 $pref_now = '';
 foreach ( $shops as $s ) :
 	if ( $s['pref'] !== $pref_now ) :
-		if ( $pref_now !== '' ) echo "  </div>\n</section>\n";
+		if ( $pref_now !== '' ) echo "    </div>\n  </div>\n</section>\n";
 		$pref_now = $s['pref'];
 		$soft = ( $pref_now === '石川県' ) ? ' l-section--soft' : '';
 ?>
 <section class="l-section<?php echo $soft; ?>" id="pref-<?php echo ( $pref_now === '石川県' ) ? 'ishikawa' : 'fukui'; ?>">
-  <div class="l-wrap l-wrap--narrow">
+  <div class="l-wrap">
     <div class="c-head">
       <h2 class="c-head__title"><?php echo esc_html( $pref_now ); ?>の<span class="marker">お店</span></h2>
     </div>
+    <div class="p-shoplist">
 <?php endif; ?>
 
     <div class="p-shop<?php echo ! empty( $s['soon'] ) ? ' p-shop--soon' : ''; ?>" id="<?php echo esc_attr( $s['slug'] ); ?>" data-reveal>
 
       <div class="p-shop__head">
         <h3 class="p-shop__name"><?php echo esc_html( $s['name'] ); ?></h3>
-        <?php if ( ! empty( $s['soon'] ) ) : ?>
-          <span class="p-shop__badge p-shop__badge--soon"><?php echo esc_html( $s['soon'] ); ?></span>
-        <?php elseif ( $s['sr'] ) : ?>
+        <?php if ( $s['sr'] ) : ?>
           <span class="p-shop__badge">ショールームあります</span>
         <?php endif; ?>
       </div>
+
+      <div class="p-shop__body">
+
+      <div class="p-shop__media">
+      <?php if ( empty( $s['nophoto'] ) ) : ?>
+        <figure class="p-shop__photo p-shop__photo--main">
+          <picture>
+            <source srcset="<?php echo $asset; ?>/assets/img/shops/<?php echo esc_attr( $s['slug'] ); ?>.webp" type="image/webp">
+            <img src="<?php echo $asset; ?>/assets/img/shops/<?php echo esc_attr( $s['slug'] ); ?>.jpg"
+                 width="680" height="400"<?php if ( ! empty( $s['pos'] ) ) : ?> style="object-position:<?php echo esc_attr( $s['pos'] ); ?>"<?php endif; ?>
+                 alt="リフォームヤマキシ <?php echo esc_attr( $s['name'] ); ?>（<?php echo esc_attr( $s['addr'] ); ?>）の外観"
+                 loading="lazy" decoding="async">
+          </picture>
+        </figure>
+        <?php /* 案内図は、画像を assets/img/shops/<slug>-map.jpg|webp に置いて $shops に 'mapimg' => true を足してください */ ?>
+        <?php if ( ! empty( $s['mapimg'] ) ) : ?>
+          <a class="p-shop__photo p-shop__photo--map"
+             href="<?php echo esc_url( ymkrf_map_url( $s['addr'] ) ); ?>" target="_blank" rel="noopener">
+            <picture>
+              <source srcset="<?php echo $asset; ?>/assets/img/shops/<?php echo esc_attr( $s['slug'] ); ?>-map.webp" type="image/webp">
+              <img src="<?php echo $asset; ?>/assets/img/shops/<?php echo esc_attr( $s['slug'] ); ?>-map.jpg"
+                   alt="リフォームヤマキシ <?php echo esc_attr( $s['name'] ); ?>（<?php echo esc_attr( $s['addr'] ); ?>）への案内図"
+                   loading="lazy" decoding="async">
+            </picture>
+            <span>Googleマップで見る</span>
+          </a>
+        <?php endif; ?>
+      <?php else : ?>
+        <div class="p-shop__noimg">
+          <img src="<?php echo $asset; ?>/assets/img/character/char-plan.webp" width="640" height="595"
+               alt="" loading="lazy" decoding="async">
+          <span>オープンに向けて準備中です</span>
+        </div>
+      <?php endif; ?>
+
+      <?php
+		/* お知らせは、外観写真の上に「吹き出し」でふわふわ浮かせます。
+		   こうすると、お知らせのあるお店とないお店で、カードの高さがそろいます。 */
+		$bubble = ! empty( $s['soon'] ) ? $s['soon'] : ( ! empty( $s['topic'] ) ? $s['topic'] : '' );
+		?>
+      <?php if ( $bubble !== '' ) : ?>
+        <p class="p-shop__bubble<?php echo ! empty( $s['soon'] ) ? ' is-soon' : ''; ?>"><?php echo esc_html( $bubble ); ?></p>
+      <?php endif; ?>
+      </div>
+
+      <div class="p-shop__info">
 
       <table class="p-shop__table">
         <tbody>
@@ -307,7 +358,8 @@ foreach ( $shops as $s ) :
               <?php echo esc_html( $s['addr'] ); ?>
               <?php if ( ! empty( $s['soon'] ) ) : ?>
                 <span class="p-shop__todo">※番地は確認中です</span>
-              <?php else : ?>
+              <?php elseif ( empty( $s['mapimg'] ) ) : ?>
+                <?php /* 案内図がないお店だけ、文字のリンクを出します */ ?>
                 <a class="p-shop__map" href="<?php echo esc_url( ymkrf_map_url( $s['addr'] ) ); ?>"
                    target="_blank" rel="noopener">地図を見る</a>
               <?php endif; ?>
@@ -351,16 +403,58 @@ foreach ( $shops as $s ) :
       <?php endif; ?>
 
       <?php if ( empty( $s['soon'] ) ) : ?>
+        <?php
+		/* お店ごとのリンク。アイコンは画像ではなくSVGで書いているので、
+		   色や大きさをCSSだけで変えられます（余分なファイルも増えません）。 */
+		$shop_links = array(
+			array(
+				'url'   => add_query_arg( 'shop', $s['slug'], home_url( '/flyer/' ) ),
+				'label' => 'チラシ',
+				'mod'   => ' is-flyer',
+				'icon'  => '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
+			),
+			array(
+				'url'   => add_query_arg( 'shop', $s['slug'], home_url( '/staff/' ) ),
+				'label' => 'スタッフ',
+				'mod'   => '',
+				'icon'  => '<circle cx="12" cy="8" r="3.4"/><path d="M4.8 20c0-3.6 3.2-5.6 7.2-5.6s7.2 2 7.2 5.6"/>',
+			),
+			array(
+				'url'   => home_url( '/works/' ),
+				'label' => '施工事例',
+				'mod'   => '',
+				'icon'  => '<path d="M3.5 11 12 4l8.5 7"/><path d="M6 10.2V20h12v-9.8"/><path d="M10 20v-5h4v5"/>',
+			),
+			array(
+				'url'   => home_url( '/voice/' ),
+				'label' => 'お客様の声',
+				'mod'   => '',
+				'icon'  => '<path d="M20 14.5c0 1.4-1.1 2.5-2.5 2.5H9l-4 3v-3H6.5C5.1 17 4 15.9 4 14.5v-8C4 5.1 5.1 4 6.5 4h11C18.9 4 20 5.1 20 6.5z"/>',
+			),
+		);
+		?>
         <ul class="p-shop__links">
-          <li><a href="<?php echo esc_url( add_query_arg( 'shop', $s['slug'], home_url( '/staff/' ) ) ); ?>">このお店のスタッフ</a></li>
-          <li><a href="<?php echo esc_url( home_url( '/works/' ) ); ?>">施工事例</a></li>
-          <li><a href="<?php echo esc_url( home_url( '/voice/' ) ); ?>">お客様の声</a></li>
+          <?php foreach ( $shop_links as $lk ) : ?>
+          <li>
+            <a class="p-shop__link<?php echo $lk['mod']; ?>" href="<?php echo esc_url( $lk['url'] ); ?>">
+              <svg class="p-shop__linkicon" viewBox="0 0 24 24" width="17" height="17"
+                   fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+                   focusable="false"><?php echo $lk['icon']; ?></svg>
+              <span><?php echo esc_html( $lk['label'] ); ?></span>
+            </a>
+          </li>
+          <?php endforeach; ?>
         </ul>
       <?php endif; ?>
+
+      </div><!-- /.p-shop__info -->
+      </div><!-- /.p-shop__body -->
 
     </div>
 
 <?php endforeach; ?>
+    </div>
   </div>
 </section>
 

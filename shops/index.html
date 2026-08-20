@@ -265,10 +265,11 @@
 
 <!-- =========== 店舗一覧 =========== -->
 <section class="l-section l-section--soft" id="pref-ishikawa">
-  <div class="l-wrap l-wrap--narrow">
+  <div class="l-wrap">
     <div class="c-head">
       <h2 class="c-head__title">石川県の<span class="marker">お店</span></h2>
     </div>
+    <div class="p-shoplist">
 
     <div class="p-shop" id="tazuruhama" data-reveal>
 
@@ -277,12 +278,29 @@
                   <span class="p-shop__badge">ショールームあります</span>
               </div>
 
+      <div class="p-shop__body">
+
+      <div class="p-shop__media">
+              <figure class="p-shop__photo p-shop__photo--main">
+          <picture>
+            <source srcset="../assets/img/shops/tazuruhama.webp" type="image/webp">
+            <img src="../assets/img/shops/tazuruhama.jpg"
+                 width="680" height="400"                 alt="リフォームヤマキシ 田鶴浜店（石川県七尾市高田町ほ部34番地）の外観"
+                 loading="lazy" decoding="async">
+          </picture>
+        </figure>
+                      
+                    <p class="p-shop__bubble">2026年10月、復興した新しいリフォームコーナーがオープン！</p>
+            </div>
+
+      <div class="p-shop__info">
+
       <table class="p-shop__table">
         <tbody>
           <tr>
             <th>所在地</th>
             <td>
-              石川県七尾市高田町ほ部34番地                              <a class="p-shop__map" href="https://www.google.com/maps/search/?api=1&query=%E3%83%A4%E3%83%9E%E3%82%AD%E3%82%B7%20%E7%9F%B3%E5%B7%9D%E7%9C%8C%E4%B8%83%E5%B0%BE%E5%B8%82%E9%AB%98%E7%94%B0%E7%94%BA%E3%81%BB%E9%83%A834%E7%95%AA%E5%9C%B0"
+              石川県七尾市高田町ほ部34番地                                              <a class="p-shop__map" href="https://www.google.com/maps/search/?api=1&query=%E3%83%A4%E3%83%9E%E3%82%AD%E3%82%B7%20%E7%9F%B3%E5%B7%9D%E7%9C%8C%E4%B8%83%E5%B0%BE%E5%B8%82%E9%AB%98%E7%94%B0%E7%94%BA%E3%81%BB%E9%83%A834%E7%95%AA%E5%9C%B0"
                    target="_blank" rel="noopener">地図を見る</a>
                           </td>
           </tr>
@@ -305,14 +323,49 @@
         </tbody>
       </table>
 
-              <p class="p-shop__srnote">※地震の影響でショールームは閉鎖中ですが、リフォームのご相談は受け付けています。</p>
       
-              <ul class="p-shop__links">
-          <li><a href="../preparing/?shop=tazuruhama">このお店のスタッフ</a></li>
-          <li><a href="../preparing/">施工事例</a></li>
-          <li><a href="../preparing/">お客様の声</a></li>
-        </ul>
+                      <ul class="p-shop__links">
+                    <li>
+            <a class="p-shop__link is-flyer" href="../preparing/">
+              <svg class="p-shop__linkicon" viewBox="0 0 24 24" width="17" height="17"
+                   fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+                   focusable="false"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+              <span>チラシ</span>
+            </a>
+          </li>
+                    <li>
+            <a class="p-shop__link" href="../preparing/">
+              <svg class="p-shop__linkicon" viewBox="0 0 24 24" width="17" height="17"
+                   fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+                   focusable="false"><circle cx="12" cy="8" r="3.4"/><path d="M4.8 20c0-3.6 3.2-5.6 7.2-5.6s7.2 2 7.2 5.6"/></svg>
+              <span>スタッフ</span>
+            </a>
+          </li>
+                    <li>
+            <a class="p-shop__link" href="../preparing/">
+              <svg class="p-shop__linkicon" viewBox="0 0 24 24" width="17" height="17"
+                   fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+                   focusable="false"><path d="M3.5 11 12 4l8.5 7"/><path d="M6 10.2V20h12v-9.8"/><path d="M10 20v-5h4v5"/></svg>
+              <span>施工事例</span>
+            </a>
+          </li>
+                    <li>
+            <a class="p-shop__link" href="../preparing/">
+              <svg class="p-shop__linkicon" viewBox="0 0 24 24" width="17" height="17"
+                   fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+                   focusable="false"><path d="M20 14.5c0 1.4-1.1 2.5-2.5 2.5H9l-4 3v-3H6.5C5.1 17 4 15.9 4 14.5v-8C4 5.1 5.1 4 6.5 4h11C18.9 4 20 5.1 20 6.5z"/></svg>
+              <span>お客様の声</span>
+            </a>
+          </li>
+                  </ul>
       
+      </div><!-- /.p-shop__info -->
+      </div><!-- /.p-shop__body -->
+
     </div>
 
 
@@ -323,12 +376,28 @@
                   <span class="p-shop__badge">ショールームあります</span>
               </div>
 
+      <div class="p-shop__body">
+
+      <div class="p-shop__media">
+              <figure class="p-shop__photo p-shop__photo--main">
+          <picture>
+            <source srcset="../assets/img/shops/hakui.webp" type="image/webp">
+            <img src="../assets/img/shops/hakui.jpg"
+                 width="680" height="400"                 alt="リフォームヤマキシ 羽咋店（石川県羽咋市鶴多町五石高34-1）の外観"
+                 loading="lazy" decoding="async">
+          </picture>
+        </figure>
+                      
+                  </div>
+
+      <div class="p-shop__info">
+
       <table class="p-shop__table">
         <tbody>
           <tr>
             <th>所在地</th>
             <td>
-              石川県羽咋市鶴多町五石高34-1                              <a class="p-shop__map" href="https://www.google.com/maps/search/?api=1&query=%E3%83%A4%E3%83%9E%E3%82%AD%E3%82%B7%20%E7%9F%B3%E5%B7%9D%E7%9C%8C%E7%BE%BD%E5%92%8B%E5%B8%82%E9%B6%B4%E5%A4%9A%E7%94%BA%E4%BA%94%E7%9F%B3%E9%AB%9834-1"
+              石川県羽咋市鶴多町五石高34-1                                              <a class="p-shop__map" href="https://www.google.com/maps/search/?api=1&query=%E3%83%A4%E3%83%9E%E3%82%AD%E3%82%B7%20%E7%9F%B3%E5%B7%9D%E7%9C%8C%E7%BE%BD%E5%92%8B%E5%B8%82%E9%B6%B4%E5%A4%9A%E7%94%BA%E4%BA%94%E7%9F%B3%E9%AB%9834-1"
                    target="_blank" rel="noopener">地図を見る</a>
                           </td>
           </tr>
@@ -353,12 +422,48 @@
       </table>
 
       
-              <ul class="p-shop__links">
-          <li><a href="../preparing/?shop=hakui">このお店のスタッフ</a></li>
-          <li><a href="../preparing/">施工事例</a></li>
-          <li><a href="../preparing/">お客様の声</a></li>
-        </ul>
+                      <ul class="p-shop__links">
+                    <li>
+            <a class="p-shop__link is-flyer" href="../preparing/">
+              <svg class="p-shop__linkicon" viewBox="0 0 24 24" width="17" height="17"
+                   fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+                   focusable="false"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+              <span>チラシ</span>
+            </a>
+          </li>
+                    <li>
+            <a class="p-shop__link" href="../preparing/">
+              <svg class="p-shop__linkicon" viewBox="0 0 24 24" width="17" height="17"
+                   fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+                   focusable="false"><circle cx="12" cy="8" r="3.4"/><path d="M4.8 20c0-3.6 3.2-5.6 7.2-5.6s7.2 2 7.2 5.6"/></svg>
+              <span>スタッフ</span>
+            </a>
+          </li>
+                    <li>
+            <a class="p-shop__link" href="../preparing/">
+              <svg class="p-shop__linkicon" viewBox="0 0 24 24" width="17" height="17"
+                   fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+                   focusable="false"><path d="M3.5 11 12 4l8.5 7"/><path d="M6 10.2V20h12v-9.8"/><path d="M10 20v-5h4v5"/></svg>
+              <span>施工事例</span>
+            </a>
+          </li>
+                    <li>
+            <a class="p-shop__link" href="../preparing/">
+              <svg class="p-shop__linkicon" viewBox="0 0 24 24" width="17" height="17"
+                   fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+                   focusable="false"><path d="M20 14.5c0 1.4-1.1 2.5-2.5 2.5H9l-4 3v-3H6.5C5.1 17 4 15.9 4 14.5v-8C4 5.1 5.1 4 6.5 4h11C18.9 4 20 5.1 20 6.5z"/></svg>
+              <span>お客様の声</span>
+            </a>
+          </li>
+                  </ul>
       
+      </div><!-- /.p-shop__info -->
+      </div><!-- /.p-shop__body -->
+
     </div>
 
 
@@ -369,12 +474,28 @@
                   <span class="p-shop__badge">ショールームあります</span>
               </div>
 
+      <div class="p-shop__body">
+
+      <div class="p-shop__media">
+              <figure class="p-shop__photo p-shop__photo--main">
+          <picture>
+            <source srcset="../assets/img/shops/tagami.webp" type="image/webp">
+            <img src="../assets/img/shops/tagami.jpg"
+                 width="680" height="400"                 alt="リフォームヤマキシ 金沢田上店（石川県金沢市田上さくら2丁目14）の外観"
+                 loading="lazy" decoding="async">
+          </picture>
+        </figure>
+                      
+                  </div>
+
+      <div class="p-shop__info">
+
       <table class="p-shop__table">
         <tbody>
           <tr>
             <th>所在地</th>
             <td>
-              石川県金沢市田上さくら2丁目14                              <a class="p-shop__map" href="https://www.google.com/maps/search/?api=1&query=%E3%83%A4%E3%83%9E%E3%82%AD%E3%82%B7%20%E7%9F%B3%E5%B7%9D%E7%9C%8C%E9%87%91%E6%B2%A2%E5%B8%82%E7%94%B0%E4%B8%8A%E3%81%95%E3%81%8F%E3%82%892%E4%B8%81%E7%9B%AE14"
+              石川県金沢市田上さくら2丁目14                                              <a class="p-shop__map" href="https://www.google.com/maps/search/?api=1&query=%E3%83%A4%E3%83%9E%E3%82%AD%E3%82%B7%20%E7%9F%B3%E5%B7%9D%E7%9C%8C%E9%87%91%E6%B2%A2%E5%B8%82%E7%94%B0%E4%B8%8A%E3%81%95%E3%81%8F%E3%82%892%E4%B8%81%E7%9B%AE14"
                    target="_blank" rel="noopener">地図を見る</a>
                           </td>
           </tr>
@@ -399,58 +520,48 @@
 
               <p class="p-shop__srnote">※エコキュートと外壁塗装の専門店です。</p>
       
-              <ul class="p-shop__links">
-          <li><a href="../preparing/?shop=tagami">このお店のスタッフ</a></li>
-          <li><a href="../preparing/">施工事例</a></li>
-          <li><a href="../preparing/">お客様の声</a></li>
-        </ul>
+                      <ul class="p-shop__links">
+                    <li>
+            <a class="p-shop__link is-flyer" href="../preparing/">
+              <svg class="p-shop__linkicon" viewBox="0 0 24 24" width="17" height="17"
+                   fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+                   focusable="false"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+              <span>チラシ</span>
+            </a>
+          </li>
+                    <li>
+            <a class="p-shop__link" href="../preparing/">
+              <svg class="p-shop__linkicon" viewBox="0 0 24 24" width="17" height="17"
+                   fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+                   focusable="false"><circle cx="12" cy="8" r="3.4"/><path d="M4.8 20c0-3.6 3.2-5.6 7.2-5.6s7.2 2 7.2 5.6"/></svg>
+              <span>スタッフ</span>
+            </a>
+          </li>
+                    <li>
+            <a class="p-shop__link" href="../preparing/">
+              <svg class="p-shop__linkicon" viewBox="0 0 24 24" width="17" height="17"
+                   fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+                   focusable="false"><path d="M3.5 11 12 4l8.5 7"/><path d="M6 10.2V20h12v-9.8"/><path d="M10 20v-5h4v5"/></svg>
+              <span>施工事例</span>
+            </a>
+          </li>
+                    <li>
+            <a class="p-shop__link" href="../preparing/">
+              <svg class="p-shop__linkicon" viewBox="0 0 24 24" width="17" height="17"
+                   fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+                   focusable="false"><path d="M20 14.5c0 1.4-1.1 2.5-2.5 2.5H9l-4 3v-3H6.5C5.1 17 4 15.9 4 14.5v-8C4 5.1 5.1 4 6.5 4h11C18.9 4 20 5.1 20 6.5z"/></svg>
+              <span>お客様の声</span>
+            </a>
+          </li>
+                  </ul>
       
-    </div>
+      </div><!-- /.p-shop__info -->
+      </div><!-- /.p-shop__body -->
 
-
-    <div class="p-shop" id="nonoichi" data-reveal>
-
-      <div class="p-shop__head">
-        <h3 class="p-shop__name">金沢野々市店</h3>
-                  <span class="p-shop__badge">ショールームあります</span>
-              </div>
-
-      <table class="p-shop__table">
-        <tbody>
-          <tr>
-            <th>所在地</th>
-            <td>
-              石川県野々市市本町6丁目12-70                              <a class="p-shop__map" href="https://www.google.com/maps/search/?api=1&query=%E3%83%A4%E3%83%9E%E3%82%AD%E3%82%B7%20%E7%9F%B3%E5%B7%9D%E7%9C%8C%E9%87%8E%E3%80%85%E5%B8%82%E5%B8%82%E6%9C%AC%E7%94%BA6%E4%B8%81%E7%9B%AE12-70"
-                   target="_blank" rel="noopener">地図を見る</a>
-                          </td>
-          </tr>
-          <tr>
-            <th>電話番号</th>
-            <td>
-                              <a class="p-shop__tel" href="tel:076-294-6101" data-cta="shop-tel">076-294-6101</a>
-                          </td>
-          </tr>
-          <tr>
-            <th>営業時間</th>
-            <td>
-                              10:00〜18:00                                  <span class="p-shop__hnote">※毎週(水)は17:00閉店</span>
-                                          </td>
-          </tr>
-                      <tr><th>定休日</th><td>年中無休 ※盆・年末年始を除く</td></tr>
-                    <tr>
-            <th>主な担当地域</th>
-            <td>金沢市／野々市市／白山市</td>
-          </tr>
-        </tbody>
-      </table>
-
-      
-              <ul class="p-shop__links">
-          <li><a href="../preparing/?shop=nonoichi">このお店のスタッフ</a></li>
-          <li><a href="../preparing/">施工事例</a></li>
-          <li><a href="../preparing/">お客様の声</a></li>
-        </ul>
-      
     </div>
 
 
@@ -458,8 +569,24 @@
 
       <div class="p-shop__head">
         <h3 class="p-shop__name">東金沢店</h3>
-                  <span class="p-shop__badge p-shop__badge--soon">2026年10月31日（土）オープン予定</span>
               </div>
+
+      <div class="p-shop__body">
+
+      <div class="p-shop__media">
+              <figure class="p-shop__photo p-shop__photo--main">
+          <picture>
+            <source srcset="../assets/img/shops/higashikanazawa.webp" type="image/webp">
+            <img src="../assets/img/shops/higashikanazawa.jpg"
+                 width="680" height="400" style="object-position:50% 22%"                 alt="リフォームヤマキシ 東金沢店（石川県金沢市大樋町）の外観"
+                 loading="lazy" decoding="async">
+          </picture>
+        </figure>
+                      
+                    <p class="p-shop__bubble is-soon">2026年10月31日（土）グランドオープン！</p>
+            </div>
+
+      <div class="p-shop__info">
 
       <table class="p-shop__table">
         <tbody>
@@ -490,6 +617,107 @@
 
       
       
+      </div><!-- /.p-shop__info -->
+      </div><!-- /.p-shop__body -->
+
+    </div>
+
+
+    <div class="p-shop" id="nonoichi" data-reveal>
+
+      <div class="p-shop__head">
+        <h3 class="p-shop__name">金沢野々市店</h3>
+                  <span class="p-shop__badge">ショールームあります</span>
+              </div>
+
+      <div class="p-shop__body">
+
+      <div class="p-shop__media">
+              <figure class="p-shop__photo p-shop__photo--main">
+          <picture>
+            <source srcset="../assets/img/shops/nonoichi.webp" type="image/webp">
+            <img src="../assets/img/shops/nonoichi.jpg"
+                 width="680" height="400"                 alt="リフォームヤマキシ 金沢野々市店（石川県野々市市本町6丁目12-70）の外観"
+                 loading="lazy" decoding="async">
+          </picture>
+        </figure>
+                      
+                  </div>
+
+      <div class="p-shop__info">
+
+      <table class="p-shop__table">
+        <tbody>
+          <tr>
+            <th>所在地</th>
+            <td>
+              石川県野々市市本町6丁目12-70                                              <a class="p-shop__map" href="https://www.google.com/maps/search/?api=1&query=%E3%83%A4%E3%83%9E%E3%82%AD%E3%82%B7%20%E7%9F%B3%E5%B7%9D%E7%9C%8C%E9%87%8E%E3%80%85%E5%B8%82%E5%B8%82%E6%9C%AC%E7%94%BA6%E4%B8%81%E7%9B%AE12-70"
+                   target="_blank" rel="noopener">地図を見る</a>
+                          </td>
+          </tr>
+          <tr>
+            <th>電話番号</th>
+            <td>
+                              <a class="p-shop__tel" href="tel:076-294-6101" data-cta="shop-tel">076-294-6101</a>
+                          </td>
+          </tr>
+          <tr>
+            <th>営業時間</th>
+            <td>
+                              10:00〜18:00                                  <span class="p-shop__hnote">※毎週(水)は17:00閉店</span>
+                                          </td>
+          </tr>
+                      <tr><th>定休日</th><td>年中無休 ※盆・年末年始を除く</td></tr>
+                    <tr>
+            <th>主な担当地域</th>
+            <td>金沢市／野々市市／白山市</td>
+          </tr>
+        </tbody>
+      </table>
+
+      
+                      <ul class="p-shop__links">
+                    <li>
+            <a class="p-shop__link is-flyer" href="../preparing/">
+              <svg class="p-shop__linkicon" viewBox="0 0 24 24" width="17" height="17"
+                   fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+                   focusable="false"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+              <span>チラシ</span>
+            </a>
+          </li>
+                    <li>
+            <a class="p-shop__link" href="../preparing/">
+              <svg class="p-shop__linkicon" viewBox="0 0 24 24" width="17" height="17"
+                   fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+                   focusable="false"><circle cx="12" cy="8" r="3.4"/><path d="M4.8 20c0-3.6 3.2-5.6 7.2-5.6s7.2 2 7.2 5.6"/></svg>
+              <span>スタッフ</span>
+            </a>
+          </li>
+                    <li>
+            <a class="p-shop__link" href="../preparing/">
+              <svg class="p-shop__linkicon" viewBox="0 0 24 24" width="17" height="17"
+                   fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+                   focusable="false"><path d="M3.5 11 12 4l8.5 7"/><path d="M6 10.2V20h12v-9.8"/><path d="M10 20v-5h4v5"/></svg>
+              <span>施工事例</span>
+            </a>
+          </li>
+                    <li>
+            <a class="p-shop__link" href="../preparing/">
+              <svg class="p-shop__linkicon" viewBox="0 0 24 24" width="17" height="17"
+                   fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+                   focusable="false"><path d="M20 14.5c0 1.4-1.1 2.5-2.5 2.5H9l-4 3v-3H6.5C5.1 17 4 15.9 4 14.5v-8C4 5.1 5.1 4 6.5 4h11C18.9 4 20 5.1 20 6.5z"/></svg>
+              <span>お客様の声</span>
+            </a>
+          </li>
+                  </ul>
+      
+      </div><!-- /.p-shop__info -->
+      </div><!-- /.p-shop__body -->
+
     </div>
 
 
@@ -500,12 +728,28 @@
                   <span class="p-shop__badge">ショールームあります</span>
               </div>
 
+      <div class="p-shop__body">
+
+      <div class="p-shop__media">
+              <figure class="p-shop__photo p-shop__photo--main">
+          <picture>
+            <source srcset="../assets/img/shops/kawakita.webp" type="image/webp">
+            <img src="../assets/img/shops/kawakita.jpg"
+                 width="680" height="400"                 alt="リフォームヤマキシ 川北店（石川県能美郡川北町三反田中216-1）の外観"
+                 loading="lazy" decoding="async">
+          </picture>
+        </figure>
+                      
+                  </div>
+
+      <div class="p-shop__info">
+
       <table class="p-shop__table">
         <tbody>
           <tr>
             <th>所在地</th>
             <td>
-              石川県能美郡川北町三反田中216-1                              <a class="p-shop__map" href="https://www.google.com/maps/search/?api=1&query=%E3%83%A4%E3%83%9E%E3%82%AD%E3%82%B7%20%E7%9F%B3%E5%B7%9D%E7%9C%8C%E8%83%BD%E7%BE%8E%E9%83%A1%E5%B7%9D%E5%8C%97%E7%94%BA%E4%B8%89%E5%8F%8D%E7%94%B0%E4%B8%AD216-1"
+              石川県能美郡川北町三反田中216-1                                              <a class="p-shop__map" href="https://www.google.com/maps/search/?api=1&query=%E3%83%A4%E3%83%9E%E3%82%AD%E3%82%B7%20%E7%9F%B3%E5%B7%9D%E7%9C%8C%E8%83%BD%E7%BE%8E%E9%83%A1%E5%B7%9D%E5%8C%97%E7%94%BA%E4%B8%89%E5%8F%8D%E7%94%B0%E4%B8%AD216-1"
                    target="_blank" rel="noopener">地図を見る</a>
                           </td>
           </tr>
@@ -529,12 +773,48 @@
       </table>
 
       
-              <ul class="p-shop__links">
-          <li><a href="../preparing/?shop=kawakita">このお店のスタッフ</a></li>
-          <li><a href="../preparing/">施工事例</a></li>
-          <li><a href="../preparing/">お客様の声</a></li>
-        </ul>
+                      <ul class="p-shop__links">
+                    <li>
+            <a class="p-shop__link is-flyer" href="../preparing/">
+              <svg class="p-shop__linkicon" viewBox="0 0 24 24" width="17" height="17"
+                   fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+                   focusable="false"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+              <span>チラシ</span>
+            </a>
+          </li>
+                    <li>
+            <a class="p-shop__link" href="../preparing/">
+              <svg class="p-shop__linkicon" viewBox="0 0 24 24" width="17" height="17"
+                   fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+                   focusable="false"><circle cx="12" cy="8" r="3.4"/><path d="M4.8 20c0-3.6 3.2-5.6 7.2-5.6s7.2 2 7.2 5.6"/></svg>
+              <span>スタッフ</span>
+            </a>
+          </li>
+                    <li>
+            <a class="p-shop__link" href="../preparing/">
+              <svg class="p-shop__linkicon" viewBox="0 0 24 24" width="17" height="17"
+                   fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+                   focusable="false"><path d="M3.5 11 12 4l8.5 7"/><path d="M6 10.2V20h12v-9.8"/><path d="M10 20v-5h4v5"/></svg>
+              <span>施工事例</span>
+            </a>
+          </li>
+                    <li>
+            <a class="p-shop__link" href="../preparing/">
+              <svg class="p-shop__linkicon" viewBox="0 0 24 24" width="17" height="17"
+                   fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+                   focusable="false"><path d="M20 14.5c0 1.4-1.1 2.5-2.5 2.5H9l-4 3v-3H6.5C5.1 17 4 15.9 4 14.5v-8C4 5.1 5.1 4 6.5 4h11C18.9 4 20 5.1 20 6.5z"/></svg>
+              <span>お客様の声</span>
+            </a>
+          </li>
+                  </ul>
       
+      </div><!-- /.p-shop__info -->
+      </div><!-- /.p-shop__body -->
+
     </div>
 
 
@@ -545,12 +825,28 @@
                   <span class="p-shop__badge">ショールームあります</span>
               </div>
 
+      <div class="p-shop__body">
+
+      <div class="p-shop__media">
+              <figure class="p-shop__photo p-shop__photo--main">
+          <picture>
+            <source srcset="../assets/img/shops/komathu.webp" type="image/webp">
+            <img src="../assets/img/shops/komathu.jpg"
+                 width="680" height="400"                 alt="リフォームヤマキシ 小松店（石川県小松市長田町イ4-1）の外観"
+                 loading="lazy" decoding="async">
+          </picture>
+        </figure>
+                      
+                  </div>
+
+      <div class="p-shop__info">
+
       <table class="p-shop__table">
         <tbody>
           <tr>
             <th>所在地</th>
             <td>
-              石川県小松市長田町イ4-1                              <a class="p-shop__map" href="https://www.google.com/maps/search/?api=1&query=%E3%83%A4%E3%83%9E%E3%82%AD%E3%82%B7%20%E7%9F%B3%E5%B7%9D%E7%9C%8C%E5%B0%8F%E6%9D%BE%E5%B8%82%E9%95%B7%E7%94%B0%E7%94%BA%E3%82%A44-1"
+              石川県小松市長田町イ4-1                                              <a class="p-shop__map" href="https://www.google.com/maps/search/?api=1&query=%E3%83%A4%E3%83%9E%E3%82%AD%E3%82%B7%20%E7%9F%B3%E5%B7%9D%E7%9C%8C%E5%B0%8F%E6%9D%BE%E5%B8%82%E9%95%B7%E7%94%B0%E7%94%BA%E3%82%A44-1"
                    target="_blank" rel="noopener">地図を見る</a>
                           </td>
           </tr>
@@ -575,12 +871,48 @@
       </table>
 
       
-              <ul class="p-shop__links">
-          <li><a href="../preparing/?shop=komathu">このお店のスタッフ</a></li>
-          <li><a href="../preparing/">施工事例</a></li>
-          <li><a href="../preparing/">お客様の声</a></li>
-        </ul>
+                      <ul class="p-shop__links">
+                    <li>
+            <a class="p-shop__link is-flyer" href="../preparing/">
+              <svg class="p-shop__linkicon" viewBox="0 0 24 24" width="17" height="17"
+                   fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+                   focusable="false"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+              <span>チラシ</span>
+            </a>
+          </li>
+                    <li>
+            <a class="p-shop__link" href="../preparing/">
+              <svg class="p-shop__linkicon" viewBox="0 0 24 24" width="17" height="17"
+                   fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+                   focusable="false"><circle cx="12" cy="8" r="3.4"/><path d="M4.8 20c0-3.6 3.2-5.6 7.2-5.6s7.2 2 7.2 5.6"/></svg>
+              <span>スタッフ</span>
+            </a>
+          </li>
+                    <li>
+            <a class="p-shop__link" href="../preparing/">
+              <svg class="p-shop__linkicon" viewBox="0 0 24 24" width="17" height="17"
+                   fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+                   focusable="false"><path d="M3.5 11 12 4l8.5 7"/><path d="M6 10.2V20h12v-9.8"/><path d="M10 20v-5h4v5"/></svg>
+              <span>施工事例</span>
+            </a>
+          </li>
+                    <li>
+            <a class="p-shop__link" href="../preparing/">
+              <svg class="p-shop__linkicon" viewBox="0 0 24 24" width="17" height="17"
+                   fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+                   focusable="false"><path d="M20 14.5c0 1.4-1.1 2.5-2.5 2.5H9l-4 3v-3H6.5C5.1 17 4 15.9 4 14.5v-8C4 5.1 5.1 4 6.5 4h11C18.9 4 20 5.1 20 6.5z"/></svg>
+              <span>お客様の声</span>
+            </a>
+          </li>
+                  </ul>
       
+      </div><!-- /.p-shop__info -->
+      </div><!-- /.p-shop__body -->
+
     </div>
 
 
@@ -591,12 +923,29 @@
                   <span class="p-shop__badge">ショールームあります</span>
               </div>
 
+      <div class="p-shop__body">
+
+      <div class="p-shop__media">
+              <figure class="p-shop__photo p-shop__photo--main">
+          <picture>
+            <source srcset="../assets/img/shops/shinkaga.webp" type="image/webp">
+            <img src="../assets/img/shops/shinkaga.jpg"
+                 width="680" height="400"                 alt="リフォームヤマキシ 新加賀店（石川県加賀市桑原町ホ48-1）の外観"
+                 loading="lazy" decoding="async">
+          </picture>
+        </figure>
+                      
+                    <p class="p-shop__bubble">2026年10月、リフォームコーナーがリニューアル！</p>
+            </div>
+
+      <div class="p-shop__info">
+
       <table class="p-shop__table">
         <tbody>
           <tr>
             <th>所在地</th>
             <td>
-              石川県加賀市桑原町ホ48-1                              <a class="p-shop__map" href="https://www.google.com/maps/search/?api=1&query=%E3%83%A4%E3%83%9E%E3%82%AD%E3%82%B7%20%E7%9F%B3%E5%B7%9D%E7%9C%8C%E5%8A%A0%E8%B3%80%E5%B8%82%E6%A1%91%E5%8E%9F%E7%94%BA%E3%83%9B48-1"
+              石川県加賀市桑原町ホ48-1                                              <a class="p-shop__map" href="https://www.google.com/maps/search/?api=1&query=%E3%83%A4%E3%83%9E%E3%82%AD%E3%82%B7%20%E7%9F%B3%E5%B7%9D%E7%9C%8C%E5%8A%A0%E8%B3%80%E5%B8%82%E6%A1%91%E5%8E%9F%E7%94%BA%E3%83%9B48-1"
                    target="_blank" rel="noopener">地図を見る</a>
                           </td>
           </tr>
@@ -620,21 +969,59 @@
       </table>
 
       
-              <ul class="p-shop__links">
-          <li><a href="../preparing/?shop=shinkaga">このお店のスタッフ</a></li>
-          <li><a href="../preparing/">施工事例</a></li>
-          <li><a href="../preparing/">お客様の声</a></li>
-        </ul>
+                      <ul class="p-shop__links">
+                    <li>
+            <a class="p-shop__link is-flyer" href="../preparing/">
+              <svg class="p-shop__linkicon" viewBox="0 0 24 24" width="17" height="17"
+                   fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+                   focusable="false"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+              <span>チラシ</span>
+            </a>
+          </li>
+                    <li>
+            <a class="p-shop__link" href="../preparing/">
+              <svg class="p-shop__linkicon" viewBox="0 0 24 24" width="17" height="17"
+                   fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+                   focusable="false"><circle cx="12" cy="8" r="3.4"/><path d="M4.8 20c0-3.6 3.2-5.6 7.2-5.6s7.2 2 7.2 5.6"/></svg>
+              <span>スタッフ</span>
+            </a>
+          </li>
+                    <li>
+            <a class="p-shop__link" href="../preparing/">
+              <svg class="p-shop__linkicon" viewBox="0 0 24 24" width="17" height="17"
+                   fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+                   focusable="false"><path d="M3.5 11 12 4l8.5 7"/><path d="M6 10.2V20h12v-9.8"/><path d="M10 20v-5h4v5"/></svg>
+              <span>施工事例</span>
+            </a>
+          </li>
+                    <li>
+            <a class="p-shop__link" href="../preparing/">
+              <svg class="p-shop__linkicon" viewBox="0 0 24 24" width="17" height="17"
+                   fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+                   focusable="false"><path d="M20 14.5c0 1.4-1.1 2.5-2.5 2.5H9l-4 3v-3H6.5C5.1 17 4 15.9 4 14.5v-8C4 5.1 5.1 4 6.5 4h11C18.9 4 20 5.1 20 6.5z"/></svg>
+              <span>お客様の声</span>
+            </a>
+          </li>
+                  </ul>
       
+      </div><!-- /.p-shop__info -->
+      </div><!-- /.p-shop__body -->
+
     </div>
 
+    </div>
   </div>
 </section>
 <section class="l-section" id="pref-fukui">
-  <div class="l-wrap l-wrap--narrow">
+  <div class="l-wrap">
     <div class="c-head">
       <h2 class="c-head__title">福井県の<span class="marker">お店</span></h2>
     </div>
+    <div class="p-shoplist">
 
     <div class="p-shop" id="kanadu" data-reveal>
 
@@ -643,12 +1030,28 @@
                   <span class="p-shop__badge">ショールームあります</span>
               </div>
 
+      <div class="p-shop__body">
+
+      <div class="p-shop__media">
+              <figure class="p-shop__photo p-shop__photo--main">
+          <picture>
+            <source srcset="../assets/img/shops/kanadu.webp" type="image/webp">
+            <img src="../assets/img/shops/kanadu.jpg"
+                 width="680" height="400"                 alt="リフォームヤマキシ 金津店（福井県あわら市大溝1丁目8-13）の外観"
+                 loading="lazy" decoding="async">
+          </picture>
+        </figure>
+                      
+                  </div>
+
+      <div class="p-shop__info">
+
       <table class="p-shop__table">
         <tbody>
           <tr>
             <th>所在地</th>
             <td>
-              福井県あわら市大溝1丁目8-13                              <a class="p-shop__map" href="https://www.google.com/maps/search/?api=1&query=%E3%83%A4%E3%83%9E%E3%82%AD%E3%82%B7%20%E7%A6%8F%E4%BA%95%E7%9C%8C%E3%81%82%E3%82%8F%E3%82%89%E5%B8%82%E5%A4%A7%E6%BA%9D1%E4%B8%81%E7%9B%AE8-13"
+              福井県あわら市大溝1丁目8-13                                              <a class="p-shop__map" href="https://www.google.com/maps/search/?api=1&query=%E3%83%A4%E3%83%9E%E3%82%AD%E3%82%B7%20%E7%A6%8F%E4%BA%95%E7%9C%8C%E3%81%82%E3%82%8F%E3%82%89%E5%B8%82%E5%A4%A7%E6%BA%9D1%E4%B8%81%E7%9B%AE8-13"
                    target="_blank" rel="noopener">地図を見る</a>
                           </td>
           </tr>
@@ -673,12 +1076,48 @@
 
               <p class="p-shop__srnote">※株式会社山岸の本社があるお店です。</p>
       
-              <ul class="p-shop__links">
-          <li><a href="../preparing/?shop=kanadu">このお店のスタッフ</a></li>
-          <li><a href="../preparing/">施工事例</a></li>
-          <li><a href="../preparing/">お客様の声</a></li>
-        </ul>
+                      <ul class="p-shop__links">
+                    <li>
+            <a class="p-shop__link is-flyer" href="../preparing/">
+              <svg class="p-shop__linkicon" viewBox="0 0 24 24" width="17" height="17"
+                   fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+                   focusable="false"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+              <span>チラシ</span>
+            </a>
+          </li>
+                    <li>
+            <a class="p-shop__link" href="../preparing/">
+              <svg class="p-shop__linkicon" viewBox="0 0 24 24" width="17" height="17"
+                   fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+                   focusable="false"><circle cx="12" cy="8" r="3.4"/><path d="M4.8 20c0-3.6 3.2-5.6 7.2-5.6s7.2 2 7.2 5.6"/></svg>
+              <span>スタッフ</span>
+            </a>
+          </li>
+                    <li>
+            <a class="p-shop__link" href="../preparing/">
+              <svg class="p-shop__linkicon" viewBox="0 0 24 24" width="17" height="17"
+                   fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+                   focusable="false"><path d="M3.5 11 12 4l8.5 7"/><path d="M6 10.2V20h12v-9.8"/><path d="M10 20v-5h4v5"/></svg>
+              <span>施工事例</span>
+            </a>
+          </li>
+                    <li>
+            <a class="p-shop__link" href="../preparing/">
+              <svg class="p-shop__linkicon" viewBox="0 0 24 24" width="17" height="17"
+                   fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+                   focusable="false"><path d="M20 14.5c0 1.4-1.1 2.5-2.5 2.5H9l-4 3v-3H6.5C5.1 17 4 15.9 4 14.5v-8C4 5.1 5.1 4 6.5 4h11C18.9 4 20 5.1 20 6.5z"/></svg>
+              <span>お客様の声</span>
+            </a>
+          </li>
+                  </ul>
       
+      </div><!-- /.p-shop__info -->
+      </div><!-- /.p-shop__body -->
+
     </div>
 
 
@@ -688,12 +1127,28 @@
         <h3 class="p-shop__name">開発店</h3>
               </div>
 
+      <div class="p-shop__body">
+
+      <div class="p-shop__media">
+              <figure class="p-shop__photo p-shop__photo--main">
+          <picture>
+            <source srcset="../assets/img/shops/kahahothu.webp" type="image/webp">
+            <img src="../assets/img/shops/kahahothu.jpg"
+                 width="680" height="400"                 alt="リフォームヤマキシ 開発店（福井県福井市開発町9字5-1）の外観"
+                 loading="lazy" decoding="async">
+          </picture>
+        </figure>
+                      
+                  </div>
+
+      <div class="p-shop__info">
+
       <table class="p-shop__table">
         <tbody>
           <tr>
             <th>所在地</th>
             <td>
-              福井県福井市開発町9字5-1                              <a class="p-shop__map" href="https://www.google.com/maps/search/?api=1&query=%E3%83%A4%E3%83%9E%E3%82%AD%E3%82%B7%20%E7%A6%8F%E4%BA%95%E7%9C%8C%E7%A6%8F%E4%BA%95%E5%B8%82%E9%96%8B%E7%99%BA%E7%94%BA9%E5%AD%975-1"
+              福井県福井市開発町9字5-1                                              <a class="p-shop__map" href="https://www.google.com/maps/search/?api=1&query=%E3%83%A4%E3%83%9E%E3%82%AD%E3%82%B7%20%E7%A6%8F%E4%BA%95%E7%9C%8C%E7%A6%8F%E4%BA%95%E5%B8%82%E9%96%8B%E7%99%BA%E7%94%BA9%E5%AD%975-1"
                    target="_blank" rel="noopener">地図を見る</a>
                           </td>
           </tr>
@@ -717,12 +1172,48 @@
       </table>
 
       
-              <ul class="p-shop__links">
-          <li><a href="../preparing/?shop=kahahothu">このお店のスタッフ</a></li>
-          <li><a href="../preparing/">施工事例</a></li>
-          <li><a href="../preparing/">お客様の声</a></li>
-        </ul>
+                      <ul class="p-shop__links">
+                    <li>
+            <a class="p-shop__link is-flyer" href="../preparing/">
+              <svg class="p-shop__linkicon" viewBox="0 0 24 24" width="17" height="17"
+                   fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+                   focusable="false"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+              <span>チラシ</span>
+            </a>
+          </li>
+                    <li>
+            <a class="p-shop__link" href="../preparing/">
+              <svg class="p-shop__linkicon" viewBox="0 0 24 24" width="17" height="17"
+                   fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+                   focusable="false"><circle cx="12" cy="8" r="3.4"/><path d="M4.8 20c0-3.6 3.2-5.6 7.2-5.6s7.2 2 7.2 5.6"/></svg>
+              <span>スタッフ</span>
+            </a>
+          </li>
+                    <li>
+            <a class="p-shop__link" href="../preparing/">
+              <svg class="p-shop__linkicon" viewBox="0 0 24 24" width="17" height="17"
+                   fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+                   focusable="false"><path d="M3.5 11 12 4l8.5 7"/><path d="M6 10.2V20h12v-9.8"/><path d="M10 20v-5h4v5"/></svg>
+              <span>施工事例</span>
+            </a>
+          </li>
+                    <li>
+            <a class="p-shop__link" href="../preparing/">
+              <svg class="p-shop__linkicon" viewBox="0 0 24 24" width="17" height="17"
+                   fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+                   focusable="false"><path d="M20 14.5c0 1.4-1.1 2.5-2.5 2.5H9l-4 3v-3H6.5C5.1 17 4 15.9 4 14.5v-8C4 5.1 5.1 4 6.5 4h11C18.9 4 20 5.1 20 6.5z"/></svg>
+              <span>お客様の声</span>
+            </a>
+          </li>
+                  </ul>
       
+      </div><!-- /.p-shop__info -->
+      </div><!-- /.p-shop__body -->
+
     </div>
 
 
@@ -733,12 +1224,28 @@
                   <span class="p-shop__badge">ショールームあります</span>
               </div>
 
+      <div class="p-shop__body">
+
+      <div class="p-shop__media">
+              <figure class="p-shop__photo p-shop__photo--main">
+          <picture>
+            <source srcset="../assets/img/shops/asahi.webp" type="image/webp">
+            <img src="../assets/img/shops/asahi.jpg"
+                 width="680" height="400"                 alt="リフォームヤマキシ 朝日店（福井県丹生郡越前町乙坂39字1番）の外観"
+                 loading="lazy" decoding="async">
+          </picture>
+        </figure>
+                      
+                  </div>
+
+      <div class="p-shop__info">
+
       <table class="p-shop__table">
         <tbody>
           <tr>
             <th>所在地</th>
             <td>
-              福井県丹生郡越前町乙坂39字1番                              <a class="p-shop__map" href="https://www.google.com/maps/search/?api=1&query=%E3%83%A4%E3%83%9E%E3%82%AD%E3%82%B7%20%E7%A6%8F%E4%BA%95%E7%9C%8C%E4%B8%B9%E7%94%9F%E9%83%A1%E8%B6%8A%E5%89%8D%E7%94%BA%E4%B9%99%E5%9D%8239%E5%AD%971%E7%95%AA"
+              福井県丹生郡越前町乙坂39字1番                                              <a class="p-shop__map" href="https://www.google.com/maps/search/?api=1&query=%E3%83%A4%E3%83%9E%E3%82%AD%E3%82%B7%20%E7%A6%8F%E4%BA%95%E7%9C%8C%E4%B8%B9%E7%94%9F%E9%83%A1%E8%B6%8A%E5%89%8D%E7%94%BA%E4%B9%99%E5%9D%8239%E5%AD%971%E7%95%AA"
                    target="_blank" rel="noopener">地図を見る</a>
                           </td>
           </tr>
@@ -763,14 +1270,51 @@
       </table>
 
       
-              <ul class="p-shop__links">
-          <li><a href="../preparing/?shop=asahi">このお店のスタッフ</a></li>
-          <li><a href="../preparing/">施工事例</a></li>
-          <li><a href="../preparing/">お客様の声</a></li>
-        </ul>
+                      <ul class="p-shop__links">
+                    <li>
+            <a class="p-shop__link is-flyer" href="../preparing/">
+              <svg class="p-shop__linkicon" viewBox="0 0 24 24" width="17" height="17"
+                   fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+                   focusable="false"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+              <span>チラシ</span>
+            </a>
+          </li>
+                    <li>
+            <a class="p-shop__link" href="../preparing/">
+              <svg class="p-shop__linkicon" viewBox="0 0 24 24" width="17" height="17"
+                   fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+                   focusable="false"><circle cx="12" cy="8" r="3.4"/><path d="M4.8 20c0-3.6 3.2-5.6 7.2-5.6s7.2 2 7.2 5.6"/></svg>
+              <span>スタッフ</span>
+            </a>
+          </li>
+                    <li>
+            <a class="p-shop__link" href="../preparing/">
+              <svg class="p-shop__linkicon" viewBox="0 0 24 24" width="17" height="17"
+                   fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+                   focusable="false"><path d="M3.5 11 12 4l8.5 7"/><path d="M6 10.2V20h12v-9.8"/><path d="M10 20v-5h4v5"/></svg>
+              <span>施工事例</span>
+            </a>
+          </li>
+                    <li>
+            <a class="p-shop__link" href="../preparing/">
+              <svg class="p-shop__linkicon" viewBox="0 0 24 24" width="17" height="17"
+                   fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+                   focusable="false"><path d="M20 14.5c0 1.4-1.1 2.5-2.5 2.5H9l-4 3v-3H6.5C5.1 17 4 15.9 4 14.5v-8C4 5.1 5.1 4 6.5 4h11C18.9 4 20 5.1 20 6.5z"/></svg>
+              <span>お客様の声</span>
+            </a>
+          </li>
+                  </ul>
       
+      </div><!-- /.p-shop__info -->
+      </div><!-- /.p-shop__body -->
+
     </div>
 
+    </div>
   </div>
 </section>
 
@@ -849,20 +1393,18 @@
   </div>
 </section>
 
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"HomeAndConstructionBusiness","name":"リフォームヤマキシ 田鶴浜店","parentOrganization":{"@type":"Organization","name":"株式会社山岸"},"telephone":"0767-68-6600","address":{"@type":"PostalAddress","addressCountry":"JP","addressRegion":"石川県","streetAddress":"七尾市高田町ほ部34番地"},"openingHours":["Mo-Su 08:00-21:00"],"areaServed":[{"@type":"City","name":"七尾市"},{"@type":"City","name":"志賀町"}],"url":"../preparing/"}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"HomeAndConstructionBusiness","name":"リフォームヤマキシ 羽咋店","parentOrganization":{"@type":"Organization","name":"株式会社山岸"},"telephone":"0767-23-4747","address":{"@type":"PostalAddress","addressCountry":"JP","addressRegion":"石川県","streetAddress":"羽咋市鶴多町五石高34-1"},"openingHours":["Mo-Th 10:00-18:00","Fr 10:00-17:00","Sa-Su 10:00-18:00"],"areaServed":[{"@type":"City","name":"羽咋市"},{"@type":"City","name":"志賀町"},{"@type":"City","name":"中能登町"},{"@type":"City","name":"宝達志水町"}],"url":"../preparing/"}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"HomeAndConstructionBusiness","name":"リフォームヤマキシ 金沢田上店","parentOrganization":{"@type":"Organization","name":"株式会社山岸"},"telephone":"076-213-6331","address":{"@type":"PostalAddress","addressCountry":"JP","addressRegion":"石川県","streetAddress":"金沢市田上さくら2丁目14"},"openingHours":["Mo-Su 10:00-17:00"],"areaServed":[{"@type":"City","name":"金沢市"}],"url":"../preparing/"}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"HomeAndConstructionBusiness","name":"リフォームヤマキシ 金沢野々市店","parentOrganization":{"@type":"Organization","name":"株式会社山岸"},"telephone":"076-294-6101","address":{"@type":"PostalAddress","addressCountry":"JP","addressRegion":"石川県","streetAddress":"野々市市本町6丁目12-70"},"openingHours":["Mo-Tu 10:00-18:00","We 10:00-17:00","Th-Su 10:00-18:00"],"areaServed":[{"@type":"City","name":"金沢市"},{"@type":"City","name":"野々市市"},{"@type":"City","name":"白山市"}],"url":"../preparing/"}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"HomeAndConstructionBusiness","name":"リフォームヤマキシ 川北店","parentOrganization":{"@type":"Organization","name":"株式会社山岸"},"telephone":"076-277-7550","address":{"@type":"PostalAddress","addressCountry":"JP","addressRegion":"石川県","streetAddress":"能美郡川北町三反田中216-1"},"openingHours":["Mo-Su 08:00-22:00"],"areaServed":[{"@type":"City","name":"川北町"},{"@type":"City","name":"白山市"},{"@type":"City","name":"能美市"}],"url":"../preparing/"}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"HomeAndConstructionBusiness","name":"リフォームヤマキシ 小松店","parentOrganization":{"@type":"Organization","name":"株式会社山岸"},"telephone":"0761-23-3636","address":{"@type":"PostalAddress","addressCountry":"JP","addressRegion":"石川県","streetAddress":"小松市長田町イ4-1"},"openingHours":["Mo-We 10:00-18:00","Th 10:00-17:00","Fr-Su 10:00-18:00"],"areaServed":[{"@type":"City","name":"小松市"},{"@type":"City","name":"能美市"}],"url":"../preparing/"}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"HomeAndConstructionBusiness","name":"リフォームヤマキシ 新加賀店","parentOrganization":{"@type":"Organization","name":"株式会社山岸"},"telephone":"0761-74-0017","address":{"@type":"PostalAddress","addressCountry":"JP","addressRegion":"石川県","streetAddress":"加賀市桑原町ホ48-1"},"openingHours":["Mo-Su 08:00-21:00"],"areaServed":[{"@type":"City","name":"加賀市"}],"url":"../preparing/"}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"HomeAndConstructionBusiness","name":"リフォームヤマキシ 金津店","parentOrganization":{"@type":"Organization","name":"株式会社山岸"},"telephone":"0776-73-1015","address":{"@type":"PostalAddress","addressCountry":"JP","addressRegion":"福井県","streetAddress":"あわら市大溝1丁目8-13"},"openingHours":["Mo-Su 08:00-19:00"],"areaServed":[{"@type":"City","name":"あわら市"},{"@type":"City","name":"坂井市"}],"url":"../preparing/"}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"HomeAndConstructionBusiness","name":"リフォームヤマキシ 開発店","parentOrganization":{"@type":"Organization","name":"株式会社山岸"},"telephone":"0776-54-9939","address":{"@type":"PostalAddress","addressCountry":"JP","addressRegion":"福井県","streetAddress":"福井市開発町9字5-1"},"openingHours":["Mo-Su 09:00-19:00"],"areaServed":[{"@type":"City","name":"福井市"},{"@type":"City","name":"永平寺町"}],"url":"../preparing/"}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"HomeAndConstructionBusiness","name":"リフォームヤマキシ 朝日店","parentOrganization":{"@type":"Organization","name":"株式会社山岸"},"telephone":"0778-34-8885","address":{"@type":"PostalAddress","addressCountry":"JP","addressRegion":"福井県","streetAddress":"丹生郡越前町乙坂39字1番"},"openingHours":["Mo-Su 07:00-21:30"],"areaServed":[{"@type":"City","name":"越前町"},{"@type":"City","name":"越前市"},{"@type":"City","name":"鯖江市"}],"url":"../preparing/"}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"HomeAndConstructionBusiness","name":"リフォームヤマキシ 田鶴浜店","parentOrganization":{"@type":"Organization","name":"株式会社山岸"},"telephone":"0767-68-6600","address":{"@type":"PostalAddress","addressCountry":"JP","addressRegion":"石川県","streetAddress":"七尾市高田町ほ部34番地"},"openingHours":["Mo-Su 08:00-21:00"],"areaServed":[{"@type":"City","name":"七尾市"},{"@type":"City","name":"志賀町"}],"url":"../preparing/","image":"../assets/img/shops/tazuruhama.jpg"}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"HomeAndConstructionBusiness","name":"リフォームヤマキシ 羽咋店","parentOrganization":{"@type":"Organization","name":"株式会社山岸"},"telephone":"0767-23-4747","address":{"@type":"PostalAddress","addressCountry":"JP","addressRegion":"石川県","streetAddress":"羽咋市鶴多町五石高34-1"},"openingHours":["Mo-Th 10:00-18:00","Fr 10:00-17:00","Sa-Su 10:00-18:00"],"areaServed":[{"@type":"City","name":"羽咋市"},{"@type":"City","name":"志賀町"},{"@type":"City","name":"中能登町"},{"@type":"City","name":"宝達志水町"}],"url":"../preparing/","image":"../assets/img/shops/hakui.jpg"}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"HomeAndConstructionBusiness","name":"リフォームヤマキシ 金沢田上店","parentOrganization":{"@type":"Organization","name":"株式会社山岸"},"telephone":"076-213-6331","address":{"@type":"PostalAddress","addressCountry":"JP","addressRegion":"石川県","streetAddress":"金沢市田上さくら2丁目14"},"openingHours":["Mo-Su 10:00-17:00"],"areaServed":[{"@type":"City","name":"金沢市"}],"url":"../preparing/","image":"../assets/img/shops/tagami.jpg"}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"HomeAndConstructionBusiness","name":"リフォームヤマキシ 金沢野々市店","parentOrganization":{"@type":"Organization","name":"株式会社山岸"},"telephone":"076-294-6101","address":{"@type":"PostalAddress","addressCountry":"JP","addressRegion":"石川県","streetAddress":"野々市市本町6丁目12-70"},"openingHours":["Mo-Tu 10:00-18:00","We 10:00-17:00","Th-Su 10:00-18:00"],"areaServed":[{"@type":"City","name":"金沢市"},{"@type":"City","name":"野々市市"},{"@type":"City","name":"白山市"}],"url":"../preparing/","image":"../assets/img/shops/nonoichi.jpg"}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"HomeAndConstructionBusiness","name":"リフォームヤマキシ 川北店","parentOrganization":{"@type":"Organization","name":"株式会社山岸"},"telephone":"076-277-7550","address":{"@type":"PostalAddress","addressCountry":"JP","addressRegion":"石川県","streetAddress":"能美郡川北町三反田中216-1"},"openingHours":["Mo-Su 08:00-22:00"],"areaServed":[{"@type":"City","name":"川北町"},{"@type":"City","name":"白山市"},{"@type":"City","name":"能美市"}],"url":"../preparing/","image":"../assets/img/shops/kawakita.jpg"}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"HomeAndConstructionBusiness","name":"リフォームヤマキシ 小松店","parentOrganization":{"@type":"Organization","name":"株式会社山岸"},"telephone":"0761-23-3636","address":{"@type":"PostalAddress","addressCountry":"JP","addressRegion":"石川県","streetAddress":"小松市長田町イ4-1"},"openingHours":["Mo-We 10:00-18:00","Th 10:00-17:00","Fr-Su 10:00-18:00"],"areaServed":[{"@type":"City","name":"小松市"},{"@type":"City","name":"能美市"}],"url":"../preparing/","image":"../assets/img/shops/komathu.jpg"}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"HomeAndConstructionBusiness","name":"リフォームヤマキシ 新加賀店","parentOrganization":{"@type":"Organization","name":"株式会社山岸"},"telephone":"0761-74-0017","address":{"@type":"PostalAddress","addressCountry":"JP","addressRegion":"石川県","streetAddress":"加賀市桑原町ホ48-1"},"openingHours":["Mo-Su 08:00-21:00"],"areaServed":[{"@type":"City","name":"加賀市"}],"url":"../preparing/","image":"../assets/img/shops/shinkaga.jpg"}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"HomeAndConstructionBusiness","name":"リフォームヤマキシ 金津店","parentOrganization":{"@type":"Organization","name":"株式会社山岸"},"telephone":"0776-73-1015","address":{"@type":"PostalAddress","addressCountry":"JP","addressRegion":"福井県","streetAddress":"あわら市大溝1丁目8-13"},"openingHours":["Mo-Su 08:00-19:00"],"areaServed":[{"@type":"City","name":"あわら市"},{"@type":"City","name":"坂井市"}],"url":"../preparing/","image":"../assets/img/shops/kanadu.jpg"}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"HomeAndConstructionBusiness","name":"リフォームヤマキシ 開発店","parentOrganization":{"@type":"Organization","name":"株式会社山岸"},"telephone":"0776-54-9939","address":{"@type":"PostalAddress","addressCountry":"JP","addressRegion":"福井県","streetAddress":"福井市開発町9字5-1"},"openingHours":["Mo-Su 09:00-19:00"],"areaServed":[{"@type":"City","name":"福井市"},{"@type":"City","name":"永平寺町"}],"url":"../preparing/","image":"../assets/img/shops/kahahothu.jpg"}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"HomeAndConstructionBusiness","name":"リフォームヤマキシ 朝日店","parentOrganization":{"@type":"Organization","name":"株式会社山岸"},"telephone":"0778-34-8885","address":{"@type":"PostalAddress","addressCountry":"JP","addressRegion":"福井県","streetAddress":"丹生郡越前町乙坂39字1番"},"openingHours":["Mo-Su 07:00-21:30"],"areaServed":[{"@type":"City","name":"越前町"},{"@type":"City","name":"越前市"},{"@type":"City","name":"鯖江市"}],"url":"../preparing/","image":"../assets/img/shops/asahi.jpg"}</script>
 
 </main>
-
-
 <footer class="p-footer">
   <div class="l-wrap">
     <div class="p-footer__grid">
