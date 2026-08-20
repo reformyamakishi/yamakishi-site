@@ -1,0 +1,118 @@
+@charset "UTF-8";
+/* ==========================================================================
+   privacy.css ─ プライバシーポリシー（/privacy/）
+   page.css のあとに読み込みます。
+   ========================================================================== */
+
+.p-pp__intro{
+  margin:0 0 22px; font-size:15px; line-height:2.05; color:var(--ink-sub);
+}
+
+/* --------------------------------------------------------------------------
+   このページの内容（目次）
+   -------------------------------------------------------------------------- */
+.p-ppnav{
+  background:var(--bg-gray); border-radius:var(--radius-lg);
+  padding:18px 18px 16px; margin-bottom:30px;
+}
+.p-ppnav__title{
+  margin:0 0 10px; font-size:13px; font-weight:900; color:var(--ink-sub);
+  letter-spacing:.04em;
+}
+.p-ppnav__list{
+  list-style:none; margin:0; padding:0; counter-reset:pp;
+  display:grid; gap:7px;
+}
+.p-ppnav__list li{ counter-increment:pp; }
+.p-ppnav__list a{
+  display:flex; align-items:baseline; gap:8px;
+  text-decoration:none; color:var(--ink);
+  font-size:14.5px; font-weight:700; line-height:1.6;
+}
+.p-ppnav__list a::before{
+  content:counter(pp); flex:0 0 auto;
+  width:20px; height:20px; border-radius:50%;
+  background:#fff; color:var(--brand-dark);
+  font-size:11px; font-weight:900; line-height:20px; text-align:center;
+}
+.p-ppnav__list a::after{ content:"›"; color:var(--ink-light); }
+.p-ppnav__list a:hover{ color:var(--brand-dark); }
+
+/* --------------------------------------------------------------------------
+   本文
+   -------------------------------------------------------------------------- */
+.p-pp{
+  padding:0 0 26px; margin-bottom:26px;
+  border-bottom:1px dashed var(--border);
+  scroll-margin-top:calc(var(--header-h) + 16px);
+}
+.p-pp:last-of-type{ border-bottom:0; margin-bottom:14px; }
+
+.p-pp__title{
+  display:flex; align-items:center; gap:10px;
+  margin:0 0 12px; font-size:clamp(17px,3.9vw,20px); font-weight:900; line-height:1.5;
+}
+.p-pp__n{
+  flex:0 0 auto; width:28px; height:28px; border-radius:50%;
+  background:var(--brand); color:#fff;
+  font-size:13px; font-weight:900; line-height:28px; text-align:center;
+}
+.p-pp__text{
+  margin:0; font-size:15px; line-height:2.05; color:var(--ink-sub);
+}
+.p-pp__text + .p-pp__text{ margin-top:12px; }
+
+.p-pp__list{
+  list-style:none; margin:14px 0 0; padding:0;
+  display:grid; gap:8px;
+}
+.p-pp__list li{
+  position:relative; padding:10px 14px 10px 32px;
+  background:var(--brand-tint); border-radius:10px;
+  font-size:14.5px; line-height:1.85; color:var(--ink);
+}
+.p-pp__list li::before{
+  content:""; position:absolute; left:14px; top:1.05em;
+  width:7px; height:7px; border-radius:50%; background:var(--brand);
+}
+.p-pp__list + .p-pp__text{ margin-top:14px; }
+
+/* --------------------------------------------------------------------------
+   個人情報についてのお問い合わせ
+   -------------------------------------------------------------------------- */
+.p-ppcontact{
+  background:#fff; border:2px solid var(--border); border-radius:var(--radius-lg);
+  padding:24px 20px; text-align:center;
+}
+.p-ppcontact__title{
+  margin:0 0 10px; font-size:clamp(16px,3.8vw,19px); font-weight:900;
+}
+.p-ppcontact__text{
+  margin:0 0 16px; font-size:14.5px; line-height:1.95; color:var(--ink-sub);
+}
+.p-ppcontact__name{ margin:0 0 4px; font-size:15px; font-weight:900; }
+.p-ppcontact__tel{ margin:0 0 16px; line-height:1.5; }
+.p-ppcontact__tel a{
+  font-size:clamp(24px,6vw,30px); font-weight:900; color:var(--brand-dark);
+  text-decoration:none; letter-spacing:.02em;
+}
+.p-ppcontact__tel a:hover{ text-decoration:underline; }
+.p-ppcontact__tel span{
+  display:block; margin-top:2px; font-size:12.5px; color:var(--ink-light);
+}
+.p-ppcontact__links{
+  margin:0; display:flex; flex-wrap:wrap; justify-content:center; gap:8px;
+}
+.p-ppcontact__links a{
+  display:inline-block; text-decoration:none;
+  background:var(--bg-gray); border-radius:999px; padding:8px 16px;
+  font-size:13px; font-weight:900; color:var(--ink);
+}
+.p-ppcontact__links a:hover{ background:var(--brand); color:#fff; }
+
+@media (min-width:768px){
+  .p-ppnav{ padding:22px 24px 20px; }
+  .p-ppnav__list{ grid-template-columns:repeat(2,1fr); gap:9px 22px; }
+  .p-pp__text{ font-size:15.5px; }
+  .p-ppcontact{ padding:30px 32px; }
+}
