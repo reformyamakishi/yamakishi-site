@@ -56,7 +56,13 @@ var AREAS = {
   after:   [2446, 1508, 4893, 2242],
   comment: [2446, 2370, 4098, 3184],
   score:   [4150, 2540, 4740, 3040],
-  shokai:  [ 170, 1815, 1580, 1915]   /* ご紹介（　様）… 公開画像では塗りつぶします */
+  shokai:  [ 170, 1815, 1580, 1915],  /* ご紹介（　様）… 公開画像では塗りつぶします */
+
+  /* ⑧「工事の仕上がり」と⑨「お知り合いへのおすすめ」は、用紙の右上にあって
+     読みまちがえやすいところです。その行だけを切り出して画面に出し、
+     人の目で確かめられるようにします（読み取りには使いません）。 */
+  q8row:   [2540,  165, 4050,  340],
+  q9row:   [2540,  460, 4200,  635]
 };
 
 /* このうち、Google に送ってよいのはここだけ */
@@ -497,10 +503,16 @@ window.YmkrfSurvey = {
 
       /* 手書きの部分を切り出して、入力欄の下に出します */
       [['score','ymkrf-crop-score'],['trouble','ymkrf-crop-trouble'],
-       ['after','ymkrf-crop-after'],['comment','ymkrf-crop-comment']].forEach(function (o) {
+       ['after','ymkrf-crop-after'],['comment','ymkrf-crop-comment'],
+       ['q8row','ymkrf-crop-finish'],['q9row','ymkrf-crop-recommend']].forEach(function (o) {
         var cv = window.YmkrfSurvey.crop(R, o[0], o[0] === 'score' ? 320 : 900);
         var $box = $('#' + o[1]).empty();
-        if (cv) $box.append($('<img>').attr('src', cv.toDataURL('image/jpeg', 0.85)));
+        if (!cv) return;
+        $box.append($('<img>').attr('src', cv.toDataURL('image/jpeg', 0.85)));
+        if (o[0] === 'q8row' || o[0] === 'q9row') {
+          $box.append($('<p class="ymkrf-voice__cropnote">')
+            .text('※ここは読みまちがえやすいところです。用紙のチェックと合っているか見てください。'));
+        }
       });
 
       $('#ymkrf-read-info').val('かたむき' + R.angle.toFixed(1) + '度 / 一致' + R.votes + '個');

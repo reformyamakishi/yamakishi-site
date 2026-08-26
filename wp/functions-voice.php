@@ -56,6 +56,23 @@ function ymkrf_voice_rating_fields() {
 		'_ymkrf_r_finish'  => '「工事の仕上がり」',
 	);
 }
+/* 管理画面の入力欄だけ、用紙と同じ番号を頭に付けます。
+   （公開ページには番号を出さないので、上の関数は番号なしのままにしてあります） */
+function ymkrf_voice_rating_fields_admin() {
+	$no = array(
+		'_ymkrf_r_sales'   => '③',
+		'_ymkrf_r_plan'    => '④',
+		'_ymkrf_r_worker'  => '⑤',
+		'_ymkrf_r_process' => '⑥',
+		'_ymkrf_r_site'    => '⑦',
+		'_ymkrf_r_finish'  => '⑧',
+	);
+	$out = array();
+	foreach ( ymkrf_voice_rating_fields() as $k => $label ) {
+		$out[ $k ] = ( isset( $no[ $k ] ) ? $no[ $k ] . ' ' : '' ) . $label;
+	}
+	return $out;
+}
 /* 4 = 大変良かった … 1 = よくなかった */
 function ymkrf_voice_rating_labels() {
 	return array( 4 => '大変良かった', 3 => '満足', 2 => '普通', 1 => 'よくなかった' );
@@ -236,7 +253,7 @@ function ymkrf_voice_metabox( $post ) {
 	      </td>
 	    </tr>
 
-	    <?php foreach ( ymkrf_voice_rating_fields() as $key => $label ) :
+	    <?php foreach ( ymkrf_voice_rating_fields_admin() as $key => $label ) :
 	      $cur = (int) $get( $key, 0 ); ?>
 	    <tr>
 	      <th><?php echo esc_html( $label ); ?></th>
@@ -246,6 +263,10 @@ function ymkrf_voice_metabox( $post ) {
 	            <?php checked( $cur, $n ); ?>> <?php echo esc_html( $lb ); ?></label>
 	        <?php endforeach; ?>
 	        <label><input type="radio" name="<?php echo esc_attr( $key ); ?>" value="0" <?php checked( $cur, 0 ); ?>> 未記入</label>
+	        <?php if ( $key === '_ymkrf_r_finish' ) : ?>
+	          <?php /* ⑧は用紙の右上にあって読みまちがえやすいので、その場所を切り出して出します */ ?>
+	          <div class="ymkrf-voice__crop" id="ymkrf-crop-finish"></div>
+	        <?php endif; ?>
 	      </td>
 	    </tr>
 	    <?php endforeach; ?>
@@ -259,6 +280,8 @@ function ymkrf_voice_metabox( $post ) {
 	            <?php checked( $cur, $n ); ?>> <?php echo esc_html( $lb ); ?></label>
 	        <?php endforeach; ?>
 	        <label><input type="radio" name="_ymkrf_recommend" value="0" <?php checked( $cur, 0 ); ?>> 未記入</label>
+	        <?php /* ⑨も用紙の右上にあって読みまちがえやすいので、その場所を切り出して出します */ ?>
+	        <div class="ymkrf-voice__crop" id="ymkrf-crop-recommend"></div>
 	      </td>
 	    </tr>
 
@@ -454,6 +477,7 @@ add_action( 'admin_enqueue_scripts', function ( $hook ) {
 	  .ymkrf-voice__need.is-on{display:block}
 	  #ymkrf-score.is-need{background:#fffbe6;border-color:#e0b000;box-shadow:0 0 0 2px #e0b000 inset}
 	  .ymkrf-voice__crop img{max-width:100%;border:1px solid #dcdcde;background:#fff}
+	  .ymkrf-voice__cropnote{margin:4px 0 0;font-size:11.5px;color:#d63638;line-height:1.6}
 	  .ymkrf-voice__table th{width:220px}
 	  .ymkrf-voice__ills{display:flex;flex-wrap:wrap;gap:8px;max-width:900px}
 	  .ymkrf-voice__ill{display:block;cursor:pointer;border:3px solid #dcdcde;border-radius:10px;
