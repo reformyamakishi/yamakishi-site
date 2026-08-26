@@ -263,10 +263,6 @@ function ymkrf_voice_metabox( $post ) {
 	            <?php checked( $cur, $n ); ?>> <?php echo esc_html( $lb ); ?></label>
 	        <?php endforeach; ?>
 	        <label><input type="radio" name="<?php echo esc_attr( $key ); ?>" value="0" <?php checked( $cur, 0 ); ?>> 未記入</label>
-	        <?php if ( $key === '_ymkrf_r_finish' ) : ?>
-	          <?php /* ⑧は用紙の右上にあって読みまちがえやすいので、その場所を切り出して出します */ ?>
-	          <div class="ymkrf-voice__crop" id="ymkrf-crop-finish"></div>
-	        <?php endif; ?>
 	      </td>
 	    </tr>
 	    <?php endforeach; ?>
@@ -280,8 +276,6 @@ function ymkrf_voice_metabox( $post ) {
 	            <?php checked( $cur, $n ); ?>> <?php echo esc_html( $lb ); ?></label>
 	        <?php endforeach; ?>
 	        <label><input type="radio" name="_ymkrf_recommend" value="0" <?php checked( $cur, 0 ); ?>> 未記入</label>
-	        <?php /* ⑨も用紙の右上にあって読みまちがえやすいので、その場所を切り出して出します */ ?>
-	        <div class="ymkrf-voice__crop" id="ymkrf-crop-recommend"></div>
 	      </td>
 	    </tr>
 
@@ -477,7 +471,6 @@ add_action( 'admin_enqueue_scripts', function ( $hook ) {
 	  .ymkrf-voice__need.is-on{display:block}
 	  #ymkrf-score.is-need{background:#fffbe6;border-color:#e0b000;box-shadow:0 0 0 2px #e0b000 inset}
 	  .ymkrf-voice__crop img{max-width:100%;border:1px solid #dcdcde;background:#fff}
-	  .ymkrf-voice__cropnote{margin:4px 0 0;font-size:11.5px;color:#d63638;line-height:1.6}
 	  .ymkrf-voice__table th{width:220px}
 	  .ymkrf-voice__ills{display:flex;flex-wrap:wrap;gap:8px;max-width:900px}
 	  .ymkrf-voice__ill{display:block;cursor:pointer;border:3px solid #dcdcde;border-radius:10px;
