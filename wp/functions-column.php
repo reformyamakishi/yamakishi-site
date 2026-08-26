@@ -271,7 +271,8 @@ function ymkrf_column_writer( $post_id = 0 ) {
 	$sid = (int) get_post_meta( $post_id, '_ymkrf_staff', true );
 	if ( ! $sid ) return;
 	$sp = get_post( $sid );
-	if ( ! $sp || $sp->post_type !== 'ymkrf_staff' ) return;
+	/* 退職などで非公開にした人は出しません（リンク先が無くなるため） */
+	if ( ! $sp || $sp->post_type !== 'ymkrf_staff' || $sp->post_status !== 'publish' ) return;
 
 	$name = trim( (string) get_the_title( $sp ) );
 	if ( $name === '' ) return;

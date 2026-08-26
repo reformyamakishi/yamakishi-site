@@ -11,6 +11,8 @@
  *    2. 画面ぜんぶから「チェック欄らしい四角」を拾う
  *    3. 拾った四角と、基準の57個の並びを投票で照合して、倍率と位置を決める
  *    4. 1つずつ微調整して、枠の内側のインクの量でチェックの有無を決める
+ *    5. ⑧⑨は用紙の右上にあって位置合わせの手がかりから遠いので、
+ *       その2行だけ4つの枠をまとめて動かし、合わせ直す
  *
  *  ※用紙の書式が変わったら REF と AREAS の座標を取り直してください。
  *    （いまの座標は 2026/08 の「仕事の通信簿」から測っています）
@@ -280,6 +282,55 @@ function readSurvey(img) {
       }
     }
   }
+
+  /* ------------------------------------------------------------------
+     ⑧「工事の仕上がり」と⑨「お知り合いへのおすすめ」の作り直し
+
+     位置合わせに使える枠（①②③〜⑦）は、すべて用紙の左3分の1に集まっています。
+     ⑧⑨は右上にあるので、そこまでは「延長線上の当てずっぽう」になり、
+     わずかな倍率のちがいが2〜3倍に広がって、となりの枠を読んでしまいます。
+
+     そこで、この2行だけは4つの枠をひとまとめにして動かし、
+     いちばん枠らしく見える位置と幅にそろえ直します。
+     （1つずつ動かすと順番が入れかわることがあるので、行ごとにまとめて動かします）
+     ------------------------------------------------------------------ */
+  function snapRow(prefix) {
+    var keys = [], i;
+    for (i = 0; i < 4; i++) keys.push(prefix + '_' + i);
+
+    var base = keys.map(function (k) { return { x: found[k].x, y: found[k].y }; });
+    var before = 0;
+    for (i = 0; i < 4; i++) before += frameScore(it, base[i].x, base[i].y, box);
+
+    var cx = (base[0].x + base[3].x) / 2;
+    var R = Math.max(6, Math.round(box * 0.9));
+    var best = null;
+
+    [0.94, 0.96, 0.98, 1.00, 1.02, 1.04, 1.06].forEach(function (f) {
+      for (var oy = -R; oy <= R; oy++) {
+        for (var ox = -R; ox <= R; ox++) {
+          var sum = 0, pos = [];
+          for (var j = 0; j < 4; j++) {
+            var px = Math.round(cx + (base[j].x - cx) * f + ox);
+            var py = base[j].y + oy;
+            sum += frameScore(it, px, py, box);
+            pos.push([px, py]);
+          }
+          if (!best || sum > best.sum) best = { sum: sum, pos: pos };
+        }
+      }
+    });
+
+    /* はっきり良くなったときだけ入れかえます（用紙が汚れていて枠が見えないときは、そのまま） */
+    if (best && best.sum > before + Math.abs(before) * 0.05 + 1) {
+      for (i = 0; i < 4; i++) {
+        found[keys[i]].x = best.pos[i][0];
+        found[keys[i]].y = best.pos[i][1];
+      }
+    }
+  }
+  snapRow('q8');
+  snapRow('q9');
 
   /* インク量は「紙の白さ」を基準にした割合で見ます（うすいスキャンでも読めるように） */
   var hist = new Uint32Array(256), n = 0, i2;

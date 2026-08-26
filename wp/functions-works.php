@@ -597,6 +597,11 @@ function ymkrf_works_metabox( $post ) {
 	                      <?php checked( (string) $get( '_ymkrf_oldpack' ), '1' ); ?>>
 	                    <span>※こちらはヤマキシ旧パック商品となります</span>
 	                  </label>
+	                  <p class="ymkrf-works__oldpacknote">
+	                    えらんだ商品の<b>取り扱いが終わって非表示になると、公開中の事例には
+	                    自動でチェックが入ります</b>（下書きのあいだは何もしません）。<br>
+	                    自動で外れることはないので、はずしたいときは手でチェックを外してください。
+	                  </p>
 	                </div>
 	              <?php endif; ?>
 	            </div>
@@ -617,6 +622,7 @@ add_action( 'admin_head', function () {
 	if ( ! $s || $s->post_type !== 'ymkrf_works' ) return;
 	echo '<style>
 	  .ymkrf-works__table th{width:190px}
+	  .ymkrf-works__oldpacknote{margin:6px 0 0;font-size:12px;color:#787c82;line-height:1.7}
 
 	  /* リフォームした箇所 */
 	  .ymkrf-works__parts{
@@ -1881,4 +1887,238 @@ add_filter( 'login_redirect', function ( $to, $req, $user ) {
 	if ( is_wp_error( $user ) || ! isset( $user->roles ) ) return $to;
 	if ( ! in_array( 'ymkrf_works_staff', (array) $user->roles, true ) ) return $to;
 	return admin_url( 'edit.php?post_type=ymkrf_works' );
+}, 10, 3 );
+
+
+/* ============================================================
+   部位とエリアを「両方いっぺんに」しぼり込む
+   ============================================================
+   URLの形
+     /works/                         … ぜんぶ
+     /works/kitchen/                 … 部位だけ
+     /works-area/kanazawa/           … エリアだけ
+     /works/kitchen/?area=kanazawa   … 両方
+   両方えらんだときは、部位をURLの道に、エリアを ?area= に置きます。
+   （どちらか一方だけのURLは、今までどおりです）
+   ============================================================ */
+
+/** いまえらばれている部位（英字）。無ければ空 */
+if ( ! function_exists( 'ymkrf_works_sel_cat' ) ) :
+function ymkrf_works_sel_cat() {
+	if ( is_tax( 'ymkrf_works_cat' ) ) {
+		$t = get_queried_object();
+		if ( $t && ! is_wp_error( $t ) ) return $t->slug;
+	}
+	if ( isset( $_GET['cat'] ) ) {
+		$s = sanitize_title( wp_unslash( $_GET['cat'] ) );
+		if ( $s !== '' && term_exists( $s, 'ymkrf_works_cat' ) ) return $s;
+	}
+	return '';
+}
+endif;
+
+/** いまえらばれているエリア（英字）。無ければ空 */
+if ( ! function_exists( 'ymkrf_works_sel_area' ) ) :
+function ymkrf_works_sel_area() {
+	if ( is_tax( 'ymkrf_works_area' ) ) {
+		$t = get_queried_object();
+		if ( $t && ! is_wp_error( $t ) ) return $t->slug;
+	}
+	if ( isset( $_GET['area'] ) ) {
+		$s = sanitize_title( wp_unslash( $_GET['area'] ) );
+		if ( $s !== '' && term_exists( $s, 'ymkrf_works_area' ) ) return $s;
+	}
+	return '';
+}
+endif;
+
+/** 部位とエリアの組み合わせから、一覧のURLを作ります */
+if ( ! function_exists( 'ymkrf_works_url' ) ) :
+function ymkrf_works_url( $cat = '', $area = '' ) {
+	$cat  = (string) $cat;
+	$area = (string) $area;
+
+	if ( $cat !== '' ) {
+		$t = get_term_by( 'slug', $cat, 'ymkrf_works_cat' );
+		$u = ( $t && ! is_wp_error( $t ) ) ? get_term_link( $t ) : get_post_type_archive_link( 'ymkrf_works' );
+		if ( is_wp_error( $u ) ) $u = get_post_type_archive_link( 'ymkrf_works' );
+		return $area !== '' ? add_query_arg( 'area', $area, $u ) : $u;
+	}
+	if ( $area !== '' ) {
+		$t = get_term_by( 'slug', $area, 'ymkrf_works_area' );
+		$u = ( $t && ! is_wp_error( $t ) ) ? get_term_link( $t ) : get_post_type_archive_link( 'ymkrf_works' );
+		if ( is_wp_error( $u ) ) $u = get_post_type_archive_link( 'ymkrf_works' );
+		return $u;
+	}
+	return get_post_type_archive_link( 'ymkrf_works' );
+}
+endif;
+
+/** しぼり込みに当てはまる記事の番号 */
+if ( ! function_exists( 'ymkrf_works_filter_ids' ) ) :
+function ymkrf_works_filter_ids( $cat = '', $area = '' ) {
+	$args = array(
+		'post_type'      => 'ymkrf_works',
+		'post_status'    => 'publish',
+		'posts_per_page' => -1,
+		'fields'         => 'ids',
+		'no_found_rows'  => true,
+	);
+	$tq = array( 'relation' => 'AND' );
+	if ( $cat  !== '' ) $tq[] = array( 'taxonomy' => 'ymkrf_works_cat',  'field' => 'slug', 'terms' => $cat );
+	if ( $area !== '' ) $tq[] = array( 'taxonomy' => 'ymkrf_works_area', 'field' => 'slug', 'terms' => $area );
+	if ( count( $tq ) > 1 ) $args['tax_query'] = $tq;
+	return get_posts( $args );
+}
+endif;
+
+/** ボタンに出す件数。もう一方のしぼり込みを効かせた数を返します
+ *  返るのは array( スラッグ => 件数 ) */
+if ( ! function_exists( 'ymkrf_works_term_counts' ) ) :
+function ymkrf_works_term_counts( $taxonomy, $cat = '', $area = '' ) {
+	$ids = ymkrf_works_filter_ids( $cat, $area );
+	$out = array();
+	if ( ! $ids ) return $out;
+	$terms = wp_get_object_terms( $ids, $taxonomy, array( 'fields' => 'all_with_object_id' ) );
+	if ( is_wp_error( $terms ) ) return $out;
+	foreach ( $terms as $t ) {
+		if ( ! isset( $out[ $t->slug ] ) ) $out[ $t->slug ] = 0;
+		$out[ $t->slug ]++;
+	}
+	return $out;
+}
+endif;
+
+/* 一覧のしぼり込みに、もう一方の条件を足します */
+add_action( 'pre_get_posts', function ( $q ) {
+	if ( is_admin() || ! $q->is_main_query() ) return;
+	if ( ! ( $q->is_post_type_archive( 'ymkrf_works' )
+	      || $q->is_tax( 'ymkrf_works_cat' ) || $q->is_tax( 'ymkrf_works_area' ) ) ) return;
+
+	$cat  = isset( $_GET['cat'] )  ? sanitize_title( wp_unslash( $_GET['cat'] ) )  : '';
+	$area = isset( $_GET['area'] ) ? sanitize_title( wp_unslash( $_GET['area'] ) ) : '';
+
+	$add = array();
+	if ( $cat !== '' && ! $q->is_tax( 'ymkrf_works_cat' ) && term_exists( $cat, 'ymkrf_works_cat' ) ) {
+		$add[] = array( 'taxonomy' => 'ymkrf_works_cat', 'field' => 'slug', 'terms' => $cat );
+	}
+	if ( $area !== '' && ! $q->is_tax( 'ymkrf_works_area' ) && term_exists( $area, 'ymkrf_works_area' ) ) {
+		$add[] = array( 'taxonomy' => 'ymkrf_works_area', 'field' => 'slug', 'terms' => $area );
+	}
+	if ( ! $add ) return;
+
+	$tq = (array) $q->get( 'tax_query' );
+	$tq = array_merge( $tq, $add );
+	$tq['relation'] = 'AND';
+	$q->set( 'tax_query', $tq );
+}, 20 );
+
+/* 部位＋エリアの組み合わせページは、検索エンジンに登録させません。
+   組み合わせの数だけ似たページができてしまい、SEO上よくないためです。
+   （/works/kitchen/ や /works-area/kanazawa/ の1つだけのページは、今までどおり登録されます） */
+add_action( 'wp_head', function () {
+	if ( ! ( is_post_type_archive( 'ymkrf_works' ) || is_tax( array( 'ymkrf_works_cat', 'ymkrf_works_area' ) ) ) ) return;
+	if ( empty( $_GET['area'] ) && empty( $_GET['cat'] ) ) return;
+	echo '<meta name="robots" content="noindex,follow">' . "\n";
+}, 1 );
+
+/* 組み合わせているときは、ページの題名にも両方を出します */
+add_filter( 'document_title_parts', function ( $parts ) {
+	if ( ! ( is_post_type_archive( 'ymkrf_works' ) || is_tax( array( 'ymkrf_works_cat', 'ymkrf_works_area' ) ) ) ) return $parts;
+	if ( empty( $_GET['area'] ) && empty( $_GET['cat'] ) ) return $parts;
+
+	$cat  = function_exists( 'ymkrf_works_sel_cat' )  ? ymkrf_works_sel_cat()  : '';
+	$area = function_exists( 'ymkrf_works_sel_area' ) ? ymkrf_works_sel_area() : '';
+	$ct = $cat  !== '' ? get_term_by( 'slug', $cat,  'ymkrf_works_cat' )  : null;
+	$at = $area !== '' ? get_term_by( 'slug', $area, 'ymkrf_works_area' ) : null;
+	$cn = ( $ct && ! is_wp_error( $ct ) ) ? $ct->name : '';
+	$an = ( $at && ! is_wp_error( $at ) ) ? $at->name : '';
+	$label = trim( $an . ( $an !== '' && $cn !== '' ? 'の' : '' ) . $cn );
+	if ( $label !== '' ) $parts['title'] = $label . 'の施工事例';
+	return $parts;
+}, 20 );
+
+
+/* ============================================================
+   取り扱いが終わった商品は、自動で「旧パック商品」にします
+   ============================================================
+   商品ページを非表示（下書き・ゴミ箱）にすると、その商品を使った
+   施工事例からは、商品ページへのリンクが出なくなります。
+   そのままだと「何を入れた工事なのか」が分からなくなるので、
+   ※こちらはヤマキシ旧パック商品となります に自動でチェックを入れます。
+
+   ★下書きの施工事例は、何もしません。
+     登録の途中で、まだ商品をえらんでいないだけのことがあるためです。
+   ★いちどチェックが入ったら、自動で外すことはしません。
+     手で外した意図を消してしまわないようにするためです。
+   ============================================================ */
+
+/** この施工事例に、取り扱いの終わった商品が入っていれば true */
+if ( ! function_exists( 'ymkrf_works_has_gone_product' ) ) :
+function ymkrf_works_has_gone_product( $post_id ) {
+	$v   = (string) get_post_meta( $post_id, '_ymkrf_products', true );
+	$ids = array_filter( array_map( 'intval', explode( ',', $v ) ) );
+	if ( ! $ids ) return false;
+	foreach ( $ids as $id ) {
+		$p = get_post( $id );
+		if ( ! $p || $p->post_type !== 'ymkrf_product' || $p->post_status !== 'publish' ) return true;
+	}
+	return false;
+}
+endif;
+
+/** 公開中の施工事例1件を見て、必要なら旧パックのチェックを入れます */
+if ( ! function_exists( 'ymkrf_works_sync_oldpack' ) ) :
+function ymkrf_works_sync_oldpack( $post_id ) {
+	$post_id = (int) $post_id;
+	$p = get_post( $post_id );
+	if ( ! $p || $p->post_type !== 'ymkrf_works' ) return;
+
+	/* 下書き・レビュー待ち・ゴミ箱は、そのままにします */
+	if ( $p->post_status !== 'publish' ) return;
+
+	if ( get_post_meta( $post_id, '_ymkrf_oldpack', true ) === '1' ) return;   /* すでに入っている */
+	if ( ! ymkrf_works_has_gone_product( $post_id ) ) return;
+
+	update_post_meta( $post_id, '_ymkrf_oldpack', '1' );
+}
+endif;
+
+/* 施工事例を保存したとき */
+add_action( 'save_post_ymkrf_works', function ( $post_id ) {
+	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
+	ymkrf_works_sync_oldpack( $post_id );
+}, 30 );
+
+/* 施工事例を「公開」にしたとき（下書きのあいだに商品が終わっていた場合） */
+add_action( 'transition_post_status', function ( $new, $old, $post ) {
+	if ( ! $post || $post->post_type !== 'ymkrf_works' ) return;
+	if ( $new !== 'publish' || $old === 'publish' ) return;
+	ymkrf_works_sync_oldpack( $post->ID );
+}, 10, 3 );
+
+/* 商品を非表示にしたとき、その商品を使っている公開中の施工事例をまとめて直します */
+add_action( 'transition_post_status', function ( $new, $old, $post ) {
+	if ( ! $post || $post->post_type !== 'ymkrf_product' ) return;
+	if ( $old !== 'publish' || $new === 'publish' ) return;   /* 公開 → 非公開 のときだけ */
+
+	$id = (int) $post->ID;
+	/* _ymkrf_products は「12,34,56」の形なので、番号が入っていそうなものを広めに拾って、
+	   そのあと1件ずつきちんと確かめます */
+	$works = get_posts( array(
+		'post_type'      => 'ymkrf_works',
+		'post_status'    => 'publish',
+		'posts_per_page' => -1,
+		'fields'         => 'ids',
+		'no_found_rows'  => true,
+		'meta_query'     => array( array(
+			'key' => '_ymkrf_products', 'value' => (string) $id, 'compare' => 'LIKE',
+		) ),
+	) );
+	foreach ( (array) $works as $w ) {
+		$v   = (string) get_post_meta( $w, '_ymkrf_products', true );
+		$ids = array_filter( array_map( 'intval', explode( ',', $v ) ) );
+		if ( ! in_array( $id, $ids, true ) ) continue;   /* 「1」と「12」の取りちがえを防ぎます */
+		ymkrf_works_sync_oldpack( $w );
+	}
 }, 10, 3 );

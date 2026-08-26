@@ -11,16 +11,32 @@
 if ( ! defined( 'ABSPATH' ) ) exit;
 $asset = get_stylesheet_directory_uri();
 
-/* いま見ている絞り込み */
-$wterm = ( is_tax( array( 'ymkrf_works_cat', 'ymkrf_works_area' ) ) ) ? get_queried_object() : null;
-$wname = ( $wterm && ! is_wp_error( $wterm ) ) ? $wterm->name : '';
-$wtax  = ( $wterm && ! is_wp_error( $wterm ) ) ? $wterm->taxonomy : '';
+/* いまえらばれているしぼり込み。部位とエリアは両方いっぺんにえらべます。
+     /works/kitchen/                … 部位だけ
+     /works-area/kanazawa/          … エリアだけ
+     /works/kitchen/?area=kanazawa  … 両方 */
+$wcat  = function_exists( 'ymkrf_works_sel_cat' )  ? ymkrf_works_sel_cat()  : '';
+$warea = function_exists( 'ymkrf_works_sel_area' ) ? ymkrf_works_sel_area() : '';
 
-/* 絞り込みボタン用（件数が0のものは出しません） */
+$wcatT  = $wcat  !== '' ? get_term_by( 'slug', $wcat,  'ymkrf_works_cat' )  : null;
+$wareaT = $warea !== '' ? get_term_by( 'slug', $warea, 'ymkrf_works_area' ) : null;
+$wcatN  = ( $wcatT  && ! is_wp_error( $wcatT ) )  ? $wcatT->name  : '';
+$wareaN = ( $wareaT && ! is_wp_error( $wareaT ) ) ? $wareaT->name : '';
+
+/* 見出しに出す言葉（エリア＋部位） */
+$wname = trim( $wareaN . ( $wareaN !== '' && $wcatN !== '' ? 'の' : '' ) . $wcatN );
+
+/* しぼり込みボタン用（件数が0のものは出しません） */
 $wcats  = get_terms( array( 'taxonomy' => 'ymkrf_works_cat',  'hide_empty' => true ) );
 $wareas = get_terms( array( 'taxonomy' => 'ymkrf_works_area', 'hide_empty' => true ) );
 if ( is_wp_error( $wcats ) )  $wcats  = array();
 if ( is_wp_error( $wareas ) ) $wareas = array();
+
+/* 片方をえらんでいるときは、その中での件数にします */
+$wcatCount  = function_exists( 'ymkrf_works_term_counts' )
+	? ymkrf_works_term_counts( 'ymkrf_works_cat',  '', $warea ) : array();
+$wareaCount = function_exists( 'ymkrf_works_term_counts' )
+	? ymkrf_works_term_counts( 'ymkrf_works_area', $wcat, '' ) : array();
 
 get_header(); ?>
 
@@ -63,19 +79,24 @@ get_header(); ?>
 <section class="l-section l-section--tight">
   <div class="l-wrap">
 
+    <?php /* 部位とエリアは、両方いっぺんにえらべます。
+             えらんだボタンをもう一度押すと、そのしぼり込みだけ外れます。 */ ?>
     <?php if ( $wcats ) : ?>
     <nav class="p-works__filter" aria-label="部位でさがす">
       <p class="p-works__filterttl">部位でさがす</p>
       <ul class="p-works__filterlist">
         <li>
-          <a class="p-works__fbtn<?php echo ( $wname === '' ? ' is-current' : '' ); ?>"
-             href="<?php echo esc_url( get_post_type_archive_link( 'ymkrf_works' ) ); ?>">すべて</a>
+          <a class="p-works__fbtn<?php echo ( $wcat === '' ? ' is-current' : '' ); ?>"
+             href="<?php echo esc_url( ymkrf_works_url( '', $warea ) ); ?>">すべて</a>
         </li>
-        <?php foreach ( $wcats as $t ) : ?>
+        <?php foreach ( $wcats as $t ) :
+          $n  = $warea === '' ? (int) $t->count : ( isset( $wcatCount[ $t->slug ] ) ? (int) $wcatCount[ $t->slug ] : 0 );
+          if ( $n === 0 ) continue;
+          $on = ( $wcat === $t->slug ); ?>
         <li>
-          <a class="p-works__fbtn<?php echo ( $wtax === 'ymkrf_works_cat' && $wterm->term_id === $t->term_id ? ' is-current' : '' ); ?>"
-             href="<?php echo esc_url( get_term_link( $t ) ); ?>">
-            <?php echo esc_html( $t->name ); ?><span class="p-works__fnum"><?php echo (int) $t->count; ?></span>
+          <a class="p-works__fbtn<?php echo ( $on ? ' is-current' : '' ); ?>"
+             href="<?php echo esc_url( ymkrf_works_url( $on ? '' : $t->slug, $warea ) ); ?>">
+            <?php echo esc_html( $t->name ); ?><span class="p-works__fnum"><?php echo $n; ?></span>
           </a>
         </li>
         <?php endforeach; ?>
@@ -87,16 +108,30 @@ get_header(); ?>
     <nav class="p-works__filter p-works__filter--area" aria-label="エリアでさがす">
       <p class="p-works__filterttl">エリアでさがす</p>
       <ul class="p-works__filterlist">
-        <?php foreach ( $wareas as $t ) : ?>
         <li>
-          <a class="p-works__fbtn<?php echo ( $wtax === 'ymkrf_works_area' && $wterm->term_id === $t->term_id ? ' is-current' : '' ); ?>"
-             href="<?php echo esc_url( get_term_link( $t ) ); ?>">
-            <?php echo esc_html( $t->name ); ?><span class="p-works__fnum"><?php echo (int) $t->count; ?></span>
+          <a class="p-works__fbtn<?php echo ( $warea === '' ? ' is-current' : '' ); ?>"
+             href="<?php echo esc_url( ymkrf_works_url( $wcat, '' ) ); ?>">すべて</a>
+        </li>
+        <?php foreach ( $wareas as $t ) :
+          $n  = $wcat === '' ? (int) $t->count : ( isset( $wareaCount[ $t->slug ] ) ? (int) $wareaCount[ $t->slug ] : 0 );
+          if ( $n === 0 ) continue;
+          $on = ( $warea === $t->slug ); ?>
+        <li>
+          <a class="p-works__fbtn<?php echo ( $on ? ' is-current' : '' ); ?>"
+             href="<?php echo esc_url( ymkrf_works_url( $wcat, $on ? '' : $t->slug ) ); ?>">
+            <?php echo esc_html( $t->name ); ?><span class="p-works__fnum"><?php echo $n; ?></span>
           </a>
         </li>
         <?php endforeach; ?>
       </ul>
     </nav>
+    <?php endif; ?>
+
+    <?php if ( $wcat !== '' && $warea !== '' ) : ?>
+      <p class="p-works__clear">
+        <span><?php echo esc_html( $wname ); ?>でしぼり込み中</span>
+        <a href="<?php echo esc_url( get_post_type_archive_link( 'ymkrf_works' ) ); ?>">しぼり込みをやめる</a>
+      </p>
     <?php endif; ?>
 
   </div>

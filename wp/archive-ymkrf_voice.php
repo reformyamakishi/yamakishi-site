@@ -6,38 +6,36 @@
 if ( ! defined( 'ABSPATH' ) ) exit;
 $asset = get_stylesheet_directory_uri();
 
-/* いま見ている工事箇所（/voice/oiltank/）と市町（/voice/area/kanazawa/） */
+/* いまえらばれている工事箇所と市町。両方いっぺんにえらべます。
+     /voice/kitchen/                … 工事箇所だけ
+     /voice/area/kanazawa/          … 地域だけ
+     /voice/kitchen/?area=kanazawa  … 両方 */
+$vpartR = function_exists( 'ymkrf_voice_sel_part' ) ? ymkrf_voice_sel_part() : '';
+$vareaR = function_exists( 'ymkrf_voice_sel_area' ) ? ymkrf_voice_sel_area() : '';
 $vpart  = function_exists( 'ymkrf_voice_current_part' ) ? ymkrf_voice_current_part() : '';
 $vcity  = function_exists( 'ymkrf_voice_current_city' ) ? ymkrf_voice_current_city() : '';
-if ( $vcity !== '' ) $vpart = '';   /* 地域の一覧のときは、工事箇所は使いません */
 
 /* 平均点（いま並んでいるぶんだけ） */
-$avg_args = array( 'post_type' => 'ymkrf_voice', 'posts_per_page' => -1, 'fields' => 'ids' );
-if ( $vcity !== '' ) {
-	$avg_args['meta_query'] = array( array( 'key' => '_ymkrf_city', 'value' => $vcity, 'compare' => '=' ) );
-} elseif ( $vpart !== '' ) {
-	$avg_args['meta_query'] = array( array( 'key' => '_ymkrf_parts', 'value' => $vpart, 'compare' => 'LIKE' ) );
-}
-$all = get_posts( $avg_args );
+$all = ymkrf_voice_filter_ids( $vpart, $vcity );
 $sum = 0; $cnt = 0;
 foreach ( (array) $all as $id ) { $s = ymkrf_voice_score( $id ); if ( $s ) { $sum += $s; $cnt++; } }
 $avg = $cnt ? (int) round( $sum / $cnt ) : 0;
 
-/* さがすボタン */
-$vcats  = function_exists( 'ymkrf_voice_part_counts' ) ? ymkrf_voice_part_counts() : array();
-$vareas = function_exists( 'ymkrf_voice_area_counts' ) ? ymkrf_voice_area_counts() : array();
+/* さがすボタン（片方をえらんでいるときは、その中での件数を出します） */
+$vcats  = function_exists( 'ymkrf_voice_part_counts' ) ? ymkrf_voice_part_counts( $vcity ) : array();
+$vareas = function_exists( 'ymkrf_voice_area_counts' ) ? ymkrf_voice_area_counts( $vpart ) : array();
+
+/* 見出しに出す言葉 */
+$vlabel = trim( $vcity . ( $vcity !== '' && $vpart !== '' ? 'の' : '' ) . $vpart );
 
 get_header(); ?>
 
 <nav class="p-breadcrumb" aria-label="パンくずリスト">
   <ol class="p-breadcrumb__list">
     <li><a href="<?php echo esc_url( home_url( '/' ) ); ?>">ホーム</a></li>
-    <?php if ( $vcity !== '' ) : ?>
+    <?php if ( $vlabel !== '' ) : ?>
       <li><a href="<?php echo esc_url( home_url( '/voice/' ) ); ?>">お客様の声</a></li>
-      <li><?php echo esc_html( $vcity ); ?></li>
-    <?php elseif ( $vpart !== '' ) : ?>
-      <li><a href="<?php echo esc_url( home_url( '/voice/' ) ); ?>">お客様の声</a></li>
-      <li><?php echo esc_html( $vpart ); ?></li>
+      <li><?php echo esc_html( $vlabel ); ?></li>
     <?php else : ?>
       <li>お客様の声</li>
     <?php endif; ?>
@@ -51,17 +49,10 @@ get_header(); ?>
     <img class="p-pagehead__chara c-chara--float" src="<?php echo $asset; ?>/assets/img/character/char-hinshitsu.webp"
          width="592" height="640" alt="" loading="lazy" decoding="async">
     <span class="p-pagehead__en">VOICE</span>
-    <?php if ( $vcity !== '' ) : ?>
-      <h1 class="p-pagehead__title"><?php echo esc_html( $vcity ); ?>のお客様の声</h1>
+    <?php if ( $vlabel !== '' ) : ?>
+      <h1 class="p-pagehead__title"><?php echo esc_html( $vlabel ); ?>のお客様の声</h1>
       <p class="p-pagehead__lead">
-        <?php echo esc_html( $vcity ); ?>で工事をさせていただいたお客様から<br class="xs-only">いただいた、
-        アンケート「仕事の通信簿」です。<br>
-        いただいたまま載せています。<br class="xs-only">良い評価も、そうでない評価も。
-      </p>
-    <?php elseif ( $vpart !== '' ) : ?>
-      <h1 class="p-pagehead__title"><?php echo esc_html( $vpart ); ?>のお客様の声</h1>
-      <p class="p-pagehead__lead">
-        <?php echo esc_html( $vpart ); ?>の工事をさせていただいたお客様から<br class="xs-only">いただいた、
+        <?php echo esc_html( $vlabel ); ?>の工事をさせていただいたお客様から<br class="xs-only">いただいた、
         アンケート「仕事の通信簿」です。<br>
         いただいたまま載せています。<br class="xs-only">良い評価も、そうでない評価も。
       </p>
@@ -86,17 +77,21 @@ get_header(); ?>
 <?php if ( count( $vcats ) > 1 || count( $vareas ) > 1 ) : ?>
 <section class="l-section l-section--tight">
   <div class="l-wrap">
+
+    <?php /* 工事箇所と地域は、両方いっぺんにえらべます。
+             えらんだボタンをもう一度押すと、そのしぼり込みだけ外れます。 */ ?>
     <nav class="p-voice__cats" aria-label="工事箇所でさがす">
       <p class="p-voice__catsttl">工事箇所でさがす</p>
       <ul class="p-voice__catslist">
         <li>
-          <a class="p-voice__cat<?php echo ( $vpart === '' && $vcity === '' ? ' is-current' : '' ); ?>"
-             href="<?php echo esc_url( home_url( '/voice/' ) ); ?>">すべて</a>
+          <a class="p-voice__cat<?php echo ( $vpartR === '' ? ' is-current' : '' ); ?>"
+             href="<?php echo esc_url( ymkrf_voice_url( '', $vareaR ) ); ?>">すべて</a>
         </li>
-        <?php foreach ( $vcats as $name => $c ) : ?>
+        <?php foreach ( $vcats as $name => $c ) :
+          $on = ( $vpartR === $c['roman'] ); ?>
         <li>
-          <a class="p-voice__cat<?php echo ( $vpart === $name ? ' is-current' : '' ); ?>"
-             href="<?php echo esc_url( ymkrf_voice_part_url( $c['roman'] ) ); ?>">
+          <a class="p-voice__cat<?php echo ( $on ? ' is-current' : '' ); ?>"
+             href="<?php echo esc_url( ymkrf_voice_url( $on ? '' : $c['roman'], $vareaR ) ); ?>">
             <?php echo esc_html( $name ); ?><span class="p-voice__catnum"><?php echo (int) $c['count']; ?></span>
           </a>
         </li>
@@ -108,10 +103,15 @@ get_header(); ?>
     <nav class="p-voice__cats p-voice__cats--area" aria-label="地域でさがす">
       <p class="p-voice__catsttl">地域でさがす</p>
       <ul class="p-voice__catslist">
-        <?php foreach ( $vareas as $name => $c ) : ?>
         <li>
-          <a class="p-voice__cat<?php echo ( $vcity === $name ? ' is-current' : '' ); ?>"
-             href="<?php echo esc_url( ymkrf_voice_area_url( $c['roman'] ) ); ?>">
+          <a class="p-voice__cat<?php echo ( $vareaR === '' ? ' is-current' : '' ); ?>"
+             href="<?php echo esc_url( ymkrf_voice_url( $vpartR, '' ) ); ?>">すべて</a>
+        </li>
+        <?php foreach ( $vareas as $name => $c ) :
+          $on = ( $vareaR === $c['roman'] ); ?>
+        <li>
+          <a class="p-voice__cat<?php echo ( $on ? ' is-current' : '' ); ?>"
+             href="<?php echo esc_url( ymkrf_voice_url( $vpartR, $on ? '' : $c['roman'] ) ); ?>">
             <?php echo esc_html( $name ); ?><span class="p-voice__catnum"><?php echo (int) $c['count']; ?></span>
           </a>
         </li>
@@ -119,6 +119,14 @@ get_header(); ?>
       </ul>
     </nav>
     <?php endif; ?>
+
+    <?php if ( $vpartR !== '' && $vareaR !== '' ) : ?>
+      <p class="p-voice__clear">
+        <span><?php echo esc_html( $vlabel ); ?>でしぼり込み中</span>
+        <a href="<?php echo esc_url( home_url( '/voice/' ) ); ?>">しぼり込みをやめる</a>
+      </p>
+    <?php endif; ?>
+
   </div>
 </section>
 <?php endif; ?>

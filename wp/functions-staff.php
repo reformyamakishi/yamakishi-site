@@ -361,18 +361,40 @@ function ymkrf_staff_card( $staff_id, $comment = '' ) {
 	$comment  = trim( (string) $comment );
 
 	$p = $staff_id ? get_post( $staff_id ) : null;
-	$ok = ( $p && $p->post_type === 'ymkrf_staff' && $p->post_status === 'publish' );
+	$is_staff = ( $p && $p->post_type === 'ymkrf_staff' );
+	$ok       = ( $is_staff && $p->post_status === 'publish' );
+
+	/* 退職などで「非公開」にした人は、名前と顔写真は出さず「○○店スタッフ」とします。
+	   工事そのものは残るので、ひとことはそのまま載せます。
+	   （在職中の方だけ、名前・顔写真・ご本人のページへのリンクを出します）
+
+	   スタッフの記事を「削除」した場合も同じ扱いです。
+	   ただしお店が分からなくなるので「リフォームヤマキシスタッフ」と出ます。
+
+	   ★「下書き」は登録の途中という意味なので、ここでは何も出しません。
+	     退職された方は「非公開」にしてください。 */
+	$deleted = ( $staff_id > 0 && ! $p );
+	$gone    = ( $is_staff && $p->post_status === 'private' ) || $deleted;
 
 	/* 担当者もひとことも無ければ、何も出しません */
-	if ( ! $ok && $comment === '' ) return '';
+	if ( ! $ok && ! $gone && $comment === '' ) return '';
 
-	$shop = $ok ? ymkrf_staff_shop_name( $staff_id ) : '';
+	$shop = ( $ok || $gone ) ? ymkrf_staff_shop_name( $staff_id ) : '';
 	$role = $ok ? trim( (string) get_post_meta( $staff_id, '_ymkrf_staff_role', true ) ) : '';
 	$name = $ok ? get_the_title( $staff_id ) : '';
 
-	if ( $comment === '' && $ok ) {
+	if ( $comment === '' && ( $ok || $gone ) ) {
 		$comment = trim( (string) get_post_meta( $staff_id, '_ymkrf_staff_word', true ) );
 	}
+
+	/* 退職された方は「○○店スタッフ」とだけ出します */
+	if ( $gone ) {
+		$name = ( $shop !== '' ? $shop : 'リフォームヤマキシ' ) . 'スタッフ';
+		$shop = '';
+	}
+
+	/* 在職中でない方は、ひとことが無ければ札そのものを出しません */
+	if ( ! $ok && $comment === '' ) return '';
 
 	$face = $ok ? ymkrf_staff_face( $staff_id, 'medium' ) : ymkrf_staff_face( 0, 'medium' );
 
@@ -611,7 +633,11 @@ function ymkrf_staff_admin_cell( $staff_id ) {
 	if ( ! $staff_id ) return $none;
 
 	$p = get_post( $staff_id );
-	if ( ! $p || $p->post_type !== 'ymkrf_staff' ) return $none;
+
+	/* 記事ごと消された方（フロントでは「リフォームヤマキシスタッフ」と出ます） */
+	if ( ! $p ) return '<span style="color:#a7aaad">（削除されたスタッフ）</span>';
+
+	if ( $p->post_type !== 'ymkrf_staff' ) return $none;
 
 	$name = trim( (string) get_the_title( $p ) );
 	if ( $name === '' ) return $none;
@@ -633,3 +659,37 @@ function ymkrf_staff_admin_cell( $staff_id ) {
 	return $out;
 }
 endif;
+
+
+/* ============================================================
+   スタッフを消すときの案内
+   ============================================================
+   施工事例やお客様の声から、スタッフの記事を番号でつないでいます。
+   記事を消すと、そのつながりは切れますが、
+   「この工事を担当しました」のひとことは消えません。
+   お名前と顔写真のかわりに「リフォームヤマキシスタッフ」と出ます。
+
+   退職された方は、消すよりも「非公開」にするのがおすすめです。
+     非公開 … スタッフ一覧とご本人のページからは消えます。
+              施工事例では「○○店スタッフ」と出て、ひとことは残ります。
+              ダッシュボードには残るので、あとから戻せます。
+     下書き … まだ登録の途中、という意味です。施工事例には何も出ません。
+     削除   … ダッシュボードからも消えます。お店の名前も分からなくなるので、
+              施工事例では「リフォームヤマキシスタッフ」と出ます。
+   ============================================================ */
+
+/* 編集画面に、消したときにどうなるかを書いておきます */
+add_action( 'admin_notices', function () {
+	$s = get_current_screen();
+	if ( ! $s || $s->post_type !== 'ymkrf_staff' ) return;
+	if ( ! in_array( $s->base, array( 'post', 'edit' ), true ) ) return;
+	echo '<div class="notice notice-info"><p>'
+	   . '<b>退職された方は「非公開」がおすすめです。</b>'
+	   . 'スタッフ一覧とご本人のページからは消えますが、'
+	   . '施工事例の「この工事を担当しました」は<b>「○○店スタッフ」</b>という表示になり、'
+	   . 'ひとことはそのまま残ります。ダッシュボードにも残るので、あとから戻せます。<br>'
+	   . '<b>削除</b>すると、ダッシュボードからも消えます。'
+	   . 'そのときは施工事例では<b>「リフォームヤマキシスタッフ」</b>と出ます（ひとことは残ります）。<br>'
+	   . '<b>「下書き」は登録の途中という意味です。</b>下書きの人は、施工事例には何も出ません。'
+	   . '</p></div>';
+} );

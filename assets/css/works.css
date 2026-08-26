@@ -209,3 +209,15 @@
   .p-work__h2{ font-size:21px; }
   .p-work__headshop{ font-size:20px; }
 }
+
+/* しぼり込み中のお知らせ（部位＋エリアの両方をえらんだとき） */
+.p-works__clear{
+  display:flex; flex-wrap:wrap; align-items:center; gap:8px 14px;
+  margin:14px 0 0; padding:10px 14px;
+  background:var(--brand-tint); border-radius:10px;
+  font-size:13.5px; font-weight:900; color:var(--brand-dark);
+}
+.p-works__clear a{
+  color:var(--ink-sub); font-size:12.5px; font-weight:900; text-decoration:underline;
+}
+.p-works__clear a:hover{ color:var(--brand-dark); }

@@ -1407,9 +1407,65 @@ function ymkrf_voice_city_from_roman( $roman ) {
 	return isset( $map[ $roman ] ) ? $map[ $roman ] : '';
 }
 
+/* ==========================================================
+   工事箇所と地域を「両方いっぺんに」しぼり込むための部品
+   ==========================================================
+   URLの形
+     /voice/                        … ぜんぶ
+     /voice/kitchen/                … 工事箇所だけ
+     /voice/area/kanazawa/          … 地域だけ
+     /voice/kitchen/?area=kanazawa  … 両方
+   工事箇所と地域の両方をえらんだときは、工事箇所をURLの道に、
+   地域を ?area= に置きます（どちらか一方だけのURLは今までどおりです）。
+   ========================================================== */
+
+/** いまえらばれている工事箇所（英字）。無ければ空 */
+function ymkrf_voice_sel_part() {
+	$r = (string) get_query_var( 'ymkrf_vpart' );
+	if ( $r === '' && isset( $_GET['part'] ) ) $r = sanitize_key( wp_unslash( $_GET['part'] ) );
+	return ( $r !== '' && ymkrf_voice_part_from_roman( $r ) !== '' ) ? $r : '';
+}
+
+/** いまえらばれている地域（英字）。無ければ空 */
+function ymkrf_voice_sel_area() {
+	$r = (string) get_query_var( 'ymkrf_varea' );
+	if ( $r === '' && isset( $_GET['area'] ) ) $r = sanitize_key( wp_unslash( $_GET['area'] ) );
+	return ( $r !== '' && ymkrf_voice_city_from_roman( $r ) !== '' ) ? $r : '';
+}
+
+/** 工事箇所と地域の組み合わせから、一覧のURLを作ります */
+function ymkrf_voice_url( $part_roman = '', $area_roman = '' ) {
+	$part = (string) $part_roman;
+	$area = (string) $area_roman;
+	if ( $part !== '' && $area !== '' ) {
+		return add_query_arg( 'area', rawurlencode( $area ),
+			home_url( '/voice/' . rawurlencode( $part ) . '/' ) );
+	}
+	if ( $part !== '' ) return home_url( '/voice/' . rawurlencode( $part ) . '/' );
+	if ( $area !== '' ) return home_url( '/voice/area/' . rawurlencode( $area ) . '/' );
+	return home_url( '/voice/' );
+}
+
+/** しぼり込みに当てはまる記事の番号。$part / $city は日本語で渡します */
+function ymkrf_voice_filter_ids( $part = '', $city = '' ) {
+	$args = array(
+		'post_type'      => 'ymkrf_voice',
+		'post_status'    => 'publish',
+		'posts_per_page' => -1,
+		'fields'         => 'ids',
+		'no_found_rows'  => true,
+	);
+	$mq = array( 'relation' => 'AND' );
+	if ( $part !== '' ) $mq[] = array( 'key' => '_ymkrf_parts', 'value' => $part, 'compare' => 'LIKE' );
+	if ( $city !== '' ) $mq[] = array( 'key' => '_ymkrf_city',  'value' => $city, 'compare' => '=' );
+	if ( count( $mq ) > 1 ) $args['meta_query'] = $mq;
+	return get_posts( $args );
+}
+
+
 /** いま見ている一覧の市町（日本語）。ふつうの一覧のときは空です */
 function ymkrf_voice_current_city() {
-	$r = get_query_var( 'ymkrf_varea' );
+	$r = ymkrf_voice_sel_area();
 	return $r ? ymkrf_voice_city_from_roman( $r ) : '';
 }
 
@@ -1422,10 +1478,8 @@ function ymkrf_voice_area_url( $roman ) {
  * 市町ごとの件数。
  * 返るのは array( '金沢市' => array( 'roman' => 'kanazawa', 'count' => 3 ), … )
  */
-function ymkrf_voice_area_counts() {
-	$ids = get_posts( array(
-		'post_type' => 'ymkrf_voice', 'posts_per_page' => -1, 'fields' => 'ids',
-	) );
+function ymkrf_voice_area_counts( $part = '' ) {
+	$ids = ymkrf_voice_filter_ids( $part, '' );
 	$cmap = ymkrf_voice_city_roman();
 	$out  = array();
 	foreach ( (array) $ids as $id ) {
@@ -1440,7 +1494,7 @@ function ymkrf_voice_area_counts() {
 
 /** いま見ている一覧の工事箇所（日本語）。ふつうの一覧のときは空です */
 function ymkrf_voice_current_part() {
-	$roman = get_query_var( 'ymkrf_vpart' );
+	$roman = ymkrf_voice_sel_part();
 	if ( ! $roman ) return '';
 	return ymkrf_voice_part_from_roman( $roman );
 }
@@ -1454,26 +1508,16 @@ add_action( 'pre_get_posts', function ( $q ) {
 	   13件目からは自動で2ページ目になります（下に「前へ／次へ」が出ます）。 */
 	$q->set( 'posts_per_page', 12 );
 
-	/* 市町でしぼる（/voice/area/kanazawa/） */
-	$city = ymkrf_voice_city_from_roman( $q->get( 'ymkrf_varea' ) );
-	if ( $city !== '' ) {
-		$q->set( 'meta_query', array( array(
-			'key'     => '_ymkrf_city',
-			'value'   => $city,
-			'compare' => '=',
-		) ) );
-		return;
-	}
+	/* 工事箇所と地域を、両方いっぺんにしぼり込めます。
+	   道の部分（/voice/kitchen/ や /voice/area/kanazawa/）と
+	   ?part= ?area= の両方を見ます。 */
+	$part = ymkrf_voice_part_from_roman( ymkrf_voice_sel_part() );
+	$city = ymkrf_voice_city_from_roman( ymkrf_voice_sel_area() );
 
-	/* 工事箇所でしぼる（/voice/kitchen/） */
-	$part = ymkrf_voice_part_from_roman( $q->get( 'ymkrf_vpart' ) );
-	if ( $part === '' ) return;
-
-	$q->set( 'meta_query', array( array(
-		'key'     => '_ymkrf_parts',
-		'value'   => $part,
-		'compare' => 'LIKE',
-	) ) );
+	$mq = array( 'relation' => 'AND' );
+	if ( $part !== '' ) $mq[] = array( 'key' => '_ymkrf_parts', 'value' => $part, 'compare' => 'LIKE' );
+	if ( $city !== '' ) $mq[] = array( 'key' => '_ymkrf_city',  'value' => $city, 'compare' => '=' );
+	if ( count( $mq ) > 1 ) $q->set( 'meta_query', $mq );
 } );
 
 /* 知らない市町のURLは、見つかりませんでした（404）にします */
@@ -1544,10 +1588,8 @@ add_action( 'template_redirect', function () {
  * 一覧ページの「箇所でさがす」ボタンに使います。
  * 返るのは array( 'オイルタンク' => array( 'roman' => 'oiltank', 'count' => 3 ), … )
  */
-function ymkrf_voice_part_counts() {
-	$ids = get_posts( array(
-		'post_type' => 'ymkrf_voice', 'posts_per_page' => -1, 'fields' => 'ids',
-	) );
+function ymkrf_voice_part_counts( $city = '' ) {
+	$ids = ymkrf_voice_filter_ids( '', $city );
 	$pmap = ymkrf_voice_part_roman();
 	$out  = array();
 	foreach ( (array) $ids as $id ) {
@@ -2084,3 +2126,24 @@ function ymkrf_voice_tidy_ocr( $text, $kind = '' ) {
 
 	return $t;
 }
+
+/* 工事箇所＋地域の組み合わせページは、検索エンジンに登録させません。
+   組み合わせの数だけ似たページができてしまい、SEO上よくないためです。
+   （/voice/kitchen/ や /voice/area/kanazawa/ の1つだけのページは、今までどおり登録されます） */
+add_action( 'wp_head', function () {
+	if ( ! is_post_type_archive( 'ymkrf_voice' ) ) return;
+	if ( empty( $_GET['area'] ) && empty( $_GET['part'] ) ) return;
+	echo '<meta name="robots" content="noindex,follow">' . "\n";
+}, 1 );
+
+/* 組み合わせているときは、ページの題名にも両方を出します */
+add_filter( 'document_title_parts', function ( $parts ) {
+	if ( ! is_post_type_archive( 'ymkrf_voice' ) ) return $parts;
+	if ( empty( $_GET['area'] ) && empty( $_GET['part'] ) ) return $parts;
+
+	$part = ymkrf_voice_current_part();
+	$city = ymkrf_voice_current_city();
+	$label = trim( $city . ( $city !== '' && $part !== '' ? 'の' : '' ) . $part );
+	if ( $label !== '' ) $parts['title'] = $label . 'のお客様の声・口コミ';
+	return $parts;
+}, 20 );

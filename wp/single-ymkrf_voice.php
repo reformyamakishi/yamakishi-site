@@ -129,7 +129,6 @@ while ( have_posts() ) : the_post();
 
     <?php $fig = ymkrf_voice_survey_figure( $id ); if ( $fig ) : ?>
       <h2 class="p-voice__h2">いただいたアンケートの実物</h2>
-      <p class="p-voice__sheetlead">上の文章は、この用紙に手書きでいただいたものを、そのまま文字にして起こしています。</p>
       <?php echo $fig; ?>
     <?php endif; ?>
 
