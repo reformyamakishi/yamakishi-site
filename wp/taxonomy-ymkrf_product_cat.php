@@ -342,33 +342,85 @@ if ( $slug === 'toilet' ) {
 
 if ( $slug === 'boiler' ) {
 
-	/* 給湯器は、メーカーごとにまとめて並べます。
-	   （型番だけがずらっと並ぶと選びにくいためです）
+	/* 給湯器の並べ方（2026/09/01 ユーザー指示）
 
-	   ★見出しの下に出る説明は、ダッシュボードの
-	     「商品 → メーカー」でそのメーカーの「説明」を直せば変わります。
-	   ★並べる順は、下の $maker_order を書きかえてください。 */
+	     大分類 … ガス給湯器 ／ 石油給湯器（灯油）
+	     中分類 … メーカー（ノーリツ ／ リンナイ）
+
+	   メーカーの説明は、同じ文章が何度も出てしまうので、
+	   一覧のいちばん上に「取り扱いメーカー」としてまとめて出します。
+
+	   ★ガスか石油かは、その商品の「キャッチコピー」で見分けています。
+	     「ガス」が入っていればガス、「石油」が入っていれば石油です。
+	     （例：ガス給湯器／エコジョーズ（高効率ガス給湯器）／
+	           石油給湯器（塗装鋼板）／エコフィール（高効率石油給湯器））
+	     どちらも入っていない商品は、小見出しなしで最後に並びます。
+
+	   ★メーカーの説明は、ダッシュボードの「商品 → メーカー」の
+	     「説明」欄を直せば変わります。
+	   ★並べる順は、下の $maker_order と $fuels を書きかえてください。 */
+
 	$maker_order = array( 'noritz', 'rinnai' );
 
-	$by = array();
+	$fuels = array(
+		'gas' => array( 'ガス給湯器',        'ガスをお使いのお宅用です。壁に掛けて取り付けます。' ),
+		'oil' => array( '石油給湯器（灯油）', '灯油をお使いのお宅用です。屋外に置いて取り付けます。' ),
+		''    => array( '',                  '' ),
+	);
+
+	/* 燃料 → メーカー の順で、商品を仕分けます */
+	$bin = array();
 	foreach ( $q->posts as $_p ) {
+		$_c = (string) get_post_meta( $_p->ID, '_ymkrf_catch', true );
+		if ( strpos( $_c, 'ガス' ) !== false )        { $_f = 'gas'; }
+		elseif ( strpos( $_c, '石油' ) !== false )    { $_f = 'oil'; }
+		else                                          { $_f = '';    }
+
 		$_ts = get_the_terms( $_p->ID, 'ymkrf_maker' );
-		$_k  = ( $_ts && ! is_wp_error( $_ts ) ) ? $_ts[0]->slug : '';
-		$by[ $_k ][] = $_p;
+		$_m  = ( $_ts && ! is_wp_error( $_ts ) ) ? $_ts[0]->slug : '';
+
+		$bin[ $_f ][ $_m ][] = $_p;
 	}
 
-	/* 決めた順のメーカーを先に、そこに無いメーカーはうしろに */
-	$keys = array_merge( $maker_order, array_diff( array_keys( $by ), $maker_order ) );
+	foreach ( $fuels as $_fk => $_fd ) {
+		if ( empty( $bin[ $_fk ] ) ) continue;
 
-	foreach ( $keys as $_k ) {
-		if ( empty( $by[ $_k ] ) ) continue;
-		$_t = $_k ? get_term_by( 'slug', $_k, 'ymkrf_maker' ) : null;
+		/* 決めた順のメーカーを先に、そこに無いメーカーはうしろに */
+		$mkeys = array_merge( $maker_order, array_diff( array_keys( $bin[ $_fk ] ), $maker_order ) );
+
+		$subs  = array();
+		$all   = array();
+		foreach ( $mkeys as $_mk ) {
+			if ( empty( $bin[ $_fk ][ $_mk ] ) ) continue;
+			$_t = $_mk ? get_term_by( 'slug', $_mk, 'ymkrf_maker' ) : null;
+			if ( is_wp_error( $_t ) ) $_t = null;
+			$subs[] = array(
+				'ttl'   => $_t ? $_t->name : '',
+				'maker' => $_t,
+				'posts' => $bin[ $_fk ][ $_mk ],
+			);
+			$all = array_merge( $all, $bin[ $_fk ][ $_mk ] );
+		}
+
 		$groups[] = array(
-			'ttl'   => ( $_t && ! is_wp_error( $_t ) ) ? $_t->name : 'そのほかのメーカー',
-			'sub'   => ( $_t && ! is_wp_error( $_t ) ) ? $_t->description : '',
-			'maker' => ( $_t && ! is_wp_error( $_t ) ) ? $_t : null,
-			'posts' => $by[ $_k ],
+			'ttl'   => $_fd[0],
+			'sub'   => $_fd[1],
+			'maker' => null,
+			'posts' => $all,
+			'subs'  => $subs,
 		);
+	}
+
+	/* いちばん上に出す「取り扱いメーカー」の紹介 */
+	$maker_intro = array();
+	$seen_makers = array();
+	foreach ( $bin as $_bym ) foreach ( array_keys( $_bym ) as $_mk ) $seen_makers[ $_mk ] = true;
+	$mkeys2 = array_merge( $maker_order, array_diff( array_keys( $seen_makers ), $maker_order ) );
+	foreach ( $mkeys2 as $_mk ) {
+		if ( empty( $seen_makers[ $_mk ] ) ) continue;
+		$_t = $_mk ? get_term_by( 'slug', $_mk, 'ymkrf_maker' ) : null;
+		if ( ! $_t || is_wp_error( $_t ) ) continue;
+		$maker_intro[] = $_t;
 	}
 }
 
@@ -377,10 +429,22 @@ if ( ! $groups ) {
 	$groups[] = array( 'ttl' => '', 'sub' => '', 'posts' => $q->posts );
 }
 
-/* どのまとめ方でも 'maker' の欄があるようにしておきます */
+/* どのまとめ方でも 'maker' と 'subs' の欄があるようにしておきます。
+   小見出しで分けないまとまりは、「見出しなしの小見出しが1つ」という形にします。
+   こうしておくと、表示側は subs だけを見ればよくなります。 */
 foreach ( $groups as $_i => $_g ) {
 	if ( ! isset( $_g['maker'] ) ) $groups[ $_i ]['maker'] = null;
+	if ( empty( $_g['subs'] ) ) {
+		$groups[ $_i ]['subs'] = array( array( 'ttl' => '', 'maker' => null, 'posts' => $_g['posts'] ) );
+	} else {
+		foreach ( $groups[ $_i ]['subs'] as $_j => $_sg ) {
+			if ( ! isset( $_sg['maker'] ) ) $groups[ $_i ]['subs'][ $_j ]['maker'] = null;
+		}
+	}
 }
+
+/* 一覧のいちばん上に出すメーカー紹介（給湯器だけ。ほかの分類では空です） */
+if ( ! isset( $maker_intro ) ) $maker_intro = array();
 
 /* 商品代のいちばん安い金額（「商品代＋工事費」の説明に使います） */
 $minitem = 0;
@@ -610,10 +674,10 @@ if ( ! empty( $pn['items'] ) ) :
       </ol>
 
       <?php if ( ! empty( $pn['note'] ) ) : ?>
-        <p class="p-cat__calcnote"><?php echo esc_html( $pn['note'] ); ?></p>
+        <p class="p-cat__calcnote"><?php echo ymkrf_brk( $pn['note'] ) /* phpcs:ignore */; ?></p>
       <?php endif; ?>
       <?php if ( ! empty( $pn['note2'] ) ) : ?>
-        <p class="p-cat__calcnote2"><?php echo esc_html( $pn['note2'] ); ?></p>
+        <p class="p-cat__calcnote2"><?php echo ymkrf_brk( $pn['note2'] ) /* phpcs:ignore */; ?></p>
       <?php endif; ?>
 
     </div>
@@ -639,6 +703,22 @@ if ( ! empty( $pn['items'] ) ) :
       </p>
       <?php endif; ?>
 
+      <?php if ( $maker_intro ) : ?>
+      <div class="p-cat__makers">
+        <?php foreach ( $maker_intro as $mi ) : ?>
+          <div class="p-cat__maker">
+            <p class="p-cat__makerhead">
+              <span class="p-cat__makername"><?php echo esc_html( $mi->name ); ?></span>
+              <?php echo ymkrf_maker_logo( $mi, 'p-cat__makerlogo' ); /* phpcs:ignore */ ?>
+            </p>
+            <?php if ( trim( (string) $mi->description ) !== '' ) : ?>
+              <p class="p-cat__makertext"><?php echo ymkrf_brk( $mi->description ) /* phpcs:ignore */; ?></p>
+            <?php endif; ?>
+          </div>
+        <?php endforeach; ?>
+      </div>
+      <?php endif; ?>
+
       <?php global $post; foreach ( $groups as $g ) : if ( ! $g['posts'] ) continue; ?>
 
       <?php if ( $g['ttl'] ) : ?>
@@ -646,12 +726,20 @@ if ( ! empty( $pn['items'] ) ) :
           <h3 class="p-cat__groupttl"><?php echo esc_html( $g['ttl'] );
             if ( $g['maker'] ) echo ymkrf_maker_logo( $g['maker'], 'p-cat__grouplogo' ); /* phpcs:ignore */
           ?></h3>
-          <?php if ( $g['sub'] ) : ?><p class="p-cat__groupsub"><?php echo esc_html( $g['sub'] ); ?></p><?php endif; ?>
+          <?php if ( $g['sub'] ) : ?><p class="p-cat__groupsub"><?php echo ymkrf_brk( $g['sub'] ) /* phpcs:ignore */; ?></p><?php endif; ?>
         </div>
       <?php endif; ?>
 
+      <?php foreach ( $g['subs'] as $sg ) : if ( ! $sg['posts'] ) continue; ?>
+
+      <?php if ( $sg['ttl'] ) : ?>
+        <p class="p-cat__subttl"><span><?php echo esc_html( $sg['ttl'] ); ?></span><?php
+          if ( $sg['maker'] ) echo ymkrf_maker_logo( $sg['maker'], 'p-cat__sublogo' ); /* phpcs:ignore */
+        ?></p>
+      <?php endif; ?>
+
       <div class="p-cat__cards">
-        <?php foreach ( $g['posts'] as $post ) : setup_postdata( $post );
+        <?php foreach ( $sg['posts'] as $post ) : setup_postdata( $post );
           $d  = ymkrf_product_data();
           $mt = ! empty( $d['makers'] ) ? $d['makers'][0] : null;
         ?>
@@ -689,6 +777,8 @@ if ( ! empty( $pn['items'] ) ) :
           </a>
         <?php endforeach; ?>
       </div>
+
+      <?php endforeach; /* $sg */ ?>
 
       <?php endforeach; wp_reset_postdata(); ?>
 

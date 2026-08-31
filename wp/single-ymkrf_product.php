@@ -371,10 +371,10 @@ if ( ! empty( $pn['items'] ) ) :
       </ol>
 
       <?php if ( ! empty( $pn['note'] ) ) : ?>
-        <p class="p-cat__calcnote"><?php echo esc_html( $pn['note'] ); ?></p>
+        <p class="p-cat__calcnote"><?php echo ymkrf_brk( $pn['note'] ) /* phpcs:ignore */; ?></p>
       <?php endif; ?>
       <?php if ( ! empty( $pn['note2'] ) ) : ?>
-        <p class="p-cat__calcnote2"><?php echo esc_html( $pn['note2'] ); ?></p>
+        <p class="p-cat__calcnote2"><?php echo ymkrf_brk( $pn['note2'] ) /* phpcs:ignore */; ?></p>
       <?php endif; ?>
     </div>
 
