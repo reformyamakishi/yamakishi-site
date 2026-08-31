@@ -223,6 +223,41 @@ $intro = array(
 		'solutions'  => array(),
 	),
 
+	'boiler' => array(
+
+		'en'    => 'BOILER',
+		'title' => '給湯器リフォーム',
+		'hero'  => 'assets/img/products/otq-c4706say/otq-c4706say-main.jpg',
+		'lead'  => '本体・標準工事費・リモコン・古い給湯器の撤去処分費まで込みの価格でご案内します。',
+
+		/* --- ブランド紹介 --- */
+		'brandsub'  => 'エコキュート＆給湯器専門店',
+		'brand'     => 'ヤマキシ給湯センター',
+		'brandtext' => 'お湯が出ない、というときこそ急ぎます。'
+		             . '<br>在庫のある機種は、工期半日で交換できます。',
+
+		/* --- 3つのこだわり --- */
+		'points' => array(
+			array( 'chara' => 'char-otoku',     'name' => 'お得',
+			       'text'  => '本体・標準工事費・リモコン・古い給湯器の撤去処分費までコミコミ！' ),
+			array( 'chara' => 'char-hinshitsu', 'name' => '早い',
+			       'text'  => '在庫のある機種なら、工期は半日。すぐに工事にうかがえます！' ),
+			array( 'chara' => 'char-anshin',    'name' => '安心',
+			       'text'  => '商品延長10年保証・工事保証5年・24時間365日トラブル対応付き！' ),
+		),
+
+		/* --- お悩み（いまは非表示） --- */
+		'worrytitle' => '給湯器のお悩み',
+		'worryintro' => 'こんなことで悩んでいませんか？',
+		'worries'    => array(),
+		'worrylead'  => '',
+		'solvesub'   => '実は、そのお悩み',
+		'solvetitle' => '最新の給湯器で解決できます！',
+		'tags'       => array(),
+		'tagnote'    => '',
+		'solutions'  => array(),
+	),
+
 );
 
 $c   = isset( $intro[ $slug ] ) ? $intro[ $slug ] : null;
@@ -476,6 +511,12 @@ if ( ! empty( $pn['items'] ) ) :
   <div class="l-wrap">
     <div class="p-cat__calc">
 
+      <?php
+      /* 給湯器のように「工事費込みの一本価格」でご案内している分類は、
+         商品代と標準工事費に分けられません。
+         そのときは金額のカードを出さず、下の「ふくまれる工事」だけを出します。 */
+      $show_calc = empty( $pn['nocalc'] ) && ( $minitem || ! empty( $pn['price'] ) );
+      if ( $show_calc ) : ?>
       <div class="p-cat__calcbody">
 
         <?php if ( $minitem ) : ?>
@@ -490,9 +531,12 @@ if ( ! empty( $pn['items'] ) ) :
             </div>
           </div>
 
-          <span class="p-cat__calcplus" aria-hidden="true">＋</span>
+          <?php if ( ! empty( $pn['price'] ) ) : ?>
+            <span class="p-cat__calcplus" aria-hidden="true">＋</span>
+          <?php endif; ?>
         <?php endif; ?>
 
+        <?php if ( ! empty( $pn['price'] ) ) : ?>
         <div class="p-cat__calccard p-cat__calccard--work">
           <p class="p-cat__calchead p-cat__calchead--work"><?php echo esc_html( $pn['label'] ); ?></p>
           <div class="p-cat__calcin">
@@ -504,8 +548,10 @@ if ( ! empty( $pn['items'] ) ) :
             <p class="p-cat__calctax">（税込<?php echo esc_html( number_format( $pn['price'] ) ); ?>円）</p>
           </div>
         </div>
+        <?php endif; ?>
 
       </div>
+      <?php endif; /* $show_calc */ ?>
 
       <p class="p-cat__stepsttl"><span><?php
         /* 「|」を、スマホだけで効く改行に置きかえます */

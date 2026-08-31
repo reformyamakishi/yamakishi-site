@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '76' );
+define( 'YMKRF_SETUP_VER', '78' );
 
 /* キッチンの「ヤマキシ標準工事内容」。
    ホームページの一覧表（7項目）と、番号入りの図（8項目）の
@@ -87,7 +87,8 @@ add_action( 'init', function () {
 			'bathroom'   => 'お風呂',
 			'toilet'     => 'トイレ',
 			'lavatory'   => '洗面化粧台',
-			'boiler'     => '給湯器・エコキュート',
+			'boiler'     => '給湯器',
+			'ecocute'    => 'エコキュート',
 			'outer-wall' => '外壁・屋根',
 			'window'     => '窓・玄関ドア',
 			'interior'   => '内装・改装',
@@ -126,6 +127,33 @@ add_action( 'init', function () {
 			'higashikanazawa' => '東金沢店',
 		),
 	);
+
+	/* ------------------------------------------------------------
+	   2026/08/31 ─ 「給湯器・エコキュート」を2つに分けます
+
+	   もともと1つだった商品カテゴリ「給湯器・エコキュート（boiler）」を、
+	   　・エコキュート … ecocute
+	   　・給湯器　　　 … boiler（あいたスラッグを使い直します）
+	   の2つにします。boiler を給湯器にしたのは、いまの本番サイトの
+	   /products/boiler/ が給湯器のページで、施工事例の部位も
+	   boiler＝給湯器・ecocute＝エコキュート に分かれているためです。
+
+	   この付け替えは1回だけです。名前が「給湯器・エコキュート」の
+	   ときだけ動くので、二度目からは何もしません。
+	   ------------------------------------------------------------ */
+	if ( taxonomy_exists( 'ymkrf_product_cat' ) ) {
+		$oldcat = get_term_by( 'slug', 'boiler', 'ymkrf_product_cat' );
+		if ( $oldcat && ! is_wp_error( $oldcat )
+			&& $oldcat->name === '給湯器・エコキュート'
+			&& ! get_term_by( 'slug', 'ecocute', 'ymkrf_product_cat' ) ) {
+
+			wp_update_term( $oldcat->term_id, 'ymkrf_product_cat', array(
+				'name' => 'エコキュート',
+				'slug' => 'ecocute',
+			) );
+			$log[] = '商品カテゴリ「給湯器・エコキュート」を「エコキュート」に変えました（このあと「給湯器」を新しく作ります）';
+		}
+	}
 
 	foreach ( $taxonomies as $tax => $terms ) {
 		foreach ( $terms as $slug => $name ) {
@@ -220,6 +248,14 @@ add_action( 'init', function () {
 		$theme . '/utsukushiizu',
 		$theme . '/octave',
 		$theme . '/woodone',
+		$theme . '/otq-c4706say',
+		$theme . '/otq-c4706ay',
+		$theme . '/otq-4706say',
+		$theme . '/otq-4706says',
+		$theme . '/srt-c2071saw',
+		$theme . '/ruf-e2006aw',
+		$theme . '/ruf-205saw',
+		$theme . '/gt-2070saw',
 		WP_CONTENT_DIR . '/themes/ymkrf/assets/img/works',
 		$dir,                 // 最後の受け皿（wp-content/ymkrf-import）
 	);
@@ -6588,6 +6624,227 @@ TOTOのセフィオンテクト、LIXILのアクアセラミック、Panasonic�
 		update_post_meta( $p2->ID, '_ymkrf_days', '' );
 		update_post_meta( $p2->ID, '_ymkrf_daystext', '最短当日' );
 		$log[] = get_the_title( $p2->ID ) . 'の工期を「最短当日」にしました';
+	}
+
+
+	/* ------------------------------------------------------------
+	   3-r. 給湯器の商品を登録します。
+
+	        いただいたPDF（本番サイトの /products/boiler/ ）の8機種です。
+	        給湯器は色や取っ手を選ぶ商品ではないので、
+	        カラー・おすすめポイント・オプションは使っていません。
+	        かわりに「標準仕様（文字だけの一覧）」に、
+	        その機種にある機能／ない機能を並べています。
+
+	   ★商品を足すときは、下の $boi_products に1つ配列を足すだけです。
+	     写真は assets/img/products/<スラッグ>/ に
+	     <スラッグ>-main.jpg と <スラッグ>-spec-remote.jpg を置いてください。
+	   ------------------------------------------------------------ */
+
+	/* 給湯器の「ヤマキシ標準工事内容」は全機種共通です
+	   （PDFの【標準工事内容】標準工事費 / 撤去・処分 / 設置工事 / 配管工事） */
+	$boi_works = array(
+		array( '既存給湯器 解体撤去工事', '古い給湯器の取り外しにかかる工事です。' ),
+		array( '撤去・処分',             '取り外した古い給湯器を廃棄処分するための費用です。' ),
+		array( '給湯器設置工事',         '新しい給湯器の取り付け工事です。' ),
+		array( '配管工事',               '給水・給湯・追い焚きなどの配管の接続工事です。' ),
+	);
+
+	/* 機能の並びは、いまの本番サイトと同じ9つです。
+	   「ある」に書いたものが、その機種についている機能です。 */
+	$boi_products = array(
+
+		/* ===== ガス給湯器 オート20号（ノーリツ） ===== */
+		array(
+			'slug' => 'gt-2070saw', 'title' => 'GT-2070SAW BL',
+			'catch' => 'ガス給湯器', 'grade' => 'オート 20号', 'size' => '壁掛設置',
+			'total' => 178000, 'order' => 10, 'maker' => 'noritz',
+			'list'  => '390720',
+			'remote'=> array( 'お風呂＋台所リモコン', 'RC-B001', '29920' ),
+			'yes'   => array( 'オート', '自動湯はり', '追い焚き' ),
+			'no'    => array( 'フルオート', 'プレミアム', '暖房', '特定保守', '業務用', '追焚（高温）' ),
+			'alt'   => 'ノーリツ ガス給湯器 GT-2070SAW BL 本体',
+		),
+
+		/* ===== ガス給湯器 オート20号（リンナイ） ===== */
+		array(
+			'slug' => 'ruf-205saw', 'title' => 'RUF-205SAW(A)',
+			'catch' => 'ガス給湯器', 'grade' => 'オート 20号', 'size' => '壁掛設置',
+			'total' => 178000, 'order' => 20, 'maker' => 'rinnai',
+			'list'  => '384340',
+			'remote'=> array( 'お風呂＋台所リモコン', 'MBC-155V', '36740' ),
+			'yes'   => array( 'オート', '自動湯はり', '追い焚き' ),
+			'no'    => array( 'フルオート', 'プレミアム', '暖房', '特定保守', '業務用', '追焚（高温）' ),
+			'alt'   => 'リンナイ ガス給湯器 RUF-205SAW(A) 本体',
+		),
+
+		/* ===== エコジョーズ オート20号（ノーリツ） ===== */
+		array(
+			'slug' => 'srt-c2071saw', 'title' => 'SRT-C2071SAW BL',
+			'catch' => 'エコジョーズ（高効率ガス給湯器）', 'grade' => 'オート 20号', 'size' => '壁掛設置',
+			'total' => 188000, 'order' => 30, 'maker' => 'noritz',
+			'list'  => '408320',
+			'remote'=> array( 'お風呂＋台所リモコン', 'RC-B001', '29920' ),
+			'yes'   => array( 'オート', '自動湯はり', '追い焚き' ),
+			'no'    => array( 'フルオート', 'プレミアム', '暖房', '特定保守', '業務用', '追焚（高温）' ),
+			'alt'   => 'ノーリツ エコジョーズ SRT-C2071SAW BL 本体',
+		),
+
+		/* ===== エコジョーズ フルオート20号（リンナイ） ===== */
+		array(
+			'slug' => 'ruf-e2006aw', 'title' => 'RUF-E2006AW',
+			'catch' => 'エコジョーズ（高効率ガス給湯器）', 'grade' => 'フルオート 20号', 'size' => '壁掛設置',
+			'total' => 238000, 'order' => 40, 'maker' => 'rinnai',
+			'list'  => '466840',
+			'remote'=> array( 'お風呂＋台所リモコン', 'MBC-155V', '36740' ),
+			'yes'   => array( 'フルオート', '自動湯はり', '追い焚き' ),
+			'no'    => array( 'オート', 'プレミアム', '暖房', '特定保守', '業務用', '追焚（高温）' ),
+			'alt'   => 'リンナイ エコジョーズ RUF-E2006AW 本体',
+		),
+
+		/* ===== 石油給湯器 オート4万キロ・塗装鋼板（ノーリツ） ===== */
+		array(
+			'slug' => 'otq-4706say', 'title' => 'OTQ-4706SAY',
+			'catch' => '石油給湯器（塗装鋼板）', 'grade' => 'オート 4万キロ', 'size' => '屋外設置・水道直圧',
+			'total' => 278000, 'order' => 50, 'maker' => 'noritz',
+			'list'  => '483780',
+			'remote'=> array( 'お風呂＋台所リモコン', 'RC-J101 (T)', '42680' ),
+			'yes'   => array( 'オート', '自動湯はり', '追い焚き', '特定保守' ),
+			'no'    => array( 'フルオート', 'プレミアム', '暖房', '業務用', '追焚（高温）' ),
+			'alt'   => 'ノーリツ 石油給湯器 OTQ-4706SAY 本体',
+		),
+
+		/* ===== 石油給湯器 オート4万キロ・ステンレス（ノーリツ） ===== */
+		array(
+			'slug' => 'otq-4706says', 'title' => 'OTQ-4706SAYS',
+			'catch' => '石油給湯器（ステンレス）', 'grade' => 'オート 4万キロ', 'size' => '屋外設置・水道直圧',
+			'total' => 298000, 'order' => 60, 'maker' => 'noritz',
+			'list'  => '503580',
+			'remote'=> array( 'お風呂＋台所リモコン', 'RC-J101 (T)', '42680' ),
+			'yes'   => array( 'オート', '自動湯はり', '追い焚き', '特定保守' ),
+			'no'    => array( 'フルオート', 'プレミアム', '暖房', '業務用', '追焚（高温）' ),
+			'alt'   => 'ノーリツ 石油給湯器 OTQ-4706SAYS 本体',
+		),
+
+		/* ===== エコフィール オート4万キロ（ノーリツ） ===== */
+		array(
+			'slug' => 'otq-c4706say', 'title' => 'OTQ-C4706SAY BL',
+			'catch' => 'エコフィール（高効率石油給湯器）', 'grade' => 'オート 4万キロ', 'size' => '屋外設置・水道直圧',
+			'total' => 298000, 'order' => 70, 'maker' => 'noritz',
+			'list'  => '548680',
+			'remote'=> array( 'お風呂＋台所リモコン', 'RC-J101E (T)', '42680' ),
+			'yes'   => array( 'オート', '自動湯はり', '追い焚き', '特定保守' ),
+			'no'    => array( 'フルオート', 'プレミアム', '暖房', '業務用', '追焚（高温）' ),
+			'alt'   => 'ノーリツ エコフィール OTQ-C4706SAY BL 本体',
+		),
+
+		/* ===== エコフィール フルオート4万キロ（ノーリツ） ===== */
+		array(
+			'slug' => 'otq-c4706ay', 'title' => 'OTQ-C4706AY BL',
+			'catch' => 'エコフィール（高効率石油給湯器）', 'grade' => 'フルオート 4万キロ', 'size' => '屋外設置・水道直圧',
+			'total' => 348000, 'order' => 80, 'maker' => 'noritz',
+			'list'  => '586080',
+			'remote'=> array( 'お風呂＋台所リモコン', 'RC-J101E (T)', '42680' ),
+			'yes'   => array( 'フルオート', '自動湯はり', '追い焚き', '特定保守' ),
+			'no'    => array( 'オート', 'プレミアム', '暖房', '業務用', '追焚（高温）' ),
+			'alt'   => 'ノーリツ エコフィール OTQ-C4706AY BL 本体',
+		),
+
+	);
+
+	/* 給湯器は写真が2枚だけなので、1回のページ読み込みで
+	   まとめて登録しても止まりません。 */
+	$boi_made = 0;
+
+	foreach ( $boi_products as $bp ) {
+
+		if ( get_page_by_path( $bp['slug'], OBJECT, 'ymkrf_product' ) ) continue;
+
+		$pid = wp_insert_post( array(
+			'post_type'   => 'ymkrf_product',
+			'post_status' => 'publish',
+			'post_title'  => $bp['title'],
+			'post_name'   => $bp['slug'],
+		) );
+		if ( ! $pid || is_wp_error( $pid ) ) continue;
+
+		$m0  = $missing;
+		$sg  = $bp['slug'];
+
+		$bimg = function ( $key, $alt = '' ) use ( $img, $sg ) {
+			return $img( $sg . '-' . $key . '.jpg', $alt );
+		};
+
+		update_post_meta( $pid, '_ymkrf_catch',    $bp['catch'] );
+		update_post_meta( $pid, '_ymkrf_grade',    $bp['grade'] );
+		update_post_meta( $pid, '_ymkrf_order',    $bp['order'] );
+		update_post_meta( $pid, '_ymkrf_name',     $bp['title'] );
+		update_post_meta( $pid, '_ymkrf_size',     $bp['size'] );
+		update_post_meta( $pid, '_ymkrf_days',     '' );
+		update_post_meta( $pid, '_ymkrf_daystext', '半日' );
+		update_post_meta( $pid, '_ymkrf_pt1',      '在庫あり' );
+		update_post_meta( $pid, '_ymkrf_pt2',      '工期は半日' );
+		update_post_meta( $pid, '_ymkrf_pt3',      '工事費・リモコン込' );
+		update_post_meta( $pid, '_ymkrf_caution',
+			'※写真はイメージです。メーカー希望小売価格 ' . number_format( (int) $bp['list'] )
+			. '円（税込・リモコン込）の品です。' );
+
+		/* ★給湯器は「工事費・リモコン込」の一本価格で、
+		     商品代と工事費の内訳をいただいていません。
+		     込み価格は自動で「標準工事費 ＋ 商品代」から計算される決まりなので、
+		     込み価格をそのまま「商品代」の欄に入れ、「標準工事費」は空にしています。
+		     （こうしておくと、管理画面で開いて保存しても価格が消えません） */
+		update_post_meta( $pid, '_ymkrf_work',  '' );
+		update_post_meta( $pid, '_ymkrf_item',  $bp['total'] );
+		update_post_meta( $pid, '_ymkrf_total', $bp['total'] );
+
+		$main = $bimg( 'main', $bp['alt'] );
+		if ( $main ) set_post_thumbnail( $pid, $main );
+
+		/* --- 標準仕様（写真つき）＝ 付いてくるリモコン --- */
+		update_post_meta( $pid, '_ymkrf_specs', array(
+			array(
+				'img'   => $bimg( 'spec-remote', $bp['remote'][0] ),
+				'name'  => $bp['remote'][0],
+				'model' => $bp['remote'][1] . '／メーカー希望小売価格 '
+				         . number_format( (int) $bp['remote'][2] ) . '円（税込）',
+			),
+		) );
+
+		/* --- 標準仕様（文字だけの一覧）＝ 機能 --- */
+		update_post_meta( $pid, '_ymkrf_speclist', array(
+			array( 'ttl' => 'この機種にある機能',   'body' => implode( "\n", $bp['yes'] ) ),
+			array( 'ttl' => 'この機種にはない機能', 'body' => implode( "\n", $bp['no'] ) ),
+		) );
+
+		/* --- ヤマキシ標準工事内容（給湯器・4項目）--- */
+		$rows = array();
+		foreach ( $boi_works as $r ) $rows[] = array( 'name' => $r[0], 'text' => $r[1] );
+		update_post_meta( $pid, '_ymkrf_works', $rows );
+
+		wp_set_object_terms( $pid, 'boiler', 'ymkrf_product_cat' );
+		wp_set_object_terms( $pid, $bp['maker'], 'ymkrf_maker' );
+
+		update_post_meta( $pid, '_ymkrf_img_missing', $missing - $m0 );
+		$log[] = '商品「' . $bp['title'] . '」を登録しました → ' . get_permalink( $pid );
+		$boi_made++;
+	}
+
+	if ( $boi_made ) {
+		flush_rewrite_rules();
+		$log[] = '給湯器を' . $boi_made . '機種登録しました';
+	}
+
+	/* すでに登録ずみの給湯器の価格を入れ直します。
+	   （はじめ「商品代」を空にしていたため、価格が出ませんでした） */
+	foreach ( $boi_products as $bp2 ) {
+		$bpx = get_page_by_path( $bp2['slug'], OBJECT, 'ymkrf_product' );
+		if ( ! $bpx ) continue;
+		if ( (int) get_post_meta( $bpx->ID, '_ymkrf_item', true ) === (int) $bp2['total'] ) continue;
+		update_post_meta( $bpx->ID, '_ymkrf_work',  '' );
+		update_post_meta( $bpx->ID, '_ymkrf_item',  $bp2['total'] );
+		update_post_meta( $bpx->ID, '_ymkrf_total', $bp2['total'] );
+		$log[] = $bp2['title'] . 'の価格を入れ直しました';
 	}
 
 

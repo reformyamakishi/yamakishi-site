@@ -970,6 +970,30 @@ function ymkrf_pointnote( $slug ) {
 					       'sub'  => '新しい便器・便座の取り付け' ),
 				),
 		),
+		/* 給湯器は「工事費・リモコン込」の一本価格でご案内しているので、
+		   標準工事費の金額（price）は入れていません。
+		   price が空のときは、金額のカードを出さずに
+		   「ふくまれる工事」の一覧だけを出します。 */
+		'boiler' => array(
+				'label' => '給湯器の標準工事費',
+				'price' => 0,
+				/* nocalc … 金額のカード（商品代＋標準工事費）を出しません */
+				'nocalc' => true,
+				'note'  => '給湯器の価格は、本体・標準工事費・リモコン・古い給湯器の撤去処分まで込みの価格です。',
+				'note2' => '※お住まいの形や、配管・電気・ガスの状態によっては、追加の工事が必要になることがあります。'
+				         . 'その場合も着工前にかならずお見積りをお出しし、ご了承をいただいてから進めます。',
+				'itemsttl' => 'リフォームヤマキシの|標準工事費にふくまれる工事',
+				'items' => array(
+					array( 'name' => '既存給湯器 解体撤去工事', 'icon' => 'hammer',
+					       'sub'  => '古い給湯器の取り外しにかかる工事' ),
+					array( 'name' => '撤去・処分',             'icon' => 'truck',
+					       'sub'  => '取り外した古い給湯器を廃棄処分するための費用' ),
+					array( 'name' => '給湯器設置工事',         'icon' => 'flame',
+					       'sub'  => '新しい給湯器の取り付け工事' ),
+					array( 'name' => '配管工事',               'icon' => 'water',
+					       'sub'  => '給水・給湯・追い焚きなどの配管の接続' ),
+				),
+		),
 		'lavatory' => array(
 				'label' => '洗面化粧台の標準工事費',
 				'price' => 24200,
@@ -1114,6 +1138,8 @@ function ymkrf_cat_label( $slug, $fallback = '' ) {
 		'bathroom' => 'ユニットバス',
 		'toilet'   => 'トイレ',
 		'lavatory' => '洗面化粧台',
+		'boiler'   => '給湯器',
+		'ecocute'  => 'エコキュート',
 	);
 	return isset( $map[ $slug ] ) ? $map[ $slug ] : $fallback;
 }
@@ -1146,6 +1172,8 @@ function ymkrf_cat_brand( $cat ) {
 		'bathroom' => 'ユニットバスリフォームパック',
 		'toilet'   => 'トイレリフォームパック',
 		'lavatory' => '洗面化粧台リフォームパック',
+		'boiler'   => 'ヤマキシ給湯センター',
+		'ecocute'  => 'ヤマキシ給湯センター',
 	);
 	return isset( $map[ $cat->slug ] ) ? $map[ $cat->slug ] : $cat->name . 'マルシェ';
 }
