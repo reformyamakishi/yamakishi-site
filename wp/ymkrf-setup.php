@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '78' );
+define( 'YMKRF_SETUP_VER', '79' );
 
 /* キッチンの「ヤマキシ標準工事内容」。
    ホームページの一覧表（7項目）と、番号入りの図（8項目）の
@@ -6833,6 +6833,34 @@ TOTOのセフィオンテクト、LIXILのアクアセラミック、Panasonic�
 	if ( $boi_made ) {
 		flush_rewrite_rules();
 		$log[] = '給湯器を' . $boi_made . '機種登録しました';
+	}
+
+	/* 本体写真の入れ直し（1回だけ）。
+	   一覧のカードは写真の上下を切って表示するため、
+	   はじめの写真は給湯器の頭と足が切れていました。
+	   正方形の中に小さめに置き直したものに差し替えます。 */
+	if ( get_option( 'ymkrf_boiler_main_ver' ) !== '2' ) {
+		$done_main = 0;
+		foreach ( $boi_products as $bp4 ) {
+			$p4 = get_page_by_path( $bp4['slug'], OBJECT, 'ymkrf_product' );
+			if ( ! $p4 ) continue;
+
+			/* 前に取り込んだ写真を消してから、同じ名前で入れ直します */
+			$olds = get_posts( array(
+				'post_type'      => 'attachment',
+				'post_status'    => 'inherit',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+				'meta_key'       => '_ymkrf_import',
+				'meta_value'     => $bp4['slug'] . '-main.jpg',
+			) );
+			foreach ( (array) $olds as $oid ) wp_delete_attachment( $oid, true );
+
+			$new = $img( $bp4['slug'] . '-main.jpg', $bp4['alt'], true );
+			if ( $new ) { set_post_thumbnail( $p4->ID, $new ); $done_main++; }
+		}
+		if ( $done_main ) $log[] = '給湯器' . $done_main . '機種の本体写真を入れ直しました';
+		update_option( 'ymkrf_boiler_main_ver', '2' );
 	}
 
 	/* すでに登録ずみの給湯器の価格を入れ直します。
