@@ -340,9 +340,46 @@ if ( $slug === 'toilet' ) {
 	);
 }
 
+if ( $slug === 'boiler' ) {
+
+	/* 給湯器は、メーカーごとにまとめて並べます。
+	   （型番だけがずらっと並ぶと選びにくいためです）
+
+	   ★見出しの下に出る説明は、ダッシュボードの
+	     「商品 → メーカー」でそのメーカーの「説明」を直せば変わります。
+	   ★並べる順は、下の $maker_order を書きかえてください。 */
+	$maker_order = array( 'noritz', 'rinnai' );
+
+	$by = array();
+	foreach ( $q->posts as $_p ) {
+		$_ts = get_the_terms( $_p->ID, 'ymkrf_maker' );
+		$_k  = ( $_ts && ! is_wp_error( $_ts ) ) ? $_ts[0]->slug : '';
+		$by[ $_k ][] = $_p;
+	}
+
+	/* 決めた順のメーカーを先に、そこに無いメーカーはうしろに */
+	$keys = array_merge( $maker_order, array_diff( array_keys( $by ), $maker_order ) );
+
+	foreach ( $keys as $_k ) {
+		if ( empty( $by[ $_k ] ) ) continue;
+		$_t = $_k ? get_term_by( 'slug', $_k, 'ymkrf_maker' ) : null;
+		$groups[] = array(
+			'ttl'   => ( $_t && ! is_wp_error( $_t ) ) ? $_t->name : 'そのほかのメーカー',
+			'sub'   => ( $_t && ! is_wp_error( $_t ) ) ? $_t->description : '',
+			'maker' => ( $_t && ! is_wp_error( $_t ) ) ? $_t : null,
+			'posts' => $by[ $_k ],
+		);
+	}
+}
+
 /* トイレ以外、または上でうまく分けられなかったときは、まとめて1つに */
 if ( ! $groups ) {
 	$groups[] = array( 'ttl' => '', 'sub' => '', 'posts' => $q->posts );
+}
+
+/* どのまとめ方でも 'maker' の欄があるようにしておきます */
+foreach ( $groups as $_i => $_g ) {
+	if ( ! isset( $_g['maker'] ) ) $groups[ $_i ]['maker'] = null;
 }
 
 /* 商品代のいちばん安い金額（「商品代＋工事費」の説明に使います） */
@@ -593,16 +630,22 @@ if ( ! empty( $pn['items'] ) ) :
 
     <?php if ( $q->have_posts() ) : ?>
 
+      <?php /* 給湯器はメーカーごとに並べていて「安い順」ではないので、
+               この案内は出しません。 */
+      if ( $slug !== 'boiler' ) : ?>
       <p class="p-cat__listlead">
         価格はすべて<strong>標準工事費・既存品の撤去処分費まで込み</strong>の税込表示です。
         安い順に並べています。
       </p>
+      <?php endif; ?>
 
       <?php global $post; foreach ( $groups as $g ) : if ( ! $g['posts'] ) continue; ?>
 
       <?php if ( $g['ttl'] ) : ?>
-        <div class="p-cat__group">
-          <h3 class="p-cat__groupttl"><?php echo esc_html( $g['ttl'] ); ?></h3>
+        <div class="p-cat__group<?php echo $g['maker'] ? ' p-cat__group--maker' : ''; ?>">
+          <h3 class="p-cat__groupttl"><?php echo esc_html( $g['ttl'] );
+            if ( $g['maker'] ) echo ymkrf_maker_logo( $g['maker'], 'p-cat__grouplogo' ); /* phpcs:ignore */
+          ?></h3>
           <?php if ( $g['sub'] ) : ?><p class="p-cat__groupsub"><?php echo esc_html( $g['sub'] ); ?></p><?php endif; ?>
         </div>
       <?php endif; ?>

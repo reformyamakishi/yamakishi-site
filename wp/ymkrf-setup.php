@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '79' );
+define( 'YMKRF_SETUP_VER', '80' );
 
 /* キッチンの「ヤマキシ標準工事内容」。
    ホームページの一覧表（7項目）と、番号入りの図（8項目）の
@@ -6833,6 +6833,30 @@ TOTOのセフィオンテクト、LIXILのアクアセラミック、Panasonic�
 	if ( $boi_made ) {
 		flush_rewrite_rules();
 		$log[] = '給湯器を' . $boi_made . '機種登録しました';
+	}
+
+	/* メーカーの「説明」を入れます（1回だけ）。
+	   給湯器のページで、メーカーごとの見出しの下に出ます。
+	   文章を直したいときは、ダッシュボードの
+	   「商品 → メーカー」でそのメーカーの「説明」を書きかえてください。
+	   （すでに何か書いてあるメーカーには、いっさい触りません） */
+	if ( get_option( 'ymkrf_maker_desc_ver' ) !== '1' ) {
+		$maker_desc = array(
+			'noritz' => '石油（灯油）とガス、どちらの給湯器もつくっているメーカーです。'
+			          . '灯油をお使いのお宅には、排気の熱を再利用して灯油の使用量をおさえる'
+			          . '高効率タイプ「エコフィール」もあります。',
+			'rinnai' => 'ガス機器を専門につくっているメーカーです。'
+			          . 'ガス給湯器には、排気の熱を再利用してガスの使用量をおさえる'
+			          . '高効率タイプ「エコジョーズ」もあります。',
+		);
+		foreach ( $maker_desc as $mslug => $mtext ) {
+			$mt2 = get_term_by( 'slug', $mslug, 'ymkrf_maker' );
+			if ( ! $mt2 || is_wp_error( $mt2 ) ) continue;
+			if ( trim( (string) $mt2->description ) !== '' ) continue;   /* 書いてあるものは触りません */
+			wp_update_term( $mt2->term_id, 'ymkrf_maker', array( 'description' => $mtext ) );
+			$log[] = 'メーカー「' . $mt2->name . '」の説明を入れました';
+		}
+		update_option( 'ymkrf_maker_desc_ver', '1' );
 	}
 
 	/* 本体写真の入れ直し（1回だけ）。

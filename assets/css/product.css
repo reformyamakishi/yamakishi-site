@@ -853,6 +853,23 @@
 .p-cat__groupsub{
   margin:7px 0 0; font-size:clamp(11.5px,3.1vw,13.5px); line-height:1.75; color:var(--ink-sub); text-wrap:pretty;
 }
+
+/* --- メーカーごとにまとめたときの見出し（給湯器） --- */
+.p-cat__group--maker{ border-bottom-color:var(--border); }
+.p-cat__group--maker .p-cat__groupttl{ gap:12px; flex-wrap:wrap; }
+.p-cat__grouplogo{ display:inline-flex; align-items:center; }
+.p-cat__grouplogo__img{
+  display:block; height:20px; width:auto;
+}
+.p-cat__grouplogo--text{
+  font-size:12px; font-weight:800; color:var(--ink-light);
+}
+.p-cat__group--maker .p-cat__groupsub{
+  max-width:62em;
+}
+@media (min-width:768px){
+  .p-cat__grouplogo__img{ height:24px; }
+}
 @media (min-width:768px){
   .p-cat__cards + .p-cat__group{ margin-top:52px; }
 }
