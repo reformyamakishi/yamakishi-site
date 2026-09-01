@@ -344,12 +344,12 @@ if ( $slug === 'boiler' ) {
 
 	/* 給湯器の並べ方（2026/09/01 ユーザー指示）
 
-	     大分類 … エコフィール ／ 石油給湯器 ／ エコジョーズ ／ ガス給湯器
-	              （チラシと同じ分けかた・同じ順番）
-	     中分類 … メーカー（ノーリツ ／ リンナイ）
+	     ガス給湯器 → エコジョーズ → 石油給湯器 → エコフィール
+	     の4つに分けて、安い順に並べます。
+	     （商品数が少ないので、メーカーではまとめません）
 
-	   メーカーの説明は、同じ文章が何度も出てしまうので、
-	   一覧のいちばん上に「取り扱いメーカー」としてまとめて出します。
+	   メーカーの説明は、一覧のいちばん上に
+	   「取り扱いメーカー」としてまとめて出します。
 
 	   ★どの種類かは、その商品の「キャッチコピー」で見分けています。
 	     「エコフィール」→ エコフィール
@@ -360,24 +360,25 @@ if ( $slug === 'boiler' ) {
 
 	   ★メーカーの説明は、ダッシュボードの「商品 → メーカー」の
 	     「説明」欄を直せば変わります。
-	   ★並べる順は、下の $maker_order と $fuels を書きかえてください。 */
+	   ★並べる順は、下の $fuels を書きかえてください。
+	     ひとつのまとまりの中は、商品の「並び順」の数字の順です。 */
 
 	$maker_order = array( 'noritz', 'rinnai' );
 
-	/* チラシと同じ4つに分けます（順番もチラシと同じ） */
+	/* 安い順に並べています */
 	$fuels = array(
-		'ecofeel' => array( 'エコフィール（高効率石油給湯器）',
-			'灯油をお使いのお宅用です。排気の熱を再利用して、灯油の使用量をおさえます。' ),
-		'oil'     => array( '石油給湯器',
-			'灯油をお使いのお宅用です。屋外に置いて取り付けます。' ),
-		'ecojaws' => array( 'エコジョーズ（高効率ガス給湯器）',
-			'ガスをお使いのお宅用です。排気の熱を再利用して、ガスの使用量をおさえます。' ),
 		'gas'     => array( 'ガス給湯器',
 			'ガスをお使いのお宅用です。壁に掛けて取り付けます。' ),
+		'ecojaws' => array( 'エコジョーズ（高効率ガス給湯器）',
+			'ガスをお使いのお宅用です。排気の熱を再利用して、ガスの使用量をおさえます。' ),
+		'oil'     => array( '石油給湯器',
+			'灯油をお使いのお宅用です。屋外に置いて取り付けます。' ),
+		'ecofeel' => array( 'エコフィール（高効率石油給湯器）',
+			'灯油をお使いのお宅用です。排気の熱を再利用して、灯油の使用量をおさえます。' ),
 		''        => array( '', '' ),
 	);
 
-	/* 燃料 → メーカー の順で、商品を仕分けます */
+	/* 種類ごとに仕分けます */
 	$bin = array();
 	foreach ( $q->posts as $_p ) {
 		$_c = (string) get_post_meta( $_p->ID, '_ymkrf_catch', true );
@@ -386,50 +387,30 @@ if ( $slug === 'boiler' ) {
 		elseif ( strpos( $_c, '石油' ) !== false )         { $_f = 'oil';     }
 		elseif ( strpos( $_c, 'ガス' ) !== false )         { $_f = 'gas';     }
 		else                                               { $_f = '';        }
-
-		$_ts = get_the_terms( $_p->ID, 'ymkrf_maker' );
-		$_m  = ( $_ts && ! is_wp_error( $_ts ) ) ? $_ts[0]->slug : '';
-
-		$bin[ $_f ][ $_m ][] = $_p;
+		$bin[ $_f ][] = $_p;
 	}
 
 	foreach ( $fuels as $_fk => $_fd ) {
 		if ( empty( $bin[ $_fk ] ) ) continue;
-
-		/* 決めた順のメーカーを先に、そこに無いメーカーはうしろに */
-		$mkeys = array_merge( $maker_order, array_diff( array_keys( $bin[ $_fk ] ), $maker_order ) );
-
-		$subs  = array();
-		$all   = array();
-		foreach ( $mkeys as $_mk ) {
-			if ( empty( $bin[ $_fk ][ $_mk ] ) ) continue;
-			$_t = $_mk ? get_term_by( 'slug', $_mk, 'ymkrf_maker' ) : null;
-			if ( is_wp_error( $_t ) ) $_t = null;
-			$subs[] = array(
-				'ttl'   => $_t ? $_t->name : '',
-				'maker' => $_t,
-				'posts' => $bin[ $_fk ][ $_mk ],
-			);
-			$all = array_merge( $all, $bin[ $_fk ][ $_mk ] );
-		}
-
 		$groups[] = array(
 			'ttl'   => $_fd[0],
 			'sub'   => $_fd[1],
 			'maker' => null,
-			'posts' => $all,
-			'subs'  => $subs,
+			'posts' => $bin[ $_fk ],
 		);
 	}
 
 	/* いちばん上に出す「取り扱いメーカー」の紹介 */
 	$maker_intro = array();
 	$seen_makers = array();
-	foreach ( $bin as $_bym ) foreach ( array_keys( $_bym ) as $_mk ) $seen_makers[ $_mk ] = true;
+	foreach ( $q->posts as $_p ) {
+		$_ts = get_the_terms( $_p->ID, 'ymkrf_maker' );
+		if ( $_ts && ! is_wp_error( $_ts ) ) $seen_makers[ $_ts[0]->slug ] = true;
+	}
 	$mkeys2 = array_merge( $maker_order, array_diff( array_keys( $seen_makers ), $maker_order ) );
 	foreach ( $mkeys2 as $_mk ) {
 		if ( empty( $seen_makers[ $_mk ] ) ) continue;
-		$_t = $_mk ? get_term_by( 'slug', $_mk, 'ymkrf_maker' ) : null;
+		$_t = get_term_by( 'slug', $_mk, 'ymkrf_maker' );
 		if ( ! $_t || is_wp_error( $_t ) ) continue;
 		$maker_intro[] = $_t;
 	}
