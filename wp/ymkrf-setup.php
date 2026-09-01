@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '80' );
+define( 'YMKRF_SETUP_VER', '81' );
 
 /* キッチンの「ヤマキシ標準工事内容」。
    ホームページの一覧表（7項目）と、番号入りの図（8項目）の
@@ -6705,7 +6705,7 @@ TOTOのセフィオンテクト、LIXILのアクアセラミック、Panasonic�
 		/* ===== 石油給湯器 オート4万キロ・塗装鋼板（ノーリツ） ===== */
 		array(
 			'slug' => 'otq-4706say', 'title' => 'OTQ-4706SAY',
-			'catch' => '石油給湯器（塗装鋼板）', 'grade' => 'オート 4万キロ', 'size' => '屋外設置・水道直圧',
+			'catch' => '石油給湯器', 'sub' => '塗装鋼板', 'grade' => 'オート 4万キロ', 'size' => '屋外設置・水道直圧',
 			'total' => 278000, 'order' => 50, 'maker' => 'noritz',
 			'list'  => '483780',
 			'remote'=> array( 'お風呂＋台所リモコン', 'RC-J101 (T)', '42680' ),
@@ -6717,7 +6717,7 @@ TOTOのセフィオンテクト、LIXILのアクアセラミック、Panasonic�
 		/* ===== 石油給湯器 オート4万キロ・ステンレス（ノーリツ） ===== */
 		array(
 			'slug' => 'otq-4706says', 'title' => 'OTQ-4706SAYS',
-			'catch' => '石油給湯器（ステンレス）', 'grade' => 'オート 4万キロ', 'size' => '屋外設置・水道直圧',
+			'catch' => '石油給湯器', 'sub' => 'ステンレス', 'grade' => 'オート 4万キロ', 'size' => '屋外設置・水道直圧',
 			'total' => 298000, 'order' => 60, 'maker' => 'noritz',
 			'list'  => '503580',
 			'remote'=> array( 'お風呂＋台所リモコン', 'RC-J101 (T)', '42680' ),
@@ -6729,7 +6729,7 @@ TOTOのセフィオンテクト、LIXILのアクアセラミック、Panasonic�
 		/* ===== エコフィール オート4万キロ（ノーリツ） ===== */
 		array(
 			'slug' => 'otq-c4706say', 'title' => 'OTQ-C4706SAY BL',
-			'catch' => 'エコフィール（高効率石油給湯器）', 'grade' => 'オート 4万キロ', 'size' => '屋外設置・水道直圧',
+			'catch' => 'エコフィール（高効率石油給湯器）', 'sub' => '塗装鋼板', 'grade' => 'オート 4万キロ', 'size' => '屋外設置・水道直圧',
 			'total' => 298000, 'order' => 70, 'maker' => 'noritz',
 			'list'  => '548680',
 			'remote'=> array( 'お風呂＋台所リモコン', 'RC-J101E (T)', '42680' ),
@@ -6741,7 +6741,7 @@ TOTOのセフィオンテクト、LIXILのアクアセラミック、Panasonic�
 		/* ===== エコフィール フルオート4万キロ（ノーリツ） ===== */
 		array(
 			'slug' => 'otq-c4706ay', 'title' => 'OTQ-C4706AY BL',
-			'catch' => 'エコフィール（高効率石油給湯器）', 'grade' => 'フルオート 4万キロ', 'size' => '屋外設置・水道直圧',
+			'catch' => 'エコフィール（高効率石油給湯器）', 'sub' => '塗装鋼板', 'grade' => 'フルオート 4万キロ', 'size' => '屋外設置・水道直圧',
 			'total' => 348000, 'order' => 80, 'maker' => 'noritz',
 			'list'  => '586080',
 			'remote'=> array( 'お風呂＋台所リモコン', 'RC-J101E (T)', '42680' ),
@@ -6780,6 +6780,7 @@ TOTOのセフィオンテクト、LIXILのアクアセラミック、Panasonic�
 		update_post_meta( $pid, '_ymkrf_order',    $bp['order'] );
 		update_post_meta( $pid, '_ymkrf_name',     $bp['title'] );
 		update_post_meta( $pid, '_ymkrf_size',     $bp['size'] );
+		update_post_meta( $pid, '_ymkrf_sub',      isset( $bp['sub'] ) ? $bp['sub'] : '' );
 		update_post_meta( $pid, '_ymkrf_days',     '' );
 		update_post_meta( $pid, '_ymkrf_daystext', '半日' );
 		update_post_meta( $pid, '_ymkrf_pt1',      '在庫あり' );
@@ -6833,6 +6834,29 @@ TOTOのセフィオンテクト、LIXILのアクアセラミック、Panasonic�
 	if ( $boi_made ) {
 		flush_rewrite_rules();
 		$log[] = '給湯器を' . $boi_made . '機種登録しました';
+	}
+
+	/* チラシに合わせた直し（1回だけ）。2026/09/01
+	     ・材質（塗装鋼板／ステンレス）を、商品名の横に出します
+	     ・キャッチコピーから材質のカッコ書きを外します
+	       （材質は商品名の横に出るようになったため） */
+	if ( get_option( 'ymkrf_boiler_sub_ver' ) !== '1' ) {
+		$boi_sub = array(
+			'otq-c4706say' => array( '塗装鋼板', 'エコフィール（高効率石油給湯器）' ),
+			'otq-c4706ay'  => array( '塗装鋼板', 'エコフィール（高効率石油給湯器）' ),
+			'otq-4706say'  => array( '塗装鋼板', '石油給湯器' ),
+			'otq-4706says' => array( 'ステンレス', '石油給湯器' ),
+		);
+		$done_sub = 0;
+		foreach ( $boi_sub as $bs => $bv ) {
+			$pb = get_page_by_path( $bs, OBJECT, 'ymkrf_product' );
+			if ( ! $pb ) continue;
+			update_post_meta( $pb->ID, '_ymkrf_sub',   $bv[0] );
+			update_post_meta( $pb->ID, '_ymkrf_catch', $bv[1] );
+			$done_sub++;
+		}
+		if ( $done_sub ) $log[] = '給湯器' . $done_sub . '機種に材質（塗装鋼板／ステンレス）を入れました';
+		update_option( 'ymkrf_boiler_sub_ver', '1' );
 	}
 
 	/* メーカーの「説明」を入れます（1回だけ）。

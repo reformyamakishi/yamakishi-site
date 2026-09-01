@@ -953,6 +953,14 @@ body.term-lavatory .p-cat__cardph img{ aspect-ratio:1/1; }
 /* お風呂の写真は縦長のものが多く、真ん中で切ると浴槽が隠れてしまうので、
    一覧のカードだけ写真の下側を見せるようにしています。 */
 body.term-bathroom .p-cat__cardph img{ object-position:center bottom; }
+/* 給湯器は「フルオート 4万キロ」のように文字が長いので、
+   写真に重ねると読みにくくなります。写真の上に置きます。 */
+body.term-boiler .p-cat__cardph{
+  display:flex; flex-direction:column; background:#fff; padding:9px 10px 0;
+}
+body.term-boiler .p-cat__cardgrade{
+  position:static; order:-1; align-self:flex-start; margin:0 0 7px;
+}
 .p-cat__cardgrade{
   position:absolute; left:10px; top:10px; z-index:1;
   background:var(--brand); color:#fff; border-radius:6px; padding:4px 10px;
