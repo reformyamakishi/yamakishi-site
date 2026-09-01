@@ -336,6 +336,10 @@ function ymkrf_product_field_overrides() {
 			'_ymkrf_grade' => array( 'ふろ機能', 'select', '',
 				'商品写真の上の帯に出ます',
 				array( '', 'オート', 'フルオート' ) ),
+			/* グレード（J・I・H…）は給湯器では使わないので、説明も書きかえます */
+			'_ymkrf_order' => array( '並び順', 'number', '例：50',
+				'数字が小さいほど先に出ます。同じまとまりの中では、安い順に並びます。'
+				. '空欄のままでもかまいません' ),
 		),
 
 		/* エコキュートは、給湯器とよく似た並びですが
@@ -358,6 +362,9 @@ function ymkrf_product_field_overrides() {
 			'_ymkrf_caution' => array( '注意書き', 'text',
 				'例：※電気温水器またはエコキュートからの交換限定価格',
 				'商品写真の下に小さく出ます' ),
+			'_ymkrf_order' => array( '並び順', 'number', '例：50',
+				'数字が小さいほど先に出ます。同じまとまりの中では、安い順に並びます。'
+				. '空欄のままでもかまいません' ),
 		),
 	);
 }
@@ -1660,9 +1667,13 @@ function ymkrf_product_data( $post_id = null ) {
 	$work = (int) $m( '_ymkrf_work' );
 	$item = (int) $m( '_ymkrf_item' );
 
+	/* 「タイプ」を付けるかどうかは分類で変わるので、先に分類を出しておきます */
+	$cats = $terms( 'ymkrf_product_cat' );
+	$cat1 = $cats ? $cats[0]->slug : '';
+
 	return array(
 		'catch'    => $m( '_ymkrf_catch' ),
-		'grade'    => ymkrf_grade_label( $m( '_ymkrf_grade' ) ),
+		'grade'    => ymkrf_grade_label( $m( '_ymkrf_grade' ), $cat1 ),
 		'name'     => $m( '_ymkrf_name' ) ?: get_the_title( $post_id ),
 		'size'     => $m( '_ymkrf_size' ),
 		'sub'      => $m( '_ymkrf_sub' ),
@@ -1698,7 +1709,7 @@ function ymkrf_product_data( $post_id = null ) {
 		'options'  => $rep( '_ymkrf_options' ),
 		'works'    => $rep( '_ymkrf_works' ),
 		'makers'   => $terms( 'ymkrf_maker' ),
-		'cats'     => $terms( 'ymkrf_product_cat' ),
+		'cats'     => $cats,
 		'shops'    => $terms( 'ymkrf_shop' ),
 	);
 }
@@ -2452,8 +2463,15 @@ endif;
    表示するときだけ「タイプ」を付けます。
    ============================================================ */
 if ( ! function_exists( 'ymkrf_grade_label' ) ) :
-function ymkrf_grade_label( $g ) {
+function ymkrf_grade_label( $g, $cat = '' ) {
 	$g = trim( (string) $g );
+
+	/* エコキュートは「フルオート」「フルオート・高圧」「フルオート・高圧・高効率」と
+	   長さがまちまちなので、「タイプ」は付けません。
+	   片方だけ「フルオートタイプ」になって、ちぐはぐに見えるためです。
+	   （PDF・本番サイトの書き方にもそろえています） */
+	if ( $cat === 'ecocute' ) return $g;
+
 	if ( $g === 'オート' || $g === 'フルオート' ) return $g . 'タイプ';
 	return $g;
 }
