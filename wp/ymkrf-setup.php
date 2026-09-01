@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '81' );
+define( 'YMKRF_SETUP_VER', '82' );
 
 /* キッチンの「ヤマキシ標準工事内容」。
    ホームページの一覧表（7項目）と、番号入りの図（8項目）の
@@ -37,6 +37,34 @@ function ymkrf_kitchen_works() {
 }
 endif;
 
+
+
+/* 給湯器の「主な機能」の一覧をつくります（2026/09/01）。
+   オート／フルオートの違いは、リンナイの説明のとおりです。
+     オート　　… 湯はり・保温・追いだきまでが自動
+     フルオート… それに加えて「たし湯」まで自動 */
+if ( ! function_exists( 'ymkrf_boiler_speclist' ) ) :
+function ymkrf_boiler_speclist( $bp ) {
+
+	$feat = array( '自動湯はり', '自動保温', '追い焚き' );
+	if ( ! empty( $bp['full'] ) ) $feat[] = '自動たし湯';
+
+	$rows = array(
+		array( 'ttl' => '主な機能', 'body' => implode( "\n", $feat ) ),
+	);
+
+	/* 石油給湯機は「特定保守製品」です。機能ではないので、別の枠にします。 */
+	if ( ! empty( $bp['hoshu'] ) ) {
+		$rows[] = array(
+			'ttl'  => '特定保守製品です',
+			'body' => "石油給湯機は、法律で点検がすすめられている「特定保守製品」です。\n"
+			        . "10年をめどに、有料の点検のご案内をいたします。",
+		);
+	}
+
+	return $rows;
+}
+endif;
 
 
 /**
@@ -6650,8 +6678,21 @@ TOTOのセフィオンテクト、LIXILのアクアセラミック、Panasonic�
 		array( '配管工事',               '給水・給湯・追い焚きなどの配管の接続工事です。' ),
 	);
 
-	/* 機能の並びは、いまの本番サイトと同じ9つです。
-	   「ある」に書いたものが、その機種についている機能です。 */
+	/* 「主な機能」に出す言葉です（2026/09/01 ユーザー指示で作りかえました）。
+
+	   もとは本番サイトと同じ9つのバッジを「ある機能／ない機能」の
+	   2つの一覧にしていましたが、
+	     ・「ない機能」は8機種ともほぼ同じで、選ぶ材料にならない
+	     ・いちばん大事な「オートかフルオートか」は、写真の上の帯に出ている
+	   ため、やめました。
+
+	   オートとフルオートの違いは、リンナイの説明のとおりです。
+	     オート　　… 湯はり・保温・追いだきまでが自動
+	     フルオート… それに加えて、お湯が減ったときの「たし湯」まで自動
+	   'full' => true の機種にだけ「自動たし湯」が付きます。
+
+	   'hoshu' => true は「特定保守製品」（石油給湯機）です。
+	   機能ではなく法律の区分なので、機能の一覧とは別に出します。 */
 	$boi_products = array(
 
 		/* ===== ガス給湯器 オート20号（ノーリツ） ===== */
@@ -6661,8 +6702,7 @@ TOTOのセフィオンテクト、LIXILのアクアセラミック、Panasonic�
 			'total' => 178000, 'order' => 10, 'maker' => 'noritz',
 			'list'  => '390720',
 			'remote'=> array( 'お風呂＋台所リモコン', 'RC-B001', '29920' ),
-			'yes'   => array( 'オート', '自動湯はり', '追い焚き' ),
-			'no'    => array( 'フルオート', 'プレミアム', '暖房', '特定保守', '業務用', '追焚（高温）' ),
+			'full'  => false, 'hoshu' => false,
 			'alt'   => 'ノーリツ ガス給湯器 GT-2070SAW BL 本体',
 		),
 
@@ -6673,8 +6713,7 @@ TOTOのセフィオンテクト、LIXILのアクアセラミック、Panasonic�
 			'total' => 178000, 'order' => 20, 'maker' => 'rinnai',
 			'list'  => '384340',
 			'remote'=> array( 'お風呂＋台所リモコン', 'MBC-155V', '36740' ),
-			'yes'   => array( 'オート', '自動湯はり', '追い焚き' ),
-			'no'    => array( 'フルオート', 'プレミアム', '暖房', '特定保守', '業務用', '追焚（高温）' ),
+			'full'  => false, 'hoshu' => false,
 			'alt'   => 'リンナイ ガス給湯器 RUF-205SAW(A) 本体',
 		),
 
@@ -6685,8 +6724,7 @@ TOTOのセフィオンテクト、LIXILのアクアセラミック、Panasonic�
 			'total' => 188000, 'order' => 30, 'maker' => 'noritz',
 			'list'  => '408320',
 			'remote'=> array( 'お風呂＋台所リモコン', 'RC-B001', '29920' ),
-			'yes'   => array( 'オート', '自動湯はり', '追い焚き' ),
-			'no'    => array( 'フルオート', 'プレミアム', '暖房', '特定保守', '業務用', '追焚（高温）' ),
+			'full'  => false, 'hoshu' => false,
 			'alt'   => 'ノーリツ エコジョーズ SRT-C2071SAW BL 本体',
 		),
 
@@ -6697,8 +6735,7 @@ TOTOのセフィオンテクト、LIXILのアクアセラミック、Panasonic�
 			'total' => 238000, 'order' => 40, 'maker' => 'rinnai',
 			'list'  => '466840',
 			'remote'=> array( 'お風呂＋台所リモコン', 'MBC-155V', '36740' ),
-			'yes'   => array( 'フルオート', '自動湯はり', '追い焚き' ),
-			'no'    => array( 'オート', 'プレミアム', '暖房', '特定保守', '業務用', '追焚（高温）' ),
+			'full'  => true, 'hoshu' => false,
 			'alt'   => 'リンナイ エコジョーズ RUF-E2006AW 本体',
 		),
 
@@ -6709,8 +6746,7 @@ TOTOのセフィオンテクト、LIXILのアクアセラミック、Panasonic�
 			'total' => 278000, 'order' => 50, 'maker' => 'noritz',
 			'list'  => '483780',
 			'remote'=> array( 'お風呂＋台所リモコン', 'RC-J101 (T)', '42680' ),
-			'yes'   => array( 'オート', '自動湯はり', '追い焚き', '特定保守' ),
-			'no'    => array( 'フルオート', 'プレミアム', '暖房', '業務用', '追焚（高温）' ),
+			'full'  => false, 'hoshu' => true,
 			'alt'   => 'ノーリツ 石油給湯器 OTQ-4706SAY 本体',
 		),
 
@@ -6721,8 +6757,7 @@ TOTOのセフィオンテクト、LIXILのアクアセラミック、Panasonic�
 			'total' => 298000, 'order' => 60, 'maker' => 'noritz',
 			'list'  => '503580',
 			'remote'=> array( 'お風呂＋台所リモコン', 'RC-J101 (T)', '42680' ),
-			'yes'   => array( 'オート', '自動湯はり', '追い焚き', '特定保守' ),
-			'no'    => array( 'フルオート', 'プレミアム', '暖房', '業務用', '追焚（高温）' ),
+			'full'  => false, 'hoshu' => true,
 			'alt'   => 'ノーリツ 石油給湯器 OTQ-4706SAYS 本体',
 		),
 
@@ -6733,8 +6768,7 @@ TOTOのセフィオンテクト、LIXILのアクアセラミック、Panasonic�
 			'total' => 298000, 'order' => 70, 'maker' => 'noritz',
 			'list'  => '548680',
 			'remote'=> array( 'お風呂＋台所リモコン', 'RC-J101E (T)', '42680' ),
-			'yes'   => array( 'オート', '自動湯はり', '追い焚き', '特定保守' ),
-			'no'    => array( 'フルオート', 'プレミアム', '暖房', '業務用', '追焚（高温）' ),
+			'full'  => false, 'hoshu' => true,
 			'alt'   => 'ノーリツ エコフィール OTQ-C4706SAY BL 本体',
 		),
 
@@ -6745,8 +6779,7 @@ TOTOのセフィオンテクト、LIXILのアクアセラミック、Panasonic�
 			'total' => 348000, 'order' => 80, 'maker' => 'noritz',
 			'list'  => '586080',
 			'remote'=> array( 'お風呂＋台所リモコン', 'RC-J101E (T)', '42680' ),
-			'yes'   => array( 'フルオート', '自動湯はり', '追い焚き', '特定保守' ),
-			'no'    => array( 'オート', 'プレミアム', '暖房', '業務用', '追焚（高温）' ),
+			'full'  => true, 'hoshu' => true,
 			'alt'   => 'ノーリツ エコフィール OTQ-C4706AY BL 本体',
 		),
 
@@ -6812,11 +6845,8 @@ TOTOのセフィオンテクト、LIXILのアクアセラミック、Panasonic�
 			),
 		) );
 
-		/* --- 標準仕様（文字だけの一覧）＝ 機能 --- */
-		update_post_meta( $pid, '_ymkrf_speclist', array(
-			array( 'ttl' => 'この機種にある機能',   'body' => implode( "\n", $bp['yes'] ) ),
-			array( 'ttl' => 'この機種にはない機能', 'body' => implode( "\n", $bp['no'] ) ),
-		) );
+		/* --- 標準仕様（文字だけの一覧）＝ 主な機能 --- */
+		update_post_meta( $pid, '_ymkrf_speclist', ymkrf_boiler_speclist( $bp ) );
 
 		/* --- ヤマキシ標準工事内容（給湯器・4項目）--- */
 		$rows = array();
@@ -6881,6 +6911,21 @@ TOTOのセフィオンテクト、LIXILのアクアセラミック、Panasonic�
 			$log[] = 'メーカー「' . $mt2->name . '」の説明を入れました';
 		}
 		update_option( 'ymkrf_maker_desc_ver', '1' );
+	}
+
+	/* 「主な機能」の入れ直し（1回だけ）。2026/09/01
+	     もとは「この機種にある機能／ない機能」の2つの一覧でしたが、
+	     「ない機能」は8機種ともほぼ同じで選ぶ材料にならないため、やめました。 */
+	if ( get_option( 'ymkrf_boiler_spec_ver' ) !== '2' ) {
+		$done_spec = 0;
+		foreach ( $boi_products as $bp5 ) {
+			$p5 = get_page_by_path( $bp5['slug'], OBJECT, 'ymkrf_product' );
+			if ( ! $p5 ) continue;
+			update_post_meta( $p5->ID, '_ymkrf_speclist', ymkrf_boiler_speclist( $bp5 ) );
+			$done_spec++;
+		}
+		if ( $done_spec ) $log[] = '給湯器' . $done_spec . '機種の「主な機能」を入れ直しました';
+		update_option( 'ymkrf_boiler_spec_ver', '2' );
 	}
 
 	/* 本体写真の入れ直し（1回だけ）。
