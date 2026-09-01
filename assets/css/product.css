@@ -955,11 +955,25 @@ body.term-lavatory .p-cat__cardph img{ aspect-ratio:1/1; }
 body.term-bathroom .p-cat__cardph img{ object-position:center bottom; }
 /* 給湯器は「フルオート 4万キロ」のように文字が長いので、
    写真に重ねると読みにくくなります。写真の上に置きます。 */
-body.term-boiler .p-cat__cardph{
+body.term-boiler .p-cat__cardph,
+body.term-ecocute .p-cat__cardph{
   display:flex; flex-direction:column; background:#fff; padding:9px 10px 0;
 }
-body.term-boiler .p-cat__cardgrade{
+body.term-boiler .p-cat__cardgrade,
+body.term-ecocute .p-cat__cardgrade{
   position:static; order:-1; align-self:flex-start; margin:0 0 7px;
+}
+/* 「このほか日立・ダイキンも…」の一行（エコキュート） */
+.p-cat__makernote{
+  margin:-6px 0 26px; color:#555; line-height:1.8;
+  font-size:clamp(13px,3.4vw,15px); word-break:auto-phrase;
+}
+/* エコキュートの「補助金対象商品！」「在庫残り2台！」などの赤いふだ。
+   本番サイトと同じく、写真の下・価格の上に赤い文字で出します。 */
+.p-cat__cardbadge{
+  margin:8px 0 0; color:#d40000; font-weight:900;
+  font-size:clamp(13px,3.4vw,14px); line-height:1.4; letter-spacing:.02em;
+  word-break:auto-phrase;
 }
 .p-cat__cardgrade{
   position:absolute; left:10px; top:10px; z-index:1;
