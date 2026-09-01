@@ -901,34 +901,278 @@ add_filter( 'posts_clauses', function ( $clauses, $q ) {
 
 
 /* ------------------------------------------------------------
-   6-b. 左メニューに「カテゴリ別の入口」を出す
-        商品 → キッチン ／ お風呂 ／ トイレ … と直接開けるようにします。
-        商品が1件も無いカテゴリは出しません（メニューが長くなるのを防ぐため）。
-        すべて出したい場合は、下の 'hide_empty' を false にしてください。
+   6-b2. 左メニューの並べかた（2026/09/01 ユーザー指示）
+
+        商品
+        　その他設定        … 商品カテゴリ／メーカー／展示店舗をまとめた画面
+
+        分類（キッチン・給湯器…）は、これから増える予定なので
+        左メニューには並べません。商品一覧の上で切り替えます（6-c2）。
+   ------------------------------------------------------------ */
+
+/* 「その他設定」の画面 */
+if ( ! function_exists( 'ymkrf_product_settings_page' ) ) :
+function ymkrf_product_settings_page() {
+
+	$items = array(
+		array(
+			'name' => '商品カテゴリ',
+			'url'  => 'edit-tags.php?taxonomy=ymkrf_product_cat&post_type=ymkrf_product',
+			'text' => '「キッチン」「給湯器」といった分け方そのものを作る・直す画面です。'
+			        . 'ここで作った分類は、商品一覧の上の切り替えにも自動で並びます。',
+		),
+		array(
+			'name' => 'メーカー',
+			'url'  => 'edit-tags.php?taxonomy=ymkrf_maker&post_type=ymkrf_product',
+			'text' => '「ノーリツ」「LIXIL」などのメーカー名を作る・直す画面です。'
+			        . '「説明」に書いた文章は、商品一覧のページに出ます。',
+		),
+		array(
+			'name' => '展示店舗',
+			'url'  => 'edit-tags.php?taxonomy=ymkrf_shop&post_type=ymkrf_product',
+			'text' => '「金沢野々市店」など、展示のあるお店の選択肢を作る画面です。'
+			        . 'どの商品をどのお店に置いているかは、商品ごとにチェックします。',
+		),
+	);
+	?>
+	<div class="wrap">
+		<h1>その他設定</h1>
+		<p class="description" style="margin:6px 0 18px;font-size:13px">
+			商品を登録するときに使う「えらぶ項目」を用意しておく画面です。ふだんは触りません。
+		</p>
+		<div style="display:grid;gap:12px;max-width:760px">
+			<?php foreach ( $items as $it ) : ?>
+				<div class="postbox" style="padding:16px 18px">
+					<h2 style="margin:0 0 6px;font-size:15px">
+						<a href="<?php echo esc_url( admin_url( $it['url'] ) ); ?>"><?php
+							echo esc_html( $it['name'] ); ?></a>
+					</h2>
+					<p style="margin:0;color:#50575e;font-size:13px;line-height:1.8"><?php
+						echo esc_html( $it['text'] ); ?></p>
+				</div>
+			<?php endforeach; ?>
+		</div>
+	</div>
+	<?php
+}
+endif;
+
+add_action( 'admin_menu', function () {
+	add_submenu_page(
+		'edit.php?post_type=ymkrf_product',
+		'その他設定',
+		'その他設定',
+		'manage_categories',
+		'ymkrf-product-settings',
+		'ymkrf_product_settings_page'
+	);
+}, 997 );
+
+add_action( 'admin_menu', function () {
+
+	global $submenu;
+	$key = 'edit.php?post_type=ymkrf_product';
+	if ( empty( $submenu[ $key ] ) ) return;
+
+	$keep = array();
+	foreach ( $submenu[ $key ] as $row ) {
+		if ( ! isset( $row[2] ) ) continue;
+		/* 分類をつくる3つの画面は「その他設定」にまとめたので出しません */
+		if ( strpos( $row[2], 'edit-tags.php' ) === 0 ) continue;
+		/* 一覧への入口（左の大きな「商品」と同じ）は出しません */
+		if ( $row[2] === $key ) continue;
+		/* 新規追加は、分類から入る形にしたので出しません */
+		if ( strpos( $row[2], 'post-new.php' ) === 0 ) continue;
+		$keep[] = $row;
+	}
+	$submenu[ $key ] = $keep;
+}, 999 );
+
+
+/* ------------------------------------------------------------
+   6-b3. 商品の追加は「分類から」に統一します（2026/09/01 ユーザー指示）
+
+        左メニューの「商品を追加」をなくし、
+        キッチン・給湯器などの分類を開いてから追加する形にしました。
+        分類から入ると、その分類が最初からチェックされた状態で始まるので、
+        入力する欄も最初からその分類のものだけになります。
    ------------------------------------------------------------ */
 add_action( 'admin_menu', function () {
+	remove_submenu_page( 'edit.php?post_type=ymkrf_product', 'post-new.php?post_type=ymkrf_product' );
+}, 998 );
+
+add_action( 'admin_footer', function () {
+
+	$s = get_current_screen();
+	if ( ! $s || $s->post_type !== 'ymkrf_product' ) return;
+
+	/* ---- 商品一覧の「新規追加」ボタン ---- */
+	if ( $s->base === 'edit' ) {
+
+		$slug = isset( $_GET['ymkrf_product_cat'] )
+			? sanitize_title( wp_unslash( $_GET['ymkrf_product_cat'] ) ) : '';
+		$name = '';
+		if ( $slug ) {
+			$t = get_term_by( 'slug', $slug, 'ymkrf_product_cat' );
+			if ( $t && ! is_wp_error( $t ) ) $name = $t->name;
+		}
+		?>
+		<script>
+		(function () {
+			var btn = document.querySelector('.wrap .page-title-action');
+			if (!btn) return;
+			var slug = <?php echo wp_json_encode( $slug ); ?>;
+			var name = <?php echo wp_json_encode( $name ); ?>;
+
+			if (slug && name) {
+				btn.href = 'post-new.php?post_type=ymkrf_product&ymkrf_cat=' + encodeURIComponent(slug);
+				btn.textContent = name + 'に商品を追加';
+			} else {
+				/* 分類を選んでいないときは、追加ボタンを出しません */
+				btn.style.display = 'none';
+				var p = document.createElement('p');
+				p.className = 'description';
+				p.style.cssText = 'margin:8px 0 0;font-size:13px';
+				p.textContent = '商品を追加するときは、上の「分類」からキッチン・給湯器などをえらんでから'
+				              + '「○○に商品を追加」を押してください。分類が最初から入った状態ではじめられます。';
+				btn.parentNode.insertBefore(p, btn.nextSibling);
+			}
+		})();
+		</script>
+		<?php
+		return;
+	}
+
+	/* ---- 新規作成のとき、分類を最初からチェックしておく ---- */
+	if ( $s->base === 'post' && $s->action === 'add' ) {
+		$slug = isset( $_GET['ymkrf_cat'] ) ? sanitize_title( wp_unslash( $_GET['ymkrf_cat'] ) ) : '';
+		if ( ! $slug ) return;
+		$t = get_term_by( 'slug', $slug, 'ymkrf_product_cat' );
+		if ( ! $t || is_wp_error( $t ) ) return;
+		?>
+		<script>
+		(function () {
+			var id  = <?php echo (int) $t->term_id; ?>;
+			var box = document.getElementById('ymkrf_product_catchecklist');
+			if (!box) return;
+			var cb = box.querySelector('input[value="' + id + '"]');
+			if (!cb || cb.checked) return;
+			cb.checked = true;
+			/* 入力欄のしぼり込みにも知らせます */
+			box.dispatchEvent(new Event('change', { bubbles: true }));
+		})();
+		</script>
+		<?php
+	}
+} );
+
+
+
+/* ------------------------------------------------------------
+   6-b4. 画面上の「＋新規 → 商品」も、分類を選んでから（2026/09/01 ユーザー指示）
+
+        黒い帯の「＋新規」から商品を作ると、分類が入らないまま
+        始まってしまいます。そこで「商品」にマウスを乗せると
+        キッチン・給湯器…と分類が出るようにしました。
+        えらんだ分類は、最初からチェックされた状態ではじまります。
+   ------------------------------------------------------------ */
+add_action( 'admin_bar_menu', function ( $bar ) {
+
+	if ( ! $bar->get_node( 'new-ymkrf_product' ) ) return;
+	if ( ! current_user_can( 'edit_posts' ) ) return;
+
+	$terms = get_terms( array(
+		'taxonomy'   => 'ymkrf_product_cat',
+		'hide_empty' => false,
+	) );
+	if ( is_wp_error( $terms ) || ! $terms ) return;
+
+	/* 並べる順は、左メニューや商品一覧ページと同じにします */
+	$order = array( 'kitchen', 'bathroom', 'toilet', 'lavatory', 'boiler', 'ecocute',
+	                'outer-wall', 'window', 'interior' );
+	usort( $terms, function ( $a, $b ) use ( $order ) {
+		$ia = array_search( $a->slug, $order, true );
+		$ib = array_search( $b->slug, $order, true );
+		if ( $ia === false ) $ia = 900;
+		if ( $ib === false ) $ib = 900;
+		if ( $ia === $ib ) return strcmp( $a->slug, $b->slug );
+		return $ia - $ib;
+	} );
+
+	/* 「商品」そのものは、押しても進まないようにします（分類を選んでもらうため） */
+	$bar->add_node( array(
+		'id'     => 'new-ymkrf_product',
+		'parent' => 'new-content',
+		'title'  => '商品',
+		'href'   => false,
+		'meta'   => array( 'title' => '分類をえらんでください' ),
+	) );
+
+	foreach ( $terms as $t ) {
+		$bar->add_node( array(
+			'id'     => 'new-ymkrf_product-' . $t->slug,
+			'parent' => 'new-ymkrf_product',
+			'title'  => $t->name,
+			'href'   => admin_url( 'post-new.php?post_type=ymkrf_product&ymkrf_cat=' . $t->slug ),
+		) );
+	}
+}, 99 );
+
+
+
+/* ------------------------------------------------------------
+   6-c2. 商品一覧の上に「分類」の切り替えを出す（2026/09/01 ユーザー指示）
+
+        左メニューに分類を並べると、分類が増えるたびに縦に長くなります。
+        そこで、WordPress の「すべて｜公開済み｜ゴミ箱」と同じ行に、
+        分類も横並びで出すようにしました。
+
+        商品が1件も無い分類は出しません。
+   ------------------------------------------------------------ */
+add_filter( 'views_edit-ymkrf_product', function ( $views ) {
 
 	$terms = get_terms( array(
 		'taxonomy'   => 'ymkrf_product_cat',
 		'hide_empty' => true,
-		'orderby'    => 'count',
-		'order'      => 'DESC',
 	) );
-	if ( is_wp_error( $terms ) || ! $terms ) return;
+	if ( is_wp_error( $terms ) || ! $terms ) return $views;
 
-	$i = 0;
-	foreach ( $terms as $t ) {
-		add_submenu_page(
-			'edit.php?post_type=ymkrf_product',                       // 親メニュー
-			$t->name . 'の商品',                                       // ページの見出し
-			'　└ ' . $t->name . '（' . $t->count . '）',               // メニューに出る文字
-			'edit_posts',
-			'edit.php?post_type=ymkrf_product&ymkrf_product_cat=' . $t->slug,
-			'',
-			11 + $i                                                    // 「新しい商品」のすぐ下
-		);
-		$i++;
+	/* 並べる順は、商品一覧ページ（/products/）のカードと同じ */
+	$order = array( 'kitchen', 'bathroom', 'toilet', 'lavatory', 'boiler', 'ecocute',
+	                'outer-wall', 'window', 'interior' );
+	usort( $terms, function ( $a, $b ) use ( $order ) {
+		$ia = array_search( $a->slug, $order, true );
+		$ib = array_search( $b->slug, $order, true );
+		if ( $ia === false ) $ia = 900;
+		if ( $ib === false ) $ib = 900;
+		if ( $ia === $ib ) return strcmp( $a->slug, $b->slug );
+		return $ia - $ib;
+	} );
+
+	$cur  = isset( $_GET['ymkrf_product_cat'] )
+		? sanitize_title( wp_unslash( $_GET['ymkrf_product_cat'] ) ) : '';
+	$base = admin_url( 'edit.php?post_type=ymkrf_product' );
+
+	/* 分類でしぼっているときは、WordPress側の「すべて」を太字にしません */
+	if ( $cur !== '' ) {
+		foreach ( $views as $k => $v ) {
+			$views[ $k ] = str_replace( ' class="current" aria-current="page"', '', $v );
+		}
 	}
+
+	$views['ymkrf-catlabel'] = '<b style="color:#1d2327">分類</b>';
+
+	foreach ( $terms as $t ) {
+		$views[ 'ymkrf-cat-' . $t->slug ] = sprintf(
+			'<a href="%s"%s>%s <span class="count">(%d)</span></a>',
+			esc_url( add_query_arg( 'ymkrf_product_cat', $t->slug, $base ) ),
+			$cur === $t->slug ? ' class="current" aria-current="page"' : '',
+			esc_html( $t->name ),
+			(int) $t->count
+		);
+	}
+
+	return $views;
 } );
 
 
