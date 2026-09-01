@@ -320,6 +320,8 @@ function ymkrf_product_field_overrides() {
 				'空欄なら上のタイトルを使います' ),
 			'_ymkrf_size'  => array( '設置方法', 'text', '例：壁掛設置',
 				'メーカーロゴのとなりと、標準仕様の表に出ます' ),
+			'_ymkrf_caution' => array( '注意書き', 'text', '例：※写真はイメージです。',
+				'商品写真の下に小さく出ます' ),
 			'_ymkrf_grade' => array( 'ふろ機能', 'select', '',
 				'商品写真の上の帯に出ます',
 				array( '', 'オート', 'フルオート' ) ),
