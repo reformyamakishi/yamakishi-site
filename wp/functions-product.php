@@ -264,16 +264,139 @@ function ymkrf_product_fields() {
 		'_ymkrf_name'    => array( '商品名',           'text',   '例：V-style（Vスタイル）', '空欄なら上のタイトルを使います' ),
 		'_ymkrf_size'    => array( '型（サイズ）',     'text',   '例：I型2550サイズ', 'メーカーロゴのとなりに出ます' ),
 		'_ymkrf_sub'     => array( '商品名の横の言葉', 'text',   '例：ハイパーキラミック', '商品名のすぐ横に、小さく出ます（トイレの陶器の種類など）' ),
-		'_ymkrf_work'    => array( '標準工事費（円）', 'number', '例：240000', '数字だけ。カンマや「円」は不要です' ),
-		'_ymkrf_item'    => array( '商品代（円）',     'number', '例：358000', '数字だけ。カンマや「円」は不要です' ),
+		'_ymkrf_work'    => array( '標準工事費（円・税込）', 'number', '例：240000', '★税込の金額を入れてください。数字だけ。カンマや「円」は不要です' ),
+		'_ymkrf_item'    => array( '商品代（円・税込）',     'number', '例：358000', '★税込の金額を入れてください。数字だけ。カンマや「円」は不要です' ),
 		'_ymkrf_days'    => array( '工期（日数）',     'number', '例：3', '数字だけ。「日」は自動で付きます' ),
 		'_ymkrf_daystext'=> array( '工期の書き方',     'text',   '例：半日', '「半日」など、日数で書けないときだけ入れてください。入れると上の日数より優先されます' ),
 		'_ymkrf_pt1'     => array( '特徴 1',           'text',   '例：お手頃価格', '' ),
 		'_ymkrf_pt2'     => array( '特徴 2',           'text',   '例：収納抜群', '' ),
 		'_ymkrf_pt3'     => array( '特徴 3',           'text',   '例：おそうじ楽々', '' ),
 		'_ymkrf_caution' => array( '写真の注意書き',   'text',   '例：※写真はイメージです。', '商品写真の下に小さく出ます' ),
+
+		/* ---- ここから下は給湯器・エコキュートだけで使う欄です（2026/09/01 追加） ----
+		   5つめの欄は「えらぶ言葉」、6つめは「この分類だけに出す」という意味です。 */
+		'_ymkrf_exterior'   => array( '外装', 'select', '', '',
+			array( '', '塗装鋼板', 'ステンレス' ),
+			array( 'boiler', 'ecocute' ) ),
+		'_ymkrf_dim'        => array( '寸法（mm）', 'text', '例：高さ600×幅480×奥行200',
+			'空欄のときは、商品ページにこの項目が出ません',
+			array(), array( 'boiler', 'ecocute' ) ),
+		'_ymkrf_weight'     => array( '質量（kg）', 'number', '例：19',
+			'数字だけ。空欄のときは、商品ページにこの項目が出ません',
+			array(), array( 'boiler', 'ecocute' ) ),
+		'_ymkrf_pressure'   => array( '給湯圧力', 'select', '', '',
+			array( '', '水道直圧式', '貯湯式', '高圧力型貯湯式' ),
+			array( 'boiler', 'ecocute' ) ),
+		'_ymkrf_power'      => array( '給湯能力', 'numunit', '例：20',
+			'数字だけ入れてください。「号」ならそのまま（20 →「20号」）、'
+			. '「万kcal/h」なら万の単位で（4 →「4万kcal/h」）',
+			array( '号', '万kcal/h' ),
+			array( 'boiler', 'ecocute' ) ),
+		/* ↑の単位。上の欄といっしょに出るので、単独では出しません */
+		'_ymkrf_power_unit' => array( '', 'unit', '', '', array(), array( 'boiler', 'ecocute' ) ),
 	);
 }
+
+
+/* ------------------------------------------------------------
+   2-b. 分類ごとに、入力欄の名前・種類・並び順を変えます
+        （2026/09/01 ユーザー指示）
+
+        給湯器では
+          キャッチコピー → 「給湯器カテゴリ」（4つからえらぶ）
+          商品名        → 「型式」
+        にします。中に入るデータ（メタ）は同じなので、
+        すでに登録ずみの商品もそのまま使えます。
+   ------------------------------------------------------------ */
+if ( ! function_exists( 'ymkrf_product_field_overrides' ) ) :
+function ymkrf_product_field_overrides() {
+	return array(
+		'boiler' => array(
+			'_ymkrf_catch' => array( '給湯器カテゴリ', 'select', '',
+				'商品ページで、型式の上に小さく出ます。一覧の分け方にも使われます',
+				array( '', 'ガス給湯器', 'エコジョーズ（高効率ガス給湯器）',
+				       '石油給湯器', 'エコフィール（高効率石油給湯器）' ) ),
+			'_ymkrf_name'  => array( '型式', 'text', '例：GT-2070SAW BL',
+				'空欄なら上のタイトルを使います' ),
+			'_ymkrf_size'  => array( '設置方法', 'text', '例：壁掛設置',
+				'メーカーロゴのとなりと、標準仕様の表に出ます' ),
+			'_ymkrf_grade' => array( 'ふろ機能', 'select', '',
+				'商品写真の上の帯に出ます',
+				array( '', 'オート', 'フルオート' ) ),
+		),
+	);
+}
+endif;
+
+/** 分類ごとの並び順（ここに書いていない欄は、うしろに元の順で付きます） */
+if ( ! function_exists( 'ymkrf_product_field_order' ) ) :
+function ymkrf_product_field_order() {
+	return array(
+		/* 「並び順」は使うことが少ないので、いちばん下にします */
+		'boiler' => array(
+			'_ymkrf_catch', '_ymkrf_name', '_ymkrf_size', '_ymkrf_exterior',
+			'_ymkrf_dim', '_ymkrf_weight', '_ymkrf_pressure', '_ymkrf_power',
+			'_ymkrf_grade',
+			'_ymkrf_work', '_ymkrf_item',
+			'_ymkrf_days', '_ymkrf_daystext',
+			'_ymkrf_pt1', '_ymkrf_pt2', '_ymkrf_pt3',
+			'_ymkrf_caution',
+			'_ymkrf_order',
+		),
+	);
+}
+endif;
+
+/** いま開いている商品の分類（新規作成のときはURLから） */
+if ( ! function_exists( 'ymkrf_product_current_cat' ) ) :
+function ymkrf_product_current_cat( $post_id = 0 ) {
+	if ( isset( $_GET['ymkrf_cat'] ) ) return sanitize_title( wp_unslash( $_GET['ymkrf_cat'] ) );
+	$ts = $post_id ? get_the_terms( $post_id, 'ymkrf_product_cat' ) : null;
+	return ( $ts && ! is_wp_error( $ts ) ) ? $ts[0]->slug : '';
+}
+endif;
+
+/** その分類で出す入力欄（名前・種類・並び順を入れかえたもの） */
+if ( ! function_exists( 'ymkrf_product_fields_for' ) ) :
+function ymkrf_product_fields_for( $cat = '' ) {
+
+	$all = ymkrf_product_fields();
+
+	/* その分類で使わない欄を外します */
+	$out = array();
+	foreach ( $all as $k => $f ) {
+		$only = isset( $f[5] ) ? (array) $f[5] : array();
+		if ( $only && ! in_array( $cat, $only, true ) ) continue;
+		$out[ $k ] = $f;
+	}
+
+	/* 給湯器・エコキュートでは「商品名の横の言葉」は使いません。
+	   塗装鋼板・ステンレスは「外装」の欄に入れます（2026/09/01 ユーザー指示） */
+	if ( in_array( $cat, array( 'boiler', 'ecocute' ), true ) ) {
+		unset( $out['_ymkrf_sub'] );
+	}
+
+	/* 名前・種類の入れかえ */
+	$ov = ymkrf_product_field_overrides();
+	if ( isset( $ov[ $cat ] ) ) {
+		foreach ( $ov[ $cat ] as $k => $f ) {
+			if ( isset( $out[ $k ] ) ) $out[ $k ] = $f;
+		}
+	}
+
+	/* 並び順 */
+	$or = ymkrf_product_field_order();
+	if ( isset( $or[ $cat ] ) ) {
+		$sorted = array();
+		foreach ( $or[ $cat ] as $k ) {
+			if ( isset( $out[ $k ] ) ) { $sorted[ $k ] = $out[ $k ]; unset( $out[ $k ] ); }
+		}
+		$out = array_merge( $sorted, $out );
+	}
+
+	return $out;
+}
+endif;
 
 /** 何行でも増やせる欄 */
 function ymkrf_product_repeaters() {
@@ -569,15 +692,64 @@ function ymkrf_product_box_basic( $post ) {
 	wp_nonce_field( 'ymkrf_product_save', 'ymkrf_product_nonce' );
 	echo ymkrf_product_admin_assets();
 
+	$cat = ymkrf_product_current_cat( $post->ID );
+
 	echo '<table class="ymkrf-tbl">';
-	foreach ( ymkrf_product_fields() as $key => $f ) {
-		printf(
-			'<tr><th><label for="%1$s">%2$s</label></th><td>
-			   <input type="%3$s" id="%1$s" name="%1$s" value="%4$s" placeholder="%5$s">%6$s</td></tr>',
-			esc_attr( $key ), esc_html( $f[0] ), esc_attr( $f[1] ),
-			esc_attr( get_post_meta( $post->ID, $key, true ) ), esc_attr( $f[2] ),
-			$f[3] ? '<span class="ymkrf-note">' . esc_html( $f[3] ) . '</span>' : ''
-		);
+	foreach ( ymkrf_product_fields_for( $cat ) as $key => $f ) {
+
+		/* 単位の欄は、ひとつ上の「給湯能力」といっしょに出しています */
+		if ( $f[1] === 'unit' ) continue;
+
+		$val  = (string) get_post_meta( $post->ID, $key, true );
+		$note = ! empty( $f[3] ) ? '<span class="ymkrf-note">' . esc_html( $f[3] ) . '</span>' : '';
+
+		echo '<tr><th><label for="' . esc_attr( $key ) . '">' . esc_html( $f[0] ) . '</label></th><td>';
+
+		if ( $f[1] === 'select' ) {
+
+			/* えらぶ欄。いま入っている言葉が一覧に無いときは、消えないように足します */
+			$opts = isset( $f[4] ) ? (array) $f[4] : array();
+			if ( $val !== '' && ! in_array( $val, $opts, true ) ) $opts[] = $val;
+
+			echo '<select id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '">';
+			foreach ( $opts as $o ) {
+				printf(
+					'<option value="%s"%s>%s</option>',
+					esc_attr( $o ),
+					selected( $val, $o, false ),
+					$o === '' ? '（えらんでください）' : esc_html( $o )
+				);
+			}
+			echo '</select>';
+
+		} elseif ( $f[1] === 'numunit' ) {
+
+			/* 数字＋単位。単位は「<キー>_unit」に入ります */
+			$ukey = $key . '_unit';
+			$uval = (string) get_post_meta( $post->ID, $ukey, true );
+			$uopt = isset( $f[4] ) ? (array) $f[4] : array();
+			if ( $uval === '' && $uopt ) $uval = $uopt[0];
+
+			printf(
+				'<input type="number" step="any" id="%1$s" name="%1$s" value="%2$s" placeholder="%3$s" style="width:110px">',
+				esc_attr( $key ), esc_attr( $val ), esc_attr( $f[2] )
+			);
+			echo ' <select name="' . esc_attr( $ukey ) . '" style="width:auto">';
+			foreach ( $uopt as $o ) {
+				printf( '<option value="%s"%s>%s</option>',
+					esc_attr( $o ), selected( $uval, $o, false ), esc_html( $o ) );
+			}
+			echo '</select>';
+
+		} else {
+
+			printf(
+				'<input type="%1$s" id="%2$s" name="%2$s" value="%3$s" placeholder="%4$s">',
+				esc_attr( $f[1] ), esc_attr( $key ), esc_attr( $val ), esc_attr( $f[2] )
+			);
+		}
+
+		echo $note . '</td></tr>'; /* phpcs:ignore */
 	}
 	echo '</table>';
 
@@ -755,12 +927,40 @@ add_action( 'admin_action_ymkrf_duplicate', function () {
    6. 一覧を見やすくする（管理画面）
    ============================================================ */
 add_filter( 'manage_ymkrf_product_posts_columns', function ( $cols ) {
+
+	/* いま分類でしぼっているかどうか（2026/09/01 ユーザー指示） */
+	$cat = isset( $_GET['ymkrf_product_cat'] )
+		? sanitize_title( wp_unslash( $_GET['ymkrf_product_cat'] ) ) : '';
+
 	$new = array();
 	foreach ( $cols as $k => $v ) {
+
+		/* 分類でしぼっているときは「商品カテゴリ」の列は要りません。
+		   給湯器だけを見ているのに「給湯器」と並ぶだけだからです。 */
+		if ( $cat !== '' && $k === 'taxonomy-ymkrf_product_cat' ) continue;
+
+		/* 給湯器・エコキュートは展示品ではないので「展示店舗」の列も出しません */
+		if ( in_array( $cat, array( 'boiler', 'ecocute' ), true )
+			&& $k === 'taxonomy-ymkrf_shop' ) continue;
+
 		$new[ $k ] = $v;
+
 		if ( $k === 'title' ) {
+
+			/* 給湯器は、商品名ではなく型番が並ぶので見出しも変えます */
+			if ( in_array( $cat, array( 'boiler', 'ecocute' ), true ) ) {
+				$new['title'] = '型番';
+			}
+
 			$new['ymkrf_thumb'] = '写真';
-			$new['ymkrf_grade'] = 'グレード';
+
+			/* 給湯器・エコキュートは、4つの種類（ガス給湯器・エコジョーズ…）を出します */
+			if ( in_array( $cat, array( 'boiler', 'ecocute' ), true ) ) {
+				$new['ymkrf_kind'] = '種類';
+			}
+
+			$new['ymkrf_grade'] = ( in_array( $cat, array( 'boiler', 'ecocute' ), true ) )
+				? 'ふろ機能' : 'グレード';
 			$new['ymkrf_price'] = '込み価格';
 		}
 	}
@@ -772,6 +972,11 @@ add_action( 'manage_ymkrf_product_posts_custom_column', function ( $col, $post_i
 		echo has_post_thumbnail( $post_id )
 			? get_the_post_thumbnail( $post_id, array( 70, 70 ) )
 			: '<span style="color:#c00">未設定</span>';
+	}
+	if ( $col === 'ymkrf_kind' ) {
+		/* 給湯器の種類（キャッチコピーの欄に入っています） */
+		$k = get_post_meta( $post_id, '_ymkrf_catch', true );
+		echo $k ? esc_html( $k ) : '<span style="color:#c00">未設定</span>';
 	}
 	if ( $col === 'ymkrf_grade' ) {
 		$g = get_post_meta( $post_id, '_ymkrf_grade', true );
@@ -901,13 +1106,60 @@ add_filter( 'posts_clauses', function ( $clauses, $q ) {
 
 
 /* ------------------------------------------------------------
+   6-b. 左メニューに「カテゴリ別の入口」を出す
+        商品 → キッチン ／ お風呂 ／ トイレ … と直接開けるようにします。
+        商品が1件も無いカテゴリは出しません（メニューが長くなるのを防ぐため）。
+   ------------------------------------------------------------ */
+add_action( 'admin_menu', function () {
+
+	$terms = get_terms( array(
+		'taxonomy'   => 'ymkrf_product_cat',
+		'hide_empty' => true,
+	) );
+	if ( is_wp_error( $terms ) || ! $terms ) return;
+
+	/* 並べる順は、商品一覧ページ（/products/）のカードと同じにします。
+	   ここに無い分類は、うしろに付きます。 */
+	$order = array( 'kitchen', 'bathroom', 'toilet', 'lavatory', 'boiler', 'ecocute',
+	                'outer-wall', 'window', 'interior' );
+	usort( $terms, function ( $a, $b ) use ( $order ) {
+		$ia = array_search( $a->slug, $order, true );
+		$ib = array_search( $b->slug, $order, true );
+		if ( $ia === false ) $ia = 900;
+		if ( $ib === false ) $ib = 900;
+		if ( $ia === $ib ) return strcmp( $a->slug, $b->slug );
+		return $ia - $ib;
+	} );
+
+	foreach ( $terms as $t ) {
+		add_submenu_page(
+			'edit.php?post_type=ymkrf_product',                       // 親メニュー
+			$t->name . 'の商品',                                       // ページの見出し
+			'　' . $t->name . '（' . $t->count . '）',                 // メニューに出る文字
+			'edit_posts',
+			'edit.php?post_type=ymkrf_product&ymkrf_product_cat=' . $t->slug
+		);
+	}
+} );
+
+
+/* ------------------------------------------------------------
    6-b2. 左メニューの並べかた（2026/09/01 ユーザー指示）
 
         商品
+        　キッチン（10）
+        　お風呂（9）
+        　…（分類の数だけ）
         　その他設定        … 商品カテゴリ／メーカー／展示店舗をまとめた画面
 
-        分類（キッチン・給湯器…）は、これから増える予定なので
-        左メニューには並べません。商品一覧の上で切り替えます（6-c2）。
+        ・分類は「商品」のすぐ下に並べます。商品を押してから、
+          左側で登録したい分類をえらべます。
+        ・いちばん上には、見えない「商品（一覧）」が残っています。
+          WordPress は「商品」を押したとき、いちばん上の項目を開くしくみなので、
+          消すと「商品」を押しただけでキッチンが開いてしまいます。
+          そのため、配列には残したまま画面上だけ隠しています（6-b5）。
+        ・ふだん触らない3つは「その他設定」にまとめました
+        ・分類が増えたときのために、商品一覧の上にも切り替えを出しています（6-c2）
    ------------------------------------------------------------ */
 
 /* 「その他設定」の画面 */
@@ -974,19 +1226,81 @@ add_action( 'admin_menu', function () {
 	$key = 'edit.php?post_type=ymkrf_product';
 	if ( empty( $submenu[ $key ] ) ) return;
 
-	$keep = array();
+	$all  = array();   // すべての商品
+	$cats = array();   // カテゴリ別の入口
+	$sets = array();   // その他設定
 	foreach ( $submenu[ $key ] as $row ) {
 		if ( ! isset( $row[2] ) ) continue;
 		/* 分類をつくる3つの画面は「その他設定」にまとめたので出しません */
 		if ( strpos( $row[2], 'edit-tags.php' ) === 0 ) continue;
-		/* 一覧への入口（左の大きな「商品」と同じ）は出しません */
-		if ( $row[2] === $key ) continue;
 		/* 新規追加は、分類から入る形にしたので出しません */
 		if ( strpos( $row[2], 'post-new.php' ) === 0 ) continue;
-		$keep[] = $row;
+
+		if ( $row[2] === $key ) {
+			/* ★この項目は消してはいけません。
+			     WordPress は「商品」を押したとき、いちばん上の項目を開くしくみなので、
+			     これが無いと「商品」を押しただけでキッチンが開いてしまいます。
+			     見た目には要らないので、下の「6-b5」で隠しています。 */
+			$all[] = $row;
+		} elseif ( strpos( $row[2], 'ymkrf_product_cat=' ) !== false ) {
+			$cats[] = $row;
+		} else {
+			$sets[] = $row;
+		}
 	}
-	$submenu[ $key ] = $keep;
+	$submenu[ $key ] = array_merge( $all, $cats, $sets );
 }, 999 );
+
+
+/* ------------------------------------------------------------
+   6-b4b. 分類をえらんだとき、左メニューのその分類に色を付けます
+          （2026/09/01 ユーザー指摘「給湯器をえらんでも見た目が変わらない」）
+
+          WordPress は、URL にうしろの文字（?ymkrf_product_cat=boiler）が
+          付いていると「いまここ」だと気づいてくれないので、教えてあげます。
+   ------------------------------------------------------------ */
+add_filter( 'submenu_file', function ( $file, $parent_file ) {
+
+	if ( $parent_file !== 'edit.php?post_type=ymkrf_product' ) return $file;
+	if ( empty( $_GET['ymkrf_product_cat'] ) ) return $file;
+
+	$slug = sanitize_title( wp_unslash( $_GET['ymkrf_product_cat'] ) );
+	return 'edit.php?post_type=ymkrf_product&ymkrf_product_cat=' . $slug;
+}, 10, 2 );
+
+/* 「いまここ」がひと目で分かるように、うすい青の帯を付けます */
+add_action( 'admin_head', function () {
+	?>
+	<style>
+	#menu-posts-ymkrf_product .wp-submenu li.current a,
+	#menu-posts-ymkrf_product .wp-submenu a.current{
+		background:#2271b1; color:#fff; border-radius:3px;
+	}
+	</style>
+	<?php
+} );
+
+
+/* ------------------------------------------------------------
+   6-b5. 左メニューの「商品」（一覧への入口）は、画面上だけ隠します
+        （2026/09/01 ユーザー指示「左のすべては不要」）
+
+        消してしまうと「商品」を押したときにキッチンが開いてしまうので、
+        中身は残したまま、見た目だけ隠しています。
+   ------------------------------------------------------------ */
+add_action( 'admin_footer', function () {
+	?>
+	<script>
+	(function () {
+		var ul = document.querySelector('#menu-posts-ymkrf_product .wp-submenu');
+		if (!ul) return;
+		var a = ul.querySelector('a[href$="edit.php?post_type=ymkrf_product"]');
+		var li = a && a.closest ? a.closest('li') : null;
+		if (li && !li.classList.contains('wp-submenu-head')) li.style.display = 'none';
+	})();
+	</script>
+	<?php
+} );
 
 
 /* ------------------------------------------------------------
@@ -1149,6 +1463,36 @@ add_filter( 'views_edit-ymkrf_product', function ( $views ) {
 		return $ia - $ib;
 	} );
 
+	/* 「所有」（自分が登録したもの）は、まぎらわしいので出しません。
+	   一括登録で入れた商品は作った人が別扱いになり、数字に意味がないためです。
+	   （2026/09/01 ユーザー指示） */
+	unset( $views['mine'] );
+
+	/* WordPress は0件の状態を出しません。
+	   「下書き」「ゴミ箱」は、0件のときも出しておきます。
+	   （2026/09/01 ユーザー指示。いつも同じ場所にあるほうが分かりやすいため） */
+	$cnt  = wp_count_posts( 'ymkrf_product' );
+	$stat = isset( $_GET['post_status'] ) ? sanitize_key( wp_unslash( $_GET['post_status'] ) ) : '';
+	$plain = admin_url( 'edit.php?post_type=ymkrf_product' );
+
+	foreach ( array( 'draft' => '下書き', 'trash' => 'ゴミ箱' ) as $k => $label ) {
+		if ( ! empty( $views[ $k ] ) ) continue;
+		$views[ $k ] = sprintf(
+			'<a href="%s"%s>%s <span class="count">(%d)</span></a>',
+			esc_url( add_query_arg( 'post_status', $k, $plain ) ),
+			$stat === $k ? ' class="current" aria-current="page"' : '',
+			esc_html( $label ),
+			isset( $cnt->$k ) ? (int) $cnt->$k : 0
+		);
+	}
+
+	/* 並べる順をそろえます：すべて → 公開済み → 下書き → ゴミ箱 */
+	$sorted = array();
+	foreach ( array( 'all', 'publish', 'draft', 'trash' ) as $k ) {
+		if ( isset( $views[ $k ] ) ) { $sorted[ $k ] = $views[ $k ]; unset( $views[ $k ] ); }
+	}
+	$views = array_merge( $sorted, $views );
+
 	$cur  = isset( $_GET['ymkrf_product_cat'] )
 		? sanitize_title( wp_unslash( $_GET['ymkrf_product_cat'] ) ) : '';
 	$base = admin_url( 'edit.php?post_type=ymkrf_product' );
@@ -1233,7 +1577,7 @@ function ymkrf_product_data( $post_id = null ) {
 
 	return array(
 		'catch'    => $m( '_ymkrf_catch' ),
-		'grade'    => $m( '_ymkrf_grade' ),
+		'grade'    => ymkrf_grade_label( $m( '_ymkrf_grade' ) ),
 		'name'     => $m( '_ymkrf_name' ) ?: get_the_title( $post_id ),
 		'size'     => $m( '_ymkrf_size' ),
 		'sub'      => $m( '_ymkrf_sub' ),
@@ -1244,6 +1588,13 @@ function ymkrf_product_data( $post_id = null ) {
 		'daystext' => $m( '_ymkrf_daystext' ),
 		'points'   => array_values( array_filter( array( $m('_ymkrf_pt1'), $m('_ymkrf_pt2'), $m('_ymkrf_pt3') ) ) ),
 		'caution'  => $m( '_ymkrf_caution' ),
+		/* 給湯器・エコキュートの基本仕様（2026/09/01 追加） */
+		'dim'      => $m( '_ymkrf_dim' ),
+		'weight'   => $m( '_ymkrf_weight' ),
+		'exterior' => $m( '_ymkrf_exterior' ),
+		'pressure' => $m( '_ymkrf_pressure' ),
+		'power'    => $m( '_ymkrf_power' ),
+		'powerunit'=> $m( '_ymkrf_power_unit' ),
 		'images'   => $rep( '_ymkrf_images' ),
 		'colors'   => $rep( '_ymkrf_colors' ),
 		'tops'     => $rep( '_ymkrf_tops' ),
@@ -1973,6 +2324,59 @@ function ymkrf_maker_logo( $term, $class = 'p-maker' ) {
 	     . ' alt="' . esc_attr( $name ) . '"'
 	     . ' title="' . esc_attr( $name . 'の製品です' ) . '"'
 	     . ' loading="lazy" decoding="async"></picture></span>';
+}
+endif;
+
+
+/* ============================================================
+   グレードの見せかた（2026/09/01 ユーザー指示）
+
+   給湯器の「ふろ機能」は、管理画面では「オート」「フルオート」と
+   短くえらべるようにしています。
+   ただ、お客様に見えるページでは「オートタイプ」のほうが分かりやすいので、
+   表示するときだけ「タイプ」を付けます。
+   ============================================================ */
+if ( ! function_exists( 'ymkrf_grade_label' ) ) :
+function ymkrf_grade_label( $g ) {
+	$g = trim( (string) $g );
+	if ( $g === 'オート' || $g === 'フルオート' ) return $g . 'タイプ';
+	return $g;
+}
+endif;
+
+
+/* ============================================================
+   基本仕様の表（給湯器・エコキュート）
+
+   入っている項目だけを返します。空の項目は出しません。
+   （2026/09/01 ユーザー指示「無記入の場合はこの項目は非表示」）
+   ============================================================ */
+if ( ! function_exists( 'ymkrf_product_basicspec' ) ) :
+function ymkrf_product_basicspec( $d ) {
+
+	/* この表を出すのは給湯器・エコキュートだけです。
+	   （ほかの分類では「設置方法」が「型（サイズ）」の意味になるため） */
+	$ok = false;
+	foreach ( (array) $d['cats'] as $c ) {
+		if ( in_array( $c->slug, array( 'boiler', 'ecocute' ), true ) ) { $ok = true; break; }
+	}
+	if ( ! $ok ) return array();
+
+	$rows = array();
+
+	if ( ! empty( $d['size'] ) )     $rows[] = array( '設置方法', $d['size'] );
+	if ( ! empty( $d['exterior'] ) ) $rows[] = array( '外装',     $d['exterior'] );
+	if ( ! empty( $d['pressure'] ) ) $rows[] = array( '給湯圧力', $d['pressure'] );
+
+	if ( $d['power'] !== '' && $d['power'] !== null ) {
+		$u = $d['powerunit'] !== '' ? $d['powerunit'] : '号';
+		$rows[] = array( '給湯能力', $d['power'] . $u );
+	}
+
+	if ( ! empty( $d['dim'] ) )    $rows[] = array( '寸法', $d['dim'] . '（mm）' );
+	if ( ! empty( $d['weight'] ) ) $rows[] = array( '質量', $d['weight'] . 'kg' );
+
+	return $rows;
 }
 endif;
 

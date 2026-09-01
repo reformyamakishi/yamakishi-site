@@ -207,13 +207,30 @@ if ( ! empty( $d['images'] ) || $csets || ! empty( $d['handles'] ) ) :
 </section>
 <?php endif; ?>
 
-<?php if ( $d['specs'] || $d['speclist'] ) : ?>
+<?php
+/* 給湯器・エコキュートの基本仕様（入っている項目だけ出ます） */
+$basic = function_exists( 'ymkrf_product_basicspec' ) ? ymkrf_product_basicspec( $d ) : array();
+if ( $d['specs'] || $d['speclist'] || $basic ) : ?>
 <!-- =========== 標準仕様 ===========
      写真つきの一覧（キッチン・お風呂）と、
-     文字だけの一覧（トイレなど）の両方に対応しています。 -->
+     文字だけの一覧（トイレなど）の両方に対応しています。
+     給湯器は、いちばん上に基本仕様の表が出ます。 -->
 <section class="l-section">
   <div class="l-wrap">
     <h2 class="p-prd__bar">標準仕様</h2>
+
+    <?php if ( $basic ) : ?>
+      <table class="p-prd__basic">
+        <tbody>
+          <?php foreach ( $basic as $b ) : ?>
+            <tr>
+              <th><?php echo esc_html( $b[0] ); ?></th>
+              <td><?php echo esc_html( $b[1] ); ?></td>
+            </tr>
+          <?php endforeach; ?>
+        </tbody>
+      </table>
+    <?php endif; ?>
 
     <?php if ( $d['specs'] ) : ?>
       <div class="p-prd__specs">

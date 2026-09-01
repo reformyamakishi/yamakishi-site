@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '82' );
+define( 'YMKRF_SETUP_VER', '86' );
 
 /* キッチンの「ヤマキシ標準工事内容」。
    ホームページの一覧表（7項目）と、番号入りの図（8項目）の
@@ -6911,6 +6911,95 @@ TOTOのセフィオンテクト、LIXILのアクアセラミック、Panasonic�
 			$log[] = 'メーカー「' . $mt2->name . '」の説明を入れました';
 		}
 		update_option( 'ymkrf_maker_desc_ver', '1' );
+	}
+
+	/* 基本仕様（設置方式・寸法・質量・給湯圧力・給湯能力）を入れます。2026/09/01
+	     チラシと、ノーリツ公式サイトで確認できたものだけ入れています。
+	     分からないもの（ガス4機種の寸法・質量など）は空のままです。
+	     空の項目は、商品ページに出ません。 */
+	if ( get_option( 'ymkrf_boiler_basic_ver' ) !== '1' ) {
+
+		$boi_basic = array(
+			/* スラッグ => 設置方式, 給湯圧力, 給湯能力, 単位, 寸法, 質量 */
+			'gt-2070saw'   => array( '壁掛設置', '', '20', '号', '', '' ),
+			'ruf-205saw'   => array( '壁掛設置', '', '20', '号', '', '' ),
+			'srt-c2071saw' => array( '壁掛設置', '', '20', '号', '', '' ),
+			'ruf-e2006aw'  => array( '壁掛設置', '', '20', '号', '', '' ),
+			'otq-4706say'  => array( '屋外据置設置', '水道直圧式', '4', '万kcal/h', '高さ770×幅540×奥行250', '' ),
+			'otq-4706says' => array( '屋外据置設置', '水道直圧式', '4', '万kcal/h', '高さ770×幅540×奥行250', '' ),
+			'otq-c4706say' => array( '屋外据置設置', '水道直圧式', '4', '万kcal/h', '', '' ),
+			'otq-c4706ay'  => array( '屋外据置設置', '水道直圧式', '4', '万kcal/h', '', '' ),
+		);
+
+		$done_basic = 0;
+		foreach ( $boi_basic as $bs2 => $bv2 ) {
+			$pb2 = get_page_by_path( $bs2, OBJECT, 'ymkrf_product' );
+			if ( ! $pb2 ) continue;
+			update_post_meta( $pb2->ID, '_ymkrf_setup',      $bv2[0] );
+			update_post_meta( $pb2->ID, '_ymkrf_pressure',   $bv2[1] );
+			update_post_meta( $pb2->ID, '_ymkrf_power',      $bv2[2] );
+			update_post_meta( $pb2->ID, '_ymkrf_power_unit', $bv2[3] );
+			update_post_meta( $pb2->ID, '_ymkrf_dim',        $bv2[4] );
+			update_post_meta( $pb2->ID, '_ymkrf_weight',     $bv2[5] );
+			$done_basic++;
+		}
+		if ( $done_basic ) $log[] = '給湯器' . $done_basic . '機種に基本仕様を入れました';
+		update_option( 'ymkrf_boiler_basic_ver', '1' );
+	}
+
+	/* 「設置方法」と「ふろ機能」に入れ直します。2026/09/01
+	     ・設置方式（別の欄）はやめて、「型（サイズ）」を「設置方法」として使います
+	     ・グレードは「ふろ機能」（オート／フルオート）にします
+	       号数・キロ数は「給湯能力」の欄に移したので、ここには入れません */
+	if ( get_option( 'ymkrf_boiler_size_ver' ) !== '2' ) {
+
+		$boi_size = array(
+			/* スラッグ => 設置方法, ふろ機能 */
+			'gt-2070saw'   => array( '壁掛設置',     'オート' ),
+			'ruf-205saw'   => array( '壁掛設置',     'オート' ),
+			'srt-c2071saw' => array( '壁掛設置',     'オート' ),
+			'ruf-e2006aw'  => array( '壁掛設置',     'フルオート' ),
+			'otq-4706say'  => array( '屋外据置設置', 'オート' ),
+			'otq-4706says' => array( '屋外据置設置', 'オート' ),
+			'otq-c4706say' => array( '屋外据置設置', 'オート' ),
+			'otq-c4706ay'  => array( '屋外据置設置', 'フルオート' ),
+		);
+
+		$done_size = 0;
+		foreach ( $boi_size as $bs3 => $bv3 ) {
+			$pb3 = get_page_by_path( $bs3, OBJECT, 'ymkrf_product' );
+			if ( ! $pb3 ) continue;
+			update_post_meta( $pb3->ID, '_ymkrf_size',  $bv3[0] );
+			update_post_meta( $pb3->ID, '_ymkrf_grade', $bv3[1] );
+			delete_post_meta( $pb3->ID, '_ymkrf_setup' );   /* 使わなくなった欄 */
+			$done_size++;
+		}
+		if ( $done_size ) $log[] = '給湯器' . $done_size . '機種の「設置方法」「ふろ機能」を入れ直しました';
+		update_option( 'ymkrf_boiler_size_ver', '2' );
+	}
+
+	/* 「外装」の欄に入れ直します。2026/09/01
+	     塗装鋼板・ステンレスは「商品名の横の言葉」に入れていましたが、
+	     専用の「外装」の欄をつくったので、そちらに移します。 */
+	if ( get_option( 'ymkrf_boiler_ext_ver' ) !== '1' ) {
+
+		$boi_ext = array(
+			'otq-4706say'  => '塗装鋼板',
+			'otq-4706says' => 'ステンレス',
+			'otq-c4706say' => '塗装鋼板',
+			'otq-c4706ay'  => '塗装鋼板',
+		);
+
+		$done_ext = 0;
+		foreach ( $boi_ext as $bs4 => $bv4 ) {
+			$pb4 = get_page_by_path( $bs4, OBJECT, 'ymkrf_product' );
+			if ( ! $pb4 ) continue;
+			update_post_meta( $pb4->ID, '_ymkrf_exterior', $bv4 );
+			update_post_meta( $pb4->ID, '_ymkrf_sub', '' );   /* 商品名の横には出しません */
+			$done_ext++;
+		}
+		if ( $done_ext ) $log[] = '給湯器' . $done_ext . '機種の外装を入れ直しました';
+		update_option( 'ymkrf_boiler_ext_ver', '1' );
 	}
 
 	/* 「主な機能」の入れ直し（1回だけ）。2026/09/01

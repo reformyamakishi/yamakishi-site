@@ -1387,3 +1387,28 @@ a.p-pack__item:hover{ border-color:var(--brand); transform:translateY(-4px); box
   .p-colwriter{ padding:22px 26px; gap:18px; }
   .p-colwriter__ph{ width:88px; height:88px; }
 }
+
+
+/* --------------------------------------------------------------------------
+   基本仕様の表（給湯器・エコキュート）
+   -------------------------------------------------------------------------- */
+.p-prd__basic{
+  width:100%; border-collapse:collapse; margin:0 0 22px;
+  background:#fff; border:2px solid var(--border); border-radius:var(--radius); overflow:hidden;
+}
+.p-prd__basic th,
+.p-prd__basic td{
+  padding:12px 14px; font-size:14px; line-height:1.7; text-align:left; vertical-align:top;
+  border-bottom:1px solid var(--border);
+}
+.p-prd__basic tr:last-child th,
+.p-prd__basic tr:last-child td{ border-bottom:0; }
+.p-prd__basic th{
+  width:34%; background:var(--bg-gray); font-weight:900; color:var(--ink-sub); white-space:nowrap;
+}
+.p-prd__basic td{ font-weight:700; color:var(--ink); }
+@media (min-width:768px){
+  .p-prd__basic th{ width:220px; }
+  .p-prd__basic th,
+  .p-prd__basic td{ padding:14px 18px; font-size:15px; }
+}
