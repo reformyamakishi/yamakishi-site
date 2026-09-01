@@ -415,6 +415,147 @@ add_action( 'add_meta_boxes', function () {
 	}
 } );
 
+/* ============================================================
+   3-b. 分類ごとに、入力する欄をしぼります
+        （2026/09/01 ユーザー指示。「すべての商品で入力欄が同じだと登録しにくい」）
+
+        キッチンには「扉カラー」「天板カラー」「取っ手」がありますが、
+        給湯器には要りません。逆に給湯器には「標準仕様（文字だけの一覧）」を使います。
+        そこで、その分類で実際に使われている欄だけを出すようにしました。
+
+        ★どの欄を使うかは、手で決めるのではなく、
+          その分類にすでに登録されている商品から自動で調べています。
+          あとから商品を足しても、勝手についてきます。
+
+        ★安全のために、次の場合は隠しません。
+          ・いま開いている商品に、すでに何か入っている欄
+          ・まだ商品が1つも無い分類（どの欄を使うか分からないため）
+
+        ★隠れた欄は、上の「使わない欄も表示する」で出せます。
+          （表示・非表示だけの話で、入っているデータは消えません）
+   ============================================================ */
+if ( ! function_exists( 'ymkrf_product_usedmap' ) ) :
+function ymkrf_product_usedmap() {
+
+	$keys = array_keys( ymkrf_product_repeaters() );
+	$map  = array();
+
+	$terms = get_terms( array(
+		'taxonomy'   => 'ymkrf_product_cat',
+		'hide_empty' => false,
+	) );
+	if ( is_wp_error( $terms ) || ! $terms ) return $map;
+
+	foreach ( $terms as $t ) {
+
+		$ids = get_posts( array(
+			'post_type'      => 'ymkrf_product',
+			'post_status'    => 'publish',
+			'posts_per_page' => -1,
+			'fields'         => 'ids',
+			'tax_query'      => array( array(
+				'taxonomy' => 'ymkrf_product_cat',
+				'field'    => 'term_id',
+				'terms'    => $t->term_id,
+			) ),
+		) );
+
+		/* まだ商品が無い分類は、ぜんぶ出します */
+		if ( ! $ids ) { $map[ (string) $t->term_id ] = null; continue; }
+
+		$use = array();
+		foreach ( $keys as $k ) {
+			foreach ( $ids as $pid ) {
+				$v = get_post_meta( $pid, $k, true );
+				if ( is_array( $v ) && $v ) { $use[] = $k; break; }
+			}
+		}
+		$map[ (string) $t->term_id ] = $use;
+	}
+	return $map;
+}
+endif;
+
+add_action( 'admin_footer', function () {
+
+	$s = get_current_screen();
+	if ( ! $s || $s->post_type !== 'ymkrf_product' ) return;
+	if ( ! in_array( $s->base, array( 'post' ), true ) ) return;
+
+	$post_id = isset( $GLOBALS['post'] ) ? (int) $GLOBALS['post']->ID : 0;
+
+	/* いま開いている商品に、すでに何か入っている欄 */
+	$has = array();
+	foreach ( array_keys( ymkrf_product_repeaters() ) as $k ) {
+		$v = $post_id ? get_post_meta( $post_id, $k, true ) : '';
+		if ( is_array( $v ) && $v ) $has[] = $k;
+	}
+	?>
+	<script>
+	(function () {
+		var MAP  = <?php echo wp_json_encode( ymkrf_product_usedmap() ); ?>;
+		var HAS  = <?php echo wp_json_encode( $has ); ?>;
+		var KEYS = <?php echo wp_json_encode( array_keys( ymkrf_product_repeaters() ) ); ?>;
+
+		var list = document.getElementById('ymkrf_product_catchecklist');
+		if (!list) return;
+
+		/* 「使わない欄も表示する」のスイッチ */
+		var first = document.getElementById('ymkrf_box' + KEYS[0]);
+		if (!first) return;
+
+		var bar = document.createElement('div');
+		bar.className = 'postbox';
+		bar.style.cssText = 'padding:11px 14px;background:#f6f7f7;border-color:#dcdcde';
+		bar.innerHTML = '<label style="font-weight:600;cursor:pointer">'
+		  + '<input type="checkbox" id="ymkrf-showall"> 使わない欄も表示する</label>'
+		  + '<span id="ymkrf-hidnum" style="margin-left:12px;color:#787c82;font-size:12px"></span>';
+		first.parentNode.insertBefore(bar, first);
+
+		var showall = document.getElementById('ymkrf-showall');
+		var numTxt  = document.getElementById('ymkrf-hidnum');
+		try { showall.checked = (localStorage.getItem('ymkrfShowAllBoxes') === '1'); } catch (e) {}
+
+		function apply() {
+			var checked = [].slice.call(list.querySelectorAll('input[type=checkbox]:checked'));
+
+			/* えらばれている分類の「使う欄」をぜんぶ足します。
+			   ひとつでも「ぜんぶ出す」分類があれば、しぼりません。 */
+			var use = null;
+			if (checked.length) {
+				use = [];
+				for (var i = 0; i < checked.length; i++) {
+					var m = MAP[String(checked[i].value)];
+					if (m === null || m === undefined) { use = null; break; }
+					use = use.concat(m);
+				}
+			}
+
+			var hidden = 0;
+			KEYS.forEach(function (k) {
+				var box = document.getElementById('ymkrf_box' + k);
+				if (!box) return;
+				var keep = showall.checked
+				        || use === null
+				        || use.indexOf(k) > -1
+				        || HAS.indexOf(k) > -1;
+				box.style.display = keep ? '' : 'none';
+				if (!keep) hidden++;
+			});
+			numTxt.textContent = hidden ? ('この分類で使わない ' + hidden + ' 項目を隠しています') : '';
+		}
+
+		list.addEventListener('change', apply);
+		showall.addEventListener('change', function () {
+			try { localStorage.setItem('ymkrfShowAllBoxes', showall.checked ? '1' : '0'); } catch (e) {}
+			apply();
+		});
+		apply();
+	})();
+	</script>
+	<?php
+} );
+
 /** 写真を選ぶ機能のために、WordPressのメディア画面と並べ替え機能を読み込む */
 add_action( 'admin_enqueue_scripts', function ( $hook ) {
 	global $post_type;
