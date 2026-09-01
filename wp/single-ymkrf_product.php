@@ -225,7 +225,8 @@ if ( $d['specs'] || $d['speclist'] || $basic ) : ?>
           <?php foreach ( $basic as $b ) : ?>
             <tr>
               <th><?php echo esc_html( $b[0] ); ?></th>
-              <td><?php echo esc_html( $b[1] ); ?></td>
+              <?php /* 改行を入れた項目（タンク容量の人数、付属品）はそこで折り返します */ ?>
+              <td><?php echo nl2br( esc_html( $b[1] ) ); ?></td>
             </tr>
           <?php endforeach; ?>
         </tbody>

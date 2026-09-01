@@ -277,7 +277,7 @@ function ymkrf_product_fields() {
 		   5つめの欄は「えらぶ言葉」、6つめは「この分類だけに出す」という意味です。 */
 		'_ymkrf_exterior'   => array( '外装', 'select', '', '',
 			array( '', '塗装鋼板', 'ステンレス' ),
-			array( 'boiler', 'ecocute' ) ),
+			array( 'boiler' ) ),
 		'_ymkrf_dim'        => array( '寸法（mm）', 'text', '例：高さ600×幅480×奥行200',
 			'空欄のときは、商品ページにこの項目が出ません',
 			array(), array( 'boiler', 'ecocute' ) ),
@@ -291,9 +291,20 @@ function ymkrf_product_fields() {
 			'数字だけ入れてください。「号」ならそのまま（20 →「20号」）、'
 			. '「万kcal/h」なら万の単位で（4 →「4万kcal/h」）',
 			array( '号', '万kcal/h' ),
-			array( 'boiler', 'ecocute' ) ),
+			array( 'boiler' ) ),
 		/* ↑の単位。上の欄といっしょに出るので、単独では出しません */
-		'_ymkrf_power_unit' => array( '', 'unit', '', '', array(), array( 'boiler', 'ecocute' ) ),
+		'_ymkrf_power_unit' => array( '', 'unit', '', '', array(), array( 'boiler' ) ),
+
+		/* ---- ここから下はエコキュートだけで使う欄です（2026/09/01 追加） ---- */
+		'_ymkrf_tank'      => array( 'タンク容量（L）', 'number', '例：370',
+			'数字だけ。空欄のときは、商品ページにこの項目が出ません',
+			array(), array( 'ecocute' ) ),
+		'_ymkrf_people'    => array( '対象人数', 'text', '例：3〜4人向け',
+			'タンク容量のすぐ下に出ます。一覧の分け方にも使われます',
+			array(), array( 'ecocute' ) ),
+		'_ymkrf_accessory' => array( '付属品', 'text', '例：脚部カバー／ベーシックリモコン',
+			'いくつかあるときは「／」で区切ってください',
+			array(), array( 'ecocute' ) ),
 	);
 }
 
@@ -326,6 +337,28 @@ function ymkrf_product_field_overrides() {
 				'商品写真の上の帯に出ます',
 				array( '', 'オート', 'フルオート' ) ),
 		),
+
+		/* エコキュートは、給湯器とよく似た並びですが
+		     キャッチコピー → 「おすすめ表示」（赤い文字のふだ）
+		     グレード       → 「タイプ」（フルオート・高圧・高効率）
+		   になります。 */
+		'ecocute' => array(
+			'_ymkrf_catch' => array( 'おすすめ表示', 'text',
+				'例：補助金対象商品！',
+				'商品写真の下に、赤い文字で出ます。'
+				. '「数量限定！早い者勝ち！」「処分アイテム！在庫残り2台！」なども入れられます。空欄でもかまいません' ),
+			'_ymkrf_name'  => array( '型番', 'text', '例：SRT-S377U',
+				'空欄なら上のタイトルを使います' ),
+			'_ymkrf_size'  => array( '設置方法', 'text', '例：屋外設置',
+				'メーカーロゴのとなりと、標準仕様の表に出ます。空欄でもかまいません' ),
+			'_ymkrf_grade' => array( 'タイプ', 'select', '',
+				'商品写真の上の帯に出ます',
+				array( '', 'フルオート', 'フルオート・高圧', 'フルオート・高圧・高効率',
+				       'オート', 'オート・高圧', '給湯専用' ) ),
+			'_ymkrf_caution' => array( '注意書き', 'text',
+				'例：※電気温水器またはエコキュートからの交換限定価格',
+				'商品写真の下に小さく出ます' ),
+		),
 	);
 }
 endif;
@@ -341,6 +374,18 @@ function ymkrf_product_field_order() {
 			'_ymkrf_grade',
 			'_ymkrf_work', '_ymkrf_item',
 			'_ymkrf_days', '_ymkrf_daystext',
+			'_ymkrf_pt1', '_ymkrf_pt2', '_ymkrf_pt3',
+			'_ymkrf_caution',
+			'_ymkrf_order',
+		),
+		'ecocute' => array(
+			'_ymkrf_name', '_ymkrf_tank', '_ymkrf_people', '_ymkrf_grade',
+			'_ymkrf_accessory',
+			'_ymkrf_size',
+			'_ymkrf_dim', '_ymkrf_weight', '_ymkrf_pressure',
+			'_ymkrf_work', '_ymkrf_item',
+			'_ymkrf_days', '_ymkrf_daystext',
+			'_ymkrf_catch',
 			'_ymkrf_pt1', '_ymkrf_pt2', '_ymkrf_pt3',
 			'_ymkrf_caution',
 			'_ymkrf_order',
@@ -956,13 +1001,14 @@ add_filter( 'manage_ymkrf_product_posts_columns', function ( $cols ) {
 
 			$new['ymkrf_thumb'] = '写真';
 
-			/* 給湯器・エコキュートは、4つの種類（ガス給湯器・エコジョーズ…）を出します */
-			if ( in_array( $cat, array( 'boiler', 'ecocute' ), true ) ) {
-				$new['ymkrf_kind'] = '種類';
-			}
+			/* 給湯器は4つの種類（ガス給湯器・エコジョーズ…）、
+			   エコキュートはタンク容量を出します */
+			if ( $cat === 'boiler' )  $new['ymkrf_kind'] = '種類';
+			if ( $cat === 'ecocute' ) $new['ymkrf_kind'] = 'タンク容量';
 
-			$new['ymkrf_grade'] = ( in_array( $cat, array( 'boiler', 'ecocute' ), true ) )
-				? 'ふろ機能' : 'グレード';
+			if ( $cat === 'boiler' )       $new['ymkrf_grade'] = 'ふろ機能';
+			elseif ( $cat === 'ecocute' )  $new['ymkrf_grade'] = 'タイプ';
+			else                           $new['ymkrf_grade'] = 'グレード';
 			$new['ymkrf_price'] = '込み価格';
 		}
 	}
@@ -976,9 +1022,24 @@ add_action( 'manage_ymkrf_product_posts_custom_column', function ( $col, $post_i
 			: '<span style="color:#c00">未設定</span>';
 	}
 	if ( $col === 'ymkrf_kind' ) {
-		/* 給湯器の種類（キャッチコピーの欄に入っています） */
-		$k = get_post_meta( $post_id, '_ymkrf_catch', true );
-		echo $k ? esc_html( $k ) : '<span style="color:#c00">未設定</span>';
+		$cat = isset( $_GET['ymkrf_product_cat'] )
+			? sanitize_title( wp_unslash( $_GET['ymkrf_product_cat'] ) ) : '';
+
+		if ( $cat === 'ecocute' ) {
+			/* エコキュートはタンク容量と対象人数 */
+			$t = get_post_meta( $post_id, '_ymkrf_tank', true );
+			$n = get_post_meta( $post_id, '_ymkrf_people', true );
+			if ( $t ) {
+				echo esc_html( $t ) . 'L';
+				if ( $n ) echo '<br><small style="color:#666">' . esc_html( $n ) . '</small>';
+			} else {
+				echo '<span style="color:#c00">未設定</span>';
+			}
+		} else {
+			/* 給湯器の種類（キャッチコピーの欄に入っています） */
+			$k = get_post_meta( $post_id, '_ymkrf_catch', true );
+			echo $k ? esc_html( $k ) : '<span style="color:#c00">未設定</span>';
+		}
 	}
 	if ( $col === 'ymkrf_grade' ) {
 		$g = get_post_meta( $post_id, '_ymkrf_grade', true );
@@ -1619,6 +1680,10 @@ function ymkrf_product_data( $post_id = null ) {
 		'pressure' => $m( '_ymkrf_pressure' ),
 		'power'    => $m( '_ymkrf_power' ),
 		'powerunit'=> $m( '_ymkrf_power_unit' ),
+		/* エコキュートの基本仕様（2026/09/01 追加） */
+		'tank'      => $m( '_ymkrf_tank' ),
+		'people'    => $m( '_ymkrf_people' ),
+		'accessory' => $m( '_ymkrf_accessory' ),
 		'images'   => $rep( '_ymkrf_images' ),
 		'colors'   => $rep( '_ymkrf_colors' ),
 		'tops'     => $rep( '_ymkrf_tops' ),
@@ -1752,6 +1817,32 @@ function ymkrf_pointnote( $slug ) {
 					       'sub'  => '新しい給湯器の取り付け工事' ),
 					array( 'name' => '配管工事',               'icon' => 'water',
 					       'sub'  => '給水・給湯・追い焚きなどの配管の接続' ),
+				),
+		),
+		/* エコキュートも給湯器と同じく、工事費込みの一本価格でご案内しています。
+		   PDF（本番サイトの /products/ecocute/）の
+		   【ヤマキシのエコキュート標準工事に含まれる工事】4項目です。 */
+		'ecocute' => array(
+				'label' => 'エコキュートの標準工事費',
+				'price' => 0,
+				/* nocalc … 金額のカード（商品代＋標準工事費）を出しません */
+				'nocalc' => true,
+				'note'  => 'エコキュートの価格は、本体・標準工事費・リモコン・古い機器の撤去処分まで込みの価格です。'
+				         . '北陸電力への申請作業もふくまれています。',
+				'note2' => '※価格は、電気温水器またはエコキュートからのお取り替えの場合です。'
+				         . 'それ以外の給湯器からのお取り替えは、別途お見積りをお出しします。'
+				         . '※お住まいの形や、配管・電気の状態によっては、追加の工事が必要になることがあります。'
+				         . 'その場合も着工前にかならずお見積りをお出しし、ご了承をいただいてから進めます。',
+				'itemsttl' => 'リフォームヤマキシの|標準工事費にふくまれる工事',
+				'items' => array(
+					array( 'name' => '既存給湯器 解体撤去工事', 'icon' => 'hammer',
+					       'sub'  => '古い電気温水器・エコキュートの取り外しと処分にかかる工事' ),
+					array( 'name' => '水道工事',               'icon' => 'water',
+					       'sub'  => '給水・給湯・排水' ),
+					array( 'name' => '電気工事',               'icon' => 'bolt',
+					       'sub'  => '配線。北陸電力への申請作業もふくみます' ),
+					array( 'name' => 'エコキュート設置工事',   'icon' => 'flame',
+					       'sub'  => '新しいエコキュート本体とヒートポンプの取り付け工事' ),
 				),
 		),
 		'lavatory' => array(
@@ -2388,6 +2479,15 @@ function ymkrf_product_basicspec( $d ) {
 
 	$rows = array();
 
+	/* エコキュートは、タンクの大きさがいちばん大事なので先に出します */
+	if ( ! empty( $d['tank'] ) ) {
+		$v = $d['tank'] . 'L';
+		if ( ! empty( $d['people'] ) ) $v .= "\n" . $d['people'];
+		$rows[] = array( 'タンク容量', $v );
+	} elseif ( ! empty( $d['people'] ) ) {
+		$rows[] = array( '対象人数', $d['people'] );
+	}
+
 	if ( ! empty( $d['size'] ) )     $rows[] = array( '設置方法', $d['size'] );
 	if ( ! empty( $d['exterior'] ) ) $rows[] = array( '外装',     $d['exterior'] );
 	if ( ! empty( $d['pressure'] ) ) $rows[] = array( '給湯圧力', $d['pressure'] );
@@ -2399,6 +2499,11 @@ function ymkrf_product_basicspec( $d ) {
 
 	if ( ! empty( $d['dim'] ) )    $rows[] = array( '寸法', $d['dim'] . '（mm）' );
 	if ( ! empty( $d['weight'] ) ) $rows[] = array( '質量', $d['weight'] . 'kg' );
+
+	/* 付属品はエコキュートだけ。いちばん下に出します */
+	if ( ! empty( $d['accessory'] ) ) {
+		$rows[] = array( '付属品', str_replace( array( '／', '/' ), "\n", $d['accessory'] ) );
+	}
 
 	return $rows;
 }

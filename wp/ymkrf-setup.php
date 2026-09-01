@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '86' );
+define( 'YMKRF_SETUP_VER', '87' );
 
 /* キッチンの「ヤマキシ標準工事内容」。
    ホームページの一覧表（7項目）と、番号入りの図（8項目）の
@@ -59,6 +59,45 @@ function ymkrf_boiler_speclist( $bp ) {
 			'ttl'  => '特定保守製品です',
 			'body' => "石油給湯機は、法律で点検がすすめられている「特定保守製品」です。\n"
 			        . "10年をめどに、有料の点検のご案内をいたします。",
+		);
+	}
+
+	return $rows;
+}
+endif;
+
+
+/* エコキュートの「主な機能」をつくります（2026/09/01）。
+
+   エコキュートは、いただいたPDF（本番サイトの /products/ecocute/）に
+   「タイプ」しか書かれていません。
+   そこで、そのタイプから読み取れることだけを並べています。
+     フルオート … 湯はり・保温・追いだき・たし湯まで自動
+     高圧　　　 … シャワーの勢いが強いタイプ
+     高効率　　 … 電気の使用量をよりおさえるタイプ
+   メーカーのカタログにしか無い数値（年間給湯保温効率など）は、
+   確認できていないので入れていません。 */
+if ( ! function_exists( 'ymkrf_ecocute_speclist' ) ) :
+function ymkrf_ecocute_speclist( $ep ) {
+
+	$type = isset( $ep['grade'] ) ? (string) $ep['grade'] : '';
+
+	$feat = array( '自動湯はり', '自動保温', '追い焚き' );
+	if ( strpos( $type, 'フルオート' ) !== false ) $feat[] = '自動たし湯';
+	if ( strpos( $type, '高圧' ) !== false )       $feat[] = '高圧給湯（シャワーの勢いが強いタイプ）';
+	if ( strpos( $type, '高効率' ) !== false )     $feat[] = '高効率（電気の使用量をよりおさえるタイプ）';
+
+	$rows = array(
+		array( 'ttl' => '主な機能', 'body' => implode( "\n", $feat ) ),
+	);
+
+	/* 補助金は年度で内容が変わるので、金額や条件は書きません。 */
+	if ( ! empty( $ep['hojo'] ) ) {
+		$rows[] = array(
+			'ttl'  => '補助金の対象になる機種です',
+			'body' => "国や自治体の補助金の対象になる機種です。\n"
+			        . "年度によって、金額も申請のしめきりも変わります。\n"
+			        . "そのときにお使いいただけるものを、お見積りの際にご案内します。",
 		);
 	}
 
@@ -133,6 +172,7 @@ add_action( 'init', function () {
 			'noritz'         => 'ノーリツ',
 			'daikin'         => 'ダイキン',
 			'mitsubishi'     => '三菱電機',
+			'hitachi'        => '日立',
 			'ykkap'          => 'YKK AP',
 			'nichiha'        => 'ニチハ',
 			'woodone'        => 'WOODONE（ウッドワン）',
@@ -284,6 +324,13 @@ add_action( 'init', function () {
 		$theme . '/ruf-e2006aw',
 		$theme . '/ruf-205saw',
 		$theme . '/gt-2070saw',
+		$theme . '/he-s37lqs',
+		$theme . '/he-s46lqs',
+		$theme . '/srt-w466',
+		$theme . '/srt-s376ua',
+		$theme . '/srt-s466ua',
+		$theme . '/srt-s377u',
+		$theme . '/srt-s467u',
 		WP_CONTENT_DIR . '/themes/ymkrf/assets/img/works',
 		$dir,                 // 最後の受け皿（wp-content/ymkrf-import）
 	);
@@ -7055,6 +7102,213 @@ TOTOのセフィオンテクト、LIXILのアクアセラミック、Panasonic�
 		update_post_meta( $bpx->ID, '_ymkrf_item',  $bp2['total'] );
 		update_post_meta( $bpx->ID, '_ymkrf_total', $bp2['total'] );
 		$log[] = $bp2['title'] . 'の価格を入れ直しました';
+	}
+
+
+	/* ------------------------------------------------------------
+	   3-w. エコキュート（ecocute）　2026/09/01
+
+	        いただいたPDF（本番サイトの /products/ecocute/ ）の7機種です。
+	        給湯器と同じく、色や取っ手を選ぶ商品ではないので、
+	        カラー・おすすめポイント・オプションは使っていません。
+
+	   ★商品を足すときは、下の $eco_products に1つ配列を足すだけです。
+	     写真は assets/img/products/<スラッグ>/<スラッグ>-main.jpg に置いて、
+	     上の $dirs にもそのフォルダを足してください。
+	   ------------------------------------------------------------ */
+
+	/* エコキュートの「ヤマキシ標準工事内容」は全機種共通です
+	   （PDFの【ヤマキシのエコキュート標準工事に含まれる工事】4項目） */
+	$eco_works = array(
+		array( '既存給湯器 解体撤去工事', '古い電気温水器・エコキュートの取り外しと処分にかかる工事です。' ),
+		array( '水道工事',               '給水・給湯・排水の配管工事です。' ),
+		array( '電気工事',               '配線工事です。北陸電力への申請作業もふくみます。' ),
+		array( 'エコキュート設置工事',   '新しいエコキュート本体とヒートポンプの取り付け工事です。' ),
+	);
+
+	/* 全機種に共通の付属品（PDFの「付属品」欄） */
+	$eco_acc = '脚部カバー／ベーシックリモコン';
+
+	/* 'grade' … PDFの「タイプ」欄そのままです（写真の上の帯に出ます）
+	   'catch' … 写真の下に赤い文字で出るふだです
+	   'hojo'  … 補助金の対象になる機種
+	   'kouatsu' … PDFのタイプ欄に「高圧」と書かれている機種。
+	               三菱のSシリーズは高圧力型貯湯式です。
+	               書かれていない機種は、確認できていないので空のままにします。 */
+	$eco_products = array(
+
+		/* ===== 三菱 460L フルオート（数量限定） ===== */
+		array(
+			'slug' => 'srt-w466', 'title' => 'SRT-W466',
+			'maker' => 'mitsubishi', 'tank' => '460', 'people' => '4〜5人向け',
+			'grade' => 'フルオート',
+			'catch' => '数量限定！早い者勝ち！',
+			'note'  => '無くなり次第終了となります。',
+			'total' => 398000, 'order' => 10, 'hojo' => false, 'kouatsu' => false,
+			'alt'   => '三菱電機 エコキュート SRT-W466 本体とヒートポンプ',
+		),
+
+		/* ===== 三菱 370L フルオート・高圧（処分品） ===== */
+		array(
+			'slug' => 'srt-s376ua', 'title' => 'SRT-S376UA',
+			'maker' => 'mitsubishi', 'tank' => '370', 'people' => '3〜4人向け',
+			'grade' => 'フルオート・高圧',
+			'catch' => '処分アイテム！在庫残り2台！',
+			'note'  => '無くなり次第終了となります。',
+			'total' => 428000, 'order' => 20, 'hojo' => false, 'kouatsu' => true,
+			'alt'   => '三菱電機 エコキュート SRT-S376UA 本体とヒートポンプ',
+		),
+
+		/* ===== 三菱 460L フルオート・高圧（処分品） ===== */
+		array(
+			'slug' => 'srt-s466ua', 'title' => 'SRT-S466UA',
+			'maker' => 'mitsubishi', 'tank' => '460', 'people' => '4〜5人向け',
+			'grade' => 'フルオート・高圧',
+			'catch' => '処分アイテム！在庫残り1台！',
+			'note'  => '無くなり次第終了となります。',
+			'total' => 438000, 'order' => 30, 'hojo' => false, 'kouatsu' => true,
+			'alt'   => '三菱電機 エコキュート SRT-S466UA 本体とヒートポンプ',
+		),
+
+		/* ===== パナソニック 370L フルオート ===== */
+		array(
+			'slug' => 'he-s37lqs', 'title' => 'HE-S37LQS',
+			'maker' => 'panasonic', 'tank' => '370', 'people' => '3〜4人向け',
+			'grade' => 'フルオート',
+			'catch' => '補助金対象商品！',
+			'note'  => '',
+			'total' => 468000, 'order' => 40, 'hojo' => true, 'kouatsu' => false,
+			'alt'   => 'パナソニック エコキュート HE-S37LQS 本体とヒートポンプ',
+		),
+
+		/* ===== パナソニック 460L フルオート ===== */
+		array(
+			'slug' => 'he-s46lqs', 'title' => 'HE-S46LQS',
+			'maker' => 'panasonic', 'tank' => '460', 'people' => '4〜7人向け',
+			'grade' => 'フルオート',
+			'catch' => '補助金対象商品！',
+			'note'  => '',
+			'total' => 508000, 'order' => 50, 'hojo' => true, 'kouatsu' => false,
+			'alt'   => 'パナソニック エコキュート HE-S46LQS 本体とヒートポンプ',
+		),
+
+		/* ===== 三菱 370L フルオート・高圧・高効率 ===== */
+		array(
+			'slug' => 'srt-s377u', 'title' => 'SRT-S377U',
+			'maker' => 'mitsubishi', 'tank' => '370', 'people' => '3〜4人向け',
+			'grade' => 'フルオート・高圧・高効率',
+			'catch' => '補助金対象商品！',
+			'note'  => '',
+			'total' => 548000, 'order' => 60, 'hojo' => true, 'kouatsu' => true,
+			'alt'   => '三菱電機 エコキュート SRT-S377U 本体とヒートポンプ',
+		),
+
+		/* ===== 三菱 460L フルオート・高圧・高効率 ===== */
+		array(
+			'slug' => 'srt-s467u', 'title' => 'SRT-S467U',
+			'maker' => 'mitsubishi', 'tank' => '460', 'people' => '4〜5人向け',
+			'grade' => 'フルオート・高圧・高効率',
+			'catch' => '補助金対象商品！',
+			'note'  => '',
+			'total' => 578000, 'order' => 70, 'hojo' => true, 'kouatsu' => true,
+			'alt'   => '三菱電機 エコキュート SRT-S467U 本体とヒートポンプ',
+		),
+
+	);
+
+	$eco_made = 0;
+
+	foreach ( $eco_products as $ep ) {
+
+		if ( get_page_by_path( $ep['slug'], OBJECT, 'ymkrf_product' ) ) continue;
+
+		$pid = wp_insert_post( array(
+			'post_type'   => 'ymkrf_product',
+			'post_status' => 'publish',
+			'post_title'  => $ep['title'],
+			'post_name'   => $ep['slug'],
+		) );
+		if ( ! $pid || is_wp_error( $pid ) ) continue;
+
+		$m0 = $missing;
+
+		update_post_meta( $pid, '_ymkrf_catch',     $ep['catch'] );
+		update_post_meta( $pid, '_ymkrf_grade',     $ep['grade'] );
+		update_post_meta( $pid, '_ymkrf_order',     $ep['order'] );
+		update_post_meta( $pid, '_ymkrf_name',      $ep['title'] );
+		update_post_meta( $pid, '_ymkrf_size',      '' );
+		update_post_meta( $pid, '_ymkrf_sub',       '' );
+		update_post_meta( $pid, '_ymkrf_tank',      $ep['tank'] );
+		update_post_meta( $pid, '_ymkrf_people',    $ep['people'] );
+		update_post_meta( $pid, '_ymkrf_accessory', $eco_acc );
+		update_post_meta( $pid, '_ymkrf_pressure',  $ep['kouatsu'] ? '高圧力型貯湯式' : '' );
+		update_post_meta( $pid, '_ymkrf_days',      '1' );
+		update_post_meta( $pid, '_ymkrf_daystext',  '' );
+		update_post_meta( $pid, '_ymkrf_pt1',       '工事は1日' );
+		update_post_meta( $pid, '_ymkrf_pt2',       '北陸電力への申請もおまかせ' );
+		update_post_meta( $pid, '_ymkrf_pt3',       '工事費・リモコン込' );
+		update_post_meta( $pid, '_ymkrf_caution',
+			'※写真はイメージです。※電気温水器またはエコキュートからのお取り替えの場合の価格です。'
+			. ( $ep['note'] ? $ep['note'] : '' ) );
+
+		/* ★給湯器と同じく、工事費込みの一本価格でご案内しています。
+		     込み価格は「標準工事費 ＋ 商品代」から計算される決まりなので、
+		     込み価格をそのまま「商品代」に入れ、「標準工事費」は空にしています。 */
+		update_post_meta( $pid, '_ymkrf_work',  '' );
+		update_post_meta( $pid, '_ymkrf_item',  $ep['total'] );
+		update_post_meta( $pid, '_ymkrf_total', $ep['total'] );
+
+		$main = $img( $ep['slug'] . '-main.jpg', $ep['alt'] );
+		if ( $main ) set_post_thumbnail( $pid, $main );
+
+		update_post_meta( $pid, '_ymkrf_speclist', ymkrf_ecocute_speclist( $ep ) );
+
+		$rows = array();
+		foreach ( $eco_works as $r ) $rows[] = array( 'name' => $r[0], 'text' => $r[1] );
+		update_post_meta( $pid, '_ymkrf_works', $rows );
+
+		wp_set_object_terms( $pid, 'ecocute', 'ymkrf_product_cat' );
+		wp_set_object_terms( $pid, $ep['maker'], 'ymkrf_maker' );
+
+		update_post_meta( $pid, '_ymkrf_img_missing', $missing - $m0 );
+		$log[] = '商品「' . $ep['title'] . '」を登録しました → ' . get_permalink( $pid );
+		$eco_made++;
+	}
+
+	if ( $eco_made ) {
+		flush_rewrite_rules();
+		$log[] = 'エコキュートを' . $eco_made . '機種登録しました';
+	}
+
+	/* すでに登録ずみのエコキュートの価格を入れ直します
+	   （管理画面で開いて保存したあとも、価格が消えないようにするため） */
+	foreach ( $eco_products as $ep2 ) {
+		$epx = get_page_by_path( $ep2['slug'], OBJECT, 'ymkrf_product' );
+		if ( ! $epx ) continue;
+		if ( (int) get_post_meta( $epx->ID, '_ymkrf_item', true ) === (int) $ep2['total'] ) continue;
+		update_post_meta( $epx->ID, '_ymkrf_work',  '' );
+		update_post_meta( $epx->ID, '_ymkrf_item',  $ep2['total'] );
+		update_post_meta( $epx->ID, '_ymkrf_total', $ep2['total'] );
+		$log[] = $ep2['title'] . 'の価格を入れ直しました';
+	}
+
+	/* エコキュートのメーカーの「説明」を入れます（1回だけ）。
+	   すでに何か書いてあるメーカーには、いっさい触りません。 */
+	if ( get_option( 'ymkrf_eco_maker_ver' ) !== '1' ) {
+		$eco_mdesc = array(
+			'mitsubishi' => 'エコキュートを日本ではじめて発売したメーカーです。'
+			              . 'タンクの中の湯量をこまかく見て、使う分だけわかす省エネの仕組みが得意です。',
+			'panasonic'  => '住宅設備を幅広くつくっているメーカーです。'
+			              . 'ご家庭の使い方をおぼえて、わかす量をかしこく調整する仕組みが入っています。',
+		);
+		foreach ( $eco_mdesc as $ems => $emt ) {
+			$emt2 = get_term_by( 'slug', $ems, 'ymkrf_maker' );
+			if ( ! $emt2 || is_wp_error( $emt2 ) ) continue;
+			if ( trim( (string) $emt2->description ) !== '' ) continue;
+			wp_update_term( $emt2->term_id, 'ymkrf_maker', array( 'description' => $emt ) );
+			$log[] = 'メーカー「' . $emt2->name . '」の説明を入れました';
+		}
+		update_option( 'ymkrf_eco_maker_ver', '1' );
 	}
 
 

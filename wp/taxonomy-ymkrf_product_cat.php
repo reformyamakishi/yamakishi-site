@@ -260,6 +260,42 @@ $intro = array(
 		'solutions'  => array(),
 	),
 
+	'ecocute' => array(
+
+		'en'    => 'ECOCUTE',
+		'title' => 'エコキュートリフォーム',
+		/* 給湯器と同じく、横長の見出し写真がまだないので写真なしにしています */
+		'hero'  => '',
+		'lead'  => '本体・標準工事費・リモコン・古い機器の撤去処分費まで込みの価格でご案内します。',
+
+		/* --- ブランド紹介 --- */
+		'brandsub'  => 'エコキュート＆給湯器専門店',
+		'brand'     => 'ヤマキシ給湯センター',
+		'brandtext' => '空気の熱でお湯をわかすので、電気代をぐっとおさえられます。'
+		             . '<br>北陸電力への申請作業まで、まとめておまかせください。',
+
+		/* --- 3つのこだわり --- */
+		'points' => array(
+			array( 'chara' => 'char-otoku',     'name' => 'お得',
+			       'text'  => '本体・標準工事費・リモコン・古い機器の撤去処分費までコミコミ！' ),
+			array( 'chara' => 'char-hinshitsu', 'name' => '早い',
+			       'text'  => '工事は1日で完了。北陸電力への申請作業もおまかせください！' ),
+			array( 'chara' => 'char-anshin',    'name' => '安心',
+			       'text'  => '商品延長10年保証・工事保証5年・24時間365日トラブル対応付き！' ),
+		),
+
+		/* --- お悩み（いまは非表示） --- */
+		'worrytitle' => 'エコキュートのお悩み',
+		'worryintro' => 'こんなことで悩んでいませんか？',
+		'worries'    => array(),
+		'worrylead'  => '',
+		'solvesub'   => '実は、そのお悩み',
+		'solvetitle' => '最新のエコキュートで解決できます！',
+		'tags'       => array(),
+		'tagnote'    => '',
+		'solutions'  => array(),
+	),
+
 );
 
 $c   = isset( $intro[ $slug ] ) ? $intro[ $slug ] : null;
@@ -409,6 +445,66 @@ if ( $slug === 'boiler' ) {
 	}
 	$mkeys2 = array_merge( $maker_order, array_diff( array_keys( $seen_makers ), $maker_order ) );
 	foreach ( $mkeys2 as $_mk ) {
+		if ( empty( $seen_makers[ $_mk ] ) ) continue;
+		$_t = get_term_by( 'slug', $_mk, 'ymkrf_maker' );
+		if ( ! $_t || is_wp_error( $_t ) ) continue;
+		$maker_intro[] = $_t;
+	}
+}
+
+if ( $slug === 'ecocute' ) {
+
+	/* エコキュートの並べ方（2026/09/01）
+
+	     タンクの大きさで分けて、それぞれ安い順に並べます。
+	     お客様がいちばんはじめに決めるのが「何人で使うか＝タンクの大きさ」
+	     なので、そこで分けるのがいちばん選びやすいからです。
+
+	   ★どのまとまりに入るかは、その商品の「タンク容量（L）」で決まります。
+	     下の $tanks に無い大きさは、いちばん下にまとまって並びます。
+	   ★メーカーの説明は、一覧のいちばん上に
+	     「取り扱いメーカー」としてまとめて出します。
+	     文章はダッシュボードの「商品 → メーカー」の「説明」欄で直せます。 */
+
+	$maker_order = array( 'mitsubishi', 'panasonic', 'hitachi', 'daikin' );
+
+	/* 小さい順に並べています */
+	$tanks = array(
+		'370' => array( '370L（3〜4人向け）',
+			'3〜4人でお使いのご家庭向けの大きさです。' ),
+		'460' => array( '460L（4〜7人向け）',
+			'4〜7人でお使いのご家庭や、お湯をたくさん使うご家庭向けの大きさです。' ),
+	);
+
+	/* 大きさごとに仕分けます */
+	$bin = array();
+	foreach ( $q->posts as $_p ) {
+		$_t = (string) get_post_meta( $_p->ID, '_ymkrf_tank', true );
+		$_k = isset( $tanks[ $_t ] ) ? $_t : '';
+		$bin[ $_k ][] = $_p;
+	}
+
+	$tanks[''] = array( '', '' );   /* 表にない大きさは、見出しなしで最後に */
+
+	foreach ( $tanks as $_tk => $_td ) {
+		if ( empty( $bin[ $_tk ] ) ) continue;
+		$groups[] = array(
+			'ttl'   => $_td[0],
+			'sub'   => $_td[1],
+			'maker' => null,
+			'posts' => $bin[ $_tk ],
+		);
+	}
+
+	/* いちばん上に出す「取り扱いメーカー」の紹介 */
+	$maker_intro = array();
+	$seen_makers = array();
+	foreach ( $q->posts as $_p ) {
+		$_ts = get_the_terms( $_p->ID, 'ymkrf_maker' );
+		if ( $_ts && ! is_wp_error( $_ts ) ) $seen_makers[ $_ts[0]->slug ] = true;
+	}
+	$mkeys3 = array_merge( $maker_order, array_diff( array_keys( $seen_makers ), $maker_order ) );
+	foreach ( $mkeys3 as $_mk ) {
 		if ( empty( $seen_makers[ $_mk ] ) ) continue;
 		$_t = get_term_by( 'slug', $_mk, 'ymkrf_maker' );
 		if ( ! $_t || is_wp_error( $_t ) ) continue;
@@ -686,12 +782,21 @@ if ( ! empty( $pn['items'] ) ) :
 
     <?php if ( $q->have_posts() ) : ?>
 
-      <?php /* 給湯器はメーカーごとに並べていて「安い順」ではないので、
-               この案内は出しません。 */
-      if ( $slug !== 'boiler' ) : ?>
+      <?php /* 給湯器・エコキュートは種類やタンクの大きさで分けて並べていて
+               全体の「安い順」ではないので、この案内は出しません。 */
+      if ( ! in_array( $slug, array( 'boiler', 'ecocute' ), true ) ) : ?>
       <p class="p-cat__listlead">
         価格はすべて<strong>標準工事費・既存品の撤去処分費まで込み</strong>の税込表示です。
         安い順に並べています。
+      </p>
+      <?php endif; ?>
+
+      <?php /* エコキュートだけの但し書き（PDF・本番サイトと同じ文言） */
+      if ( $slug === 'ecocute' ) : ?>
+      <p class="p-cat__listlead">
+        価格はすべて<strong>標準工事費・既存品の撤去処分費まで込み</strong>の税込表示です。
+        タンクの大きさで分けて、それぞれ安い順に並べています。<br>
+        <small>※電気温水器またはエコキュートからのお取り替えの場合の価格です。</small>
       </p>
       <?php endif; ?>
 
@@ -709,6 +814,14 @@ if ( ! empty( $pn['items'] ) ) :
           </div>
         <?php endforeach; ?>
       </div>
+      <?php /* エコキュートは、日立・ダイキンなども取り扱っています。
+               ロゴをいただいていないので、いまは文章でご案内しています。 */
+      if ( $slug === 'ecocute' ) : ?>
+        <p class="p-cat__makernote">
+          このほか、日立・ダイキンのエコキュートもお取り扱いしています。<br>
+          掲載の機種以外もご用意できますので、お気軽にお問い合わせください。
+        </p>
+      <?php endif; ?>
       <?php endif; ?>
 
       <?php global $post; foreach ( $groups as $g ) : if ( ! $g['posts'] ) continue; ?>
@@ -754,8 +867,21 @@ if ( ! empty( $pn['items'] ) ) :
                 <?php elseif ( $d['days'] ) : ?><span class="p-cat__carddays">工期<?php echo esc_html( $d['days'] ); ?>日</span><?php endif; ?>
               </p>
               <?php /* 2行目：型番。長さが商品ごとに違うので、行を分けています */ ?>
-              <?php if ( $d['size'] ) : ?>
-                <p class="p-cat__cardmeta p-cat__cardmeta--size"><span><?php echo esc_html( $d['size'] ); ?></span></p>
+              <?php
+                /* エコキュートは「設置方法」より、タンクの大きさのほうが大事なので
+                   そちらを出します（2026/09/01） */
+                $cardmeta = $d['size'];
+                if ( $slug === 'ecocute' && ! empty( $d['tank'] ) ) {
+                  $cardmeta = 'タンク' . $d['tank'] . 'L';
+                  if ( ! empty( $d['people'] ) ) $cardmeta .= '／' . $d['people'];
+                }
+              ?>
+              <?php if ( $cardmeta ) : ?>
+                <p class="p-cat__cardmeta p-cat__cardmeta--size"><span><?php echo esc_html( $cardmeta ); ?></span></p>
+              <?php endif; ?>
+              <?php /* エコキュートの赤いふだ（補助金対象商品！／在庫残り○台！ など） */ ?>
+              <?php if ( $slug === 'ecocute' && $d['catch'] ) : ?>
+                <p class="p-cat__cardbadge"><?php echo esc_html( $d['catch'] ); ?></p>
               <?php endif; ?>
               <?php if ( $d['total'] ) : ?>
                 <p class="p-cat__cardprice">
