@@ -1262,19 +1262,41 @@ add_action( 'admin_menu', function () {
 add_filter( 'submenu_file', function ( $file, $parent_file ) {
 
 	if ( $parent_file !== 'edit.php?post_type=ymkrf_product' ) return $file;
-	if ( empty( $_GET['ymkrf_product_cat'] ) ) return $file;
 
-	$slug = sanitize_title( wp_unslash( $_GET['ymkrf_product_cat'] ) );
+	$slug = '';
+
+	/* ① 一覧を分類でしぼっているとき */
+	if ( ! empty( $_GET['ymkrf_product_cat'] ) ) {
+		$slug = sanitize_title( wp_unslash( $_GET['ymkrf_product_cat'] ) );
+	}
+
+	/* ② 商品を1つ開いているとき（新規作成もふくむ） */
+	if ( $slug === '' && isset( $GLOBALS['pagenow'] )
+		&& in_array( $GLOBALS['pagenow'], array( 'post.php', 'post-new.php' ), true ) ) {
+
+		if ( ! empty( $_GET['ymkrf_cat'] ) ) {
+			$slug = sanitize_title( wp_unslash( $_GET['ymkrf_cat'] ) );
+		} elseif ( ! empty( $GLOBALS['post'] ) && $GLOBALS['post']->post_type === 'ymkrf_product' ) {
+			$ts = get_the_terms( $GLOBALS['post']->ID, 'ymkrf_product_cat' );
+			if ( $ts && ! is_wp_error( $ts ) ) $slug = $ts[0]->slug;
+		}
+	}
+
+	if ( $slug === '' ) return $file;
 	return 'edit.php?post_type=ymkrf_product&ymkrf_product_cat=' . $slug;
 }, 10, 2 );
 
-/* 「いまここ」がひと目で分かるように、うすい青の帯を付けます */
+/* 「いまここ」がひと目で分かるように、水色の帯を付けます */
 add_action( 'admin_head', function () {
 	?>
 	<style>
 	#menu-posts-ymkrf_product .wp-submenu li.current a,
 	#menu-posts-ymkrf_product .wp-submenu a.current{
-		background:#2271b1; color:#fff; border-radius:3px;
+		background:#a7d8f5; color:#0a2540; border-radius:3px; font-weight:700;
+	}
+	#menu-posts-ymkrf_product .wp-submenu li.current a:hover,
+	#menu-posts-ymkrf_product .wp-submenu a.current:hover{
+		background:#8ccbf2; color:#0a2540;
 	}
 	</style>
 	<?php
