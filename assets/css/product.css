@@ -1787,7 +1787,7 @@ a.p-pack__item:hover{ border-color:var(--brand); transform:translateY(-4px); box
 }
 .p-ow__pigs{ display:flex; gap:3px; }
 .p-ow__pig{
-  display:block; width:24px; height:24px;
+  display:block; width:27px; height:27px;
 }
 /* まだ届いていない分は、うすく出します */
 .p-ow__pig.is-off{ opacity:.18; filter:grayscale(1); }
@@ -1796,28 +1796,87 @@ a.p-pack__item:hover{ border-color:var(--brand); transform:translateY(-4px); box
   margin:0; font-size:14px; line-height:1.95; color:#444; word-break:auto-phrase;
 }
 
-/* ── 価格の目安 ─────────────────────────────── */
-.p-ow__prices{
-  display:grid; gap:18px; grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
-  margin-bottom:22px;
-}
-.p-ow__price{
-  background:#fff; border:2px solid var(--brand-tint2); border-radius:14px; padding:24px 22px;
-  text-align:center;
+/* ── 料金表 ─────────────────────────────────
+   パソコンでは「表」、スマホでは「1行＝1枚のカード」に組み替わります。
+   横スクロールする表は、シニアの方にはとても読みにくいためです。 */
+.p-ow__pricebox{
+  background:#fff; border:1px solid #eee; border-radius:14px;
+  padding:clamp(20px,4.5vw,30px); margin-bottom:22px; box-shadow:var(--shadow);
 }
 .p-ow__pricettl{
-  margin:0 0 10px; font-size:clamp(16px,4.2vw,18px); font-weight:900; color:var(--ink);
+  margin:0 0 8px; font-size:clamp(18px,4.8vw,22px); font-weight:900; color:var(--ink);
+  padding-bottom:10px; border-bottom:3px solid var(--brand);
 }
-.p-ow__priceyen{
-  margin:0 0 12px; color:var(--brand); font-weight:900; line-height:1;
-  display:flex; align-items:baseline; justify-content:center; gap:2px;
+.p-ow__pricelead{
+  margin:0 0 18px; font-size:14px; line-height:1.9; color:#444; word-break:auto-phrase;
 }
-.p-ow__priceyen .num{ font-size:clamp(40px,11vw,54px); letter-spacing:-.02em; }
-.p-ow__priceyen .dec{ font-size:.62em; }
-.p-ow__priceyen .unit{ font-size:clamp(15px,4vw,17px); font-weight:900; }
-.p-ow__priceyen .tax{ font-size:11px; font-weight:700; color:var(--ink-sub); }
-.p-ow__pricenote{
-  margin:0; font-size:13px; line-height:1.85; color:#555; word-break:auto-phrase;
+
+.p-ow__table{ display:block; }
+
+/* 表の見出し（パソコンのみ） */
+.p-ow__thead{
+  display:grid; grid-template-columns:1.5fr repeat(3,1fr) 1.1fr; gap:1px;
+  background:var(--brand); border-radius:8px 8px 0 0; overflow:hidden;
+}
+.p-ow__thead span{
+  padding:11px 8px; text-align:center; color:#fff;
+  font-size:13px; font-weight:900; letter-spacing:.02em;
+}
+
+.p-ow__trow{
+  display:grid; grid-template-columns:1.5fr repeat(3,1fr) 1.1fr; gap:1px;
+  background:var(--border);
+}
+.p-ow__trow:last-child{ border-radius:0 0 8px 8px; overflow:hidden; }
+
+.p-ow__tname{
+  background:#fdf8f6; padding:14px 12px; display:flex; flex-direction:column;
+  justify-content:center; font-size:14.5px; font-weight:900; color:var(--ink);
+  line-height:1.45; word-break:auto-phrase;
+}
+.p-ow__tsub{ font-size:11.5px; font-weight:700; color:var(--ink-sub); margin-top:3px; }
+
+.p-ow__tcell{
+  background:#fff; padding:14px 8px; display:flex; align-items:center; justify-content:center;
+}
+.p-ow__tyen{
+  color:var(--brand); font-weight:900; font-size:clamp(17px,2.4vw,21px); line-height:1.2;
+  white-space:nowrap;
+}
+.p-ow__tyen small{ font-size:.62em; margin-left:1px; }
+.p-ow__tlife{ font-size:13.5px; font-weight:900; color:var(--ink); white-space:nowrap; }
+.p-ow__tcell--life{ background:#fdf8f6; }
+
+.p-ow__pricenotes{
+  margin:14px 0 0; padding:0; list-style:none;
+}
+.p-ow__pricenotes li{
+  position:relative; padding-left:1.2em; margin-bottom:5px;
+  font-size:13px; line-height:1.85; color:#555; word-break:auto-phrase;
+}
+.p-ow__pricenotes li::before{ content:'※'; position:absolute; left:0; color:var(--brand); }
+
+/* スマホ：1行を1枚のカードにします */
+@media (max-width:700px){
+  .p-ow__thead{ display:none; }
+  .p-ow__trow{
+    display:block; background:#fff; border:2px solid var(--brand-tint2);
+    border-radius:12px; margin-bottom:12px; overflow:hidden;
+  }
+  .p-ow__trow:last-child{ margin-bottom:0; }
+  .p-ow__tname{
+    background:var(--brand-tint); padding:11px 14px; font-size:15.5px;
+    flex-direction:row; align-items:baseline; gap:8px;
+  }
+  .p-ow__tsub{ margin-top:0; }
+  .p-ow__tcell{
+    justify-content:space-between; padding:10px 14px;
+    border-top:1px solid var(--border);
+  }
+  .p-ow__tcell::before{
+    content:attr(data-lbl); font-size:13px; font-weight:700; color:var(--ink-sub);
+  }
+  .p-ow__tcell--life{ background:#fff; }
 }
 
 /* ── 専門サイトへの出口 ─────────────────────────
