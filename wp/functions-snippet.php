@@ -28,7 +28,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '2.5.0' );   // ファイル更新時はここを上げるとキャッシュが切れます
+if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '2.5.1' );   // ファイル更新時はここを上げるとキャッシュが切れます
 
 /* ============================================================
    1. CSS / JS の読み込み
@@ -327,6 +327,26 @@ function ymkrf_is_ts() {
 	return (bool) get_query_var( 'ymkrf_ts' );
 }
 endif;
+
+/* ============================================================
+   1-5. 外壁・屋根（/products/outer-wall/）の題名
+
+        このページは分類ページなので、そのままだと題名が
+        「外壁・屋根」だけになってしまいます。
+        検索結果に出たときに何のページか分かるよう、書き足します。
+
+        ページの中身は taxonomy-ymkrf_product_cat-outer-wall.php です。
+        （WordPressの決まりで、そのファイル名にしておくだけで使われます）
+   ============================================================ */
+add_filter( 'document_title_parts', function ( $parts ) {
+	if ( is_tax( 'ymkrf_product_cat', 'outer-wall' ) ) {
+		/* うしろに「– リフォームヤマキシ」が自動で付きます。
+		   ですので、ここに社名を入れると二重になります。 */
+		$parts['title'] = '外壁塗装・屋根塗装の価格と劣化のサイン｜石川・福井';
+		unset( $parts['tagline'] );
+	}
+	return $parts;
+} );
 
 /* 旧URLからの引っ越し。
    /concept/ と /system/ は、この1枚にまとめたので /about/ へ送ります。

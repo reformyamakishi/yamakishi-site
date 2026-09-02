@@ -126,13 +126,62 @@ $roof_checks = array(
 	),
 );
 
-/* 劣化度のブタさんを並べます（5つのうち、いくつ分か） */
+/* ------------------------------------------------------------
+   料金表
+
+   ★金額を直すときは、ここだけ直してください。
+     数字は「万円（税込）」です。「49.8」のように書きます。
+     面積の見出し（head）と、行の数字（cols）の数は
+     かならず同じにしてください。ずれると表が崩れます。
+
+   ※塗料の並びは、お安いものから順にしています。
+   ------------------------------------------------------------ */
+$price_tables = array(
+
+	array(
+		'ttl'  => '外壁塗装',
+		'lead' => '足場・高圧洗浄・下地処理・下塗り・中塗り・上塗り・10年保証まで込みの価格です。'
+		        . '（シリコンのみ保証3年になります）',
+		'head' => array( '〜100㎡', '〜150㎡', '〜200㎡' ),
+		'rows' => array(
+			array( 'name' => 'シリコン',                   'cols' => array( '49.8', '74.7', '99.6' ),  'life' => '12〜15年' ),
+			array( 'name' => 'プレミアムシリコン',         'sub' => 'ラジカル', 'cols' => array( '54.8', '82.2', '109.6' ), 'life' => '15〜17年' ),
+			array( 'name' => '遮熱シリコン',               'cols' => array( '59.8', '89.7', '119.6' ), 'life' => '13〜15年' ),
+			array( 'name' => '無機シリコン',               'cols' => array( '64.8', '97.2', '129.6' ), 'life' => '17〜20年' ),
+			array( 'name' => 'フッ素',                     'cols' => array( '69.8', '104.7', '139.6' ), 'life' => '17〜20年' ),
+			array( 'name' => '無機',                       'cols' => array( '74.8', '112.2', '149.6' ), 'life' => '20年以上' ),
+		),
+		'note' => array(
+			'破風・軒天の塗装は、別にお見積りをお出しします。',
+			'2024年4月1日の法改正で足場の基準が変わりました。上の金額は、新しい基準の足場代を含んだ価格です。',
+		),
+	),
+
+	array(
+		'ttl'  => '屋根塗装',
+		'lead' => '高圧洗浄・下地処理・下塗り・中塗り・上塗り・3〜5年保証まで込みの価格です。',
+		'head' => array( '50㎡', '100㎡', '150㎡' ),
+		'rows' => array(
+			array( 'name' => '遮熱シリコン', 'cols' => array( '19.8', '39.6', '59.4' ), 'life' => '13〜15年' ),
+			array( 'name' => '遮熱フッ素',   'cols' => array( '29.8', '59.6', '89.4' ), 'life' => '17〜20年' ),
+		),
+		'note' => array(
+			'保証の年数は、屋根の状態によって変わります。',
+			'屋根だけを塗る場合は、足場代が別になります。',
+		),
+	),
+);
+
+/* 劣化度のブタさんを並べます（5つのうち、いくつ分か）
+
+   ★絵を変えたいときは assets/img/outerwall/lv-pig.webp（と .png）を
+     差し替えてください。ここを直す必要はありません。 */
 $lv_html = function ( $lv ) use ( $dir ) {
 	$out = '';
 	for ( $i = 1; $i <= 5; $i++ ) {
 		$out .= '<img class="p-ow__pig' . ( $i <= $lv ? '' : ' is-off' ) . '" src="'
-		      . esc_url( $dir . '/assets/img/character/char-icon.webp' )
-		      . '" width="117" height="117" alt="" loading="lazy" decoding="async">';
+		      . esc_url( $dir . '/assets/img/outerwall/lv-pig.webp' )
+		      . '" width="207" height="207" alt="" loading="lazy" decoding="async">';
 	}
 	return $out;
 };
@@ -252,34 +301,67 @@ get_header();
   </div>
 </section>
 
-<!-- =========== 価格の目安 ===========
-     ここは「目安」だけです。塗料ごとのくわしい料金表は
-     専門サイト（ヤマキシペイント）に載せています。 -->
+<!-- =========== 料金表 ===========
+     ★スマホでは、表が横スクロールにならないよう、
+       1行ずつのカードに組み替わります（CSSで切り替えています）。
+       ですので、セルには data-lbl（見出しの控え）を付けてください。 -->
 <section class="l-section" id="price">
   <div class="l-wrap">
     <div class="c-head">
       <span class="c-head__en">PRICE</span>
-      <h2 class="c-head__title">価格の<span class="marker">目安</span></h2>
+      <h2 class="c-head__title">外壁・屋根塗装の<span class="marker">価格</span></h2>
+      <p class="c-head__lead">
+        すべて税込・コミコミの価格です。<br class="pc-only">
+        塗る面積と、塗料の種類でお値段が変わります。
+      </p>
     </div>
 
-    <div class="p-ow__prices">
-      <div class="p-ow__price">
-        <h3 class="p-ow__pricettl">外壁塗装</h3>
-        <p class="p-ow__priceyen"><span class="num">49<span class="dec">.8</span></span><span class="unit">万円〜<small class="tax">（税込）</small></span></p>
-        <p class="p-ow__pricenote">足場・高圧洗浄・下地処理・塗装（下塗り／中塗り／上塗り）・保証まで込みの価格です。</p>
+    <?php foreach ( $price_tables as $pt ) : ?>
+      <div class="p-ow__pricebox">
+        <h3 class="p-ow__pricettl"><?php echo esc_html( $pt['ttl'] ); ?></h3>
+        <p class="p-ow__pricelead"><?php echo esc_html( $pt['lead'] ); ?></p>
+
+        <div class="p-ow__table">
+          <div class="p-ow__thead">
+            <span>塗料の種類</span>
+            <?php foreach ( $pt['head'] as $h ) : ?>
+              <span><?php echo esc_html( $h ); ?></span>
+            <?php endforeach; ?>
+            <span>もちの目安</span>
+          </div>
+
+          <?php foreach ( $pt['rows'] as $row ) : ?>
+            <div class="p-ow__trow">
+              <div class="p-ow__tname">
+                <?php echo esc_html( $row['name'] ); ?>
+                <?php if ( ! empty( $row['sub'] ) ) : ?>
+                  <span class="p-ow__tsub"><?php echo esc_html( $row['sub'] ); ?></span>
+                <?php endif; ?>
+              </div>
+              <?php foreach ( $row['cols'] as $i => $v ) : ?>
+                <div class="p-ow__tcell" data-lbl="<?php echo esc_attr( $pt['head'][ $i ] ); ?>">
+                  <span class="p-ow__tyen"><?php echo esc_html( $v ); ?><small>万円</small></span>
+                </div>
+              <?php endforeach; ?>
+              <div class="p-ow__tcell p-ow__tcell--life" data-lbl="もちの目安">
+                <span class="p-ow__tlife"><?php echo esc_html( $row['life'] ); ?></span>
+              </div>
+            </div>
+          <?php endforeach; ?>
+        </div>
+
+        <ul class="p-ow__pricenotes">
+          <?php foreach ( $pt['note'] as $n ) : ?>
+            <li><?php echo esc_html( $n ); ?></li>
+          <?php endforeach; ?>
+        </ul>
       </div>
-      <div class="p-ow__price">
-        <h3 class="p-ow__pricettl">屋根塗装</h3>
-        <p class="p-ow__priceyen"><span class="num">19<span class="dec">.8</span></span><span class="unit">万円〜<small class="tax">（税込）</small></span></p>
-        <p class="p-ow__pricenote">高圧洗浄・下地処理・塗装（下塗り／中塗り／上塗り）・保証まで込みの価格です。</p>
-      </div>
-    </div>
+    <?php endforeach; ?>
 
     <p class="p-guide__note">
-      ※塗る面積と、塗料の種類（シリコン・フッ素・無機など）によって金額は変わります。<br>
-      ※破風・軒天の塗装、屋根だけの場合の足場代は別になります。<br>
-      追加の工事が必要なときは、着工前にかならずお見積りをお出しします。<br>
-      塗料ごとの料金表は、外壁・屋根サポートサイトにくわしく載せています。
+      ※上の金額は税込です。お家の形や、いまの壁・屋根の傷みぐあいによって変わることがあります。<br>
+      まずは無料の現地調査で、実際に測ってからお見積りをお出しします。<br>
+      追加の工事が必要なときは、着工前にかならずお見積りをお出しします。
     </p>
   </div>
 </section>
@@ -294,7 +376,7 @@ get_header();
       <p class="p-ow__siteen">YAMAKISHI PAINT</p>
       <h2 class="p-ow__sitettl">外壁・屋根の専門サイトが<br class="sp-only">あります</h2>
       <p class="p-ow__sitetext">
-        塗料ごとの料金表、工事の流れ、よくあるご質問、施工事例。<br>
+        工事の流れ、よくあるご質問、施工事例、対応している地域。<br>
         外壁と屋根のことは、こちらにくわしくまとめています。
       </p>
       <a class="p-ow__sitebtn" href="<?php echo esc_url( $paint_url ); ?>" target="_blank" rel="noopener">
