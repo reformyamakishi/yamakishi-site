@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '94' );
+define( 'YMKRF_SETUP_VER', '95' );
 
 /* キッチンの「ヤマキシ標準工事内容」。
    ホームページの一覧表（7項目）と、番号入りの図（8項目）の
@@ -7154,7 +7154,7 @@ TOTOのセフィオンテクト、LIXILのアクアセラミック、Panasonic�
 			'slug' => 'srt-s376ua', 'title' => 'SRT-S376UA',
 			'maker' => 'mitsubishi', 'tank' => '370', 'people' => '3〜4人向け',
 			'grade' => 'フルオート・高圧',
-			'catch' => '処分アイテム！',
+			'catch' => '在庫処分！数量限定！',
 			'note'  => '無くなり次第終了となります。',
 			'total' => 428000, 'order' => 20, 'hojo' => false, 'kouatsu' => true,
 			'alt'   => '三菱電機 エコキュート SRT-S376UA 本体とヒートポンプ',
@@ -7165,7 +7165,7 @@ TOTOのセフィオンテクト、LIXILのアクアセラミック、Panasonic�
 			'slug' => 'srt-s466ua', 'title' => 'SRT-S466UA',
 			'maker' => 'mitsubishi', 'tank' => '460', 'people' => '4〜5人向け',
 			'grade' => 'フルオート・高圧',
-			'catch' => '処分アイテム！',
+			'catch' => '在庫処分！数量限定！',
 			'note'  => '無くなり次第終了となります。',
 			'total' => 438000, 'order' => 30, 'hojo' => false, 'kouatsu' => true,
 			'alt'   => '三菱電機 エコキュート SRT-S466UA 本体とヒートポンプ',
@@ -7348,18 +7348,19 @@ TOTOのセフィオンテクト、LIXILのアクアセラミック、Panasonic�
 	/* 赤いふだから「在庫残り○台！」の台数を外します（1回だけ）。2026/09/01 ユーザー指示
 	   PDFの「残り2台／残り1台」のままになっていましたが、
 	   在庫確認シートでは9台・12台あり、合っていなかったためです。
-	   台数は動くので、「処分アイテム！」だけ残します。
+	   台数は動くので、「在庫処分！数量限定！」という言い方にしています。
 	   台数を出したいときは、登録ぺージの「おすすめ表示」に書いてください。 */
-	if ( get_option( 'ymkrf_eco_stock_ver' ) !== '1' ) {
+	if ( get_option( 'ymkrf_eco_stock_ver' ) !== '2' ) {
 		$done_st = 0;
 		foreach ( array( 'srt-s376ua', 'srt-s466ua' ) as $ss ) {
 			$sp = get_page_by_path( $ss, OBJECT, 'ymkrf_product' );
 			if ( ! $sp ) continue;
-			update_post_meta( $sp->ID, '_ymkrf_catch', '処分アイテム！' );
+			/* 2026/09/01 ユーザー指示で「処分アイテム！」から言いかえました */
+			update_post_meta( $sp->ID, '_ymkrf_catch', '在庫処分！数量限定！' );
 			$done_st++;
 		}
-		if ( $done_st ) $log[] = 'エコキュート' . $done_st . '機種の「在庫残り○台！」を外しました';
-		update_option( 'ymkrf_eco_stock_ver', '1' );
+		if ( $done_st ) $log[] = 'エコキュート' . $done_st . '機種の赤いふだを「在庫処分！数量限定！」にしました';
+		update_option( 'ymkrf_eco_stock_ver', '2' );
 	}
 
 	/* 県の補助金（福井県・石川県）は、いちど入れましたが
