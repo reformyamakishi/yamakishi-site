@@ -242,10 +242,11 @@ add_action( 'init', function () {
 	   14 … 代表挨拶ページ（/message/）を足したため
 	   15 … 会社概要ページ（/company/）を足したため
 	   20 … プライバシーポリシー（/privacy/）を足したため
-	   21 … お知らせ（/news/）を足したため */
-	if ( get_option( 'ymkrf_rewrite_ver' ) === '21' ) return;
+	   21 … お知らせ（/news/）を足したため
+	   22 … 給湯器・エコキュートの選び方（/products/boiler-guide/）を足したため */
+	if ( get_option( 'ymkrf_rewrite_ver' ) === '23' ) return;
 	flush_rewrite_rules( false );
-	update_option( 'ymkrf_rewrite_ver', '21' );
+	update_option( 'ymkrf_rewrite_ver', '23' );
 }, 99 );
 
 

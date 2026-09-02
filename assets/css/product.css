@@ -1429,3 +1429,289 @@ a.p-pack__item:hover{ border-color:var(--brand); transform:translateY(-4px); box
   .p-prd__basic th,
   .p-prd__basic td{ padding:14px 18px; font-size:15px; }
 }
+
+
+/* ============================================================
+   給湯器・エコキュートの選び方ページ（/products/boiler-guide/）
+
+   読みもののページです。商品一覧と同じ色・同じ間隔にそろえて、
+   サイトの中で浮かないようにしています。
+   ============================================================ */
+
+/* --- 見出し --- */
+.p-guide__hero{
+  background:linear-gradient(180deg,#fff6f2 0%,#fff 100%);
+  padding:clamp(38px,8vw,68px) 0 clamp(30px,6vw,52px); text-align:center;
+}
+.p-guide__title{
+  margin:6px 0 14px; font-weight:900; line-height:1.35;
+  font-size:clamp(26px,6.4vw,40px); letter-spacing:.02em; color:var(--ink);
+}
+.p-guide__lead{
+  margin:0; line-height:1.9; color:#444;
+  font-size:clamp(14px,3.7vw,16px); word-break:auto-phrase;
+}
+/* 見出しのとんとこトン。文字が多いページなので、いちばん上は大きめに出します */
+.p-guide__herochara{
+  display:block; width:auto; height:clamp(110px,26vw,150px); margin:18px auto 0;
+}
+
+/* 目次は外しました（2026/09/01 ユーザー指示）。
+   章の見出しにとんとこトンを出して、読む場所の目印にしています。 */
+
+/* --- 種類 --- */
+.p-guide__types{
+  display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+}
+.p-guide__type{
+  background:#fff; border:1px solid #eee; border-radius:14px; padding:22px 20px;
+  display:flex; flex-direction:column;
+}
+/* 種類の写真。お客様が「うちのはこれだ」と見分けるための一枚です。
+   白い背景の商品写真なので、枠も白にして自然につなげています。 */
+.p-guide__typeph{
+  margin:-6px -4px 14px; background:#fff; border-radius:10px; overflow:hidden;
+}
+.p-guide__typeph img{
+  display:block; width:100%; height:auto; aspect-ratio:4/3; object-fit:contain;
+}
+.p-guide__typenoph{
+  display:flex; align-items:center; justify-content:center;
+  width:100%; aspect-ratio:4/3; background:#f4f4f4;
+  color:#a9a9a9; font-size:12.5px; letter-spacing:.06em;
+}
+.p-guide__typefuel{
+  align-self:flex-start; margin:0 0 8px; background:#fff1ec; color:var(--brand);
+  border-radius:999px; padding:3px 12px; font-size:12px; font-weight:900; letter-spacing:.06em;
+}
+.p-guide__typename{
+  margin:0 0 8px; font-size:clamp(17px,4.4vw,19px); font-weight:900;
+  color:var(--ink); line-height:1.4; word-break:auto-phrase;
+}
+.p-guide__typetext{ margin:0; font-size:14px; line-height:1.9; color:#444; word-break:auto-phrase; }
+.p-guide__typemaker{ margin:12px 0 0; font-size:12.5px; color:#777; }
+.p-guide__typelink{
+  margin-top:14px; text-align:center; text-decoration:none;
+  border:1.5px solid var(--brand); border-radius:999px; color:var(--brand);
+  font-size:13.5px; font-weight:700; padding:8px;
+}
+.p-guide__typelink:hover{ background:var(--brand); color:#fff; }
+
+/* --- ふろ機能 --- */
+.p-guide__funcs{
+  display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+}
+.p-guide__func{ background:#fff; border-radius:14px; padding:24px 20px; text-align:center; }
+.p-guide__funcno{
+  width:40px; height:40px; margin:0 auto 10px; border-radius:50%;
+  background:var(--brand); color:#fff; font-weight:900; font-size:18px;
+  display:flex; align-items:center; justify-content:center;
+}
+.p-guide__funcname{ margin:0 0 8px; font-size:18px; font-weight:900; color:var(--ink); }
+.p-guide__functext{ margin:0; font-size:14px; line-height:1.9; color:#444; text-align:left; word-break:auto-phrase; }
+
+/* --- 大きさ --- */
+.p-guide__sizes{ display:grid; gap:18px; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); }
+.p-guide__size{ background:#fff; border:1px solid #eee; border-radius:14px; padding:24px 22px; }
+.p-guide__sizettl{
+  margin:0 0 12px; font-size:clamp(16px,4.2vw,18px); font-weight:900; color:var(--ink);
+  line-height:1.5; padding-bottom:10px; border-bottom:2px solid #f3e2dc; word-break:auto-phrase;
+}
+.p-guide__sizetext{ margin:0 0 10px; font-size:14px; line-height:1.95; color:#444; word-break:auto-phrase; }
+.p-guide__sizelist{ margin:0 0 12px; padding:0; list-style:none; }
+.p-guide__sizelist li{
+  padding:9px 12px; margin-bottom:7px; background:#faf6f4; border-radius:8px;
+  font-size:14px; line-height:1.7; color:#333;
+}
+.p-guide__sizelist b{ color:var(--brand); font-weight:900; margin-right:6px; }
+
+/* --- 替えどき --- */
+.p-guide__signs{
+  margin:0; padding:0; list-style:none;
+  display:grid; gap:10px; grid-template-columns:repeat(auto-fit,minmax(290px,1fr));
+}
+.p-guide__signs li{
+  background:#fff; border-radius:10px; padding:14px 16px 14px 44px; position:relative;
+  font-size:14.5px; line-height:1.7; color:#333; word-break:auto-phrase;
+}
+.p-guide__signs li::before{
+  content:"✓"; position:absolute; left:16px; top:13px;
+  color:var(--brand); font-weight:900; font-size:16px;
+}
+
+/* --- エラーコード --- */
+.p-guide__errors{
+  display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+}
+.p-guide__error{
+  background:#fff; border:1px solid #eee; border-radius:14px; padding:22px 20px;
+}
+.p-guide__errorttl{
+  margin:0 0 12px; font-size:18px; font-weight:900; color:var(--ink);
+  padding-bottom:10px; border-bottom:2px solid #f3e2dc;
+}
+/* メーカーごとのリンク。どれか1つを押すと、そのメーカーの一覧に行きます */
+.p-guide__errorlist{ margin:0; padding:0; list-style:none; }
+.p-guide__errorlist li{ margin-bottom:7px; }
+.p-guide__errorlist li:last-child{ margin-bottom:0; }
+.p-guide__errorlist a{
+  display:block; text-decoration:none; background:#faf6f4; border-radius:8px;
+  padding:11px 34px 11px 14px; position:relative;
+  font-size:14px; font-weight:700; color:#333; line-height:1.5;
+  transition:background .2s,color .2s;
+}
+.p-guide__errorlist a::after{
+  content:""; position:absolute; right:15px; top:50%; width:7px; height:7px;
+  border-right:2px solid var(--brand); border-top:2px solid var(--brand);
+  transform:translateY(-50%) rotate(45deg);
+}
+.p-guide__errorlist a:hover{ background:var(--brand); color:#fff; }
+.p-guide__errorlist a:hover::after{ border-color:#fff; }
+
+/* --- 流れ --- */
+.p-guide__flow{ display:grid; gap:12px; }
+.p-guide__step{
+  background:#fff; border-radius:12px; padding:18px 20px 18px 62px; position:relative;
+  font-size:14px; line-height:1.9; color:#444; word-break:auto-phrase;
+}
+.p-guide__step .no{
+  position:absolute; left:18px; top:16px; width:30px; height:30px; border-radius:50%;
+  background:var(--brand); color:#fff; font-weight:900; font-size:15px;
+  display:flex; align-items:center; justify-content:center;
+}
+.p-guide__step b{ display:block; font-size:16px; font-weight:900; color:var(--ink); margin-bottom:3px; }
+
+/* --- 強み --- */
+.p-guide__reasons{ display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); }
+.p-guide__reason{ background:#fff; border:1px solid #eee; border-radius:14px; padding:24px 20px; }
+.p-guide__reason h3{
+  margin:0 0 10px; font-size:clamp(16px,4.2vw,17px); font-weight:900; color:var(--brand);
+  line-height:1.5; word-break:auto-phrase;
+}
+.p-guide__reason p{ margin:0; font-size:14px; line-height:1.9; color:#444; word-break:auto-phrase; }
+
+/* --- よくある質問 --- */
+.p-guide__faqs{ display:grid; gap:10px; }
+.p-guide__faq{ background:#fff; border-radius:12px; overflow:hidden; }
+.p-guide__faq summary{
+  cursor:pointer; list-style:none; padding:18px 46px 18px 48px; position:relative;
+  font-size:clamp(15px,4vw,16px); font-weight:700; color:var(--ink); line-height:1.6;
+  word-break:auto-phrase;
+}
+.p-guide__faq summary::-webkit-details-marker{ display:none; }
+.p-guide__faq summary::before{
+  content:"Q"; position:absolute; left:18px; top:17px;
+  color:var(--brand); font-weight:900; font-size:17px;
+}
+.p-guide__faq summary::after{
+  content:""; position:absolute; right:20px; top:24px; width:9px; height:9px;
+  border-right:2px solid #b9a49e; border-bottom:2px solid #b9a49e;
+  transform:rotate(45deg); transition:transform .2s;
+}
+.p-guide__faq[open] summary::after{ transform:rotate(-135deg); top:28px; }
+.p-guide__faq p{
+  margin:0; padding:0 22px 20px 48px; font-size:14px; line-height:1.95; color:#444;
+  word-break:auto-phrase;
+}
+
+/* --- 共通の注意書き --- */
+.p-guide__note{
+  margin:22px 0 0; font-size:13.5px; line-height:1.95; color:#666; word-break:auto-phrase;
+}
+.p-guide__note strong{ color:var(--ink); }
+
+
+/* ============================================================
+   エラーコード一覧（/troubleshooting/）
+   ============================================================ */
+
+/* --- 入口：給湯器の種類 --- */
+.p-ts__cats{ display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); }
+.p-ts__cat{
+  display:flex; flex-direction:column; gap:8px; text-decoration:none;
+  background:#fff; border:2px solid #eee; border-radius:14px; padding:24px 22px;
+  transition:border-color .2s,transform .2s;
+}
+.p-ts__cat:hover{ border-color:var(--brand); transform:translateY(-2px); }
+.p-ts__catttl{ font-size:clamp(19px,4.8vw,22px); font-weight:900; color:var(--ink); }
+.p-ts__catlead{ font-size:13.5px; line-height:1.85; color:#666; word-break:auto-phrase; }
+.p-ts__catlink{
+  margin-top:auto; padding-top:12px; color:var(--brand); font-size:14px; font-weight:700;
+}
+.p-ts__catlink::after{ content:" →"; }
+
+/* --- 種類：メーカーをえらぶ --- */
+.p-ts__makers{ display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); }
+.p-ts__maker{
+  display:block; text-decoration:none; background:#fff; border:2px solid #eee;
+  border-radius:12px; padding:20px 40px 20px 22px; position:relative;
+  font-size:clamp(15px,4vw,16px); font-weight:700; color:var(--ink); line-height:1.6;
+  word-break:auto-phrase; transition:border-color .2s,background .2s,color .2s;
+}
+.p-ts__maker::after{
+  content:""; position:absolute; right:18px; top:50%; width:8px; height:8px;
+  border-right:2px solid var(--brand); border-top:2px solid var(--brand);
+  transform:translateY(-50%) rotate(45deg);
+}
+.p-ts__maker:hover{ background:var(--brand); border-color:var(--brand); color:#fff; }
+.p-ts__maker:hover::after{ border-color:#fff; }
+
+/* --- エラーコードの表 ---
+   パソコンでは3列、スマホでは縦に積みます。
+   数字がたくさん並ぶので、行ごとに区切りをはっきりさせています。 */
+.p-ts__count{ margin:0 0 16px; font-size:13.5px; color:#777; }
+.p-ts__table{ background:#fff; border-radius:12px; overflow:hidden; }
+.p-ts__thead{
+  display:grid; grid-template-columns:100px 1fr 1fr;
+  background:var(--ink); color:#fff; font-size:13.5px; font-weight:700;
+}
+.p-ts__thead span{ padding:12px 16px; }
+.p-ts__row{
+  display:grid; grid-template-columns:100px 1fr 1fr;
+  border-top:1px solid #eee;
+}
+.p-ts__row:nth-child(odd){ background:#fbfaf9; }
+.p-ts__code{
+  padding:18px 12px; font-size:clamp(16px,4.2vw,18px); font-weight:900;
+  color:var(--brand); text-align:center; word-break:break-all;
+}
+.p-ts__cause,
+.p-ts__fix{ padding:18px 16px; }
+.p-ts__ttl{
+  margin:0 0 8px; font-size:15px; font-weight:900; color:var(--ink); line-height:1.5;
+  word-break:auto-phrase;
+}
+.p-ts__lbl{
+  display:inline-block; margin:0 0 5px; padding:2px 10px; border-radius:999px;
+  background:#f0e6e2; color:#7a5c52; font-size:11.5px; font-weight:700; letter-spacing:.06em;
+}
+/* 「対処方法」はお客様が実際に手を動かすところなので、
+   「原因」より濃くして目立たせています。 */
+.p-ts__lbl--fix{ background:#2f5c66; color:#fff; }
+.p-ts__txt{
+  margin:0; font-size:13.5px; line-height:1.9; color:#444; word-break:auto-phrase;
+}
+@media (max-width:760px){
+  .p-ts__thead{ display:none; }
+  .p-ts__row{ grid-template-columns:1fr; padding:4px 0 10px; }
+  .p-ts__code{
+    text-align:left; padding:14px 16px 4px;
+    font-size:20px;
+  }
+  .p-ts__cause,
+  .p-ts__fix{ padding:6px 16px; }
+}
+
+/* --- まだ用意できていないメーカー --- */
+.p-ts__soon{ background:#fff; border-radius:12px; padding:28px 24px; }
+.p-ts__soonttl{
+  margin:0 0 10px; font-size:18px; font-weight:900; color:var(--ink);
+}
+.p-ts__soon p{ margin:0; font-size:14px; line-height:1.9; color:#555; word-break:auto-phrase; }
+
+/* --- 下のリンク --- */
+.p-ts__nav{ display:flex; flex-wrap:wrap; gap:14px; margin-top:26px; }
+.p-ts__nav a{
+  color:var(--brand); font-size:14px; font-weight:700; text-decoration:none;
+  border-bottom:1px solid currentColor;
+}

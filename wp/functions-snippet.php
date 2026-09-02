@@ -28,7 +28,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '2.4.0' );   // ファイル更新時はここを上げるとキャッシュが切れます
+if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '2.4.6' );   // ファイル更新時はここを上げるとキャッシュが切れます
 
 /* ============================================================
    1. CSS / JS の読み込み
@@ -60,6 +60,8 @@ add_action( 'wp_enqueue_scripts', function () {
 	           || ( function_exists( 'ymkrf_is_flow' ) && ymkrf_is_flow() )
 	           || ( function_exists( 'ymkrf_is_faq' ) && ymkrf_is_faq() )
 	           || ( function_exists( 'ymkrf_is_shops' ) && ymkrf_is_shops() )
+	           || ( function_exists( 'ymkrf_is_bguide' ) && ymkrf_is_bguide() )
+	           || ( function_exists( 'ymkrf_is_ts' ) && ymkrf_is_ts() )
 	           || ( function_exists( 'ymkrf_is_privacy' ) && ymkrf_is_privacy() );
 	$is_top = is_front_page() && ! $is_special;
 
@@ -68,6 +70,13 @@ add_action( 'wp_enqueue_scripts', function () {
 		wp_enqueue_script( 'ymkrf-home', $dir . '/assets/js/home.js', array( 'ymkrf-common' ), YMKRF_VER, true );
 	} else {
 		wp_enqueue_style( 'ymkrf-page', $dir . '/assets/css/page.css', array( 'ymkrf-common' ), YMKRF_VER );
+	}
+
+	/* 給湯器・エコキュートの選び方のページ。
+	   商品ページと同じ見た目の部品を使うので、product.css を足します。 */
+	if ( ( function_exists( 'ymkrf_is_bguide' ) && ymkrf_is_bguide() )
+	  || ( function_exists( 'ymkrf_is_ts' ) && ymkrf_is_ts() ) ) {
+		wp_enqueue_style( 'ymkrf-product', $dir . '/assets/css/product.css', array( 'ymkrf-page' ), YMKRF_VER );
 	}
 
 	/* こだわりページだけ、専用のCSSを1枚足します */
@@ -178,6 +187,144 @@ add_filter( 'document_title_parts', function ( $parts ) {
 if ( ! function_exists( 'ymkrf_is_about' ) ) :
 function ymkrf_is_about() {
 	return (bool) get_query_var( 'ymkrf_about' );
+}
+endif;
+
+
+/* ============================================================
+   1-3. 給湯器・エコキュートの選び方（/products/boiler-guide/）のURL
+        やり方は上の「こだわりページ」と同じです。
+        商品を並べる一覧ではなく、読みもののページです。
+   ============================================================ */
+add_action( 'init', function () {
+	add_rewrite_rule( '^products/boiler-guide/?$', 'index.php?ymkrf_bguide=1', 'top' );
+}, 20 );
+
+add_filter( 'query_vars', function ( $vars ) {
+	$vars[] = 'ymkrf_bguide';
+	return $vars;
+} );
+
+add_filter( 'template_include', function ( $tpl ) {
+	if ( ! get_query_var( 'ymkrf_bguide' ) ) return $tpl;
+	$found = locate_template( 'ymkrf-boilerguide.php' );
+	return $found ? $found : $tpl;
+} );
+
+/* このURLは「見つかりません」でもトップページでもありません。
+   ここをはっきりさせないと、下層ページ用のCSSが読み込まれません。 */
+add_action( 'wp', function () {
+	if ( ! get_query_var( 'ymkrf_bguide' ) ) return;
+	global $wp_query;
+	$wp_query->is_404        = false;
+	$wp_query->is_home       = false;
+	$wp_query->is_front_page = false;
+	$wp_query->is_page       = false;
+	$wp_query->is_singular   = false;
+	$wp_query->is_archive    = false;
+	$wp_query->is_post_type_archive = false;
+	status_header( 200 );
+} );
+
+add_filter( 'document_title_parts', function ( $parts ) {
+	if ( get_query_var( 'ymkrf_bguide' ) ) {
+		$parts['title'] = '給湯器・エコキュートの選び方｜種類・号数・替えどき・エラーコード';
+		unset( $parts['tagline'] );
+	}
+	return $parts;
+} );
+
+if ( ! function_exists( 'ymkrf_is_bguide' ) ) :
+function ymkrf_is_bguide() {
+	return (bool) get_query_var( 'ymkrf_bguide' );
+}
+endif;
+
+
+/* ============================================================
+   1-4. エラーコード一覧（/troubleshooting/）のURL
+
+        1枚のテンプレートで、3つの階層をまかないます。
+          /troubleshooting/                       … 入口
+          /troubleshooting/<種類>-error/           … メーカーをえらぶ
+          /troubleshooting/<種類>-error/<メーカー>/ … エラーコードの表
+
+        並べる順が大事です。長いものから先に書かないと、
+        短いほうの決まりが先に当たってしまいます。
+   ============================================================ */
+add_action( 'init', function () {
+	add_rewrite_rule( '^troubleshooting/([a-z0-9-]+)-error/([a-z0-9-]+)/?$',
+		'index.php?ymkrf_ts=1&ymkrf_ts_cat=$matches[1]&ymkrf_ts_maker=$matches[2]', 'top' );
+	add_rewrite_rule( '^troubleshooting/([a-z0-9-]+)-error/?$',
+		'index.php?ymkrf_ts=1&ymkrf_ts_cat=$matches[1]', 'top' );
+	add_rewrite_rule( '^troubleshooting/?$', 'index.php?ymkrf_ts=1', 'top' );
+}, 20 );
+
+add_filter( 'query_vars', function ( $vars ) {
+	$vars[] = 'ymkrf_ts';
+	$vars[] = 'ymkrf_ts_cat';
+	$vars[] = 'ymkrf_ts_maker';
+	return $vars;
+} );
+
+add_filter( 'template_include', function ( $tpl ) {
+	if ( ! get_query_var( 'ymkrf_ts' ) ) return $tpl;
+	$found = locate_template( 'ymkrf-troubleshooting.php' );
+	return $found ? $found : $tpl;
+} );
+
+add_action( 'wp', function () {
+	if ( ! get_query_var( 'ymkrf_ts' ) ) return;
+	global $wp_query;
+	$wp_query->is_404        = false;
+	$wp_query->is_home       = false;
+	$wp_query->is_front_page = false;
+	$wp_query->is_page       = false;
+	$wp_query->is_singular   = false;
+	$wp_query->is_archive    = false;
+	$wp_query->is_post_type_archive = false;
+	status_header( 200 );
+} );
+
+add_filter( 'document_title_parts', function ( $parts ) {
+	if ( ! get_query_var( 'ymkrf_ts' ) ) return $parts;
+
+	$names = array(
+		'ecocute'  => 'エコキュート',
+		'gas'      => 'ガス給湯器',
+		'oil'      => '石油給湯器',
+		'electric' => '電気温水器',
+	);
+	$makers = array(
+		'mitsubishi'     => '三菱電機',
+		'panasonic'      => 'パナソニック',
+		'daikin'         => 'ダイキン',
+		'hitachi'        => '日立',
+		'noritz'         => 'ノーリツ',
+		'rinnai'         => 'リンナイ',
+		'paloma'         => 'パロマ',
+		'chofu'          => '長府製作所',
+		'corona'         => 'コロナ',
+		'takarastandard' => 'タカラスタンダード',
+	);
+
+	$c = (string) get_query_var( 'ymkrf_ts_cat' );
+	$m = (string) get_query_var( 'ymkrf_ts_maker' );
+
+	if ( $m !== '' && isset( $names[ $c ], $makers[ $m ] ) ) {
+		$parts['title'] = $makers[ $m ] . 'のエラーコード一覧｜' . $names[ $c ] . '｜原因と対処方法';
+	} elseif ( isset( $names[ $c ] ) ) {
+		$parts['title'] = $names[ $c ] . 'のエラーコード一覧｜メーカー別に原因と対処方法';
+	} else {
+		$parts['title'] = '給湯器エラーコード一覧｜故障かな？と思ったら';
+	}
+	unset( $parts['tagline'] );
+	return $parts;
+} );
+
+if ( ! function_exists( 'ymkrf_is_ts' ) ) :
+function ymkrf_is_ts() {
+	return (bool) get_query_var( 'ymkrf_ts' );
 }
 endif;
 
