@@ -971,11 +971,6 @@ body.term-boiler .p-cat__cardgrade,
 body.term-ecocute .p-cat__cardgrade{
   position:static; order:-1; align-self:flex-start; margin:0 0 7px;
 }
-/* 「このほか日立・ダイキンも…」の一行（エコキュート） */
-.p-cat__makernote{
-  margin:-6px 0 26px; color:#555; line-height:1.8;
-  font-size:clamp(13px,3.4vw,15px); word-break:auto-phrase;
-}
 /* エコキュートの「補助金対象商品！」「在庫残り2台！」などの赤いふだ。
    本番サイトと同じく、写真の下・価格の上に赤い文字で出します。 */
 .p-cat__cardbadge{

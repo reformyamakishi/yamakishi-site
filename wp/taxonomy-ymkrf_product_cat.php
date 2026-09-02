@@ -829,14 +829,6 @@ if ( ! empty( $pn['items'] ) ) :
           </div>
         <?php endforeach; ?>
       </div>
-      <?php /* エコキュートは、日立・ダイキンなども取り扱っています。
-               ロゴをいただいていないので、いまは文章でご案内しています。 */
-      if ( $slug === 'ecocute' ) : ?>
-        <p class="p-cat__makernote">
-          このほか、日立・ダイキンのエコキュートもお取り扱いしています。<br>
-          掲載の機種以外もご用意できますので、お気軽にお問い合わせください。
-        </p>
-      <?php endif; ?>
       <?php endif; ?>
 
       <?php global $post; foreach ( $groups as $g ) : if ( ! $g['posts'] ) continue; ?>
