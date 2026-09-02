@@ -1112,6 +1112,13 @@ body.term-toilet .p-cat__cardname{ min-height:2.7em; }
   transition:box-shadow .2s ease, transform .2s ease;
 }
 .p-col__card:hover{ box-shadow:var(--shadow-md); transform:translateY(-2px); }
+/* お役立ち情報のいちばん上に、いつも置いておくカード（選び方のページなど）。
+   コラムの記事とまざらないよう、枠だけブランド色にしています。
+   日付が入らないぶん、本文の位置が上にずれないよう余白を足しています。 */
+.p-col__card--pin{ border-color:var(--brand); }
+.p-col__card--pin .p-col__body{ padding-top:20px; }
+.p-col__card--pin .p-col__tag{ background:var(--brand); color:#fff; }
+.p-col__card--pin .p-col__ph img{ background:#fff; object-fit:contain; }
 .p-col__ph{ position:relative; background:var(--bg-soft); aspect-ratio:16/10; overflow:hidden; }
 .p-col__ph img{ width:100%; height:100%; object-fit:cover; display:block; }
 .p-col__tag{
@@ -1599,6 +1606,13 @@ a.p-pack__item:hover{ border-color:var(--brand); transform:translateY(-4px); box
   word-break:auto-phrase;
 }
 .p-guide__faq summary::-webkit-details-marker{ display:none; }
+/* 「共通」「給湯器」「エコキュート」の小さな札。
+   どちらの話なのかが、開く前に分かるようにしています。 */
+.p-guide__faqtag{
+  display:inline-block; margin-right:8px; padding:2px 9px; border-radius:999px;
+  background:#efe7e4; color:#7a5c52;
+  font-size:11px; font-weight:700; letter-spacing:.04em; vertical-align:2px;
+}
 .p-guide__faq summary::before{
   content:"Q"; position:absolute; left:18px; top:17px;
   color:var(--brand); font-weight:900; font-size:17px;
@@ -1624,6 +1638,14 @@ a.p-pack__item:hover{ border-color:var(--brand); transform:translateY(-4px); box
 /* ============================================================
    エラーコード一覧（/troubleshooting/）
    ============================================================ */
+
+/* どの機器のエラーコードかを、見出しの上に大きく出します。
+   「日立のエラーコード一覧」だけでは、給湯器なのかエアコンなのか伝わらないためです。 */
+.p-ts__device{
+  display:inline-block; margin:0 0 10px; padding:6px 20px; border-radius:999px;
+  background:var(--brand); color:#fff;
+  font-size:clamp(15px,4vw,18px); font-weight:900; letter-spacing:.06em;
+}
 
 /* --- 入口：給湯器の種類 --- */
 .p-ts__cats{ display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); }

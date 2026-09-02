@@ -142,14 +142,15 @@ get_header();
   <div class="l-wrap">
     <span class="c-head__en">ERROR CODE</span>
     <?php if ( $ts_maker ) : ?>
+      <?php /* どの機器のエラーコードなのかが、ひと目で分かるようにします。
+               「日立のエラーコード」だけだと、エアコンなのか給湯器なのか伝わりません。 */ ?>
+      <p class="p-ts__device"><?php echo esc_html( $ymkrf_ts_cats[ $ts_cat ]['name'] ); ?></p>
       <h1 class="p-guide__title">
         <?php echo esc_html( $ymkrf_ts_cats[ $ts_cat ]['makers'][ $ts_maker ] ); ?>の<br class="sp-only">エラーコード一覧
       </h1>
-      <p class="p-guide__lead"><?php echo esc_html( $ymkrf_ts_cats[ $ts_cat ]['name'] ); ?></p>
     <?php elseif ( $ts_cat ) : ?>
-      <h1 class="p-guide__title">
-        <?php echo esc_html( $ymkrf_ts_cats[ $ts_cat ]['name'] ); ?>の<br class="sp-only">エラーコード一覧
-      </h1>
+      <p class="p-ts__device"><?php echo esc_html( $ymkrf_ts_cats[ $ts_cat ]['name'] ); ?></p>
+      <h1 class="p-guide__title">エラーコード一覧</h1>
       <p class="p-guide__lead">メーカーをお選びください。</p>
     <?php else : ?>
       <h1 class="p-guide__title">エラーコード一覧</h1>

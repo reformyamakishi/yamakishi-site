@@ -133,12 +133,98 @@ endif;
 
 
 /* ============================================================
+   5-b. お役立ち情報のいちばん上に、いつも出しておくページ
+
+        コラムの記事とは別に、ずっと置いておきたい読みものです。
+        いまは「給湯器・エコキュートの選び方」だけで、
+        給湯器とエコキュートの2つのカテゴリに出しています。
+        （2026/09/02 ユーザー指示）
+
+   ★ほかの分類にも足したいときは、下の $pin に1つ足してください。
+     'cats' に書いた分類のページで、いちばん先頭に出ます。
+   ============================================================ */
+if ( ! function_exists( 'ymkrf_column_pinned' ) ) :
+function ymkrf_column_pinned( $slug ) {
+
+	$pin = array(
+		array(
+			'cats'  => array( 'boiler', 'ecocute' ),
+			'url'   => home_url( '/products/boiler-guide/' ),
+			'tag'   => '選び方',
+			'title' => '給湯器・エコキュートの選び方',
+			'text'  => 'うちはどのタイプ？　号数やタンクの大きさは？　'
+			         . 'いつ替えればいい？　はじめてのお取り替えでも迷わないように、順番にご説明します。',
+			'img'   => 'assets/img/guide/ecocute.jpg',
+			'alt'   => '',
+		),
+	);
+
+	$out = array();
+	foreach ( $pin as $p ) {
+		if ( ! in_array( $slug, (array) $p['cats'], true ) ) continue;
+		$out[] = $p;
+	}
+	return $out;
+}
+endif;
+
+/* 固定のカードを1枚出します。コラムのカードと同じ見た目です。 */
+if ( ! function_exists( 'ymkrf_column_pincard' ) ) :
+function ymkrf_column_pincard( $p ) {
+	$dir = get_stylesheet_directory_uri();
+	?>
+	<a class="p-col__card p-col__card--pin" href="<?php echo esc_url( $p['url'] ); ?>">
+		<div class="p-col__ph">
+			<?php if ( ! empty( $p['img'] ) ) : ?>
+				<img src="<?php echo esc_url( $dir . '/' . ltrim( $p['img'], '/' ) ); ?>"
+				     alt="<?php echo esc_attr( $p['alt'] ); ?>" loading="lazy" decoding="async">
+			<?php endif; ?>
+			<?php if ( ! empty( $p['tag'] ) ) : ?>
+				<span class="p-col__tag"><?php echo esc_html( $p['tag'] ); ?></span>
+			<?php endif; ?>
+		</div>
+		<div class="p-col__body">
+			<h3 class="p-col__title"><?php echo esc_html( $p['title'] ); ?></h3>
+			<p class="p-col__excerpt"><?php echo esc_html( $p['text'] ); ?></p>
+			<span class="p-col__more">くわしく読む</span>
+		</div>
+	</a>
+	<?php
+}
+endif;
+
+
+/* ============================================================
    6. カテゴリページの下に出す「お役立ち情報」ブロック
    ============================================================ */
 if ( ! function_exists( 'ymkrf_column_section' ) ) :
 function ymkrf_column_section( $slug, $catname, $number = 3 ) {
 
 	$q = ymkrf_column_query( $slug, $number );
+
+	/* いちばん上にいつも出しておくカード（選び方のページなど）。
+	   その分だけコラムの数を減らして、全体の枚数は変えません。 */
+	$pins = function_exists( 'ymkrf_column_pinned' ) ? ymkrf_column_pinned( $slug ) : array();
+	$rest = max( 0, $number - count( $pins ) );
+
+	/* 固定のカードだけがあって、コラムの記事が無いとき */
+	if ( $pins && ! $q->have_posts() ) {
+		wp_reset_postdata();
+		?>
+		<section class="l-section l-section--soft" id="column">
+			<div class="l-wrap">
+				<div class="c-head">
+					<span class="c-head__en">COLUMN</span>
+					<h2 class="c-head__title"><?php echo esc_html( $catname ); ?>リフォームお役立ち情報</h2>
+				</div>
+				<div class="p-col__cards">
+					<?php foreach ( $pins as $p ) ymkrf_column_pincard( $p ); ?>
+				</div>
+			</div>
+		</section>
+		<?php
+		return;
+	}
 
 	/* 記事が1件も無いとき。
 	   お客様には何も出しませんが、ログイン中のスタッフには
@@ -185,7 +271,12 @@ function ymkrf_column_section( $slug, $catname, $number = 3 ) {
 				<h2 class="c-head__title"><?php echo esc_html( $catname ); ?>リフォームお役立ち情報</h2>
 			</div>
 			<div class="p-col__cards">
-				<?php while ( $q->have_posts() ) : $q->the_post(); ymkrf_column_card(); endwhile; ?>
+				<?php foreach ( $pins as $p ) ymkrf_column_pincard( $p ); ?>
+				<?php $shown = 0;
+				while ( $q->have_posts() ) : $q->the_post();
+					if ( $shown >= $rest ) break;
+					ymkrf_column_card(); $shown++;
+				endwhile; ?>
 			</div>
 
 			<?php if ( $more ) : ?>
