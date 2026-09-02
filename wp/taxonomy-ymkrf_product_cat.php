@@ -454,58 +454,73 @@ if ( $slug === 'boiler' ) {
 
 if ( $slug === 'ecocute' ) {
 
-	/* エコキュートの並べ方（2026/09/01）
+	/* エコキュートの並べ方（2026/09/01 ユーザー指示）
 
-	     タンクの大きさで分けて、それぞれ安い順に並べます。
-	     お客様がいちばんはじめに決めるのが「何人で使うか＝タンクの大きさ」
-	     なので、そこで分けるのがいちばん選びやすいからです。
+	     大きく メーカー で分けて（三菱電機 → Panasonic）、
+	     その中を タンクの大きさ の小見出しでさらに分けます。
+	     ひとつのまとまりの中は、安い順です。
 
-	   ★どのまとまりに入るかは、その商品の「タンク容量（L）」で決まります。
-	     下の $tanks に無い大きさは、いちばん下にまとまって並びます。
-	   ★メーカーの説明は、一覧のいちばん上に
-	     「取り扱いメーカー」としてまとめて出します。
+	   ★メーカーの順は下の $maker_order です。
+	   ★タンクの大きさの見出しは下の $tanks です。
+	     ここに無い大きさは、小見出しなしでいちばん下に並びます。
+	   ★メーカーの説明は、一覧のいちばん上の「取り扱いメーカー」に出ます。
 	     文章はダッシュボードの「商品 → メーカー」の「説明」欄で直せます。 */
 
 	$maker_order = array( 'mitsubishi', 'panasonic', 'hitachi', 'daikin' );
 
 	/* 小さい順に並べています */
 	$tanks = array(
-		'370' => array( '370L（3〜4人向け）',
-			'3〜4人でお使いのご家庭向けの大きさです。' ),
-		'460' => array( '460L（4〜7人向け）',
-			'4〜7人でお使いのご家庭や、お湯をたくさん使うご家庭向けの大きさです。' ),
+		'370' => '370L（3〜4人向け）',
+		'460' => '460L（4〜7人向け）',
+		''    => '',
 	);
 
-	/* 大きさごとに仕分けます */
+	/* メーカー → タンクの大きさ の順に仕分けます */
 	$bin = array();
 	foreach ( $q->posts as $_p ) {
-		$_t = (string) get_post_meta( $_p->ID, '_ymkrf_tank', true );
-		$_k = isset( $tanks[ $_t ] ) ? $_t : '';
-		$bin[ $_k ][] = $_p;
+		$_ts = get_the_terms( $_p->ID, 'ymkrf_maker' );
+		$_mk = ( $_ts && ! is_wp_error( $_ts ) ) ? $_ts[0]->slug : '';
+		$_tk = (string) get_post_meta( $_p->ID, '_ymkrf_tank', true );
+		if ( ! isset( $tanks[ $_tk ] ) ) $_tk = '';
+		$bin[ $_mk ][ $_tk ][] = $_p;
 	}
 
-	$tanks[''] = array( '', '' );   /* 表にない大きさは、見出しなしで最後に */
+	/* 表にないメーカーは、うしろにまわします */
+	$mkeys = array_merge( $maker_order, array_diff( array_keys( $bin ), $maker_order ) );
 
-	foreach ( $tanks as $_tk => $_td ) {
-		if ( empty( $bin[ $_tk ] ) ) continue;
+	foreach ( $mkeys as $_mk ) {
+		if ( empty( $bin[ $_mk ] ) ) continue;
+
+		$_t = $_mk ? get_term_by( 'slug', $_mk, 'ymkrf_maker' ) : null;
+		if ( is_wp_error( $_t ) ) $_t = null;
+
+		/* タンクの大きさごとの小見出し */
+		$subs = array();
+		$all  = array();
+		foreach ( $tanks as $_tk => $_tl ) {
+			if ( empty( $bin[ $_mk ][ $_tk ] ) ) continue;
+			$subs[] = array(
+				'ttl'   => $_tl,
+				'maker' => null,
+				'posts' => $bin[ $_mk ][ $_tk ],
+			);
+			$all = array_merge( $all, $bin[ $_mk ][ $_tk ] );
+		}
+		if ( ! $all ) continue;
+
 		$groups[] = array(
-			'ttl'   => $_td[0],
-			'sub'   => $_td[1],
-			'maker' => null,
-			'posts' => $bin[ $_tk ],
+			'ttl'   => $_t ? $_t->name : 'そのほかのメーカー',
+			'sub'   => '',
+			'maker' => $_t,
+			'posts' => $all,
+			'subs'  => $subs,
 		);
 	}
 
 	/* いちばん上に出す「取り扱いメーカー」の紹介 */
 	$maker_intro = array();
-	$seen_makers = array();
-	foreach ( $q->posts as $_p ) {
-		$_ts = get_the_terms( $_p->ID, 'ymkrf_maker' );
-		if ( $_ts && ! is_wp_error( $_ts ) ) $seen_makers[ $_ts[0]->slug ] = true;
-	}
-	$mkeys3 = array_merge( $maker_order, array_diff( array_keys( $seen_makers ), $maker_order ) );
-	foreach ( $mkeys3 as $_mk ) {
-		if ( empty( $seen_makers[ $_mk ] ) ) continue;
+	foreach ( $mkeys as $_mk ) {
+		if ( empty( $bin[ $_mk ] ) || ! $_mk ) continue;
 		$_t = get_term_by( 'slug', $_mk, 'ymkrf_maker' );
 		if ( ! $_t || is_wp_error( $_t ) ) continue;
 		$maker_intro[] = $_t;
@@ -850,9 +865,13 @@ if ( ! empty( $pn['items'] ) ) :
         ?>
           <a class="p-cat__card" href="<?php the_permalink(); ?>">
             <div class="p-cat__cardph">
-              <?php echo has_post_thumbnail()
-                ? get_the_post_thumbnail( null, 'medium_large', array( 'loading' => 'lazy', 'alt' => '' ) )
-                : ''; ?>
+              <?php /* 写真がまだ入っていない商品は、札の高さがつぶれてしまうので
+                       同じ大きさの仮の枠を出します。写真を入れれば自動で消えます。 */ ?>
+              <?php if ( has_post_thumbnail() ) :
+                echo get_the_post_thumbnail( null, 'medium_large', array( 'loading' => 'lazy', 'alt' => '' ) );
+              else : ?>
+                <span class="p-cat__cardnoph">写真は準備中です</span>
+              <?php endif; ?>
               <?php if ( $d['grade'] ) : ?>
                 <span class="p-cat__cardgrade"><?php echo esc_html( $d['grade'] ); ?></span>
               <?php endif; ?>

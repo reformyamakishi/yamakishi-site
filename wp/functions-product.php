@@ -268,9 +268,6 @@ function ymkrf_product_fields() {
 		'_ymkrf_item'    => array( '商品代（円・税込）',     'number', '例：358000', '★税込の金額を入れてください。数字だけ。カンマや「円」は不要です' ),
 		'_ymkrf_days'    => array( '工期（日数）',     'number', '例：3', '数字だけ。「日」は自動で付きます' ),
 		'_ymkrf_daystext'=> array( '工期の書き方',     'text',   '例：半日', '「半日」など、日数で書けないときだけ入れてください。入れると上の日数より優先されます' ),
-		/* 特徴1〜3。エコキュートでは、ここに「石川県の補助金」「福井県の補助金」と
-		   書くと、ダッシュボードの一覧のその県の欄が〇になります。
-		   県の補助金は一時的なものなので、専用の欄は作らず、この形にしています。 */
 		'_ymkrf_pt1'     => array( '特徴 1',           'text',   '例：お手頃価格', '' ),
 		'_ymkrf_pt2'     => array( '特徴 2',           'text',   '例：収納抜群', '' ),
 		'_ymkrf_pt3'     => array( '特徴 3',           'text',   '例：おそうじ楽々', '' ),
@@ -316,21 +313,8 @@ function ymkrf_product_fields() {
 			array(), array( 'ecocute' ) ),
 		/* 国の補助金は年度で中身が変わるので、金額は入れず「対象かどうか」だけ持ちます。
 		   在庫確認シートの「2026 国 補助金対象」の〇×に合わせてください。 */
-		'_ymkrf_hojo'      => array( '2026年 国の補助金', 'select', '',
-			'「対象」をえらぶと、商品ページに「2026年補助金適用」と出ます',
-			array( '', '対象', '対象外' ), array( 'ecocute' ) ),
-
-		/* ★県の補助金は一時的なものです（2026/09/01 ユーザー指摘）。
-		     予告なく終わることがあるので、お客様のページには出していません。
-		     ダッシュボードの一覧で見るだけにしています。
-		     ページにも出したいときは、終わったらすぐ消せる形にしましょう。 */
-		'_ymkrf_hojo_fukui' => array( '2026年 福井県の補助金', 'select', '',
-			'福井県省エネ家電購入応援キャンペーンの対象かどうかです。'
-			. '★一時的なものなので、お客様のページには出していません',
-			array( '', '対象', '対象外' ), array( 'ecocute' ) ),
-		'_ymkrf_hojo_ishikawa' => array( '2026年 石川県の補助金', 'select', '',
-			'石川県の補助金の対象かどうかです。'
-			. '★一時的なものなので、お客様のページには出していません',
+		'_ymkrf_hojo'      => array( '補助金', 'select', '',
+			'「対象」をえらぶと、商品ページに「補助金適用」と出ます',
 			array( '', '対象', '対象外' ), array( 'ecocute' ) ),
 
 		/* ---- ここから下は社内用です。お客様のページには出ません ----
@@ -391,9 +375,7 @@ function ymkrf_product_field_overrides() {
 			'_ymkrf_catch' => array( 'おすすめ表示', 'text',
 				'例：補助金対象商品！',
 				'商品写真の下に、赤い文字で出ます。'
-				. '「数量限定！早い者勝ち！」「処分アイテム！在庫残り2台！」なども入れられます。空欄でもかまいません。'
-				. '★ここか下の「特徴」に「石川県の補助金」「福井県の補助金」と書くと、'
-				. 'ダッシュボードの一覧のその県の欄が〇になります' ),
+				. '「数量限定！早い者勝ち！」「処分アイテム！在庫残り2台！」なども入れられます。空欄でもかまいません' ),
 			'_ymkrf_name'  => array( '型番', 'text', '例：SRT-S377U',
 				'空欄なら上のタイトルを使います' ),
 			'_ymkrf_size'  => array( '設置方法', 'text', '例：屋外設置',
@@ -430,8 +412,7 @@ function ymkrf_product_field_order() {
 		),
 		'ecocute' => array(
 			'_ymkrf_name', '_ymkrf_tank', '_ymkrf_people', '_ymkrf_grade',
-			'_ymkrf_hojo', '_ymkrf_hojo_fukui', '_ymkrf_hojo_ishikawa',
-			'_ymkrf_accessory', '_ymkrf_remote',
+			'_ymkrf_hojo', '_ymkrf_accessory', '_ymkrf_remote',
 			'_ymkrf_size',
 			'_ymkrf_dim', '_ymkrf_weight', '_ymkrf_pressure',
 			'_ymkrf_work', '_ymkrf_item',
@@ -1063,9 +1044,7 @@ add_filter( 'manage_ymkrf_product_posts_columns', function ( $cols ) {
 			   補助金（国・福井県・石川県）と在庫を出します。
 			   どれも社内で見るための欄で、お客様のページには出ません。 */
 			if ( $cat === 'ecocute' ) {
-				$new['ymkrf_hojo_k']    = '国';
-				$new['ymkrf_hojo_f']    = '福井県';
-				$new['ymkrf_hojo_i']    = '石川県';
+				$new['ymkrf_hojo_k']    = '補助金';
 				$new['ymkrf_stock']     = '在庫数';
 				$new['ymkrf_stockshop'] = '在庫店舗';
 			}
@@ -1089,49 +1068,15 @@ add_action( 'manage_ymkrf_product_posts_custom_column', function ( $col, $post_i
 		$k = get_post_meta( $post_id, '_ymkrf_catch', true );
 		echo $k ? esc_html( $k ) : '<span style="color:#c00">未設定</span>';
 	}
-	/* 補助金（国・福井県・石川県）。〇か—だけの、せまい列です。
+	/* 補助金（国の補助金）。〇か—だけの、せまい列です。
+	   対象にすると、商品ページに「補助金適用」と出ます。
 
-	   ★県の補助金は一時的なものなので、専用の欄は作らず、
-	     「おすすめ表示」か「特徴1〜3」に
-	     「石川県の補助金」のように書いてあれば〇にします
-	     （2026/09/01 ユーザー指示）。
-	     こうしておくと、補助金が終わったときに
-	     その文を消すだけで、ページも一覧も同時に直ります。
-
-	   ★えらぶ欄（対象／対象外）にも値が入っているときは、
-	     「対象だけど、まだページに書いていない」ことが分かるように
-	     うすい〇で出します。書けば、こい〇に変わります。 */
-	$hojo_cols = array(
-		'ymkrf_hojo_k' => array( '_ymkrf_hojo',          '' ),
-		'ymkrf_hojo_f' => array( '_ymkrf_hojo_fukui',    '福井' ),
-		'ymkrf_hojo_i' => array( '_ymkrf_hojo_ishikawa', '石川' ),
-	);
-	if ( isset( $hojo_cols[ $col ] ) ) {
-
-		list( $hkey, $hken ) = $hojo_cols[ $col ];
-		$v = get_post_meta( $post_id, $hkey, true );
-
-		/* 「おすすめ表示」と「特徴1〜3」に書いてあるかを見ます */
-		$written = false;
-		if ( $hken !== '' ) {
-			$txt = '';
-			foreach ( array( '_ymkrf_catch', '_ymkrf_pt1', '_ymkrf_pt2', '_ymkrf_pt3' ) as $tk ) {
-				$txt .= (string) get_post_meta( $post_id, $tk, true ) . ' ';
-			}
-			$written = ( mb_strpos( $txt, $hken ) !== false && mb_strpos( $txt, '補助金' ) !== false );
-		}
-
-		if ( $written ) {
-			echo '<span style="color:#0a6b2d;font-size:17px;font-weight:700"'
-			   . ' title="ページに書いてあります">〇</span>';
-		} elseif ( $v === '対象' ) {
-			if ( $hken === '' ) {
-				/* 国の補助金は、商品ページに自動で出るので、こい〇のままです */
-				echo '<span style="color:#0a6b2d;font-size:17px;font-weight:700" title="対象">〇</span>';
-			} else {
-				echo '<span style="color:#b9c6bd;font-size:17px"'
-				   . ' title="対象ですが、おすすめ表示・特徴にまだ書いていません">〇</span>';
-			}
+	   ※福井県・石川県の補助金の列もいちど作りましたが、
+	     ユーザー指示（2026/09/01）で外しました。 */
+	if ( $col === 'ymkrf_hojo_k' ) {
+		$v = get_post_meta( $post_id, '_ymkrf_hojo', true );
+		if ( $v === '対象' ) {
+			echo '<span style="color:#0a6b2d;font-size:17px;font-weight:700" title="補助金適用">〇</span>';
 		} elseif ( $v === '対象外' ) {
 			echo '<span style="color:#c7c7c7" title="対象外">—</span>';
 		} else {
@@ -2682,7 +2627,7 @@ function ymkrf_product_basicspec( $d ) {
 		$rows[] = array( '補助金対応リモコン', $d['remote'] );
 	}
 	if ( ! empty( $d['hojo'] ) && $d['hojo'] === '対象' ) {
-		$rows[] = array( '2026年 国の補助金', '2026年補助金適用の対象機種です' );
+		$rows[] = array( '補助金', '補助金適用の対象機種です' );
 	}
 
 	return $rows;

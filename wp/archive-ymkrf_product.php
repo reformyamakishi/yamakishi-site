@@ -64,6 +64,8 @@ foreach ( $cards as $slug => $c ) {
 	}
 
 	$c['slug']  = $slug;
+	/* count はいま画面には出していません（2026/09/01 ユーザー指示）。
+	   また出したくなったときのために、数だけは取っておきます。 */
 	$c['count'] = count( (array) $ids );
 	$c['min']   = $min;
 	$ready[]    = $c;
@@ -157,8 +159,11 @@ get_header();
                 </p>
               <?php endif; ?>
 
+              <?php /* 「（○機種）」は出しません（2026/09/01 ユーザー指示）。
+                       機種の数はお客様が選ぶ材料にならず、
+                       数が少ないカテゴリほど品ぞろえが悪く見えてしまうためです。 */ ?>
               <a class="p-price__link" href="<?php echo esc_url( ymkrf_cat_url( $c['slug'] ) ); ?>">
-                <?php echo esc_html( $c['ttl'] ); ?>の商品を見る（<?php echo (int) $c['count']; ?>機種）
+                <?php echo esc_html( $c['ttl'] ); ?>の商品を見る
               </a>
             </div>
 

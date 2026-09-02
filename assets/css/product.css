@@ -940,6 +940,14 @@
 }
 .p-cat__card:hover{ transform:translateY(-2px); box-shadow:0 10px 24px rgba(0,0,0,.10); }
 .p-cat__cardph{ position:relative; background:#f4f4f4; }
+/* 写真がまだ入っていない商品の、仮の枠。
+   写真と同じ高さにして、札の並びが崩れないようにしています。 */
+.p-cat__cardnoph{
+  display:flex; align-items:center; justify-content:center;
+  width:100%; aspect-ratio:7/5; background:#f4f4f4;
+  color:#a9a9a9; font-size:13px; letter-spacing:.06em;
+}
+body.term-lavatory .p-cat__cardnoph{ aspect-ratio:1/1; }
 /* 写真の高さ。3:2 だと文字のほうが重く見えたので、少しだけ縦を出しています。 */
 .p-cat__cardph img{ width:100%; height:auto; aspect-ratio:7/5; object-fit:cover; display:block; }
 /* トイレも、キッチン・お風呂と同じように枠いっぱいに表示します。

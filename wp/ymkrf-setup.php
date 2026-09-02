@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '91' );
+define( 'YMKRF_SETUP_VER', '94' );
 
 /* キッチンの「ヤマキシ標準工事内容」。
    ホームページの一覧表（7項目）と、番号入りの図（8項目）の
@@ -95,8 +95,8 @@ function ymkrf_ecocute_speclist( $ep ) {
 	   対象かどうかは、在庫確認シートの「2026 国 補助金対象」に合わせています。 */
 	if ( ! empty( $ep['hojo'] ) ) {
 		$rows[] = array(
-			'ttl'  => '2026年補助金適用',
-			'body' => "2026年の国の補助金の対象になる機種です。\n"
+			'ttl'  => '補助金適用',
+			'body' => "国の補助金の対象になる機種です。\n"
 			        . "年度によって、金額も申請のしめきりも変わります。\n"
 			        . "そのときにお使いいただけるものを、お見積りの際にご案内します。",
 		);
@@ -7362,45 +7362,29 @@ TOTOのセフィオンテクト、LIXILのアクアセラミック、Panasonic�
 		update_option( 'ymkrf_eco_stock_ver', '1' );
 	}
 
-	/* 県の補助金（福井県・石川県）を入れます（1回だけ）。2026/09/01
-	   在庫確認シートの
-	     「2026福井県省エネ家電購入応援キャンペーン対象」
-	     「2026 石川県 補助金対象」
-	   の2つの欄をそのまま写しています。
+	/* 県の補助金（福井県・石川県）は、いちど入れましたが
+	   ユーザー指示（2026/09/01）で外しました。
+	   商品に残っている欄を消します（1回だけ）。
 
-	   ★県の補助金は一時的なものです（ユーザー指摘）。
-	     予告なく終わることがあるので、お客様のページには出していません。
-	     ダッシュボードの「商品 → エコキュート」の一覧で見るだけです。 */
-	if ( get_option( 'ymkrf_eco_ken_ver' ) !== '1' ) {
-
-		$eco_ken = array(
-			/* スラッグ => 福井県, 石川県 */
-			'srt-w466'   => array( '対象', '対象外' ),
-			'srt-s376ua' => array( '対象', '対象外' ),
-			'srt-s466ua' => array( '対象', '対象外' ),
-			'srt-s376u'  => array( '対象', '対象'   ),
-			'srt-s376'   => array( '対象', '対象'   ),
-			'srt-s466'   => array( '対象', '対象'   ),
-			'srt-n466-2' => array( '対象', '対象'   ),
-			'srt-s377u'  => array( '対象', '対象'   ),
-			'srt-s467u'  => array( '対象', '対象'   ),
-			'srt-s377'   => array( '対象', '対象'   ),
-			'srt-s467'   => array( '対象', '対象'   ),
-			'he-ns46lqs' => array( '対象', '対象外' ),
-			'he-s37lqs'  => array( '対象', '対象'   ),
-			'he-s46lqs'  => array( '対象', '対象'   ),
+	   国の補助金（_ymkrf_hojo）は、そのまま使っています。 */
+	if ( get_option( 'ymkrf_eco_ken_ver' ) !== '2' ) {
+		$eco_ken_slugs = array(
+			'srt-w466', 'srt-s376ua', 'srt-s466ua', 'srt-s376u', 'srt-s376',
+			'srt-s466', 'srt-n466-2', 'srt-s377u', 'srt-s467u', 'srt-s377',
+			'srt-s467', 'he-ns46lqs', 'he-s37lqs', 'he-s46lqs',
 		);
-
 		$done_ken = 0;
-		foreach ( $eco_ken as $ns => $nv ) {
+		foreach ( $eco_ken_slugs as $ns ) {
 			$np = get_page_by_path( $ns, OBJECT, 'ymkrf_product' );
 			if ( ! $np ) continue;
-			update_post_meta( $np->ID, '_ymkrf_hojo_fukui',    $nv[0] );
-			update_post_meta( $np->ID, '_ymkrf_hojo_ishikawa', $nv[1] );
+			if ( get_post_meta( $np->ID, '_ymkrf_hojo_fukui', true ) === ''
+				&& get_post_meta( $np->ID, '_ymkrf_hojo_ishikawa', true ) === '' ) continue;
+			delete_post_meta( $np->ID, '_ymkrf_hojo_fukui' );
+			delete_post_meta( $np->ID, '_ymkrf_hojo_ishikawa' );
 			$done_ken++;
 		}
-		if ( $done_ken ) $log[] = 'エコキュート' . $done_ken . '機種に県の補助金（福井県・石川県）を入れました';
-		update_option( 'ymkrf_eco_ken_ver', '1' );
+		if ( $done_ken ) $log[] = 'エコキュート' . $done_ken . '機種から県の補助金の欄を消しました';
+		update_option( 'ymkrf_eco_ken_ver', '2' );
 	}
 
 	/* 在庫数と在庫店舗を入れます（1回だけ）。2026/09/01
@@ -7446,17 +7430,35 @@ TOTOのセフィオンテクト、LIXILのアクアセラミック、Panasonic�
 		update_option( 'ymkrf_eco_stockdata_ver', '1' );
 	}
 
-	/* 「主な機能」の見出しを「2026年補助金適用」に入れ直します（1回だけ） */
-	if ( get_option( 'ymkrf_eco_spec_ver' ) !== '1' ) {
+	/* 「主な機能」の見出しを「補助金適用」に入れ直します（1回だけ）。
+	   2026/09/01 ユーザー指示で「2026年」を外しました。
+	   年をつけると、年が変わるたびに全機種を直すことになるためです。 */
+	if ( get_option( 'ymkrf_eco_spec_ver' ) !== '2' ) {
+
+		/* 商品ごとに書いてある「タイプ」と「補助金」から作り直します。
+		   下書きの商品もふくめて、エコキュート全部が対象です。 */
+		$eco_all = get_posts( array(
+			'post_type'      => 'ymkrf_product',
+			'post_status'    => array( 'publish', 'draft', 'pending', 'private' ),
+			'posts_per_page' => -1,
+			'fields'         => 'ids',
+			'tax_query'      => array( array(
+				'taxonomy' => 'ymkrf_product_cat',
+				'field'    => 'slug',
+				'terms'    => 'ecocute',
+			) ),
+		) );
+
 		$done_es = 0;
-		foreach ( $eco_products as $ep3 ) {
-			$p3 = get_page_by_path( $ep3['slug'], OBJECT, 'ymkrf_product' );
-			if ( ! $p3 ) continue;
-			update_post_meta( $p3->ID, '_ymkrf_speclist', ymkrf_ecocute_speclist( $ep3 ) );
+		foreach ( (array) $eco_all as $eid ) {
+			update_post_meta( $eid, '_ymkrf_speclist', ymkrf_ecocute_speclist( array(
+				'grade' => get_post_meta( $eid, '_ymkrf_grade', true ),
+				'hojo'  => ( get_post_meta( $eid, '_ymkrf_hojo', true ) === '対象' ),
+			) ) );
 			$done_es++;
 		}
 		if ( $done_es ) $log[] = 'エコキュート' . $done_es . '機種の「主な機能」を入れ直しました';
-		update_option( 'ymkrf_eco_spec_ver', '1' );
+		update_option( 'ymkrf_eco_spec_ver', '2' );
 	}
 
 	/* 在庫が4台以上あって、まだ載っていなかった機種です。
@@ -7554,6 +7556,33 @@ TOTOのセフィオンテクト、LIXILのアクアセラミック、Panasonic�
 	if ( $eco_dmade ) {
 		$log[] = 'エコキュートを' . $eco_dmade . '機種、下書きで追加しました。'
 		       . '価格を入れて「公開」にすると一覧に出ます';
+	}
+
+	/* 下書きで足した7機種を公開にします（1回だけ）。2026/09/01 ユーザー指示
+	   「価格と商品写真は、あとで自分で足す」とのことなので、
+	   価格・写真が空のまま先に出します。
+
+	   ★SRT-W466 は、ここにふくめていません。
+	     こちらは「在庫1台で、合計数4以上の条件から外れたから」下書きにしたもので、
+	     価格待ちの7機種とは理由がちがうためです。
+	     出したいときは、ダッシュボードで「公開」に変えてください。 */
+	if ( get_option( 'ymkrf_eco_pub_ver' ) !== '1' ) {
+		$eco_pub = array(
+			'srt-s376u', 'srt-s376', 'srt-s466',
+			'srt-s377', 'srt-s467', 'srt-n466-2', 'he-ns46lqs',
+		);
+		$done_pub = 0;
+		foreach ( $eco_pub as $ps ) {
+			$pp2 = get_page_by_path( $ps, OBJECT, 'ymkrf_product' );
+			if ( ! $pp2 || $pp2->post_status !== 'draft' ) continue;
+			wp_update_post( array( 'ID' => $pp2->ID, 'post_status' => 'publish' ) );
+			$done_pub++;
+		}
+		if ( $done_pub ) {
+			flush_rewrite_rules();
+			$log[] = 'エコキュート' . $done_pub . '機種を公開にしました（価格・写真はこれからです）';
+		}
+		update_option( 'ymkrf_eco_pub_ver', '1' );
 	}
 
 	/* エコキュートのメーカーの「説明」を入れます（1回だけ）。
