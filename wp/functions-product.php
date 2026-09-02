@@ -268,6 +268,9 @@ function ymkrf_product_fields() {
 		'_ymkrf_item'    => array( '商品代（円・税込）',     'number', '例：358000', '★税込の金額を入れてください。数字だけ。カンマや「円」は不要です' ),
 		'_ymkrf_days'    => array( '工期（日数）',     'number', '例：3', '数字だけ。「日」は自動で付きます' ),
 		'_ymkrf_daystext'=> array( '工期の書き方',     'text',   '例：半日', '「半日」など、日数で書けないときだけ入れてください。入れると上の日数より優先されます' ),
+		/* 特徴1〜3。エコキュートでは、ここに「石川県の補助金」「福井県の補助金」と
+		   書くと、ダッシュボードの一覧のその県の欄が〇になります。
+		   県の補助金は一時的なものなので、専用の欄は作らず、この形にしています。 */
 		'_ymkrf_pt1'     => array( '特徴 1',           'text',   '例：お手頃価格', '' ),
 		'_ymkrf_pt2'     => array( '特徴 2',           'text',   '例：収納抜群', '' ),
 		'_ymkrf_pt3'     => array( '特徴 3',           'text',   '例：おそうじ楽々', '' ),
@@ -304,6 +307,44 @@ function ymkrf_product_fields() {
 			array(), array( 'ecocute' ) ),
 		'_ymkrf_accessory' => array( '付属品', 'text', '例：脚部カバー／ベーシックリモコン',
 			'いくつかあるときは「／」で区切ってください',
+			array(), array( 'ecocute' ) ),
+		/* 国の補助金は、ネットワーク対応リモコンが付いている場合だけ対象になります。
+		   そのため「補助金対応リモコン」として出しています。
+		   （在庫確認シートの「補助金対応 リモコン品番」の欄と同じものです） */
+		'_ymkrf_remote'    => array( '補助金対応リモコン品番', 'text', '例：RMCB-F7SE',
+			'標準仕様の表に「補助金対応リモコン」として出ます。空欄のときは、この項目が出ません',
+			array(), array( 'ecocute' ) ),
+		/* 国の補助金は年度で中身が変わるので、金額は入れず「対象かどうか」だけ持ちます。
+		   在庫確認シートの「2026 国 補助金対象」の〇×に合わせてください。 */
+		'_ymkrf_hojo'      => array( '2026年 国の補助金', 'select', '',
+			'「対象」をえらぶと、商品ページに「2026年補助金適用」と出ます',
+			array( '', '対象', '対象外' ), array( 'ecocute' ) ),
+
+		/* ★県の補助金は一時的なものです（2026/09/01 ユーザー指摘）。
+		     予告なく終わることがあるので、お客様のページには出していません。
+		     ダッシュボードの一覧で見るだけにしています。
+		     ページにも出したいときは、終わったらすぐ消せる形にしましょう。 */
+		'_ymkrf_hojo_fukui' => array( '2026年 福井県の補助金', 'select', '',
+			'福井県省エネ家電購入応援キャンペーンの対象かどうかです。'
+			. '★一時的なものなので、お客様のページには出していません',
+			array( '', '対象', '対象外' ), array( 'ecocute' ) ),
+		'_ymkrf_hojo_ishikawa' => array( '2026年 石川県の補助金', 'select', '',
+			'石川県の補助金の対象かどうかです。'
+			. '★一時的なものなので、お客様のページには出していません',
+			array( '', '対象', '対象外' ), array( 'ecocute' ) ),
+
+		/* ---- ここから下は社内用です。お客様のページには出ません ----
+		   Gドライブの「住設機器　在庫確認＆発注確認」を見て入れています。
+		   シートは日々変わるので、たまに入れ直してください。 */
+		'_ymkrf_stock'      => array( '在庫数（社内用）', 'number', '例：12',
+			'★お客様のページには出ません。ダッシュボードの一覧にだけ出ます',
+			array(), array( 'ecocute' ) ),
+		'_ymkrf_stockshop'  => array( '在庫店舗（社内用）', 'text',
+			'例：小松3台／野々市2台／羽咋7台',
+			'★お客様のページには出ません。「／」で区切って書いてください',
+			array(), array( 'ecocute' ) ),
+		'_ymkrf_stockdate'  => array( '在庫の確認日（社内用）', 'text', '例：2026/09/01',
+			'★お客様のページには出ません。在庫数をいつ写したかの目印です',
 			array(), array( 'ecocute' ) ),
 	);
 }
@@ -350,7 +391,9 @@ function ymkrf_product_field_overrides() {
 			'_ymkrf_catch' => array( 'おすすめ表示', 'text',
 				'例：補助金対象商品！',
 				'商品写真の下に、赤い文字で出ます。'
-				. '「数量限定！早い者勝ち！」「処分アイテム！在庫残り2台！」なども入れられます。空欄でもかまいません' ),
+				. '「数量限定！早い者勝ち！」「処分アイテム！在庫残り2台！」なども入れられます。空欄でもかまいません。'
+				. '★ここか下の「特徴」に「石川県の補助金」「福井県の補助金」と書くと、'
+				. 'ダッシュボードの一覧のその県の欄が〇になります' ),
 			'_ymkrf_name'  => array( '型番', 'text', '例：SRT-S377U',
 				'空欄なら上のタイトルを使います' ),
 			'_ymkrf_size'  => array( '設置方法', 'text', '例：屋外設置',
@@ -387,7 +430,8 @@ function ymkrf_product_field_order() {
 		),
 		'ecocute' => array(
 			'_ymkrf_name', '_ymkrf_tank', '_ymkrf_people', '_ymkrf_grade',
-			'_ymkrf_accessory',
+			'_ymkrf_hojo', '_ymkrf_hojo_fukui', '_ymkrf_hojo_ishikawa',
+			'_ymkrf_accessory', '_ymkrf_remote',
 			'_ymkrf_size',
 			'_ymkrf_dim', '_ymkrf_weight', '_ymkrf_pressure',
 			'_ymkrf_work', '_ymkrf_item',
@@ -396,6 +440,8 @@ function ymkrf_product_field_order() {
 			'_ymkrf_pt1', '_ymkrf_pt2', '_ymkrf_pt3',
 			'_ymkrf_caution',
 			'_ymkrf_order',
+			/* 社内用（お客様のページには出ません） */
+			'_ymkrf_stock', '_ymkrf_stockshop', '_ymkrf_stockdate',
 		),
 	);
 }
@@ -1006,16 +1052,26 @@ add_filter( 'manage_ymkrf_product_posts_columns', function ( $cols ) {
 				$new['title'] = '型番';
 			}
 
-			$new['ymkrf_thumb'] = '写真';
+			/* エコキュートは列が多くなるので、写真は出しません
+			   （2026/09/01 ユーザー指示） */
+			if ( $cat !== 'ecocute' ) $new['ymkrf_thumb'] = '写真';
 
-			/* 給湯器は4つの種類（ガス給湯器・エコジョーズ…）、
-			   エコキュートはタンク容量を出します */
-			if ( $cat === 'boiler' )  $new['ymkrf_kind'] = '種類';
-			if ( $cat === 'ecocute' ) $new['ymkrf_kind'] = 'タンク容量';
+			/* 給湯器は4つの種類（ガス給湯器・エコジョーズ…）を出します */
+			if ( $cat === 'boiler' ) $new['ymkrf_kind'] = '種類';
 
-			if ( $cat === 'boiler' )       $new['ymkrf_grade'] = 'ふろ機能';
-			elseif ( $cat === 'ecocute' )  $new['ymkrf_grade'] = 'タイプ';
-			else                           $new['ymkrf_grade'] = 'グレード';
+			/* エコキュートは、タンク容量とタイプのかわりに
+			   補助金（国・福井県・石川県）と在庫を出します。
+			   どれも社内で見るための欄で、お客様のページには出ません。 */
+			if ( $cat === 'ecocute' ) {
+				$new['ymkrf_hojo_k']    = '国';
+				$new['ymkrf_hojo_f']    = '福井県';
+				$new['ymkrf_hojo_i']    = '石川県';
+				$new['ymkrf_stock']     = '在庫数';
+				$new['ymkrf_stockshop'] = '在庫店舗';
+			}
+
+			if ( $cat === 'boiler' )      $new['ymkrf_grade'] = 'ふろ機能';
+			elseif ( $cat !== 'ecocute' ) $new['ymkrf_grade'] = 'グレード';
 			$new['ymkrf_price'] = '込み価格';
 		}
 	}
@@ -1029,24 +1085,78 @@ add_action( 'manage_ymkrf_product_posts_custom_column', function ( $col, $post_i
 			: '<span style="color:#c00">未設定</span>';
 	}
 	if ( $col === 'ymkrf_kind' ) {
-		$cat = isset( $_GET['ymkrf_product_cat'] )
-			? sanitize_title( wp_unslash( $_GET['ymkrf_product_cat'] ) ) : '';
+		/* 給湯器の種類（キャッチコピーの欄に入っています） */
+		$k = get_post_meta( $post_id, '_ymkrf_catch', true );
+		echo $k ? esc_html( $k ) : '<span style="color:#c00">未設定</span>';
+	}
+	/* 補助金（国・福井県・石川県）。〇か—だけの、せまい列です。
 
-		if ( $cat === 'ecocute' ) {
-			/* エコキュートはタンク容量と対象人数 */
-			$t = get_post_meta( $post_id, '_ymkrf_tank', true );
-			$n = get_post_meta( $post_id, '_ymkrf_people', true );
-			if ( $t ) {
-				echo esc_html( $t ) . 'L';
-				if ( $n ) echo '<br><small style="color:#666">' . esc_html( $n ) . '</small>';
-			} else {
-				echo '<span style="color:#c00">未設定</span>';
+	   ★県の補助金は一時的なものなので、専用の欄は作らず、
+	     「おすすめ表示」か「特徴1〜3」に
+	     「石川県の補助金」のように書いてあれば〇にします
+	     （2026/09/01 ユーザー指示）。
+	     こうしておくと、補助金が終わったときに
+	     その文を消すだけで、ページも一覧も同時に直ります。
+
+	   ★えらぶ欄（対象／対象外）にも値が入っているときは、
+	     「対象だけど、まだページに書いていない」ことが分かるように
+	     うすい〇で出します。書けば、こい〇に変わります。 */
+	$hojo_cols = array(
+		'ymkrf_hojo_k' => array( '_ymkrf_hojo',          '' ),
+		'ymkrf_hojo_f' => array( '_ymkrf_hojo_fukui',    '福井' ),
+		'ymkrf_hojo_i' => array( '_ymkrf_hojo_ishikawa', '石川' ),
+	);
+	if ( isset( $hojo_cols[ $col ] ) ) {
+
+		list( $hkey, $hken ) = $hojo_cols[ $col ];
+		$v = get_post_meta( $post_id, $hkey, true );
+
+		/* 「おすすめ表示」と「特徴1〜3」に書いてあるかを見ます */
+		$written = false;
+		if ( $hken !== '' ) {
+			$txt = '';
+			foreach ( array( '_ymkrf_catch', '_ymkrf_pt1', '_ymkrf_pt2', '_ymkrf_pt3' ) as $tk ) {
+				$txt .= (string) get_post_meta( $post_id, $tk, true ) . ' ';
 			}
-		} else {
-			/* 給湯器の種類（キャッチコピーの欄に入っています） */
-			$k = get_post_meta( $post_id, '_ymkrf_catch', true );
-			echo $k ? esc_html( $k ) : '<span style="color:#c00">未設定</span>';
+			$written = ( mb_strpos( $txt, $hken ) !== false && mb_strpos( $txt, '補助金' ) !== false );
 		}
+
+		if ( $written ) {
+			echo '<span style="color:#0a6b2d;font-size:17px;font-weight:700"'
+			   . ' title="ページに書いてあります">〇</span>';
+		} elseif ( $v === '対象' ) {
+			if ( $hken === '' ) {
+				/* 国の補助金は、商品ページに自動で出るので、こい〇のままです */
+				echo '<span style="color:#0a6b2d;font-size:17px;font-weight:700" title="対象">〇</span>';
+			} else {
+				echo '<span style="color:#b9c6bd;font-size:17px"'
+				   . ' title="対象ですが、おすすめ表示・特徴にまだ書いていません">〇</span>';
+			}
+		} elseif ( $v === '対象外' ) {
+			echo '<span style="color:#c7c7c7" title="対象外">—</span>';
+		} else {
+			echo '<span style="color:#c00;font-size:11px" title="まだ入っていません">未</span>';
+		}
+	}
+
+	/* 在庫（社内用）。Gドライブの在庫確認シートを写したものです */
+	if ( $col === 'ymkrf_stock' ) {
+		$v = get_post_meta( $post_id, '_ymkrf_stock', true );
+		$d = get_post_meta( $post_id, '_ymkrf_stockdate', true );
+		if ( $v === '' || $v === null ) {
+			echo '<span style="color:#a7aaad">—</span>';
+		} else {
+			$n = (int) $v;
+			$c = $n >= 4 ? '#0a6b2d' : '#c00';
+			echo '<strong style="color:' . $c . '">' . esc_html( number_format( $n ) ) . '台</strong>';
+			if ( $d ) echo '<br><small style="color:#a7aaad">' . esc_html( $d ) . '現在</small>';
+		}
+	}
+	if ( $col === 'ymkrf_stockshop' ) {
+		$v = get_post_meta( $post_id, '_ymkrf_stockshop', true );
+		echo $v
+			? '<small>' . esc_html( str_replace( '／', ' / ', $v ) ) . '</small>'
+			: '<span style="color:#a7aaad">—</span>';
 	}
 	if ( $col === 'ymkrf_grade' ) {
 		$g = get_post_meta( $post_id, '_ymkrf_grade', true );
@@ -1161,6 +1271,50 @@ add_filter( 'posts_clauses', function ( $clauses, $q ) {
 	/* 並び順に数字が入っていればそれを、無ければグレードの序列を使います */
 	$gs = "CAST( COALESCE( NULLIF( ymkrf_od.meta_value, '' ), ymkrf_gs.meta_value, 999 ) AS SIGNED )";
 	$pr = "CAST( COALESCE( NULLIF( ymkrf_ot.meta_value, '' ), 0 ) AS SIGNED )";
+
+	/* エコキュートの一覧は「メーカーごと → その中は価格の安い順」にします。
+	   （2026/09/01 ユーザー指示。ダッシュボードの一覧だけです）
+
+	   ・メーカーは、エコキュートのページと同じ 三菱電機 → Panasonic → 日立 → ダイキン の順
+	   ・価格が空の商品（下書き）は、そのメーカーのいちばん下に置きます
+	   ・見出しを押したときは、これまでどおりその見出しの順になります */
+	$eco_list = ( ! $front && ! $q->get( 'orderby' )
+		&& isset( $_GET['ymkrf_product_cat'] )
+		&& sanitize_title( wp_unslash( $_GET['ymkrf_product_cat'] ) ) === 'ecocute' );
+
+	if ( $eco_list ) {
+
+		$mk_order = array( 'mitsubishi', 'panasonic', 'hitachi', 'daikin' );
+		$cases    = '';
+		foreach ( $mk_order as $n => $mk ) {
+			$t = get_term_by( 'slug', $mk, 'ymkrf_maker' );
+			if ( $t && ! is_wp_error( $t ) ) {
+				$cases .= $wpdb->prepare( ' WHEN %d THEN %d ', $t->term_id, $n );
+			}
+		}
+		/* 表にないメーカーは、うしろにまわします。
+
+		   ★MIN( ) で囲んでいるのが大事なところです。
+		     1つの商品に「商品カテゴリ」「メーカー」「展示店舗」の行が
+		     ぶらさがっているので、そのまま並べるとメーカー以外の行
+		     （＝空っぽ）を見てしまい、ぜんぶ「99」になってしまいます。
+		     いちばん小さい値を取れば、かならずメーカーの行が選ばれます。 */
+		$mkexp = $cases ? "MIN( CASE ymkrf_mk.term_id {$cases} ELSE 99 END )" : '99';
+
+		$clauses['join'] .= " LEFT JOIN {$wpdb->term_relationships} AS ymkrf_tr"
+		                  . " ON ( ymkrf_tr.object_id = {$wpdb->posts}.ID )"
+		                  . " LEFT JOIN {$wpdb->term_taxonomy} AS ymkrf_mk"
+		                  . " ON ( ymkrf_mk.term_taxonomy_id = ymkrf_tr.term_taxonomy_id"
+		                  . " AND ymkrf_mk.taxonomy = 'ymkrf_maker' )";
+
+		/* 価格が空（＝0）の商品は、そのメーカーのいちばん下へ */
+		$noprice = "CASE WHEN {$pr} > 0 THEN 0 ELSE 1 END";
+
+		$clauses['groupby'] = "{$wpdb->posts}.ID";
+		$clauses['orderby'] = "{$mkexp} ASC, {$noprice} ASC, {$pr} ASC, {$wpdb->posts}.post_title ASC";
+
+		return $clauses;
+	}
 
 	if ( $by === 'ymkrf_price' ) {
 		/* 「込み価格」の見出しを押したとき */
@@ -1695,6 +1849,8 @@ function ymkrf_product_data( $post_id = null ) {
 		'tank'      => $m( '_ymkrf_tank' ),
 		'people'    => $m( '_ymkrf_people' ),
 		'accessory' => $m( '_ymkrf_accessory' ),
+		'remote'    => $m( '_ymkrf_remote' ),
+		'hojo'      => $m( '_ymkrf_hojo' ),
 		'images'   => $rep( '_ymkrf_images' ),
 		'colors'   => $rep( '_ymkrf_colors' ),
 		'tops'     => $rep( '_ymkrf_tops' ),
@@ -2518,9 +2674,15 @@ function ymkrf_product_basicspec( $d ) {
 	if ( ! empty( $d['dim'] ) )    $rows[] = array( '寸法', $d['dim'] . '（mm）' );
 	if ( ! empty( $d['weight'] ) ) $rows[] = array( '質量', $d['weight'] . 'kg' );
 
-	/* 付属品はエコキュートだけ。いちばん下に出します */
+	/* 付属品・リモコン品番・補助金はエコキュートだけ。いちばん下に出します */
 	if ( ! empty( $d['accessory'] ) ) {
 		$rows[] = array( '付属品', str_replace( array( '／', '/' ), "\n", $d['accessory'] ) );
+	}
+	if ( ! empty( $d['remote'] ) ) {
+		$rows[] = array( '補助金対応リモコン', $d['remote'] );
+	}
+	if ( ! empty( $d['hojo'] ) && $d['hojo'] === '対象' ) {
+		$rows[] = array( '2026年 国の補助金', '2026年補助金適用の対象機種です' );
 	}
 
 	return $rows;

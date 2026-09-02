@@ -14,7 +14,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_SETUP_VER', '87' );
+define( 'YMKRF_SETUP_VER', '91' );
 
 /* キッチンの「ヤマキシ標準工事内容」。
    ホームページの一覧表（7項目）と、番号入りの図（8項目）の
@@ -91,11 +91,12 @@ function ymkrf_ecocute_speclist( $ep ) {
 		array( 'ttl' => '主な機能', 'body' => implode( "\n", $feat ) ),
 	);
 
-	/* 補助金は年度で内容が変わるので、金額や条件は書きません。 */
+	/* 補助金は年度で内容が変わるので、金額や条件は書きません。
+	   対象かどうかは、在庫確認シートの「2026 国 補助金対象」に合わせています。 */
 	if ( ! empty( $ep['hojo'] ) ) {
 		$rows[] = array(
-			'ttl'  => '補助金の対象になる機種です',
-			'body' => "国や自治体の補助金の対象になる機種です。\n"
+			'ttl'  => '2026年補助金適用',
+			'body' => "2026年の国の補助金の対象になる機種です。\n"
 			        . "年度によって、金額も申請のしめきりも変わります。\n"
 			        . "そのときにお使いいただけるものを、お見積りの際にご案内します。",
 		);
@@ -7153,7 +7154,7 @@ TOTOのセフィオンテクト、LIXILのアクアセラミック、Panasonic�
 			'slug' => 'srt-s376ua', 'title' => 'SRT-S376UA',
 			'maker' => 'mitsubishi', 'tank' => '370', 'people' => '3〜4人向け',
 			'grade' => 'フルオート・高圧',
-			'catch' => '処分アイテム！在庫残り2台！',
+			'catch' => '処分アイテム！',
 			'note'  => '無くなり次第終了となります。',
 			'total' => 428000, 'order' => 20, 'hojo' => false, 'kouatsu' => true,
 			'alt'   => '三菱電機 エコキュート SRT-S376UA 本体とヒートポンプ',
@@ -7164,7 +7165,7 @@ TOTOのセフィオンテクト、LIXILのアクアセラミック、Panasonic�
 			'slug' => 'srt-s466ua', 'title' => 'SRT-S466UA',
 			'maker' => 'mitsubishi', 'tank' => '460', 'people' => '4〜5人向け',
 			'grade' => 'フルオート・高圧',
-			'catch' => '処分アイテム！在庫残り1台！',
+			'catch' => '処分アイテム！',
 			'note'  => '無くなり次第終了となります。',
 			'total' => 438000, 'order' => 30, 'hojo' => false, 'kouatsu' => true,
 			'alt'   => '三菱電機 エコキュート SRT-S466UA 本体とヒートポンプ',
@@ -7290,6 +7291,269 @@ TOTOのセフィオンテクト、LIXILのアクアセラミック、Panasonic�
 		update_post_meta( $epx->ID, '_ymkrf_item',  $ep2['total'] );
 		update_post_meta( $epx->ID, '_ymkrf_total', $ep2['total'] );
 		$log[] = $ep2['title'] . 'の価格を入れ直しました';
+	}
+
+	/* ------------------------------------------------------------
+	   3-w2. 在庫確認シートに合わせた追加　2026/09/01
+
+	        Gドライブの「住設機器　在庫確認＆発注確認」の
+	        エコキュート在庫表（合計数・2026 国 補助金対象・
+	        補助金対応リモコン品番）を見て入れています。
+
+	        ★合計数が4以上の機種だけを対象にしています（ユーザー指示）。
+	        ★もともと載っていた7機種いがいは、
+	          価格が未確認なので「価格は空・下書き」で登録しています。
+	          価格を入れて「公開」に変えると、一覧に出ます。
+	   ------------------------------------------------------------ */
+
+	/* すでに載っている機種に、補助金とリモコン品番を入れます（1回だけ）。
+	   〇×は在庫確認シートの「2026 国 補助金対象」のとおりです。 */
+	if ( get_option( 'ymkrf_eco_hojo_ver' ) !== '1' ) {
+
+		$eco_hojo = array(
+			/* スラッグ => 補助金（対象／対象外）, リモコン品番 */
+			'he-s37lqs'  => array( '対象',   'HE-TQWLW' ),
+			'he-s46lqs'  => array( '対象',   'HE-TQWLW' ),
+			'srt-s377u'  => array( '対象',   'RMCB-F7SE' ),
+			'srt-s467u'  => array( '対象',   'RMCB-F7SE' ),
+			'srt-w466'   => array( '対象外', '' ),
+			'srt-s376ua' => array( '対象外', '' ),
+			'srt-s466ua' => array( '対象外', '' ),
+		);
+
+		$done_hojo = 0;
+		foreach ( $eco_hojo as $hs => $hv ) {
+			$hp = get_page_by_path( $hs, OBJECT, 'ymkrf_product' );
+			if ( ! $hp ) continue;
+			update_post_meta( $hp->ID, '_ymkrf_hojo',   $hv[0] );
+			update_post_meta( $hp->ID, '_ymkrf_remote', $hv[1] );
+			$done_hojo++;
+		}
+		if ( $done_hojo ) $log[] = 'エコキュート' . $done_hojo . '機種に補助金・リモコン品番を入れました';
+		update_option( 'ymkrf_eco_hojo_ver', '1' );
+	}
+
+	/* SRT-W466 を下書きにもどします（1回だけ）。2026/09/01 ユーザー指示
+	   在庫確認シートの合計数が1台で、「合計数4以上」の条件から外れたためです。
+	   消してはいません。在庫がもどったら「公開」に変えれば、また一覧に出ます。 */
+	if ( get_option( 'ymkrf_eco_w466_ver' ) !== '1' ) {
+		$w466 = get_page_by_path( 'srt-w466', OBJECT, 'ymkrf_product' );
+		if ( $w466 && $w466->post_status === 'publish' ) {
+			wp_update_post( array( 'ID' => $w466->ID, 'post_status' => 'draft' ) );
+			$log[] = 'SRT-W466 を下書きにもどしました（在庫1台のため）';
+		}
+		update_option( 'ymkrf_eco_w466_ver', '1' );
+	}
+
+	/* 赤いふだから「在庫残り○台！」の台数を外します（1回だけ）。2026/09/01 ユーザー指示
+	   PDFの「残り2台／残り1台」のままになっていましたが、
+	   在庫確認シートでは9台・12台あり、合っていなかったためです。
+	   台数は動くので、「処分アイテム！」だけ残します。
+	   台数を出したいときは、登録ぺージの「おすすめ表示」に書いてください。 */
+	if ( get_option( 'ymkrf_eco_stock_ver' ) !== '1' ) {
+		$done_st = 0;
+		foreach ( array( 'srt-s376ua', 'srt-s466ua' ) as $ss ) {
+			$sp = get_page_by_path( $ss, OBJECT, 'ymkrf_product' );
+			if ( ! $sp ) continue;
+			update_post_meta( $sp->ID, '_ymkrf_catch', '処分アイテム！' );
+			$done_st++;
+		}
+		if ( $done_st ) $log[] = 'エコキュート' . $done_st . '機種の「在庫残り○台！」を外しました';
+		update_option( 'ymkrf_eco_stock_ver', '1' );
+	}
+
+	/* 県の補助金（福井県・石川県）を入れます（1回だけ）。2026/09/01
+	   在庫確認シートの
+	     「2026福井県省エネ家電購入応援キャンペーン対象」
+	     「2026 石川県 補助金対象」
+	   の2つの欄をそのまま写しています。
+
+	   ★県の補助金は一時的なものです（ユーザー指摘）。
+	     予告なく終わることがあるので、お客様のページには出していません。
+	     ダッシュボードの「商品 → エコキュート」の一覧で見るだけです。 */
+	if ( get_option( 'ymkrf_eco_ken_ver' ) !== '1' ) {
+
+		$eco_ken = array(
+			/* スラッグ => 福井県, 石川県 */
+			'srt-w466'   => array( '対象', '対象外' ),
+			'srt-s376ua' => array( '対象', '対象外' ),
+			'srt-s466ua' => array( '対象', '対象外' ),
+			'srt-s376u'  => array( '対象', '対象'   ),
+			'srt-s376'   => array( '対象', '対象'   ),
+			'srt-s466'   => array( '対象', '対象'   ),
+			'srt-n466-2' => array( '対象', '対象'   ),
+			'srt-s377u'  => array( '対象', '対象'   ),
+			'srt-s467u'  => array( '対象', '対象'   ),
+			'srt-s377'   => array( '対象', '対象'   ),
+			'srt-s467'   => array( '対象', '対象'   ),
+			'he-ns46lqs' => array( '対象', '対象外' ),
+			'he-s37lqs'  => array( '対象', '対象'   ),
+			'he-s46lqs'  => array( '対象', '対象'   ),
+		);
+
+		$done_ken = 0;
+		foreach ( $eco_ken as $ns => $nv ) {
+			$np = get_page_by_path( $ns, OBJECT, 'ymkrf_product' );
+			if ( ! $np ) continue;
+			update_post_meta( $np->ID, '_ymkrf_hojo_fukui',    $nv[0] );
+			update_post_meta( $np->ID, '_ymkrf_hojo_ishikawa', $nv[1] );
+			$done_ken++;
+		}
+		if ( $done_ken ) $log[] = 'エコキュート' . $done_ken . '機種に県の補助金（福井県・石川県）を入れました';
+		update_option( 'ymkrf_eco_ken_ver', '1' );
+	}
+
+	/* 在庫数と在庫店舗を入れます（1回だけ）。2026/09/01
+	   Gドライブの「住設機器　在庫確認＆発注確認」のエコキュート在庫表を写したものです。
+
+	   ★これは社内用です。お客様のページには出ません。
+	     ダッシュボードの「商品 → エコキュート」の一覧にだけ出ます。
+	   ★シートは毎日変わります。ここは写した時点のものなので、
+	     新しくしたいときは、その商品の登録ぺージで直接直してください。
+	     （この処理は1回きりなので、直したものが上書きされることはありません） */
+	if ( get_option( 'ymkrf_eco_stockdata_ver' ) !== '1' ) {
+
+		$eco_stock_date = '2026/09/01';
+
+		$eco_stock = array(
+			/* スラッグ => 合計数, 在庫のある店舗 */
+			'srt-w466'   => array( '1',  '野々市1台' ),
+			'srt-s376ua' => array( '9',  '小松3台／野々市1台／羽咋5台' ),
+			'srt-s466ua' => array( '12', '小松3台／野々市2台／羽咋7台' ),
+			'srt-s376u'  => array( '4',  '金津1台／野々市2台／羽咋1台' ),
+			'srt-s376'   => array( '6',  '開発1台／羽咋5台' ),
+			'srt-s466'   => array( '5',  '開発1台／羽咋4台' ),
+			'srt-n466-2' => array( '8',  '小松3台／野々市2台／新加賀1台／羽咋2台' ),
+			'srt-s377u'  => array( '46', '金津3台／小松9台／野々市4台／開発5台／田鶴浜2台／朝日3台／川北5台／新加賀1台／羽咋14台' ),
+			'srt-s467u'  => array( '40', '金津5台／小松1台／野々市5台／開発5台／田鶴浜3台／朝日5台／川北5台／新加賀2台／羽咋9台' ),
+			'srt-s377'   => array( '19', '金津8台／小松2台／野々市5台／新加賀1台／羽咋3台' ),
+			'srt-s467'   => array( '20', '金津5台／小松8台／野々市7台／羽咋2台' ),
+			'he-ns46lqs' => array( '9',  '金津2台／川北1台／羽咋6台' ),
+			'he-s37lqs'  => array( '28', '金津3台／小松4台／野々市5台／開発2台／田鶴浜1台／朝日1台／川北3台／新加賀2台／羽咋7台' ),
+			'he-s46lqs'  => array( '39', '金津3台／小松1台／野々市4台／開発1台／田鶴浜4台／朝日3台／川北5台／新加賀2台／羽咋16台' ),
+		);
+
+		$done_stk = 0;
+		foreach ( $eco_stock as $ks => $kv ) {
+			$kp = get_page_by_path( $ks, OBJECT, 'ymkrf_product' );
+			if ( ! $kp ) continue;
+			update_post_meta( $kp->ID, '_ymkrf_stock',     $kv[0] );
+			update_post_meta( $kp->ID, '_ymkrf_stockshop', $kv[1] );
+			update_post_meta( $kp->ID, '_ymkrf_stockdate', $eco_stock_date );
+			$done_stk++;
+		}
+		if ( $done_stk ) $log[] = 'エコキュート' . $done_stk . '機種に在庫数・在庫店舗を入れました（' . $eco_stock_date . '現在）';
+		update_option( 'ymkrf_eco_stockdata_ver', '1' );
+	}
+
+	/* 「主な機能」の見出しを「2026年補助金適用」に入れ直します（1回だけ） */
+	if ( get_option( 'ymkrf_eco_spec_ver' ) !== '1' ) {
+		$done_es = 0;
+		foreach ( $eco_products as $ep3 ) {
+			$p3 = get_page_by_path( $ep3['slug'], OBJECT, 'ymkrf_product' );
+			if ( ! $p3 ) continue;
+			update_post_meta( $p3->ID, '_ymkrf_speclist', ymkrf_ecocute_speclist( $ep3 ) );
+			$done_es++;
+		}
+		if ( $done_es ) $log[] = 'エコキュート' . $done_es . '機種の「主な機能」を入れ直しました';
+		update_option( 'ymkrf_eco_spec_ver', '1' );
+	}
+
+	/* 在庫が4台以上あって、まだ載っていなかった機種です。
+	   価格は空のまま・下書きで登録します（ユーザー指示 2026/09/01）。
+
+	   ★人数は、すでに載っている同じ大きさの機種に合わせています。
+	     ちがっていたら、登録ぺージで直してください。
+	   ★写真はまだありません。アイキャッチを入れてください。 */
+	$eco_draft = array(
+
+		/* 三菱・高圧（在庫4台） */
+		array( 'slug' => 'srt-s376u', 'title' => 'SRT-S376U', 'maker' => 'mitsubishi',
+		       'tank' => '370', 'people' => '3〜4人向け', 'grade' => 'フルオート・高圧',
+		       'hojo' => '対象', 'remote' => 'RMCB-F6SE-T', 'kouatsu' => true, 'stock' => 4 ),
+
+		/* 三菱（在庫6台） */
+		array( 'slug' => 'srt-s376', 'title' => 'SRT-S376', 'maker' => 'mitsubishi',
+		       'tank' => '370', 'people' => '3〜4人向け', 'grade' => 'フルオート',
+		       'hojo' => '対象', 'remote' => 'RMCB-F6SE-T', 'kouatsu' => false, 'stock' => 6 ),
+
+		/* 三菱（在庫5台） */
+		array( 'slug' => 'srt-s466', 'title' => 'SRT-S466', 'maker' => 'mitsubishi',
+		       'tank' => '460', 'people' => '4〜5人向け', 'grade' => 'フルオート',
+		       'hojo' => '対象', 'remote' => 'RMCB-F6SE-T', 'kouatsu' => false, 'stock' => 5 ),
+
+		/* 三菱・新品番（在庫19台） */
+		array( 'slug' => 'srt-s377', 'title' => 'SRT-S377', 'maker' => 'mitsubishi',
+		       'tank' => '370', 'people' => '3〜4人向け', 'grade' => 'フルオート',
+		       'hojo' => '対象', 'remote' => 'RMCB-F7SE', 'kouatsu' => false, 'stock' => 19 ),
+
+		/* 三菱・新品番（在庫20台） */
+		array( 'slug' => 'srt-s467', 'title' => 'SRT-S467', 'maker' => 'mitsubishi',
+		       'tank' => '460', 'people' => '4〜5人向け', 'grade' => 'フルオート',
+		       'hojo' => '対象', 'remote' => 'RMCB-F7SE', 'kouatsu' => false, 'stock' => 20 ),
+
+		/* 三菱・給湯専用（在庫8台）。国の補助金は対象外、石川県は対象です */
+		array( 'slug' => 'srt-n466-2', 'title' => 'SRT-N466-2', 'maker' => 'mitsubishi',
+		       'tank' => '460', 'people' => '4〜5人向け', 'grade' => '給湯専用',
+		       'hojo' => '対象外', 'remote' => '', 'kouatsu' => false, 'stock' => 8 ),
+
+		/* パナソニック（在庫9台）。国の補助金は対象外です */
+		array( 'slug' => 'he-ns46lqs', 'title' => 'HE-NS46LQS', 'maker' => 'panasonic',
+		       'tank' => '460', 'people' => '4〜7人向け', 'grade' => 'フルオート',
+		       'hojo' => '対象外', 'remote' => '', 'kouatsu' => false, 'stock' => 9 ),
+	);
+
+	$eco_dmade = 0;
+
+	foreach ( $eco_draft as $ed ) {
+
+		if ( get_page_by_path( $ed['slug'], OBJECT, 'ymkrf_product' ) ) continue;
+
+		$did = wp_insert_post( array(
+			'post_type'   => 'ymkrf_product',
+			'post_status' => 'draft',          /* ★下書きです */
+			'post_title'  => $ed['title'],
+			'post_name'   => $ed['slug'],
+		) );
+		if ( ! $did || is_wp_error( $did ) ) continue;
+
+		update_post_meta( $did, '_ymkrf_name',      $ed['title'] );
+		update_post_meta( $did, '_ymkrf_tank',      $ed['tank'] );
+		update_post_meta( $did, '_ymkrf_people',    $ed['people'] );
+		update_post_meta( $did, '_ymkrf_grade',     $ed['grade'] );
+		update_post_meta( $did, '_ymkrf_hojo',      $ed['hojo'] );
+		update_post_meta( $did, '_ymkrf_remote',    $ed['remote'] );
+		update_post_meta( $did, '_ymkrf_accessory', $eco_acc );
+		update_post_meta( $did, '_ymkrf_pressure',  $ed['kouatsu'] ? '高圧力型貯湯式' : '' );
+		update_post_meta( $did, '_ymkrf_days',      '1' );
+		update_post_meta( $did, '_ymkrf_pt1',       '工事は1日' );
+		update_post_meta( $did, '_ymkrf_pt2',       '北陸電力への申請もおまかせ' );
+		update_post_meta( $did, '_ymkrf_pt3',       '工事費・リモコン込' );
+		update_post_meta( $did, '_ymkrf_caution',
+			'※写真はイメージです。※電気温水器またはエコキュートからのお取り替えの場合の価格です。' );
+
+		/* ★価格は空のままにします（あとで調べて入れていただきます） */
+		update_post_meta( $did, '_ymkrf_work',  '' );
+		update_post_meta( $did, '_ymkrf_item',  '' );
+		update_post_meta( $did, '_ymkrf_total', '' );
+
+		update_post_meta( $did, '_ymkrf_speclist',
+			ymkrf_ecocute_speclist( array( 'grade' => $ed['grade'], 'hojo' => ( $ed['hojo'] === '対象' ) ) ) );
+
+		$rows = array();
+		foreach ( $eco_works as $r ) $rows[] = array( 'name' => $r[0], 'text' => $r[1] );
+		update_post_meta( $did, '_ymkrf_works', $rows );
+
+		wp_set_object_terms( $did, 'ecocute', 'ymkrf_product_cat' );
+		wp_set_object_terms( $did, $ed['maker'], 'ymkrf_maker' );
+
+		$log[] = '商品「' . $ed['title'] . '」を下書きで登録しました（在庫' . $ed['stock'] . '台・価格は空）';
+		$eco_dmade++;
+	}
+
+	if ( $eco_dmade ) {
+		$log[] = 'エコキュートを' . $eco_dmade . '機種、下書きで追加しました。'
+		       . '価格を入れて「公開」にすると一覧に出ます';
 	}
 
 	/* エコキュートのメーカーの「説明」を入れます（1回だけ）。
