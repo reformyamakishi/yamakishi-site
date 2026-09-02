@@ -1,0 +1,35 @@
+エラーコードの中身を入れる場所です。
+
+ファイル名は  <種類>-<メーカー>.php  にしてください。
+
+  ecocute-mitsubishi.php     エコキュート／三菱電機
+  ecocute-panasonic.php      エコキュート／パナソニック
+  ecocute-daikin.php         エコキュート／ダイキン
+  ecocute-hitachi.php        エコキュート／日立
+  gas-noritz.php             ガス給湯器／ノーリツ
+  gas-rinnai.php             ガス給湯器／リンナイ
+  gas-paloma.php             ガス給湯器／パロマ
+  oil-noritz.php             石油給湯器／ノーリツ
+  oil-chofu.php              石油給湯器／長府製作所
+  oil-corona.php             石油給湯器／コロナ
+  electric-mitsubishi.php    電気温水器／三菱電機
+  electric-panasonic.php     電気温水器／パナソニック
+  electric-hitachi.php       電気温水器／日立
+  electric-chofu.php         電気温水器／長府製作所
+  electric-corona.php        電気温水器／コロナ
+  electric-takarastandard.php 電気温水器／タカラスタンダード
+
+中身は、次の形の配列を return するだけです。
+
+  <?php return array(
+    array(
+      'code'  => '102',
+      'title' => 'わき上げ不良',
+      'cause' => "ヒートポンプユニットの部品不具合によるエラー（圧力センサ異常）",
+      'fix'   => "①要点検。給水配管専用止水栓を閉じ、点検・修理を依頼。\n②エラー解除方法は据付工事説明書を確認、または問い合わせ。",
+    ),
+  );
+
+ファイルが無いメーカーは、ページに「ただいま準備中です」と出ます。
+メーカーを足したいときは、ymkrf-troubleshooting.php の $ymkrf_ts_cats にも
+1行足してください。
