@@ -2073,6 +2073,14 @@ function ymkrf_cat_url( $slug ) {
 	/* 分類そのものが無い（＝これまで404になっていたところ） */
 	if ( ! $term || is_wp_error( $term ) ) return ymkrf_products_url();
 
+	/* 外壁・屋根は、商品を1つも登録しません。
+	   専用のページ（taxonomy-ymkrf_product_cat-outer-wall.php）を用意してあるので、
+	   商品が0件でも、そちらへお送りします。 */
+	if ( $slug === 'outer-wall' ) {
+		$u = get_term_link( $term );
+		return is_wp_error( $u ) ? ymkrf_products_url() : $u;
+	}
+
 	/* 分類はあるが、商品がまだ1つも入っていない
 	   （子分類に入れている場合もあるので、子の数もたします） */
 	$count = (int) $term->count;

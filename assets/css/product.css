@@ -1737,3 +1737,137 @@ a.p-pack__item:hover{ border-color:var(--brand); transform:translateY(-4px); box
   color:var(--brand); font-size:14px; font-weight:700; text-decoration:none;
   border-bottom:1px solid currentColor;
 }
+
+
+/* ============================================================
+   外壁・屋根のページ（/products/outer-wall/）
+   ファイル： taxonomy-ymkrf_product_cat-outer-wall.php
+
+   ★このページは「入口」です。くわしい話は専門サイト
+     （ヤマキシペイント）にまかせているので、部品も少なめです。
+   ============================================================ */
+
+/* ── 外壁・屋根チェックの札 ───────────────────────
+   写真を大きく、文字は少なく。
+   スマホでは1列、パソコンでは2列に並びます。 */
+.p-ow__checks{
+  display:grid; gap:20px; grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+}
+/* 屋根は3つなので、3列まで広がってよいことにします */
+.p-ow__checks--roof{ grid-template-columns:repeat(auto-fit,minmax(290px,1fr)); }
+
+.p-ow__check{
+  background:#fff; border:1px solid #eee; border-radius:14px; overflow:hidden;
+  display:flex; flex-direction:column; box-shadow:var(--shadow);
+}
+.p-ow__ph{ background:#fff; }
+.p-ow__ph img{
+  display:block; width:100%; height:auto; aspect-ratio:4/3; object-fit:cover;
+}
+.p-ow__body{ padding:18px 20px 22px; }
+
+.p-ow__name{
+  margin:0 0 10px; font-size:clamp(17px,4.6vw,19px); font-weight:900; color:var(--ink);
+  line-height:1.45; word-break:auto-phrase;
+}
+/* 「（スレート瓦）」のような、屋根材の名前 */
+.p-ow__sub{
+  display:block; margin-top:4px; font-size:13px; font-weight:700; color:var(--brand-dark);
+}
+
+/* 劣化度。ブタさん5匹のうち、いくつ分かで表します。
+   数字だけより、ぱっと見て強さが伝わります。 */
+.p-ow__lv{
+  display:flex; align-items:center; gap:8px; margin:0 0 12px;
+  padding-bottom:12px; border-bottom:2px solid #f3e2dc;
+}
+.p-ow__lvlbl{
+  font-size:12px; font-weight:900; letter-spacing:.08em; color:var(--ink-sub);
+  white-space:nowrap;
+}
+.p-ow__pigs{ display:flex; gap:3px; }
+.p-ow__pig{
+  display:block; width:24px; height:24px;
+}
+/* まだ届いていない分は、うすく出します */
+.p-ow__pig.is-off{ opacity:.18; filter:grayscale(1); }
+
+.p-ow__text{
+  margin:0; font-size:14px; line-height:1.95; color:#444; word-break:auto-phrase;
+}
+
+/* ── 価格の目安 ─────────────────────────────── */
+.p-ow__prices{
+  display:grid; gap:18px; grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  margin-bottom:22px;
+}
+.p-ow__price{
+  background:#fff; border:2px solid var(--brand-tint2); border-radius:14px; padding:24px 22px;
+  text-align:center;
+}
+.p-ow__pricettl{
+  margin:0 0 10px; font-size:clamp(16px,4.2vw,18px); font-weight:900; color:var(--ink);
+}
+.p-ow__priceyen{
+  margin:0 0 12px; color:var(--brand); font-weight:900; line-height:1;
+  display:flex; align-items:baseline; justify-content:center; gap:2px;
+}
+.p-ow__priceyen .num{ font-size:clamp(40px,11vw,54px); letter-spacing:-.02em; }
+.p-ow__priceyen .dec{ font-size:.62em; }
+.p-ow__priceyen .unit{ font-size:clamp(15px,4vw,17px); font-weight:900; }
+.p-ow__priceyen .tax{ font-size:11px; font-weight:700; color:var(--ink-sub); }
+.p-ow__pricenote{
+  margin:0; font-size:13px; line-height:1.85; color:#555; word-break:auto-phrase;
+}
+
+/* ── 専門サイトへの出口 ─────────────────────────
+   このページでいちばん大事な部品です。
+   ほかのボタンより大きく、目立つようにしています。 */
+.p-ow__site{
+  position:relative; background:#fff; border-radius:var(--radius-lg);
+  padding:clamp(28px,6vw,44px) clamp(20px,5vw,48px); text-align:center;
+  box-shadow:var(--shadow-md); overflow:hidden;
+}
+.p-ow__sitechara{
+  position:absolute; right:clamp(-14px,-2vw,0px); bottom:0;
+  width:clamp(84px,17vw,130px); height:auto; opacity:.9; pointer-events:none;
+}
+.p-ow__siteen{
+  margin:0 0 6px; font-size:12px; font-weight:900; letter-spacing:.14em; color:var(--brand);
+}
+.p-ow__sitettl{
+  margin:0 0 14px; font-size:clamp(20px,5.4vw,28px); font-weight:900; color:var(--ink);
+  line-height:1.45; word-break:auto-phrase;
+}
+.p-ow__sitetext{
+  margin:0 0 22px; font-size:clamp(14px,3.7vw,15px); line-height:1.95; color:#444;
+  word-break:auto-phrase;
+}
+.p-ow__sitebtn{
+  display:inline-flex; flex-direction:column; align-items:center; gap:4px;
+  min-width:min(100%,420px); padding:18px 28px;
+  background:var(--brand); color:#fff; border-radius:999px; text-decoration:none;
+  font-size:clamp(15px,4.2vw,18px); font-weight:900; line-height:1.4;
+  box-shadow:0 6px 0 var(--brand-deep); transition:transform .12s, box-shadow .12s;
+}
+.p-ow__sitebtn:hover{ transform:translateY(2px); box-shadow:0 4px 0 var(--brand-deep); }
+.p-ow__sitebtn:focus-visible{ outline:3px solid var(--brand-deep); outline-offset:3px; }
+.p-ow__sitebtnsub{
+  font-size:11.5px; font-weight:700; letter-spacing:.02em; opacity:.92;
+}
+
+/* ── まとめて頼めます ───────────────────────── */
+.p-ow__merits{
+  margin:0; padding:0; list-style:none;
+  display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+}
+.p-ow__merit{
+  background:var(--bg-soft); border-radius:14px; padding:22px 20px;
+}
+.p-ow__meritttl{
+  margin:0 0 8px; font-size:clamp(15px,4vw,17px); font-weight:900; color:var(--brand-dark);
+  line-height:1.5; word-break:auto-phrase;
+}
+.p-ow__merit p{
+  margin:0; font-size:14px; line-height:1.95; color:#444; word-break:auto-phrase;
+}
