@@ -77,7 +77,9 @@ $asset = get_stylesheet_directory_uri();
         <small>お電話でのご相談（通話無料）</small>
         <strong>0800-777-3331</strong>
       </a>
-      <a class="c-btn c-btn--line" href="https://lin.ee/UJZuSTrz" rel="noopener" data-cta="header">LINEで見積り</a>
+      <a class="c-btn c-btn--line" href="https://lin.ee/UJZuSTrz" rel="noopener" data-cta="header">LINEで相談</a>
+      <?php /* LINEをお使いでない方の受け口。メールでのご相談です。 */ ?>
+      <a class="c-btn c-btn--ghost" href="<?php echo esc_url( home_url( '/inquiry/' ) ); ?>" data-cta="header">無料お見積り</a>
       <a class="c-btn" href="<?php echo esc_url( home_url( '/inquiry/webrsv/' ) ); ?>" data-cta="header">来店予約</a>
     </div>
 
@@ -112,7 +114,8 @@ $asset = get_stylesheet_directory_uri();
 
     <p class="p-drawer__title">まずはご相談</p>
     <div class="p-drawer__cta">
-      <a class="c-btn c-btn--line c-btn--block" href="https://lin.ee/UJZuSTrz" rel="noopener" data-cta="drawer">LINEで無料見積り</a>
+      <a class="c-btn c-btn--line c-btn--block" href="https://lin.ee/UJZuSTrz" rel="noopener" data-cta="drawer">LINEで相談する</a>
+      <a class="c-btn c-btn--block" href="<?php echo esc_url( home_url( '/inquiry/' ) ); ?>" data-cta="drawer">無料の現地調査・お見積り</a>
       <a class="c-btn c-btn--block" href="tel:0800-777-3331" data-cta="drawer">0800-777-3331</a>
       <a class="c-btn c-btn--ghost c-btn--block" href="<?php echo esc_url( home_url( '/inquiry/webrsv/' ) ); ?>" data-cta="drawer">ネット来店予約</a>
     </div>
@@ -132,10 +135,11 @@ $asset = get_stylesheet_directory_uri();
         <li><a href="<?php echo esc_url( ymkrf_cat_url( 'bathroom' ) ); ?>">お風呂・ユニットバス</a></li>
         <li><a href="<?php echo esc_url( ymkrf_cat_url( 'toilet' ) ); ?>">トイレ</a></li>
         <li><a href="<?php echo esc_url( ymkrf_cat_url( 'lavatory' ) ); ?>">洗面化粧台</a></li>
-        <li><a href="<?php echo esc_url( ymkrf_cat_url( 'boiler' ) ); ?>">給湯器・エコキュート</a></li>
+        <li><a href="<?php echo esc_url( ymkrf_cat_url( 'boiler' ) ); ?>">給湯器</a></li>
+        <li><a href="<?php echo esc_url( ymkrf_cat_url( 'ecocute' ) ); ?>">エコキュート</a></li>
         <li><a href="<?php echo esc_url( ymkrf_cat_url( 'outer-wall' ) ); ?>">外壁・屋根</a></li>
-        <li><a href="<?php echo esc_url( ymkrf_cat_url( 'exterior' ) ); ?>">エクステリア</a></li>
-        <li><a href="<?php echo esc_url( ymkrf_cat_url( 'interior' ) ); ?>">内装・窓・断熱</a></li>
+        <li><a href="<?php echo esc_url( ymkrf_cat_url( 'window' ) ); ?>">窓・玄関ドア</a></li>
+        <li><a href="<?php echo esc_url( ymkrf_cat_url( 'interior' ) ); ?>">内装・改装</a></li>
       </ul>
     <?php } ?>
   </div>

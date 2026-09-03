@@ -1777,20 +1777,24 @@ a.p-pack__item:hover{ border-color:var(--brand); transform:translateY(-4px); box
 
 /* 劣化度。ブタさん5匹のうち、いくつ分かで表します。
    数字だけより、ぱっと見て強さが伝わります。 */
+/* 「劣化度」の帯。カードのいちばん上、写真の上にのせています。
+   ここが札ごとに見くらべる目じるしになるので、先に目に入る場所です。 */
 .p-ow__lv{
-  display:flex; align-items:center; gap:8px; margin:0 0 12px;
-  padding-bottom:12px; border-bottom:2px solid #f3e2dc;
+  display:flex; align-items:center; gap:10px; margin:0;
+  background:var(--brand-tint); border-bottom:1px solid var(--brand-tint2);
+  padding:9px 14px;
 }
 .p-ow__lvlbl{
-  font-size:12px; font-weight:900; letter-spacing:.08em; color:var(--ink-sub);
+  flex:none; background:var(--brand); color:#fff; border-radius:999px;
+  padding:5px 12px; font-size:12.5px; font-weight:900; letter-spacing:.08em;
   white-space:nowrap;
 }
-.p-ow__pigs{ display:flex; gap:3px; }
+.p-ow__pigs{ display:flex; gap:8px; }
 .p-ow__pig{
   display:block; width:27px; height:27px;
 }
 /* まだ届いていない分は、うすく出します */
-.p-ow__pig.is-off{ opacity:.18; filter:grayscale(1); }
+.p-ow__pig.is-off{ opacity:.22; filter:grayscale(1); }
 
 .p-ow__text{
   margin:0; font-size:14px; line-height:1.95; color:#444; word-break:auto-phrase;
@@ -1882,14 +1886,22 @@ a.p-pack__item:hover{ border-color:var(--brand); transform:translateY(-4px); box
 /* ── 専門サイトへの出口 ─────────────────────────
    このページでいちばん大事な部品です。
    ほかのボタンより大きく、目立つようにしています。 */
+/* 左にとんとこトン、右に文章とボタン。
+   画面がせまいときは、上下に積んで真ん中ぞろえにします。 */
 .p-ow__site{
   position:relative; background:#fff; border-radius:var(--radius-lg);
-  padding:clamp(28px,6vw,44px) clamp(20px,5vw,48px); text-align:center;
-  box-shadow:var(--shadow-md); overflow:hidden;
+  padding:clamp(28px,6vw,44px) clamp(20px,5vw,48px);
+  box-shadow:var(--shadow-md);
+  display:flex; align-items:center; gap:clamp(18px,4vw,40px); text-align:left;
 }
-.p-ow__sitechara{
-  position:absolute; right:clamp(-14px,-2vw,0px); bottom:0;
-  width:clamp(84px,17vw,130px); height:auto; opacity:.9; pointer-events:none;
+.p-ow__sitechara{ flex:none; display:block; width:clamp(96px,15vw,180px); }
+.p-ow__sitechara img{ display:block; width:100%; height:auto; }
+.p-ow__sitebody{ flex:1; min-width:0; }
+
+@media (max-width:640px){
+  .p-ow__site{ flex-direction:column; text-align:center; gap:14px; }
+  .p-ow__sitechara{ width:120px; }
+  .p-ow__sitebody{ width:100%; }
 }
 .p-ow__siteen{
   margin:0 0 6px; font-size:12px; font-weight:900; letter-spacing:.14em; color:var(--brand);

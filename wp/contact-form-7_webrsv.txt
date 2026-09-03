@@ -3,10 +3,16 @@ Contact Form 7 用 フォームタグ（ネット来店予約）
 ----------------------------------------------------------------
 使い方
  1. WordPress管理画面 →「お問い合わせ」→「新規追加」
- 2. タイトルを「ネット来店予約」にする
+ 2. タイトルを ★「ネット来店予約」★ にする
+    （この名前でページが自動で見つけます。1文字でも違うと出ません）
  3. 「フォーム」タブに、下の【フォーム】をそのまま貼り付ける
  4. 「メール」タブに、下の【メール】の内容を設定する
- 5. 保存すると出てくるショートコードを、予約ページに貼る
+ 5. 保存するだけで、/inquiry/webrsv/ のページに出ます
+    （ショートコードを貼り付ける必要はありません）
+
+ ※本番サイトでも、同じタイトルでもう一度作れば、そのまま出ます。
+   フォームはファイルではなくデータベースに入るため、
+   ローカルで作ったものは本番には移りません。
 ================================================================
 
 
@@ -25,8 +31,10 @@ Contact Form 7 用 フォームタグ（ネット来店予約）
 </div>
 
 <div class="p-form__row">
+  <!-- ★Contact Form 7 では「name」という名前が使えません（設定エラーになります）。
+       「your-name」から変えないでください。メール本文の [your-name] も同じです。 -->
   <label class="p-form__label">お名前 <span class="c-req">必須</span></label>
-  [text* name autocomplete:name class:p-form__input]
+  [text* your-name autocomplete:name class:p-form__input]
 </div>
 
 <div class="p-form__row">
@@ -36,7 +44,7 @@ Contact Form 7 用 フォームタグ（ネット来店予約）
 
 <div class="p-form__row">
   <label class="p-form__label">電話番号 <span class="c-req">必須</span></label>
-  [tel* tel autocomplete:tel class:p-form__input placeholder "例：0776-73-1015"]
+  [tel* tel autocomplete:tel class:p-form__input placeholder "例：076-294-6101"]
 </div>
 
 <div class="p-form__row">
@@ -48,21 +56,29 @@ Contact Form 7 用 フォームタグ（ネット来店予約）
 <div class="p-form__row">
   <span class="p-form__label">住所 <span class="c-req">必須</span></span>
   <div class="p-form__zip">
-    [text zip id:rsv-zip autocomplete:postal-code class:p-form__input class:p-form__input--zip placeholder "例：919-0628"]
+    [text zip id:rsv-zip autocomplete:postal-code class:p-form__input class:p-form__input--zip placeholder "例：921-8815"]
     <button class="p-form__zipbtn" type="button" id="rsv-zipbtn">郵便番号から住所を入力</button>
   </div>
-  [text* address id:rsv-addr autocomplete:street-address class:p-form__input placeholder "例：福井県あわら市大溝1-8-13"]
+  [text* address id:rsv-addr autocomplete:street-address class:p-form__input placeholder "例：石川県野々市市本町6丁目12-70"]
   <p class="p-form__help" id="rsv-ziphelp" role="status"></p>
 </div>
 
+<!-- ★店舗を選ぶと、その店の営業時間から選択肢を作りなおします。
+     （例：小松店 10:00〜18:00 → 10:00〜12:00 ／ 12:00〜13:00 ／
+           13:00〜15:00 ／ 15:00〜18:00 ／ いつでもよい）
+     そのしくみは ymkrf-webrsv.php の中にあります。
+
+     下に書いてある時間帯は、店舗を選ぶ前に出るものです。
+     区切りを変えたいときは ymkrf-webrsv.php の $cuts を直してください。
+     フォームタグの名前（shop / when）は変えないでください。 -->
 <div class="p-form__row">
   <label class="p-form__label">連絡がつきやすい時間帯</label>
-  [select when class:p-form__select "選んでください" "午前中（9:00〜12:00）" "13:00〜15:00" "15:00〜17:00" "17:00以降" "いつでもよい"]
+  [select when class:p-form__select "選んでください" "9:00〜12:00" "12:00〜13:00" "13:00〜15:00" "15:00〜18:00" "18:00〜21:00" "いつでもよい"]
 </div>
 
 <div class="p-form__row">
   <span class="p-form__label">工事場所<small>（複数選択可）</small></span>
-  [checkbox place use_label_element "キッチン" "浴室・バス" "トイレ" "洗面所" "エコキュート" "給湯器・オール電化" "エクステリア" "外壁塗装・外装工事" "改装・内装" "修理・小工事" "全面リフォーム" "その他"]
+  [checkbox place use_label_element "キッチン" "お風呂（ユニットバス）" "トイレ" "洗面化粧台" "水まわり4点パック" "給湯器" "エコキュート" "外壁・屋根" "窓・玄関ドア" "内装・改装" "修理・小工事" "その他"]
 </div>
 
 <div class="p-form__row">
@@ -77,13 +93,21 @@ Contact Form 7 用 フォームタグ（ネット来店予約）
   [text staff class:p-form__input class:p-form__input--half]
 </div>
 
+<!-- reCAPTCHA v3（おすすめ）の場合、ここに書くものはありません。
+     v2（「私はロボットではありません」のチェック）にするときだけ、
+     下の4行のコメントを外して、枠の中にプラグインのタグを貼ってください。
+
 <div class="p-form__row p-form__row--captcha">
   <p class="p-form__captcha-lead">下記にチェックを入れてください</p>
-  [recaptcha]
 </div>
+-->
+
+<p class="p-form__privacy">
+  <a href="/privacy/" target="_blank" rel="noopener">プライバシーポリシー</a>をご確認のうえ、送信してください。
+</p>
 
 <div class="p-form__submit">
-  [submit class:c-btn class:c-btn--block class:p-form__button "入力内容を確認する"]
+  [submit class:c-btn class:c-btn--block class:p-form__button "この内容で予約する"]
   <p class="p-form__note">※しつこい営業は一切いたしません。ご相談だけでも歓迎です。</p>
 </div>
 
@@ -94,7 +118,7 @@ Contact Form 7 用 フォームタグ（ネット来店予約）
 
 ・送信先        : 予約を受け取りたいメールアドレス（例：info@yamakishi.co.jp）
 ・送信元        : [_site_title] <wordpress@yamakishi-reform.jp>
-・題名          : 【来店予約】[shop] / [name] 様
+・題名          : 【来店予約】[shop] / [your-name] 様
 ・追加ヘッダー  : Reply-To: [mail]
 
 ・メッセージ本文:
@@ -102,7 +126,7 @@ Contact Form 7 用 フォームタグ（ネット来店予約）
 ネット来店予約が届きました。
 
 ■店舗          : [shop]
-■お名前        : [name]
+■お名前        : [your-name]
 ■フリガナ      : [kana]
 ■電話番号      : [tel]
 ■メールアドレス: [mail]
@@ -129,13 +153,13 @@ Contact Form 7 用 フォームタグ（ネット来店予約）
 ・送信先: [mail]
 ・題名  : 【リフォームヤマキシ】ご予約を承りました
 
-[name] 様
+[your-name] 様
 
 このたびはネット来店予約をいただき、ありがとうございます。
 下記の内容で承りました。
 
 ■ご希望店舗: [shop]
-■お名前    : [name]
+■お名前    : [your-name]
 ■電話番号  : [tel]
 
 このメールは自動送信です。
@@ -154,26 +178,87 @@ https://yamakishi-reform.jp/
 【メール(2)】ここまで ↑ ----------------------------------------
 
 
-================================================================
-reCAPTCHA の設定について
+===========================================================
+
+
+【メッセージ】画面に出る文言 ------------------------------------
+
+「メッセージ」タブで、下のように直してください。
+初期設定のままだと「メッセージの送信に失敗しました。後でまたお試し
+ください。」としか出ず、お客様がどうすればよいか分かりません。
+
+ ■ 送信に成功したとき
+   ありがとうございます。ご予約のお申し込みを承りました。当社からの
+   予約確認のお電話をもって、ご予約完了となります。1〜3日以内にご連絡いたします。
+
+ ■ 送信に失敗したとき／迷惑メールと判定されたとき（2か所とも同じ文で）
+   送信できませんでした。お手数ですが、お電話（0800-777-3331／通話無料・
+   受付 9:00〜17:00）またはLINEからご連絡ください。
+
+   ★reCAPTCHA v3 は、まれに本物のお客様を機械と判定してしまいます。
+     そのときの逃げ道として、電話とLINEを書いておくことが大事です。
+
+ ■ 入力内容に問題があるとき
+   入力もれ、または入力のまちがいがあります。赤く出ているところをご確認ください。
+
+ ■ 必須の欄が空のとき
+   こちらは入力をお願いします。
+
+ ■ 同意のチェックが入っていないとき
+   注意事項の確認にチェックをお願いします。
+
+
+=====
+迷惑メール対策（reCAPTCHA）
 ----------------------------------------------------------------
-Contact Form 7 の [recaptcha] タグは、バージョン5.0以降では
-使えなくなっています。次のどちらかを選んでください。
+いたずら送信を防ぐしくみです。2つのやり方があります。
 
- ■ 方法A：reCAPTCHA v3（チェック不要・自動判定）
-   1. https://www.google.com/recaptcha/admin で v3 のキーを取得
-   2. WordPress管理画面 →「お問い合わせ」→「インテグレーション」
-      → reCAPTCHA →「インテグレーションのセットアップ」
-   3. サイトキーとシークレットキーを入力
-   ※画面にチェックボックスは出ません。右下にバッジが表示されます。
-   ※上の【フォーム】から [recaptcha] の行を削除してください。
+──────────────────────────────
+■ おすすめ： reCAPTCHA v3（お客様の操作なし）
+──────────────────────────────
+画面に何も出ません。あやしい送信かどうかを裏側で判断します。
+「私はロボットではありません」のチェックも、写真を選ぶ問題も出ないので、
+シニアのお客様がつまずきません。追加のプラグインも不要です。
 
- ■ 方法B：reCAPTCHA v2（「私はロボットではありません」のチェック）
-   いまのサイトと同じ見た目にしたい場合はこちらです。
-   プラグイン「Contact Form 7 - reCaptcha v2」等の追加が必要です。
-   1. 上記プラグインを追加
-   2. https://www.google.com/recaptcha/admin で v2 のキーを取得
-   3. プラグインの設定画面にキーを入力
+ 1. https://www.google.com/recaptcha/admin をブラウザで開く
+ 2. 「＋」で新しいサイトを登録する
+      ラベル　　　… リフォームヤマキシ
+      タイプ　　　… reCAPTCHA v3 を選ぶ
+      ドメイン　　… yamakishi-reform.jp
+                    （ローカルで試すときは localhost も足す）
+ 3. 「サイトキー」と「シークレットキー」が表示される
+ 4. WordPress管理画面 →「お問い合わせ」→「インテグレーション」
+      → reCAPTCHA の「インテグレーションのセットアップ」
+      → 2つのキーを貼り付けて保存
+
+ ★キーの入力は、必ずご担当の方ご自身でお願いします。
+   （私はパスワードやキーの類は入力いたしません）
+
+ ※このフォームのタグに書き足すものはありません。
+   キーを入れた時点で、全部のフォームで働きはじめます。
+ ※上の【フォーム】にある「下記にチェックを入れてください」の枠は、
+   v3 の場合は不要です。まるごと削除してください。
+ ※画面の右下に、Google のバッジが出ます。これは規約で必要なものです。
+
+──────────────────────────────
+■ いまの本番サイトと同じ： reCAPTCHA v2（チェックを入れる方式）
+──────────────────────────────
+「私はロボットではありません」にチェックを入れていただく方式です。
+いまお使いのフォームはこちらです。
+
+Contact Form 7 は v5.0 から v2 に対応しなくなったため、
+別のプラグインが必要になります。
+
+ 1. プラグイン →「新規追加」で「reCAPTCHA v2 Contact Form 7」など、
+    v2 に対応したプラグインを入れる
+ 2. 上と同じ手順でキーを取る（タイプは reCAPTCHA v2 →「私はロボットではありません」）
+ 3. プラグインの説明に従ってキーを設定する
+ 4. 上の【フォーム】の「下記にチェックを入れてください」の枠の中に、
+    プラグインが指定するタグを貼り付ける
+
+ ※v2 は、写真を選ぶ問題が出ることがあります。
+   お客様が送信をあきらめてしまう原因になりやすいので、
+   できれば v3 をおすすめします。
 
 ================================================================
 確認画面について

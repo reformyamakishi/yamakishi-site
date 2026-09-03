@@ -243,10 +243,13 @@ add_action( 'init', function () {
 	   15 … 会社概要ページ（/company/）を足したため
 	   20 … プライバシーポリシー（/privacy/）を足したため
 	   21 … お知らせ（/news/）を足したため
-	   22 … 給湯器・エコキュートの選び方（/products/boiler-guide/）を足したため */
-	if ( get_option( 'ymkrf_rewrite_ver' ) === '23' ) return;
+	   22 … 給湯器・エコキュートの選び方（/products/boiler-guide/）を足したため
+	   23 … エラーコード一覧（/troubleshooting/）を足したため
+	   24 … お見積り・お問い合わせ（/inquiry/）を足したため
+	   25 … ネット来店予約（/inquiry/webrsv/）を足したため */
+	if ( get_option( 'ymkrf_rewrite_ver' ) === '25' ) return;
 	flush_rewrite_rules( false );
-	update_option( 'ymkrf_rewrite_ver', '23' );
+	update_option( 'ymkrf_rewrite_ver', '25' );
 }, 99 );
 
 
@@ -2229,6 +2232,7 @@ add_action( 'wp_enqueue_scripts', function () {
 if ( ! function_exists( 'ymkrf_product_cta' ) ) :
 function ymkrf_product_cta( $place = 'product', $with_tel = false ) {
 	$rsv  = esc_url( home_url( '/inquiry/webrsv/' ) );
+	$inq  = esc_url( home_url( '/inquiry/' ) );
 	$line = 'https://lin.ee/UJZuSTrz';
 	?>
 	<div class="p-pagecta__btns" style="margin-top:26px">
@@ -2236,7 +2240,12 @@ function ymkrf_product_cta( $place = 'product', $with_tel = false ) {
 	    <span class="c-btn__label">来店して現物を見る<span class="c-btn__sub">初回特典500円ヤマキシお買物券<br>※展示のない店舗もあります</span></span>
 	  </a>
 	  <a class="c-btn c-btn--line c-btn--block" href="<?php echo esc_url( $line ); ?>" rel="noopener" data-cta="<?php echo esc_attr( $place ); ?>">
-	    <span class="c-btn__label">LINEで相談・見積もり<span class="c-btn__sub">ご相談だけでもOK・24時間受付</span></span>
+	    <span class="c-btn__label">LINEで相談する<span class="c-btn__sub">写真を送るだけでもOK・24時間受付</span></span>
+	  </a>
+	  <?php /* LINEをお使いでない方・夜のうちに送っておきたい方の受け口です。
+	           /inquiry/ のフォームへ送ります。 */ ?>
+	  <a class="c-btn c-btn--ghost c-btn--block" href="<?php echo $inq; ?>" data-cta="<?php echo esc_attr( $place ); ?>">
+	    <span class="c-btn__label">無料の現地調査・お見積り<span class="c-btn__sub">メールでのご相談はこちら・24時間受付</span></span>
 	  </a>
 	  <?php if ( $with_tel ) : ?>
 	  <a class="c-btn c-btn--ghost c-btn--block" href="tel:0800-777-3331" data-cta="<?php echo esc_attr( $place ); ?>">

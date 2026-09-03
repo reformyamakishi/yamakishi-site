@@ -325,3 +325,191 @@
   border-radius:10px; padding:12px 14px;
   font-size:13.5px; font-weight:800; color:var(--brand-dark); text-align:center; line-height:1.8;
 }
+
+
+/* ============================================================
+   お見積り・お問い合わせ（/inquiry/）
+   ファイル： ymkrf-inquiry.php
+   ============================================================ */
+
+/* ── お電話でのご相談（フォームの下） ───────────── */
+.p-inq__telbox{
+  max-width:620px; margin:0 auto 34px; text-align:center;
+  background:#fff; border-radius:var(--radius-lg);
+  padding:clamp(22px,4.5vw,30px) clamp(18px,4vw,30px); box-shadow:var(--shadow);
+}
+.p-inq__tel{
+  display:inline-flex; flex-direction:column; align-items:center; gap:2px;
+  text-decoration:none; color:var(--brand-dark);
+}
+.p-inq__tellbl{
+  background:var(--brand); color:#fff; border-radius:999px; padding:3px 14px;
+  font-size:11.5px; font-weight:900; letter-spacing:.1em; margin-bottom:6px;
+}
+.p-inq__telnum{
+  font-size:clamp(28px,8vw,42px); font-weight:900; letter-spacing:.01em; line-height:1.1;
+}
+.p-inq__telsub{ font-size:12.5px; font-weight:700; color:var(--ink-sub); }
+.p-inq__telnote{
+  margin:16px 0 0; padding-top:14px; border-top:1px solid var(--border);
+  font-size:clamp(14px,3.8vw,15.5px); font-weight:900; color:var(--ink);
+  line-height:1.7; word-break:auto-phrase;
+}
+
+/* 全店の一覧 */
+.p-inq__pref{
+  margin:0 0 12px; font-size:clamp(15px,4vw,17px); font-weight:900; color:var(--ink);
+  padding-left:12px; border-left:5px solid var(--brand);
+}
+.p-inq__shops{
+  margin:0 0 26px; padding:0; list-style:none;
+  display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+}
+.p-inq__shop{
+  background:#fff; border:1px solid #eee; border-radius:12px; padding:16px 18px;
+}
+.p-inq__shopname{
+  margin:0 0 6px; font-size:15px; font-weight:900; color:var(--ink);
+  display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+}
+.p-inq__shopsoon{
+  background:var(--brand-tint); color:var(--brand-dark); border-radius:999px;
+  padding:2px 9px; font-size:11px; font-weight:900;
+}
+.p-inq__shoptel{
+  display:inline-block; font-size:clamp(19px,5vw,22px); font-weight:900;
+  color:var(--brand-dark); text-decoration:none; line-height:1.2; letter-spacing:.01em;
+}
+.p-inq__shoptel:hover{ text-decoration:underline; }
+.p-inq__shopsoontxt{
+  margin:0; font-size:13px; font-weight:700; color:var(--ink-sub); line-height:1.6;
+}
+.p-inq__shophours{
+  margin:6px 0 0; font-size:13px; color:#555; line-height:1.7;
+}
+.p-inq__shophours small{ display:block; font-size:11.5px; color:var(--ink-light); }
+.p-inq__shoparea{
+  margin:6px 0 0; font-size:12.5px; color:var(--ink-sub); line-height:1.7;
+  word-break:auto-phrase;
+}
+
+/* ── 送信したあとの流れ（3つ） ───────────────────── */
+/* ①→②→③ と、矢印でつなぎます。
+   横に並ぶときは右向き、縦に積むときは下向きになります。 */
+.p-inq__steps{
+  margin:0; padding:0; list-style:none;
+  display:grid; gap:44px 34px; grid-template-columns:1fr;
+}
+.p-inq__step{
+  background:#fff; border:1px solid #eee; border-radius:14px;
+  padding:24px 20px 22px; position:relative;
+}
+.p-inq__step:not(:last-child)::after{
+  content:'➡'; position:absolute; z-index:1;
+  color:var(--brand); font-size:26px; line-height:1;
+  /* 縦に積むとき（スマホ）は、下向きにします */
+  left:50%; bottom:-35px; transform:translateX(-50%) rotate(90deg);
+}
+@media (min-width:820px){
+  .p-inq__steps{ grid-template-columns:repeat(3,1fr); gap:34px; }
+  .p-inq__step:not(:last-child)::after{
+    left:auto; bottom:auto; right:-30px; top:50%;
+    transform:translateY(-50%);
+  }
+  /* 来店予約は5つあるので、横幅の広いときだけ横に並べます */
+  .p-inq__steps--5{ grid-template-columns:repeat(2,1fr); }
+  .p-inq__steps--5 .p-inq__step:nth-child(2n)::after,
+  .p-inq__steps--5 .p-inq__step:last-child::after{ content:none; }
+}
+@media (min-width:1180px){
+  .p-inq__steps--5{ grid-template-columns:repeat(5,1fr); gap:30px; }
+  .p-inq__steps--5 .p-inq__step:not(:last-child)::after{
+    content:'➡'; right:-26px; font-size:22px;
+  }
+}
+
+/* ②の下につく小さな但し書き */
+.p-inq__stepsub{
+  margin:8px 0 0; font-size:12.5px; line-height:1.8; color:var(--ink-sub);
+  word-break:auto-phrase;
+}
+/* ⑤のお買物券のところだけ、うっすら色をつけます */
+.p-inq__step--gift{
+  background:var(--brand-tint); border-color:var(--brand-tint2);
+}
+
+/* お電話でのご予約の但し書き */
+.p-inq__telcaution{
+  margin:10px 0 0; font-size:12.5px; line-height:1.8; color:var(--ink-sub);
+}
+.p-inq__stepno{
+  display:flex; align-items:center; justify-content:center;
+  width:38px; height:38px; margin-bottom:12px;
+  background:var(--brand); color:#fff; border-radius:50%;
+  font-size:18px; font-weight:900; line-height:1;
+}
+.p-inq__stepttl{
+  margin:0 0 8px; font-size:clamp(15px,4vw,17px); font-weight:900; color:var(--ink);
+  line-height:1.5; word-break:auto-phrase;
+}
+.p-inq__steptxt{
+  margin:0; font-size:14px; line-height:1.95; color:#444; word-break:auto-phrase;
+}
+
+/* ── フォームまわりの補足 ───────────────────────── */
+.p-inq__note{
+  margin:22px 0 0; font-size:13px; line-height:1.9; color:#666; word-break:auto-phrase;
+}
+.p-inq__note a{ color:var(--brand-dark); }
+
+.p-form__privacy{
+  margin:0 0 18px; text-align:center; font-size:13.5px; line-height:1.8; color:#555;
+}
+
+/* フォームがまだ無いときのご案内 */
+.p-inq__soon{
+  text-align:center; background:#fff; border:2px dashed var(--brand-tint2);
+  border-radius:14px; padding:28px 22px;
+}
+.p-inq__soonttl{
+  margin:0 0 10px; font-size:clamp(16px,4.4vw,19px); font-weight:900; color:var(--brand-dark);
+}
+.p-inq__soon p{ margin:0; font-size:14px; line-height:1.95; color:#444; }
+
+/* ログイン中のスタッフだけに見える案内 */
+.p-inq__admin{
+  margin-top:16px; background:#fffbe6; border:1px solid #f0e0a0; border-radius:10px;
+  padding:16px 18px; font-size:13px; line-height:1.9; color:#5a4a10;
+}
+.p-inq__admin p{ margin:0 0 6px; }
+.p-inq__admin p:last-child{ margin-bottom:0; }
+.p-inq__admin code{
+  background:#fff; border:1px solid #e6d9a8; border-radius:4px; padding:1px 5px; font-size:12.5px;
+}
+
+/* ── 営業・セールスお断りのひとこと ─────────────────
+   目立たせすぎると、本当のお客様まで身構えてしまいます。
+   小さな注意書きとして、フォームの上に静かに置いています。 */
+.p-inq__nosales{
+  max-width:720px; margin:0 auto 18px;
+  font-size:12.5px; line-height:1.9; color:var(--ink-light);
+  word-break:auto-phrase;
+}
+.p-inq__nosales a{ color:var(--ink-sub); }
+
+/* ── reCAPTCHA ─────────────────────────────────
+   右下に出る灰色のバッジを隠します。
+   このサイトは右下に「ページの先頭にもどる」ボタン、
+   スマホでは下に固定したボタンの帯があり、重なってしまうためです。
+
+   ★消すかわりに、フォームの下にご案内文を出しています。
+     これはGoogleの規約で決められていることなので、
+     下の .p-form__recaptcha を消さないでください。 */
+.grecaptcha-badge{ visibility:hidden; }
+
+.p-form__recaptcha{
+  max-width:720px; margin:16px auto 0;
+  font-size:12px; line-height:1.9; color:var(--ink-light);
+  text-align:center; word-break:auto-phrase;
+}
+.p-form__recaptcha a{ color:var(--ink-sub); }

@@ -223,8 +223,6 @@ get_header();
   <div class="l-wrap">
     <div class="c-head">
       <span class="c-head__en">WALL CHECK</span>
-      <img class="c-head__chara c-chara--float" src="<?php echo $dir; ?>/assets/img/character/char-search.webp"
-           width="592" height="640" alt="" loading="lazy" decoding="async">
       <h2 class="c-head__title">外壁から<br class="sp-only">こんな<span class="marker">サイン</span>が出ていませんか</h2>
       <p class="c-head__lead">
         下にいくほど、急いだほうがよい状態です。<br class="pc-only">
@@ -235,6 +233,12 @@ get_header();
     <div class="p-ow__checks">
       <?php foreach ( $wall_checks as $c ) : ?>
         <div class="p-ow__check">
+          <p class="p-ow__lv">
+            <span class="p-ow__lvlbl">劣化度</span>
+            <span class="p-ow__pigs" role="img"
+                  aria-label="劣化度5段階のうち<?php echo (int) $c['lv']; ?>"><?php
+              echo $lv_html( $c['lv'] ) /* phpcs:ignore WordPress.Security.EscapeOutput */; ?></span>
+          </p>
           <div class="p-ow__ph">
             <picture>
               <source srcset="<?php echo esc_url( $dir . '/assets/img/outerwall/' . $c['img'] . '.webp' ); ?>" type="image/webp">
@@ -245,12 +249,6 @@ get_header();
           </div>
           <div class="p-ow__body">
             <h3 class="p-ow__name"><?php echo esc_html( $c['name'] ); ?></h3>
-            <p class="p-ow__lv">
-              <span class="p-ow__lvlbl">劣化度</span>
-              <span class="p-ow__pigs" role="img"
-                    aria-label="劣化度5段階のうち<?php echo (int) $c['lv']; ?>"><?php
-                echo $lv_html( $c['lv'] ) /* phpcs:ignore WordPress.Security.EscapeOutput */; ?></span>
-            </p>
             <p class="p-ow__text"><?php echo ymkrf_brk( $c['text'] ) /* phpcs:ignore */; ?></p>
           </div>
         </div>
@@ -274,6 +272,12 @@ get_header();
     <div class="p-ow__checks p-ow__checks--roof">
       <?php foreach ( $roof_checks as $c ) : ?>
         <div class="p-ow__check">
+          <p class="p-ow__lv">
+            <span class="p-ow__lvlbl">劣化度</span>
+            <span class="p-ow__pigs" role="img"
+                  aria-label="劣化度5段階のうち<?php echo (int) $c['lv']; ?>"><?php
+              echo $lv_html( $c['lv'] ) /* phpcs:ignore WordPress.Security.EscapeOutput */; ?></span>
+          </p>
           <div class="p-ow__ph">
             <picture>
               <source srcset="<?php echo esc_url( $dir . '/assets/img/outerwall/' . $c['img'] . '.webp' ); ?>" type="image/webp">
@@ -287,12 +291,6 @@ get_header();
               <?php echo esc_html( $c['name'] ); ?>
               <span class="p-ow__sub"><?php echo esc_html( $c['sub'] ); ?></span>
             </h3>
-            <p class="p-ow__lv">
-              <span class="p-ow__lvlbl">劣化度</span>
-              <span class="p-ow__pigs" role="img"
-                    aria-label="劣化度5段階のうち<?php echo (int) $c['lv']; ?>"><?php
-                echo $lv_html( $c['lv'] ) /* phpcs:ignore WordPress.Security.EscapeOutput */; ?></span>
-            </p>
             <p class="p-ow__text"><?php echo ymkrf_brk( $c['text'] ) /* phpcs:ignore */; ?></p>
           </div>
         </div>
@@ -371,18 +369,25 @@ get_header();
 <section class="l-section l-section--tint" id="paint">
   <div class="l-wrap">
     <div class="p-ow__site">
-      <img class="p-ow__sitechara" src="<?php echo $dir; ?>/assets/img/character/char-roller.webp"
-           width="640" height="596" alt="" loading="lazy" decoding="async">
-      <p class="p-ow__siteen">YAMAKISHI PAINT</p>
-      <h2 class="p-ow__sitettl">外壁・屋根の専門サイトが<br class="sp-only">あります</h2>
-      <p class="p-ow__sitetext">
-        工事の流れ、よくあるご質問、施工事例、対応している地域。<br>
-        外壁と屋根のことは、こちらにくわしくまとめています。
-      </p>
-      <a class="p-ow__sitebtn" href="<?php echo esc_url( $paint_url ); ?>" target="_blank" rel="noopener">
-        外壁・屋根サポートサイトを見る
-        <span class="p-ow__sitebtnsub">ヤマキシペイント（別のサイトが開きます）</span>
-      </a>
+      <picture class="p-ow__sitechara">
+        <source srcset="<?php echo $dir; ?>/assets/img/outerwall/site-pig.webp" type="image/webp">
+        <img src="<?php echo $dir; ?>/assets/img/outerwall/site-pig.png"
+             width="593" height="640"
+             alt="ヤマキシのキャラクター「とんとこトン」がローラーを持って歩いているイラスト"
+             loading="lazy" decoding="async">
+      </picture>
+      <div class="p-ow__sitebody">
+        <p class="p-ow__siteen">YAMAKISHI PAINT</p>
+        <h2 class="p-ow__sitettl">外壁・屋根の専門サイトが<br class="sp-only">あります</h2>
+        <p class="p-ow__sitetext">
+          工事の流れ、よくあるご質問、施工事例、対応している地域。<br>
+          外壁と屋根のことは、こちらにくわしくまとめています。
+        </p>
+        <a class="p-ow__sitebtn" href="<?php echo esc_url( $paint_url ); ?>" target="_blank" rel="noopener">
+          外壁・屋根サポートサイトを見る
+          <span class="p-ow__sitebtnsub">ヤマキシペイント（別のサイトが開きます）</span>
+        </a>
+      </div>
     </div>
   </div>
 </section>

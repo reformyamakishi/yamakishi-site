@@ -28,7 +28,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '2.5.1' );   // ファイル更新時はここを上げるとキャッシュが切れます
+if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '2.7.5' );   // ファイル更新時はここを上げるとキャッシュが切れます
 
 /* ============================================================
    1. CSS / JS の読み込み
@@ -62,6 +62,8 @@ add_action( 'wp_enqueue_scripts', function () {
 	           || ( function_exists( 'ymkrf_is_shops' ) && ymkrf_is_shops() )
 	           || ( function_exists( 'ymkrf_is_bguide' ) && ymkrf_is_bguide() )
 	           || ( function_exists( 'ymkrf_is_ts' ) && ymkrf_is_ts() )
+	           || ( function_exists( 'ymkrf_is_inquiry' ) && ymkrf_is_inquiry() )
+	           || ( function_exists( 'ymkrf_is_webrsv' ) && ymkrf_is_webrsv() )
 	           || ( function_exists( 'ymkrf_is_privacy' ) && ymkrf_is_privacy() );
 	$is_top = is_front_page() && ! $is_special;
 
@@ -327,6 +329,133 @@ function ymkrf_is_ts() {
 	return (bool) get_query_var( 'ymkrf_ts' );
 }
 endif;
+
+/* ============================================================
+   1-8. reCAPTCHA のご案内文
+
+        reCAPTCHA v3 は、ふつう画面の右下に灰色のバッジを出します。
+        ところがこのサイトは、右下に「ページの先頭にもどる」ボタンと、
+        スマホでは下に固定したボタンの帯があるため、バッジが
+        そのうしろに隠れてしまいます。
+
+        Google は「バッジを消すかわりに、下の文をフォームの近くに
+        出すこと」を認めています。そちらのやり方にしています。
+        （バッジを消すCSSは assets/css/page.css にあります）
+   ============================================================ */
+if ( ! function_exists( 'ymkrf_recaptcha_note' ) ) :
+function ymkrf_recaptcha_note() {
+
+	/* reCAPTCHA を使っていないときは、何も出しません */
+	if ( ! class_exists( 'WPCF7_RECAPTCHA' ) ) return;
+	$svc = WPCF7_RECAPTCHA::get_instance();
+	if ( ! $svc || ! $svc->is_active() ) return;
+	?>
+	<p class="p-form__recaptcha">
+	  このサイトは reCAPTCHA によって保護されており、Google の<a
+	    href="https://policies.google.com/privacy" target="_blank" rel="noopener">プライバシーポリシー</a>と<a
+	    href="https://policies.google.com/terms" target="_blank" rel="noopener">利用規約</a>が適用されます。
+	</p>
+	<?php
+}
+endif;
+
+
+/* ============================================================
+   1-6. お見積り・お問い合わせ（/inquiry/）のURL
+
+        ★ /inquiry/webrsv/（来店予約）は別のページです。
+          ここでは「/inquiry/ ちょうど」だけを拾うようにしています。
+          `?$` を外すと来店予約まで飲み込んでしまうので、ご注意ください。
+   ============================================================ */
+add_action( 'init', function () {
+	add_rewrite_rule( '^inquiry/?$', 'index.php?ymkrf_inquiry=1', 'top' );
+}, 20 );
+
+add_filter( 'query_vars', function ( $vars ) {
+	$vars[] = 'ymkrf_inquiry';
+	return $vars;
+} );
+
+add_filter( 'template_include', function ( $tpl ) {
+	if ( ! get_query_var( 'ymkrf_inquiry' ) ) return $tpl;
+	$found = locate_template( 'ymkrf-inquiry.php' );
+	return $found ? $found : $tpl;
+} );
+
+add_action( 'wp', function () {
+	if ( ! get_query_var( 'ymkrf_inquiry' ) ) return;
+	global $wp_query;
+	$wp_query->is_404        = false;
+	$wp_query->is_home       = false;
+	$wp_query->is_front_page = false;
+	$wp_query->is_page       = false;
+	$wp_query->is_singular   = false;
+	$wp_query->is_archive    = false;
+	$wp_query->is_post_type_archive = false;
+	status_header( 200 );
+} );
+
+add_filter( 'document_title_parts', function ( $parts ) {
+	if ( get_query_var( 'ymkrf_inquiry' ) ) {
+		$parts['title'] = 'お見積り・お問い合わせ｜現地調査もお見積りも無料';
+		unset( $parts['tagline'] );
+	}
+	return $parts;
+} );
+
+if ( ! function_exists( 'ymkrf_is_inquiry' ) ) :
+function ymkrf_is_inquiry() {
+	return (bool) get_query_var( 'ymkrf_inquiry' );
+}
+endif;
+
+
+/* ============================================================
+   1-7. ネット来店予約（/inquiry/webrsv/）のURL
+        作りは上の /inquiry/ と同じです。
+   ============================================================ */
+add_action( 'init', function () {
+	add_rewrite_rule( '^inquiry/webrsv/?$', 'index.php?ymkrf_webrsv=1', 'top' );
+}, 20 );
+
+add_filter( 'query_vars', function ( $vars ) {
+	$vars[] = 'ymkrf_webrsv';
+	return $vars;
+} );
+
+add_filter( 'template_include', function ( $tpl ) {
+	if ( ! get_query_var( 'ymkrf_webrsv' ) ) return $tpl;
+	$found = locate_template( 'ymkrf-webrsv.php' );
+	return $found ? $found : $tpl;
+} );
+
+add_action( 'wp', function () {
+	if ( ! get_query_var( 'ymkrf_webrsv' ) ) return;
+	global $wp_query;
+	$wp_query->is_404        = false;
+	$wp_query->is_home       = false;
+	$wp_query->is_front_page = false;
+	$wp_query->is_page       = false;
+	$wp_query->is_singular   = false;
+	$wp_query->is_archive    = false;
+	$wp_query->is_post_type_archive = false;
+	status_header( 200 );
+} );
+
+add_filter( 'document_title_parts', function ( $parts ) {
+	if ( get_query_var( 'ymkrf_webrsv' ) ) {
+		$parts['title'] = 'ネット来店予約｜初回はヤマキシお買物券500円分プレゼント';
+		unset( $parts['tagline'] );
+	}
+	return $parts;
+} );
+
+if ( ! function_exists( 'ymkrf_is_webrsv' ) ) :
+function ymkrf_is_webrsv() {
+	return (bool) get_query_var( 'ymkrf_webrsv' );
+}
+endif;
+
 
 /* ============================================================
    1-5. 外壁・屋根（/products/outer-wall/）の題名

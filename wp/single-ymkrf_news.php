@@ -100,7 +100,7 @@ if ( $others->have_posts() ) : ?>
       </p>
       <div class="p-lpcta__btns">
         <a class="c-btn c-btn--line c-btn--block" href="https://lin.ee/UJZuSTrz" rel="noopener" data-cta="news-cta">
-          <span class="c-btn__label">LINEで無料見積り<span class="c-btn__sub">ご相談だけでもOK・24時間受付</span></span>
+          <span class="c-btn__label">LINEで相談する<span class="c-btn__sub">写真を送るだけでもOK・24時間受付</span></span>
         </a>
         <a class="c-btn c-btn--ghost c-btn--block" href="tel:0800-777-3331" data-cta="news-cta">
           <span class="c-btn__label">0800-777-3331<span class="c-btn__sub">通話無料・受付 9:00〜17:00</span></span>
