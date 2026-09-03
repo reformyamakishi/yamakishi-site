@@ -24,9 +24,19 @@
  *   ・どこにもチェックを入れない … 全店共通のチラシです
  *   ・お店にチェックを入れる　　　… そのお店だけのチラシです
  *
- * ページの出し分けは、こうなります。
- *   そのお店だけのチラシがある → そちらを出します（共通のものは出しません）
- *   そのお店だけのチラシがない → 全店共通のチラシを出します
+ * お客様のページには、そのお店のチラシ ＋ 全店共通のチラシ の両方が出ます。
+ * 並びは「そのお店のもの → 全店共通」です。
+ *
+ * ── 出す日・やめる日 ────────────────────────────
+ * 右の「公開」の欄だけで決めます（2026/09/03 ユーザー要望）。
+ *   出す日　… WordPressの公開日時を先にして「予約投稿」
+ *   やめる日… 「予約非公開日時」にチェックを入れて日時を入れる
+ * 編集画面のいちばん上に、いま出ているかどうかを大きく出しています。
+ *
+ * ── 古いチラシのかたづけ ──────────────────────────
+ * 予約非公開日時をすぎて21日たつと、チラシと画像を自動で削除します。
+ * 下書き・予約済み、「自動で削除しない」のもの、ほかでも使っている画像は
+ * 消しません。くわしくは「3-c」を見てください。
  *
  * ── 掲載商品について ────────────────────────────
  * 「チラシに載せた商品」は、サイトに登録ずみの商品からえらぶだけです。
@@ -65,7 +75,9 @@ add_action( 'init', function () {
 		'has_archive'         => false,
 		'rewrite'             => false,
 		'menu_icon'           => 'dashicons-tickets-alt',
-		'supports'            => array( 'title', 'editor', 'page-attributes' ),
+		/* editor（本文）は supports からはずし、下でたためる箱として出しています。
+		   ふだん使わない欄が、タイトルのすぐ下を占めてしまうためです。 */
+		'supports'            => array( 'title', 'page-attributes' ),
 		'show_in_rest'        => false,
 	) );
 
@@ -114,17 +126,45 @@ add_action( 'wp_enqueue_scripts', function () {
    3. 編集画面の欄
    ============================================================ */
 add_action( 'add_meta_boxes', function () {
-	add_meta_box( 'ymkrf_flyer_main', 'チラシの画像と期間',
+	add_meta_box( 'ymkrf_flyer_main', 'チラシの画像',
 		'ymkrf_flyer_box_main', 'ymkrf_flyer', 'normal', 'high' );
 	add_meta_box( 'ymkrf_flyer_prd', 'チラシに載せた商品',
 		'ymkrf_flyer_box_prd', 'ymkrf_flyer', 'normal', 'default' );
 
+	/* 本文。ふだんは使わないので、たたんだ状態で出します
+	   （2026/09/03 ユーザー要望）。見出しを押すと開きます。 */
+	add_meta_box( 'ymkrf_flyer_body', '本文',
+		'ymkrf_flyer_box_body', 'ymkrf_flyer', 'normal', 'low' );
+
 	/* お店の欄は、そのままだと商品と同じ「展示店舗」という題名になってしまい、
 	   並び順もばらばらです。チラシ用に作りなおします。 */
 	remove_meta_box( 'ymkrf_shopdiv', 'ymkrf_flyer', 'side' );
+	/* 右のせまい列だと11店舗が入りきらず、スクロールが必要でした。
+	   左（本文と同じ列）のいちばん上に置いて、全店を一度に出します
+	   （2026/09/03 ユーザー要望）。 */
 	add_meta_box( 'ymkrf_flyer_shop', 'このチラシを出すお店',
-		'ymkrf_flyer_box_shop', 'ymkrf_flyer', 'side', 'high' );
+		'ymkrf_flyer_box_shop', 'ymkrf_flyer', 'normal', 'high' );
 }, 20 );
+
+/* WordPress は、いちど出した欄の置き場所をユーザーごとに覚えています。
+   そのままだと「お店」の欄が右のままになってしまうので、
+   この画面の記憶だけを一度きり消します（2026/09/03）。
+   このあとは、ご自分でドラッグして動かした位置を覚えます。 */
+add_filter( 'get_user_option_meta-box-order_ymkrf_flyer', function ( $order ) {
+	if ( ! is_array( $order ) ) return $order;
+
+	/* 覚えている並びから「お店」の欄だけを取りのぞきます。
+	   そうすると、上の add_meta_box で決めた左の位置がそのまま使われます。
+	   ほかの欄は、これまでどおりドラッグで動かせます。 */
+	foreach ( $order as $ctx => $ids ) {
+		$keep = array_filter(
+			explode( ',', (string) $ids ),
+			function ( $id ) { return $id !== '' && $id !== 'ymkrf_flyer_shop'; }
+		);
+		$order[ $ctx ] = implode( ',', $keep );
+	}
+	return $order;
+} );
 
 /**
  * 「このチラシを出すお店」の欄。
@@ -145,36 +185,56 @@ function ymkrf_flyer_box_shop( $post ) {
 	}
 
 	$shops = function_exists( 'ymkrf_shops' ) ? ymkrf_shops() : array();
+
+	/* この欄だけの並び順（2026/09/03 ユーザー指定）。
+	   1段5つ出るので、よく使うお店が上の段にそろいます。
+	     上の段 … 東金沢／羽咋／金沢野々市／金沢田上／小松
+	     下の段 … そのほか
+	   ここに書いていないお店は、そのままうしろに続きます。
+	   ※店舗ページ（/shops/）などの並びは変えていません。 */
+	$box_order = array(
+		'higashikanazawa', 'hakui', 'nonoichi', 'tagami', 'komathu',
+	);
+
 	$by_pref = array();
 	foreach ( $shops as $sp ) $by_pref[ $sp['pref'] ][] = $sp;
+
+	foreach ( $by_pref as $pref => $list ) {
+		usort( $list, function ( $a, $b ) use ( $box_order ) {
+			$ia = array_search( $a['slug'], $box_order, true );
+			$ib = array_search( $b['slug'], $box_order, true );
+			if ( false === $ia ) $ia = PHP_INT_MAX;
+			if ( false === $ib ) $ib = PHP_INT_MAX;
+			return $ia <=> $ib;   /* 同じ順位のときは、もとの並びのままです */
+		} );
+		$by_pref[ $pref ] = $list;
+	}
 	?>
 	<div class="ymkrf-fl__shop">
 	  <p class="ymkrf-fl__shopall">
 	    <label>
 	      <input type="checkbox" id="ymkrf-fl-shopnone" <?php checked( ! $now ); ?>>
 	      <b>全店共通にする</b>
-	    </label><br>
-	    <span class="description">どのお店でも出ます。全店で同じチラシのときに使います。</span>
+	    </label>
 	  </p>
 
 	  <div id="ymkrf-fl-shoplist" class="ymkrf-fl__shoplist<?php echo $now ? '' : ' is-off'; ?>">
 	    <?php foreach ( $by_pref as $pref => $list ) : ?>
-	      <p class="ymkrf-fl__shoppref"><?php echo esc_html( $pref ); ?></p>
-	      <?php foreach ( $list as $sp ) : ?>
-	        <label class="ymkrf-fl__shopitem">
-	          <input type="checkbox" class="ymkrf-fl__shopchk" name="ymkrf_flyer_shop[]"
-	                 value="<?php echo esc_attr( $sp['slug'] ); ?>"
-	                 <?php checked( in_array( $sp['slug'], $now, true ) ); ?>>
-	          <span><?php echo esc_html( $sp['name'] ); ?></span>
-	        </label>
-	      <?php endforeach; ?>
+	      <div class="ymkrf-fl__shopgrp">
+	        <p class="ymkrf-fl__shoppref"><?php echo esc_html( $pref ); ?></p>
+	        <div class="ymkrf-fl__shopgrid">
+	          <?php foreach ( $list as $sp ) : ?>
+	            <label class="ymkrf-fl__shopitem">
+	              <input type="checkbox" class="ymkrf-fl__shopchk" name="ymkrf_flyer_shop[]"
+	                     value="<?php echo esc_attr( $sp['slug'] ); ?>"
+	                     <?php checked( in_array( $sp['slug'], $now, true ) ); ?>>
+	              <span><?php echo esc_html( $sp['name'] ); ?></span>
+	            </label>
+	          <?php endforeach; ?>
+	        </div>
+	      </div>
 	    <?php endforeach; ?>
 	  </div>
-
-	  <p class="description ymkrf-fl__shophelp">
-	    お店にチェックを入れると、そのお店のチラシになります。<br>
-	    お客様のページでは、<b>そのお店のチラシ</b>と<b>全店共通のチラシ</b>の両方が出ます。
-	  </p>
 	</div>
 	<?php
 }
@@ -192,6 +252,276 @@ add_action( 'save_post_ymkrf_flyer', function ( $post_id ) {
 	/* 空にすると「全店共通」になります */
 	wp_set_object_terms( $post_id, $slugs ? $slugs : null, 'ymkrf_shop', false );
 } );
+
+/* ============================================================
+   3-a. 右の「公開」の欄に「予約非公開日時」を足します
+   ------------------------------------------------------------
+   ★2026/09/03 ユーザー要望：
+     チラシを出す日・やめる日は、右の「公開」の欄だけで決めます。
+     （「掲載期間」の欄はなくしました）
+
+       出す日　… WordPressの「公開日時」を先の日にして「予約投稿」
+       やめる日… ここで足す「予約非公開日時」
+
+     やめる日時をすぎると、お客様のページから消えます。
+     記事そのものは消えませんし、下書きにも戻りません。
+     日時をのばせば、また出ます。
+   ============================================================ */
+add_action( 'post_submitbox_misc_actions', function ( $post ) {
+	if ( ! $post || $post->post_type !== 'ymkrf_flyer' ) return;
+
+	$val = ymkrf_flyer_unpublish_at( $post->ID );          /* 'Y-m-d H:i' か '' */
+	$in  = $val !== '' ? str_replace( ' ', 'T', $val ) : '';
+	wp_nonce_field( 'ymkrf_flyer_off_save', 'ymkrf_flyer_off_nonce' );
+	?>
+	<div class="misc-pub-section ymkrf-fl__off">
+	  <label class="ymkrf-fl__offchk">
+	    <input type="checkbox" name="_ymkrf_flyer_off_on" id="ymkrf-fl-off-on" value="1" <?php checked( $val !== '' ); ?>>
+	    <b>予約非公開日時</b>
+	  </label>
+	  <p class="ymkrf-fl__offbody" id="ymkrf-fl-off-body"<?php echo $val === '' ? ' hidden' : ''; ?>>
+	    <input type="datetime-local" name="_ymkrf_flyer_off" id="ymkrf-fl-off"
+	           value="<?php echo esc_attr( $in ); ?>" style="width:100%">
+	    <span class="description">この日時になると、お客様のページから自動で消えます。<br>
+	      日時をのばせば、また出ます。</span>
+	  </p>
+	</div>
+
+	<div class="misc-pub-section ymkrf-fl__keep">
+	  <label class="ymkrf-fl__offchk">
+	    <input type="checkbox" name="_ymkrf_flyer_keep" value="1"
+	      <?php checked( get_post_meta( $post->ID, '_ymkrf_flyer_keep', true ) === '1' ); ?>>
+	    <b>自動で削除しない（ずっと残す）</b>
+	  </label>
+	  <p class="description">
+	    ふだんは、ページから消えて<b><?php echo (int) YMKRF_FLYER_KEEP_DAYS; ?>日</b>たつと、
+	    このチラシと画像を自動で削除します。<br>
+	    残しておきたいチラシは、ここにチェックを入れてください。
+	  </p>
+	  <?php $del = ymkrf_flyer_delete_at( $post->ID ); if ( $del !== '' ) : ?>
+	    <p class="ymkrf-fl__delnote">
+	      <b><?php echo esc_html( ymkrf_flyer_day_text( $del ) ); ?></b>ごろに自動で削除されます
+	    </p>
+	  <?php endif; ?>
+	</div>
+	<script>
+	(function () {
+	  var c = document.getElementById('ymkrf-fl-off-on');
+	  var b = document.getElementById('ymkrf-fl-off-body');
+	  var i = document.getElementById('ymkrf-fl-off');
+	  if (!c || !b) return;
+	  c.addEventListener('change', function () {
+	    b.hidden = !c.checked;
+	    /* はじめてチェックしたときは、1か月後を入れておきます */
+	    if (c.checked && !i.value) {
+	      var d = new Date(); d.setMonth(d.getMonth() + 1);
+	      var p = function (n) { return ('0' + n).slice(-2); };
+	      i.value = d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + 'T22:00';
+	    }
+	  });
+	})();
+	</script>
+	<?php
+} );
+
+add_action( 'save_post_ymkrf_flyer', function ( $post_id ) {
+	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
+	if ( ! isset( $_POST['ymkrf_flyer_off_nonce'] ) ||
+	     ! wp_verify_nonce( $_POST['ymkrf_flyer_off_nonce'], 'ymkrf_flyer_off_save' ) ) return;
+	if ( ! current_user_can( 'edit_post', $post_id ) ) return;
+
+	if ( ! empty( $_POST['_ymkrf_flyer_keep'] ) ) {
+		update_post_meta( $post_id, '_ymkrf_flyer_keep', '1' );
+	} else {
+		delete_post_meta( $post_id, '_ymkrf_flyer_keep' );
+	}
+
+	$on  = ! empty( $_POST['_ymkrf_flyer_off_on'] );
+	$raw = isset( $_POST['_ymkrf_flyer_off'] ) ? sanitize_text_field( wp_unslash( $_POST['_ymkrf_flyer_off'] ) ) : '';
+	$raw = str_replace( 'T', ' ', trim( $raw ) );
+
+	/* 「2026-09-28 22:00」の形だけ受けつけます */
+	if ( ! $on || ! preg_match( '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/', $raw ) ) {
+		delete_post_meta( $post_id, '_ymkrf_flyer_off' );
+		return;
+	}
+	update_post_meta( $post_id, '_ymkrf_flyer_off', $raw );
+} );
+
+
+/* ============================================================
+   3-c. 古くなったチラシを自動でかたづけます
+   ------------------------------------------------------------
+   ★2026/09/03 ユーザー要望：
+     「チラシは非表示になって3週間後に自動で削除してほしい。
+       メディアも削除。下書きの場合は残す。」
+
+   ── かならず守っていること ──────────────────────
+     ・下書き／予約済みのチラシは、いっさい消しません
+     ・「予約非公開日時」を決めていないチラシも消しません
+       （いつまでも出しつづけるものなので）
+     ・「自動で削除しない」にチェックのあるものは消しません
+     ・画像は、ほかのチラシでも使われていたら消しません
+     ・消える日は、編集画面と一覧にあらかじめ出しています
+
+   ── いつ動くか ────────────────────────────
+     1日に1回、WordPressの定期処理（wp-cron）で動きます。
+     お客様のアクセスがきっかけで動くしくみなので、
+     ぴったりの時刻ではなく「その日のうち」に消えます。
+   ============================================================ */
+if ( ! defined( 'YMKRF_FLYER_KEEP_DAYS' ) ) define( 'YMKRF_FLYER_KEEP_DAYS', 21 );   /* 3週間 */
+
+/** 自動で削除される日時（'Y-m-d H:i'）。消さないものは空 */
+if ( ! function_exists( 'ymkrf_flyer_delete_at' ) ) :
+function ymkrf_flyer_delete_at( $post_id ) {
+	if ( get_post_meta( $post_id, '_ymkrf_flyer_keep', true ) === '1' ) return '';
+	if ( get_post_status( $post_id ) !== 'publish' ) return '';          /* 下書き・予約済みは残す */
+
+	$off = ymkrf_flyer_unpublish_at( $post_id );
+	if ( $off === '' ) return '';                                        /* 終わりを決めていない */
+
+	$t = strtotime( $off );
+	if ( ! $t ) return '';
+	return gmdate( 'Y-m-d H:i', $t + YMKRF_FLYER_KEEP_DAYS * DAY_IN_SECONDS );
+}
+endif;
+
+/* 1日に1回の見まわりを予約します */
+add_action( 'init', function () {
+	if ( ! wp_next_scheduled( 'ymkrf_flyer_cleanup' ) ) {
+		wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', 'ymkrf_flyer_cleanup' );
+	}
+}, 30 );
+
+add_action( 'ymkrf_flyer_cleanup', 'ymkrf_flyer_do_cleanup' );
+
+/** その画像が、ほかのチラシでも使われているか */
+if ( ! function_exists( 'ymkrf_flyer_img_used_elsewhere' ) ) :
+function ymkrf_flyer_img_used_elsewhere( $att_id, $except_post_id ) {
+	if ( ! $att_id ) return true;   /* 念のため「使われている」扱い＝消しません */
+
+	global $wpdb;
+
+	/* ほかのチラシの表面・裏面に使われていないか */
+	$n = (int) $wpdb->get_var( $wpdb->prepare(
+		"SELECT COUNT(*) FROM {$wpdb->postmeta}
+		  WHERE meta_key IN ( '_ymkrf_flyer_front', '_ymkrf_flyer_back' )
+		    AND meta_value = %s AND post_id <> %d",
+		(string) (int) $att_id, (int) $except_post_id
+	) );
+	if ( $n > 0 ) return true;
+
+	/* 商品・施工事例などのアイキャッチに使われていないか */
+	$n = (int) $wpdb->get_var( $wpdb->prepare(
+		"SELECT COUNT(*) FROM {$wpdb->postmeta}
+		  WHERE meta_key = '_thumbnail_id' AND meta_value = %s",
+		(string) (int) $att_id
+	) );
+	if ( $n > 0 ) return true;
+
+	/* どこかの本文に貼りこまれていないか（ファイル名で見ます） */
+	$file = get_post_meta( $att_id, '_wp_attached_file', true );
+	if ( $file ) {
+		$base = wp_basename( $file );
+		$dot  = strrpos( $base, '.' );
+		if ( $dot ) $base = substr( $base, 0, $dot );      /* 拡張子とサイズ違いも拾えるように */
+		if ( strlen( $base ) >= 4 ) {
+			$n = (int) $wpdb->get_var( $wpdb->prepare(
+				"SELECT COUNT(*) FROM {$wpdb->posts}
+				  WHERE post_status NOT IN ( 'trash', 'auto-draft' )
+				    AND ID <> %d AND post_content LIKE %s",
+				(int) $except_post_id, '%' . $wpdb->esc_like( $base ) . '%'
+			) );
+			if ( $n > 0 ) return true;
+		}
+	}
+
+	return false;
+}
+endif;
+
+/**
+ * そのチラシにぶら下がっている画像のIDを、ぜんぶ集めます。
+ *
+ * ・表面・裏面にえらんでいるもの
+ * ・そのチラシの編集画面からアップロードしたもの（post_parent）
+ *   ← 入れかえてえらばれなくなった画像も、ここで拾えます。
+ *     これを消さないと、使っていない画像がたまりつづけます。
+ */
+if ( ! function_exists( 'ymkrf_flyer_own_attachments' ) ) :
+function ymkrf_flyer_own_attachments( $post_id ) {
+	$ids = array();
+
+	foreach ( array( '_ymkrf_flyer_front', '_ymkrf_flyer_back' ) as $k ) {
+		$a = (int) get_post_meta( $post_id, $k, true );
+		if ( $a ) $ids[] = $a;
+	}
+
+	$kids = get_posts( array(
+		'post_type'      => 'attachment',
+		'post_status'    => 'any',
+		'post_parent'    => (int) $post_id,
+		'posts_per_page' => -1,
+		'fields'         => 'ids',
+		'no_found_rows'  => true,
+	) );
+	foreach ( (array) $kids as $a ) $ids[] = (int) $a;
+
+	return array_values( array_unique( array_filter( $ids ) ) );
+}
+endif;
+
+/**
+ * 見まわりの本体。
+ * 消したものは option 'ymkrf_flyer_cleanup_log' に、直近20件だけ残します。
+ */
+if ( ! function_exists( 'ymkrf_flyer_do_cleanup' ) ) :
+function ymkrf_flyer_do_cleanup() {
+
+	$now = current_time( 'Y-m-d H:i' );
+	$log = (array) get_option( 'ymkrf_flyer_cleanup_log', array() );
+
+	$posts = get_posts( array(
+		'post_type'      => 'ymkrf_flyer',
+		'post_status'    => 'publish',          /* 下書き・予約済みは対象外 */
+		'posts_per_page' => 50,
+		'no_found_rows'  => true,
+		'meta_query'     => array(
+			array( 'key' => '_ymkrf_flyer_off', 'compare' => 'EXISTS' ),
+			array( 'key' => '_ymkrf_flyer_keep', 'compare' => 'NOT EXISTS' ),
+		),
+	) );
+
+	foreach ( $posts as $p ) {
+
+		$due = ymkrf_flyer_delete_at( $p->ID );
+		if ( $due === '' || $now < $due ) continue;
+
+		/* 画像を先にかたづけます。
+		   えらんでいる2枚だけでなく、そのチラシからアップロードした画像も
+		   ぜんぶ見ます（入れかえて使わなくなったものが残らないように）。 */
+		$gone = 0;
+		$kept = 0;
+		foreach ( ymkrf_flyer_own_attachments( $p->ID ) as $att ) {
+			if ( ymkrf_flyer_img_used_elsewhere( $att, $p->ID ) ) { $kept++; continue; }
+			if ( wp_delete_attachment( $att, true ) ) $gone++;
+		}
+
+		$title = get_the_title( $p->ID );
+		wp_delete_post( $p->ID, true );
+
+		array_unshift( $log, array(
+			'when'  => current_time( 'Y-m-d H:i' ),
+			'title' => ( $title !== '' ? $title : '（名前なし）' ),
+			'imgs'  => $gone,
+			'kept'  => $kept,
+		) );
+	}
+
+	if ( $log ) update_option( 'ymkrf_flyer_cleanup_log', array_slice( $log, 0, 20 ), false );
+}
+endif;
+
 
 /** 画像を1枚えらぶ欄をひとつ出します */
 function ymkrf_flyer_imgfield( $key, $label, $post_id, $note = '' ) {
@@ -224,29 +554,13 @@ function ymkrf_flyer_imgfield( $key, $label, $post_id, $note = '' ) {
 
 function ymkrf_flyer_box_main( $post ) {
 	wp_nonce_field( 'ymkrf_flyer_save', 'ymkrf_flyer_nonce' );
-	$start = (string) get_post_meta( $post->ID, '_ymkrf_flyer_start', true );
-	$end   = (string) get_post_meta( $post->ID, '_ymkrf_flyer_end',   true );
 	$catch = (string) get_post_meta( $post->ID, '_ymkrf_flyer_catch', true );
-	$pdf   = (int)    get_post_meta( $post->ID, '_ymkrf_flyer_pdf',   true );
 	?>
 	<p>
-	  <label for="ymkrf-fl-catch"><b>キャッチコピー</b></label><br>
+	  <label for="ymkrf-fl-catch"><b>チラシ有効期限</b></label><br>
 	  <input type="text" class="widefat" id="ymkrf-fl-catch" name="_ymkrf_flyer_catch"
 	         value="<?php echo esc_attr( $catch ); ?>"
-	         placeholder="例：秋のリフォームフェア　水まわり4点まとめてお得！">
-	  <span class="description">チラシの上に大きく出ます。空でもかまいません。</span>
-	</p>
-
-	<p>
-	  <b>掲載期間</b><br>
-	  <label>はじまり <input type="date" name="_ymkrf_flyer_start" value="<?php echo esc_attr( $start ); ?>"></label>
-	  　〜
-	  <label>おわり <input type="date" name="_ymkrf_flyer_end" value="<?php echo esc_attr( $end ); ?>"></label><br>
-	  <span class="description">
-	    おわりの日をすぎると、ページに出なくなります（消さなくて大丈夫です）。<br>
-	    はじまりの日を空にすると、公開したその日から出ます。
-	    おわりの日を空にすると、ずっと出つづけます。
-	  </span>
+	         placeholder="例：10/24（土）・10/25（日）　2日間かぎり">
 	</p>
 
 	<hr>
@@ -258,28 +572,53 @@ function ymkrf_flyer_box_main( $post ) {
 		'裏がないチラシのときは、空のままでかまいません。表面と同じ向きにしてください。' ); ?>
 	</div>
 
-	<hr>
-
-	<p>
-	  <b>PDF（ご希望の方がダウンロードできます）</b><br>
-	  <input type="hidden" name="_ymkrf_flyer_pdf" id="ymkrf-fl-pdf" value="<?php echo esc_attr( $pdf ); ?>">
-	  <span id="ymkrf-fl-pdf-name" class="description">
-	    <?php echo $pdf ? esc_html( get_the_title( $pdf ) ) : 'まだ入っていません'; ?>
-	  </span><br>
-	  <button type="button" class="button ymkrf-fl__pickpdf">PDFをえらぶ</button>
-	  <button type="button" class="button-link ymkrf-fl__clearpdf">はずす</button><br>
-	  <span class="description">入れなくてもかまいません。入れると「チラシをPDFで見る」のボタンが出ます。</span>
-	</p>
-
-	<hr>
-	<p class="description">
-	  ★<b>本文（上の大きな入力欄）</b>には、チラシに書ききれなかったご案内や、
-	  お店からのひとことを入れてください。空でもかまいません。<br>
-	  ★<b>対象のお店</b>は、右側の「お店」の欄でえらびます。
-	  どこにもチェックを入れなければ、全店共通のチラシになります。
-	</p>
 	<?php
 }
+
+/**
+ * 本文の欄。
+ *
+ * 投稿タイプの supports から editor をはずし、かわりにこの箱で出しています。
+ * こうすると「たたんでおく」ことができ、ふだんは見出しだけになります。
+ *
+ * 入力欄の id / name を content にしてあるので、
+ * WordPress がこれまでどおり本文として保存します。
+ */
+function ymkrf_flyer_box_body( $post ) {
+	wp_editor( $post->post_content, 'content', array(
+		'textarea_name' => 'content',
+		'textarea_rows' => 8,
+		'media_buttons' => true,
+		'teeny'         => true,
+		'tinymce'       => array( 'wp_autoresize_on' => true ),
+	) );
+}
+
+/* はじめて開いたときは、本文の箱をたたんでおきます。
+   一度ご自身で開け閉めされたあとは、その状態を覚えます。 */
+add_filter( 'get_user_option_closedpostboxes_ymkrf_flyer', function ( $closed ) {
+	return ( false === $closed ) ? array( 'ymkrf_flyer_body' ) : $closed;
+} );
+
+/* たたんだ中の入力欄は、開いたときに高さがつぶれることがあるので直します */
+add_action( 'admin_footer', function () {
+	$s = get_current_screen();
+	if ( ! $s || $s->post_type !== 'ymkrf_flyer' || $s->base !== 'post' ) return;
+	?>
+	<script>
+	jQuery(function ($) {
+		$('#ymkrf_flyer_body .postbox-header, #ymkrf_flyer_body .handlediv').on('click', function () {
+			setTimeout(function () {
+				if (window.tinymce) {
+					var ed = window.tinymce.get('content');
+					if (ed && !ed.isHidden()) ed.execCommand('mceRepaint');
+				}
+			}, 60);
+		});
+	});
+	</script>
+	<?php
+} );
 
 function ymkrf_flyer_box_prd( $post ) {
 	$ids = array_filter( array_map( 'intval',
@@ -341,11 +680,11 @@ add_action( 'save_post_ymkrf_flyer', function ( $post_id ) {
 	     ! wp_verify_nonce( $_POST['ymkrf_flyer_nonce'], 'ymkrf_flyer_save' ) ) return;
 	if ( ! current_user_can( 'edit_post', $post_id ) ) return;
 
-	foreach ( array( '_ymkrf_flyer_start', '_ymkrf_flyer_end', '_ymkrf_flyer_catch' ) as $k ) {
+	foreach ( array( '_ymkrf_flyer_catch' ) as $k ) {
 		update_post_meta( $post_id, $k,
 			isset( $_POST[ $k ] ) ? sanitize_text_field( wp_unslash( $_POST[ $k ] ) ) : '' );
 	}
-	foreach ( array( '_ymkrf_flyer_front', '_ymkrf_flyer_back', '_ymkrf_flyer_pdf' ) as $k ) {
+	foreach ( array( '_ymkrf_flyer_front', '_ymkrf_flyer_back' ) as $k ) {
 		update_post_meta( $post_id, $k, isset( $_POST[ $k ] ) ? (int) $_POST[ $k ] : 0 );
 	}
 
@@ -382,14 +721,22 @@ add_action( 'admin_head', function () {
 	  .ymkrf-fl__prdgrp:first-child .ymkrf-fl__prdttl{margin-top:0}
 	  .ymkrf-fl__prdlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:2px 10px}
 	  .ymkrf-fl__prditem{display:flex;gap:6px;align-items:flex-start;font-size:12.5px;line-height:1.5;padding:2px 0}
-	  .ymkrf-fl__shopall{margin:0 0 10px;padding-bottom:10px;border-bottom:1px solid #e5e5e5}
-	  .ymkrf-fl__shoplist{max-height:260px;overflow:auto}
+	  .ymkrf-fl__shopall{margin:0 0 12px;padding-bottom:12px;border-bottom:1px solid #e5e5e5;font-size:14px}
+	  .ymkrf-fl__shopall label{display:inline-flex;gap:6px;align-items:center}
 	  .ymkrf-fl__shoplist.is-off{opacity:.4;pointer-events:none}
-	  .ymkrf-fl__shoppref{margin:8px 0 3px;padding-left:6px;font-size:11.5px;font-weight:700;
+	  .ymkrf-fl__shopgrp + .ymkrf-fl__shopgrp{margin-top:14px}
+	  .ymkrf-fl__shoppref{margin:0 0 6px;padding-left:7px;font-size:12px;font-weight:700;
 	    color:#646970;border-left:3px solid #fe3301;line-height:1.4}
-	  .ymkrf-fl__shoplist p:first-child{margin-top:0}
-	  .ymkrf-fl__shopitem{display:flex;gap:6px;align-items:center;font-size:13px;line-height:1.7;padding:1px 0}
-	  .ymkrf-fl__shophelp{margin-top:10px}
+	  .ymkrf-fl__shopgrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:2px 12px}
+	  @media (max-width:1100px){.ymkrf-fl__shopgrid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+	  @media (max-width:782px){.ymkrf-fl__shopgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+	  .ymkrf-fl__shopitem{display:flex;gap:6px;align-items:center;font-size:13.5px;line-height:1.9}
+	  .ymkrf-fl__off .ymkrf-fl__offchk{display:flex;gap:6px;align-items:center}
+	  .ymkrf-fl__offbody{margin:8px 0 0}
+	  .ymkrf-fl__offbody .description{display:block;margin-top:4px}
+	  .ymkrf-fl__keep .description{display:block;margin-top:4px}
+	  .ymkrf-fl__delnote{margin:6px 0 0;padding:5px 8px;font-size:12px;line-height:1.6;
+	    background:#fff4f2;border-left:3px solid #d63638;border-radius:3px}
 	</style>';
 } );
 
@@ -423,28 +770,6 @@ add_action( 'admin_footer', function () {
 			var dom = $(this).data('target');
 			$('#' + dom).val('');
 			$('#' + dom + '-prev').html('<span class="ymkrf-fl__none">まだ入っていません</span>');
-		});
-
-		/* PDFをえらぶ */
-		var pdfFrame = null;
-		$(document).on('click', '.ymkrf-fl__pickpdf', function (e) {
-			e.preventDefault();
-			if (!pdfFrame) {
-				pdfFrame = wp.media({ title: 'PDFをえらぶ',
-					library: { type: 'application/pdf' }, multiple: false,
-					button: { text: 'このPDFをつかう' } });
-				pdfFrame.on('select', function () {
-					var m = pdfFrame.state().get('selection').first().toJSON();
-					$('#ymkrf-fl-pdf').val(m.id);
-					$('#ymkrf-fl-pdf-name').text(m.title || m.filename);
-				});
-			}
-			pdfFrame.open();
-		});
-		$(document).on('click', '.ymkrf-fl__clearpdf', function (e) {
-			e.preventDefault();
-			$('#ymkrf-fl-pdf').val('');
-			$('#ymkrf-fl-pdf-name').text('まだ入っていません');
 		});
 
 		/* 掲載商品のチェックを、かくれた欄にまとめます */
@@ -490,14 +815,25 @@ add_action( 'admin_menu', function () {
 		'ymkrf-flyer-shops', 'ymkrf_flyer_shops_page', 'dashicons-tickets-alt', 8
 	);
 
+	/* ★この1つめは、下のCSSで見えなくしています。
+	   WordPress は「メニューを押したときの行き先」を、いちばん上の小メニューから
+	   決めるしくみなので、消してしまうと行き先が変わってしまいます。
+	   そのため、置いたまま隠しています。
+	   （2026/09/03 ユーザー要望：小メニューの「お店からえらぶ」
+	     「チラシ一覧（ぜんぶ）」は出さない） */
 	add_submenu_page( 'ymkrf-flyer-shops', 'お店からえらぶ', 'お店からえらぶ',
 		'edit_posts', 'ymkrf-flyer-shops', 'ymkrf_flyer_shops_page' );
 
-	add_submenu_page( 'ymkrf-flyer-shops', 'チラシ一覧（ぜんぶ）', 'チラシ一覧（ぜんぶ）',
-		'edit_posts', 'edit.php?post_type=ymkrf_flyer' );
-
 	add_submenu_page( 'ymkrf-flyer-shops', 'チラシを新規追加', '新規追加',
 		'edit_posts', 'post-new.php?post_type=ymkrf_flyer' );
+} );
+
+/* 小メニューの1つめ（お店からえらぶ）を見えなくします。
+   「イベント・チラシ」を押すと、そのままお店をえらぶ画面が右に出ます。 */
+add_action( 'admin_head', function () {
+	echo '<style>
+	  #toplevel_page_ymkrf-flyer-shops .wp-submenu li.wp-first-item{display:none}
+	</style>';
 } );
 
 /* チラシを編集しているあいだも、このメニューが開いたままになるようにします */
@@ -509,9 +845,12 @@ add_filter( 'parent_file', function ( $parent ) {
 add_filter( 'submenu_file', function ( $sub ) {
 	$s = get_current_screen();
 	if ( $s && $s->post_type === 'ymkrf_flyer' ) {
+		/* 一覧・編集のときは、隠してある1つめ（お店からえらぶ）を
+		   「いま開いている場所」にしておきます。
+		   小メニューに何も光らない、という見え方を避けるためです。 */
 		return ( $s->base === 'post' && $s->action === 'add' )
 			? 'post-new.php?post_type=ymkrf_flyer'
-			: 'edit.php?post_type=ymkrf_flyer';
+			: 'ymkrf-flyer-shops';
 	}
 	return $sub;
 } );
@@ -524,66 +863,78 @@ function ymkrf_flyer_shops_page() {
 	/* お店ごとに「掲載中／期間外・下書き」を数えます */
 	$all = get_posts( array(
 		'post_type'      => 'ymkrf_flyer',
-		'post_status'    => array( 'publish', 'draft', 'pending', 'future' ),
+		'post_status'    => array( 'publish', 'draft', 'pending', 'future' ),   /* future＝予約投稿 */
 		'posts_per_page' => -1,
 		'no_found_rows'  => true,
 	) );
 
-	$count  = array();   /* slug => array( now, other ) */
-	$common = array( 'now' => 0, 'other' => 0 );
+	$zero   = array( 'now' => 0, 'before' => 0, 'other' => 0, 'soon' => '' );
+	$count  = array();   /* slug => 件数 */
+	$common = $zero;
 
 	foreach ( $all as $p ) {
-		$live = ( $p->post_status === 'publish' && ymkrf_flyer_is_now( $p->ID ) );
-		$k    = $live ? 'now' : 'other';
+		$st = ymkrf_flyer_state( $p->ID );
+		$k  = ( $st === 'now' || $st === 'before' ) ? $st : 'other';
 
 		$ts = get_the_terms( $p->ID, 'ymkrf_shop' );
-		if ( ! $ts || is_wp_error( $ts ) ) {
-			$common[ $k ]++;
-			continue;
-		}
-		foreach ( $ts as $t ) {
-			if ( ! isset( $count[ $t->slug ] ) ) $count[ $t->slug ] = array( 'now' => 0, 'other' => 0 );
-			$count[ $t->slug ][ $k ]++;
+		$targets = ( $ts && ! is_wp_error( $ts ) ) ? wp_list_pluck( $ts, 'slug' ) : array( '' );
+
+		foreach ( $targets as $slug ) {
+			if ( $slug === '' ) {
+				$common[ $k ]++;
+				$ref = &$common;
+			} else {
+				if ( ! isset( $count[ $slug ] ) ) $count[ $slug ] = $zero;
+				$count[ $slug ][ $k ]++;
+				$ref = &$count[ $slug ];
+			}
+			/* いちばん近い「これから出る日」を覚えておきます */
+			if ( $st === 'before' ) {
+				$d = (string) get_post_time( 'Y-m-d H:i', false, $p );
+				if ( $ref['soon'] === '' || $d < $ref['soon'] ) $ref['soon'] = $d;
+			}
+			unset( $ref );
 		}
 	}
 
 	$list_url = function ( $slug ) {
 		return admin_url( 'edit.php?post_type=ymkrf_flyer' . ( $slug ? '&ymkrf_shop=' . rawurlencode( $slug ) : '&ymkrf_flyer_common=1' ) );
 	};
-	$new_url = function ( $slug ) {
-		return admin_url( 'post-new.php?post_type=ymkrf_flyer' . ( $slug ? '&ymkrf_shop=' . rawurlencode( $slug ) : '' ) );
-	};
 
-	/* 1枚のカードを出します */
-	$card = function ( $name, $slug, $c, $note = '' ) use ( $list_url, $new_url ) {
+	/* カードまるごとがリンクです。ボタンは置きません
+	   （2026/09/03 ユーザー要望：店名と件数だけでよい）。
+	   押すと、そのお店のチラシ一覧が開きます。 */
+	$card = function ( $name, $slug, $c, $note = '' ) use ( $list_url ) {
 		?>
-		<div class="ymkrf-fs__card<?php echo $slug ? '' : ' ymkrf-fs__card--common'; ?>">
-		  <p class="ymkrf-fs__name"><?php echo esc_html( $name ); ?></p>
-		  <?php if ( $note ) : ?><p class="ymkrf-fs__note"><?php echo esc_html( $note ); ?></p><?php endif; ?>
-		  <p class="ymkrf-fs__cnt">
+		<a class="ymkrf-fs__card<?php echo $slug ? '' : ' ymkrf-fs__card--common'; ?>"
+		   href="<?php echo esc_url( $list_url( $slug ) ); ?>">
+		  <span class="ymkrf-fs__name"><?php echo esc_html( $name ); ?></span>
+		  <?php if ( $note ) : ?><span class="ymkrf-fs__note"><?php echo esc_html( $note ); ?></span><?php endif; ?>
+		  <span class="ymkrf-fs__cnt">
 		    <?php if ( $c['now'] ) : ?>
 		      <span class="ymkrf-fs__now">掲載中 <?php echo (int) $c['now']; ?>件</span>
 		    <?php else : ?>
 		      <span class="ymkrf-fs__zero">掲載中のチラシなし</span>
 		    <?php endif; ?>
-		    <?php if ( $c['other'] ) : ?>
-		      <span class="ymkrf-fs__other">ほか <?php echo (int) $c['other']; ?>件（下書き・期間外）</span>
+		    <?php if ( ! empty( $c['before'] ) ) : ?>
+		      <span class="ymkrf-fs__before"><?php
+		        echo esc_html( ymkrf_flyer_day_text( $c['soon'] ) ); ?>から <?php echo (int) $c['before']; ?>件</span>
 		    <?php endif; ?>
-		  </p>
-		  <p class="ymkrf-fs__btns">
-		    <a class="button" href="<?php echo esc_url( $list_url( $slug ) ); ?>"><?php
-		      echo $slug ? 'このお店のチラシを見る' : '共通のチラシを見る'; ?></a>
-		    <a class="button button-primary" href="<?php echo esc_url( $new_url( $slug ) ); ?>">＋ 追加</a>
-		  </p>
-		</div>
+		    <?php if ( $c['other'] ) : ?>
+		      <span class="ymkrf-fs__other">ほか <?php echo (int) $c['other']; ?>件（下書き・非公開）</span>
+		    <?php endif; ?>
+		  </span>
+		</a>
 		<?php
 	};
 	?>
 	<div class="wrap ymkrf-fs">
-	  <h1>イベント・チラシ</h1>
+	  <h1>イベント・チラシ
+	    <a class="page-title-action" href="<?php echo esc_url( admin_url( 'edit.php?post_type=ymkrf_flyer' ) ); ?>">すべてのチラシを見る</a>
+	  </h1>
 
 	  <p class="ymkrf-fs__lead">
-	    お店をえらんでください。そのお店のチラシだけが出ます。<br>
+	    お店を押すと、そのお店のチラシだけが出ます。<br>
 	    1つのお店に<b>何種類あってもかまいません</b>（月に1〜3種類ある、といった使い方ができます）。
 	    チラシは<b>表面・裏面の2枚</b>で1件です。
 	  </p>
@@ -606,13 +957,50 @@ function ymkrf_flyer_shops_page() {
 	    </div>
 	  <?php endforeach; ?>
 
+	  <?php
+	  /* 自動でかたづけた記録。ほんとうに動いているかを目で見て確かめられます。 */
+	  $clog = (array) get_option( 'ymkrf_flyer_cleanup_log', array() );
+	  $next = wp_next_scheduled( 'ymkrf_flyer_cleanup' );
+	  ?>
+	  <div class="ymkrf-fs__log">
+	    <p><b>自動でかたづけた記録</b>
+	      <?php if ( $next ) : ?>
+	        <span class="ymkrf-fs__logsub">次の見まわり：<?php
+	          echo esc_html( wp_date( 'n月j日 G:i', $next ) ); ?>ごろ</span>
+	      <?php endif; ?>
+	    </p>
+	    <?php if ( ! $clog ) : ?>
+	      <p class="ymkrf-fs__logsub">まだ1件もかたづけていません。<br>
+	        ページから消えて<?php echo (int) YMKRF_FLYER_KEEP_DAYS; ?>日たったチラシが出てきたら、ここに残ります。</p>
+	    <?php else : ?>
+	      <ul class="ymkrf-fs__loglist">
+	        <?php foreach ( array_slice( $clog, 0, 8 ) as $l ) : ?>
+	          <li>
+	            <span class="ymkrf-fs__logday"><?php echo esc_html( $l['when'] ); ?></span>
+	            <?php echo esc_html( $l['title'] ); ?>
+	            <span class="ymkrf-fs__logsub">画像 <?php echo (int) $l['imgs']; ?>枚を削除<?php
+	              if ( ! empty( $l['kept'] ) ) : ?>／<?php echo (int) $l['kept']; ?>枚は
+	              ほかでも使っていたので残しました<?php endif; ?></span>
+	          </li>
+	        <?php endforeach; ?>
+	      </ul>
+	    <?php endif; ?>
+	  </div>
+
 	  <div class="ymkrf-fs__help">
 	    <p><b>入れかたのめやす</b></p>
 	    <ul>
-	      <li>チラシ1件につき、<b>表面と裏面の画像2枚</b>と<b>掲載期間</b>を入れます。</li>
+	      <li>チラシ1件につき、<b>表面と裏面の画像2枚</b>を入れます。</li>
 	      <li>B4のたて・よこ、どちらでも大丈夫です。ページの並べ方は自動で変わります。</li>
-	      <li>掲載期間のおわりの日をすぎると、自動でページから消えます（削除は不要です）。</li>
+	      <li>出す日・やめる日は、編集画面の右「公開」の欄で決めます。<br>
+	          先の日付で出したいときは「公開日時」を変えて<b>予約投稿</b>、
+	          自動で終わらせたいときは<b>予約非公開日時</b>にチェックを入れてください。</li>
 	      <li>お客様のページでは、<b>そのお店のチラシ</b>と<b>全店共通のチラシ</b>の両方が出ます。</li>
+	      <li>ページから消えて<b><?php echo (int) YMKRF_FLYER_KEEP_DAYS; ?>日</b>たつと、
+	          そのチラシと画像は自動で削除されます（下書きは消えません）。<br>
+	          そのチラシからアップロードした画像は、えらび直して使わなくなったものもふくめて
+	          ぜんぶ消えますので、メディアがたまりつづけることはありません。<br>
+	          残しておきたいチラシは、編集画面の右「自動で削除しない」にチェックを入れてください。</li>
 	      <li>1つのお店に何種類かあるときは、編集画面の右下「ページ属性」の<b>順序</b>で並び順を決められます（数の小さいほうが先）。</li>
 	    </ul>
 	  </div>
@@ -623,17 +1011,28 @@ function ymkrf_flyer_shops_page() {
 	  .ymkrf-fs__h2{margin:26px 0 10px;padding-left:9px;font-size:15px;
 	    border-left:4px solid #fe3301;line-height:1.5}
 	  .ymkrf-fs__grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:12px}
-	  .ymkrf-fs__card{padding:14px 16px;background:#fff;border:1px solid #dcdcde;border-radius:6px}
+	  .ymkrf-fs__card{display:block;padding:13px 16px;background:#fff;border:1px solid #dcdcde;
+	    border-radius:6px;text-decoration:none;color:inherit;transition:border-color .15s,box-shadow .15s}
+	  .ymkrf-fs__card:hover{border-color:#fe3301;box-shadow:0 1px 6px rgba(0,0,0,.08)}
 	  .ymkrf-fs__card--common{border-color:#fe3301;background:#fff8f5}
-	  .ymkrf-fs__name{margin:0;font-size:15px;font-weight:700;line-height:1.4}
-	  .ymkrf-fs__note{margin:3px 0 0;font-size:11.5px;color:#787878;line-height:1.5}
-	  .ymkrf-fs__cnt{margin:8px 0 12px;font-size:12.5px;line-height:1.6}
+	  .ymkrf-fs__name{display:block;font-size:15px;font-weight:700;line-height:1.4}
+	  .ymkrf-fs__note{display:block;margin-top:3px;font-size:11.5px;color:#787878;line-height:1.5}
+	  .ymkrf-fs__cnt{display:block;margin-top:7px;font-size:12.5px;line-height:1.6}
 	  .ymkrf-fs__cnt span{display:block}
 	  .ymkrf-fs__now{color:#00782a;font-weight:700}
+	  .ymkrf-fs__before{color:#8a6100;font-weight:700}
 	  .ymkrf-fs__zero{color:#a7aaad}
 	  .ymkrf-fs__other{color:#787878}
-	  .ymkrf-fs__btns{margin:0;display:flex;gap:6px;flex-wrap:wrap}
-	  .ymkrf-fs__help{margin-top:32px;padding:14px 18px;background:#fffbe6;
+	  .ymkrf-fs__log{margin-top:32px;padding:14px 18px;background:#fff;border:1px solid #dcdcde;
+	    border-radius:6px;max-width:860px;font-size:13px;line-height:1.8}
+	  .ymkrf-fs__log > p{margin:0 0 6px}
+	  .ymkrf-fs__logsub{color:#787878;font-size:12px;font-weight:400}
+	  .ymkrf-fs__loglist{margin:0;list-style:none}
+	  .ymkrf-fs__loglist li{padding:5px 0;border-top:1px solid #f0f0f1}
+	  .ymkrf-fs__loglist li:first-child{border-top:0}
+	  .ymkrf-fs__logday{display:inline-block;min-width:120px;color:#787878;font-size:12px}
+	  .ymkrf-fs__loglist .ymkrf-fs__logsub{display:block;margin-left:120px}
+	  .ymkrf-fs__help{margin-top:20px;padding:14px 18px;background:#fffbe6;
 	    border:1px solid #f0dc9a;border-radius:6px;max-width:860px;font-size:13px;line-height:1.85}
 	  .ymkrf-fs__help ul{margin:6px 0 0 18px;list-style:disc}
 	</style>
@@ -668,7 +1067,7 @@ add_filter( 'manage_ymkrf_flyer_posts_columns', function ( $cols ) {
 	if ( isset( $cols['cb'] ) )    $new['cb']    = $cols['cb'];
 	if ( isset( $cols['title'] ) ) $new['title'] = $cols['title'];
 	$new['ymkrf_fshop'] = '対象のお店';
-	$new['ymkrf_fterm'] = '掲載期間';
+	$new['ymkrf_fterm'] = '出す日／やめる日';
 	$new['ymkrf_fnow']  = 'いまの状態';
 	$new['ymkrf_ford']  = '並び順';
 	$new['date']        = '登録日';
@@ -689,15 +1088,8 @@ add_action( 'admin_notices', function () {
 	}
 	?>
 	<div class="notice notice-info" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-	  <p style="margin:8px 0">
-	    <?php if ( $name ) : ?>
-	      <b><?php echo esc_html( $name ); ?></b>のチラシを出しています。
-	    <?php else : ?>
-	      すべてのお店のチラシを出しています。
-	    <?php endif; ?>
-	  </p>
-	  <p style="margin:8px 0">
-	    <a class="button" href="<?php echo esc_url( admin_url( 'admin.php?page=ymkrf-flyer-shops' ) ); ?>">お店からえらぶ画面へ</a>
+	  <p style="margin:8px 0;font-size:15px">
+	    <b><?php echo esc_html( $name !== '' ? $name : 'すべてのお店' ); ?></b>
 	  </p>
 	</div>
 	<?php
@@ -714,18 +1106,34 @@ add_action( 'manage_ymkrf_flyer_posts_custom_column', function ( $col, $post_id 
 			echo esc_html( implode( '／', $n ) );
 			break;
 		case 'ymkrf_fterm':
-			$s = (string) get_post_meta( $post_id, '_ymkrf_flyer_start', true );
-			$e = (string) get_post_meta( $post_id, '_ymkrf_flyer_end', true );
-			if ( $s === '' && $e === '' ) { echo $none; break; }
-			echo esc_html( ( $s !== '' ? $s : '（いつでも）' ) . ' 〜 ' . ( $e !== '' ? $e : '（いつまでも）' ) );
+			$on  = ymkrf_flyer_day_text( get_post_time( 'Y-m-d H:i', false, $post_id ) );
+			$off = ymkrf_flyer_unpublish_at( $post_id );
+			echo $on ? esc_html( $on ) : $none;
+			echo '<br><span style="color:#787878">〜 '
+			   . ( $off !== '' ? esc_html( ymkrf_flyer_day_text( $off ) ) : 'ずっと' )
+			   . '</span>';
 			break;
 		case 'ymkrf_fnow':
-			if ( get_post_status( $post_id ) !== 'publish' ) {
-				echo '<span style="color:#a7aaad">下書き</span>'; break;
+			switch ( ymkrf_flyer_state( $post_id ) ) {
+				case 'draft':
+					echo '<span style="color:#a7aaad">下書き</span>';
+					break;
+				case 'before':
+					$d = ymkrf_flyer_day_text( get_post_time( 'Y-m-d H:i', false, $post_id ) );
+					echo '<span style="color:#996800;font-weight:700">◯ ' . esc_html( $d ) . 'から</span>'
+					   . '<br><span style="color:#a7aaad;font-size:11px">いまは出ていません</span>';
+					break;
+				case 'after':
+					echo '<span style="color:#a7aaad">非公開になりました</span>';
+					$d = ymkrf_flyer_delete_at( $post_id );
+					if ( $d !== '' ) {
+						echo '<br><span style="color:#d63638;font-size:11px">'
+						   . esc_html( ymkrf_flyer_day_text( $d ) ) . 'ごろ削除</span>';
+					}
+					break;
+				default:
+					echo '<span style="color:#00a32a;font-weight:700">● 掲載中</span>';
 			}
-			echo ymkrf_flyer_is_now( $post_id )
-				? '<span style="color:#00a32a;font-weight:700">● 掲載中</span>'
-				: '<span style="color:#a7aaad">期間外</span>';
 			break;
 		case 'ymkrf_ford':
 			$o = (int) get_post_field( 'menu_order', $post_id );
@@ -733,6 +1141,24 @@ add_action( 'manage_ymkrf_flyer_posts_custom_column', function ( $col, $post_id 
 			break;
 	}
 }, 10, 2 );
+
+/* お店でしぼり込んでいるときは、「チラシを新規追加」ボタンにも
+   そのお店を引き継ぎます（お店をえらぶ画面にボタンを置かないかわりです）。 */
+add_action( 'admin_footer', function () {
+	$s = get_current_screen();
+	if ( ! $s || $s->id !== 'edit-ymkrf_flyer' ) return;
+	if ( empty( $_GET['ymkrf_shop'] ) ) return;
+	$url = admin_url( 'post-new.php?post_type=ymkrf_flyer&ymkrf_shop='
+		. rawurlencode( sanitize_key( wp_unslash( $_GET['ymkrf_shop'] ) ) ) );
+	?>
+	<script>
+	(function () {
+	  var a = document.querySelector('.wrap .page-title-action');
+	  if (a) a.href = <?php echo wp_json_encode( $url ); ?>;
+	})();
+	</script>
+	<?php
+} );
 
 /* 一覧を「並び順 → 新しい順」にします。
    1つのお店に何種類かあるとき、お客様のページと同じ順番で見えます。 */
@@ -762,12 +1188,58 @@ add_action( 'admin_head', function () {
 /** いま掲載中の期間かどうか */
 if ( ! function_exists( 'ymkrf_flyer_is_now' ) ) :
 function ymkrf_flyer_is_now( $post_id ) {
-	$today = current_time( 'Y-m-d' );
-	$s = trim( (string) get_post_meta( $post_id, '_ymkrf_flyer_start', true ) );
-	$e = trim( (string) get_post_meta( $post_id, '_ymkrf_flyer_end',   true ) );
-	if ( $s !== '' && $today < $s ) return false;
-	if ( $e !== '' && $today > $e ) return false;
-	return true;
+	return ymkrf_flyer_state( $post_id ) === 'now';
+}
+endif;
+
+/**
+ * そのチラシが、いまどういう状態かを返します。
+ *
+ *   draft  … 下書き（公開されていません）
+ *   before … 公開の予約が入っていて、その日時がまだ先（ページには出ません）
+ *   now    … 掲載中（ページに出ています）
+ *   after  … 予約非公開日時をすぎた（ページには出ません）
+ *
+ * 日にちは、右の「公開」の欄で決めます。
+ *   出す日　… WordPressの公開日時（予約投稿）
+ *   やめる日… 予約非公開日時（_ymkrf_flyer_off）
+ */
+if ( ! function_exists( 'ymkrf_flyer_state' ) ) :
+function ymkrf_flyer_state( $post_id ) {
+	$status = get_post_status( $post_id );
+
+	if ( $status === 'future' ) return 'before';
+	if ( $status !== 'publish' ) return 'draft';
+
+	/* 公開日時が未来（予約投稿がまだ動いていない場合の保険） */
+	$now  = current_time( 'Y-m-d H:i' );
+	$pub  = get_post_time( 'Y-m-d H:i', false, $post_id );
+	if ( $pub && $now < $pub ) return 'before';
+
+	$off = ymkrf_flyer_unpublish_at( $post_id );
+	if ( $off !== '' && $now >= $off ) return 'after';
+
+	return 'now';
+}
+endif;
+
+/** 予約非公開日時（'Y-m-d H:i'）。決めていないときは空 */
+if ( ! function_exists( 'ymkrf_flyer_unpublish_at' ) ) :
+function ymkrf_flyer_unpublish_at( $post_id ) {
+	return trim( (string) get_post_meta( $post_id, '_ymkrf_flyer_off', true ) );
+}
+endif;
+
+/** 「10月3日（土）22:00」のような書き方にします（時刻は00:00のとき省きます） */
+if ( ! function_exists( 'ymkrf_flyer_day_text' ) ) :
+function ymkrf_flyer_day_text( $when ) {
+	$t = strtotime( (string) $when );
+	if ( ! $t ) return '';
+	$w   = array( '日', '月', '火', '水', '木', '金', '土' );
+	$out = date_i18n( 'n月j日', $t ) . '（' . $w[ (int) date_i18n( 'w', $t ) ] . '）';
+	$hm  = date_i18n( 'G:i', $t );
+	if ( $hm !== '0:00' ) $out .= ' ' . $hm;
+	return $out;
 }
 endif;
 
@@ -836,43 +1308,15 @@ function ymkrf_flyer_data( $post ) {
 		);
 	};
 
-	$pdf = (int) get_post_meta( $id, '_ymkrf_flyer_pdf', true );
-
 	return array(
 		'id'    => $id,
 		'title' => get_the_title( $id ),
 		'catch' => (string) get_post_meta( $id, '_ymkrf_flyer_catch', true ),
-		'start' => (string) get_post_meta( $id, '_ymkrf_flyer_start', true ),
-		'end'   => (string) get_post_meta( $id, '_ymkrf_flyer_end',   true ),
 		'front' => $img( '_ymkrf_flyer_front' ),
 		'back'  => $img( '_ymkrf_flyer_back' ),
-		'pdf'   => $pdf ? wp_get_attachment_url( $pdf ) : '',
 		'body'  => trim( (string) get_post_field( 'post_content', $id ) ),
 		'prd'   => array_filter( array_map( 'intval',
 			explode( ',', (string) get_post_meta( $id, '_ymkrf_flyer_products', true ) ) ) ),
 	);
-}
-endif;
-
-/** 「2026年10月1日（水）〜10月31日（金）」のような書き方にします */
-if ( ! function_exists( 'ymkrf_flyer_term_text' ) ) :
-function ymkrf_flyer_term_text( $start, $end ) {
-	$w = array( '日', '月', '火', '水', '木', '金', '土' );
-	$fmt = function ( $ymd, $with_year = true ) use ( $w ) {
-		$t = strtotime( $ymd );
-		if ( ! $t ) return '';
-		return ( $with_year ? date_i18n( 'Y年', $t ) : '' )
-		     . date_i18n( 'n月j日', $t ) . '（' . $w[ (int) date_i18n( 'w', $t ) ] . '）';
-	};
-	$start = trim( (string) $start );
-	$end   = trim( (string) $end );
-
-	if ( $start === '' && $end === '' ) return '';
-	if ( $start === '' ) return $fmt( $end ) . 'まで';
-	if ( $end === '' )   return $fmt( $start ) . 'から';
-
-	/* 同じ年なら、うしろの年は省きます */
-	$same = date_i18n( 'Y', strtotime( $start ) ) === date_i18n( 'Y', strtotime( $end ) );
-	return $fmt( $start ) . '〜' . $fmt( $end, ! $same );
 }
 endif;

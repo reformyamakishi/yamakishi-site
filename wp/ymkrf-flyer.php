@@ -151,9 +151,10 @@ get_header();
           <p><b>スタッフの方へ（この案内はログイン中だけ見えています）</b></p>
           <p>
             ダッシュボードの<b>「イベント・チラシ」→「新規追加」</b>から登録してください。<br>
-            入れるのは、チラシの<b>表面・裏面の画像</b>と<b>掲載期間</b>だけで大丈夫です。<br>
-            「対象のお店」を空にすると全店共通、お店にチェックを入れるとその店だけのチラシになります。<br>
-            掲載期間のおわりの日をすぎると、自動でこのページから消えます（削除は不要です）。
+            入れるのは、チラシの<b>表面・裏面の画像</b>だけで大丈夫です。<br>
+            「対象のお店」を空にすると全店共通、お店にチェックを入れるとその店のチラシになります。<br>
+            出す日・やめる日は、編集画面の右「公開」の欄で決めます。
+            <b>公開日時が未来になっていると、その日時が来るまで出ません。</b>
           </p>
         </div>
       <?php endif; ?>
@@ -226,7 +227,6 @@ get_header();
     <div class="p-flyer__items">
 
     <?php foreach ( $panels as $fid => $f ) :
-      $term = ymkrf_flyer_term_text( $f['start'], $f['end'] );
       /* えらばれていないお店のチラシは、画像を src ではなく data-src に入れておきます。
          こうすると読み込まれません。えらばれたときに JavaScript が src へ移します。 */
       $on   = in_array( $fid, $sel_ids, true );
@@ -235,12 +235,12 @@ get_header();
       <article class="p-flyer__item" data-flyer="<?php echo (int) $fid; ?>"<?php echo $on ? ' style="order:' . (int) array_search( $fid, $sel_ids, true ) . '"' : ' hidden'; ?>>
 
         <header class="p-flyer__head">
+          <?php /* 「チラシ有効期限」。管理画面に入れた文字を、そのまま出します。 */ ?>
           <?php if ( $f['catch'] ) : ?>
-            <p class="p-flyer__catch"><?php echo esc_html( $f['catch'] ); ?></p>
+            <p class="p-flyer__term"><span>有効期限</span><?php echo esc_html( $f['catch'] ); ?></p>
           <?php endif; ?>
-          <h2 class="p-flyer__title"><?php echo esc_html( $f['title'] ); ?></h2>
-          <?php if ( $term ) : ?>
-            <p class="p-flyer__term"><span>掲載期間</span><?php echo esc_html( $term ); ?></p>
+          <?php if ( $f['title'] !== '' ) : ?>
+            <h2 class="p-flyer__title"><?php echo esc_html( $f['title'] ); ?></h2>
           <?php endif; ?>
         </header>
 
@@ -280,15 +280,6 @@ get_header();
           </div>
         <?php endif; ?>
 
-        <?php if ( $f['pdf'] ) : ?>
-          <p class="p-flyer__pdf">
-            <a class="c-btn c-btn--ghost" href="<?php echo esc_url( $f['pdf'] ); ?>"
-               target="_blank" rel="noopener" data-cta="flyer-pdf">
-              <span class="c-btn__label">チラシをPDFで見る<span class="c-btn__sub">印刷・保存ができます</span></span>
-            </a>
-          </p>
-        <?php endif; ?>
-
         <?php
         /* ---- チラシに載せた商品 ----
            商品ページに登録ずみのものを出しています。
@@ -305,9 +296,13 @@ get_header();
           if ( $pq->have_posts() ) : ?>
             <div class="p-flyer__prd">
               <h3 class="p-prd__bar">チラシに載せた商品</h3>
+              <?php /* ★チラシの価格はセールで変わるので、下の札は「通常の販売価格」だと
+                       はっきり書いておきます（2026/09/03 ユーザー指示）。
+                       チラシの画像に出ている値段と食い違っても、
+                       お客様が迷われないようにするためです。 */ ?>
               <p class="p-flyer__prdlead">
                 価格はすべて<strong>標準工事費・既存品の撤去処分費まで込み</strong>の税込表示です。<br>
-                商品ページでは、色・大きさ・くわしい仕様までご覧いただけます。
+                こちらは<strong>通常の販売価格</strong>を表示しています。
               </p>
 
               <div class="p-cat__cards">
@@ -352,7 +347,7 @@ get_header();
         endif; ?>
 
         <p class="p-flyer__note">
-          ※チラシの内容は、掲載期間をすぎると変わることがあります。<br>
+          ※チラシの内容は、期間をすぎると変わることがあります。<br>
           ※お住まいの状況によっては、追加の工事が必要になることがあります。そのときは、着工前にかならずお見積りをお出しします。
         </p>
 
