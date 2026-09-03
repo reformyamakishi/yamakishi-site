@@ -221,6 +221,10 @@ get_header();
       <p class="p-flyer__nowinfo" id="flyer-shopinfo"><?php echo esc_html( $cur_hours ); ?></p>
     </div>
 
+    <?php /* チラシは、お店のものが先・全店共通があとになるように、
+             出すときに JavaScript が並び順（CSSのorder）を入れています。 */ ?>
+    <div class="p-flyer__items">
+
     <?php foreach ( $panels as $fid => $f ) :
       $term = ymkrf_flyer_term_text( $f['start'], $f['end'] );
       /* えらばれていないお店のチラシは、画像を src ではなく data-src に入れておきます。
@@ -228,7 +232,7 @@ get_header();
       $on   = in_array( $fid, $sel_ids, true );
       $at   = $on ? 'src' : 'data-src';
       ?>
-      <article class="p-flyer__item" data-flyer="<?php echo (int) $fid; ?>"<?php echo $on ? '' : ' hidden'; ?>>
+      <article class="p-flyer__item" data-flyer="<?php echo (int) $fid; ?>"<?php echo $on ? ' style="order:' . (int) array_search( $fid, $sel_ids, true ) . '"' : ' hidden'; ?>>
 
         <header class="p-flyer__head">
           <?php if ( $f['catch'] ) : ?>
@@ -355,6 +359,8 @@ get_header();
       </article>
     <?php endforeach; ?>
 
+    </div><!-- /.p-flyer__items -->
+
     <?php /* えらんだお店にチラシが無いとき */ ?>
     <div class="p-flyer__none" id="flyer-none"<?php echo ( $cur && ! $sel_ids ) ? '' : ' hidden'; ?>>
       <p class="p-flyer__nonettl">このお店の今月のチラシは、ただいま準備中です</p>
@@ -466,9 +472,10 @@ get_header();
     var shown = 0;
     Array.prototype.forEach.call(items, function (el) {
       var id = el.getAttribute('data-flyer');
-      var on = sp.ids.indexOf(parseInt(id, 10)) >= 0;
+      var pos = sp.ids.indexOf(parseInt(id, 10));
+      var on  = pos >= 0;
       el.hidden = !on;
-      if (on) { hydrate(el); shown++; }
+      if (on) { el.style.order = pos; hydrate(el); shown++; }
     });
 
     if (ask)  ask.hidden  = true;

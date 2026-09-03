@@ -57,18 +57,25 @@ add_action( 'init', function () {
 		),
 		'public'              => false,   /* 1件ずつのページは作りません */
 		'show_ui'             => true,
-		'show_in_menu'        => true,
+		/* メニューは下の「4. ダッシュボードのメニュー」で自分で作ります。
+		   お店をえらぶ画面をいちばん先に出したいためです。 */
+		'show_in_menu'        => false,
 		'publicly_queryable'  => false,
 		'exclude_from_search' => true,
 		'has_archive'         => false,
 		'rewrite'             => false,
 		'menu_icon'           => 'dashicons-tickets-alt',
-		'menu_position'       => 8,
-		'supports'            => array( 'title', 'editor' ),
+		'supports'            => array( 'title', 'editor', 'page-attributes' ),
 		'show_in_rest'        => false,
 	) );
 
 }, 6 );
+
+/* 「順序」の欄の題名を「並び順」にします。
+   1つのお店に何種類かチラシがあるとき、数の小さいほうが先に出ます。 */
+add_filter( 'enter_title_here', function ( $t, $post ) {
+	return ( $post && $post->post_type === 'ymkrf_flyer' ) ? 'チラシの名前（例：2026年10月 秋のリフォームフェア）' : $t;
+}, 10, 2 );
 
 /* 「対象のお店」は、商品・スタッフと同じ ymkrf_shop を使いまわします。
    お店を1か所で直せるようにするためです。
@@ -112,12 +119,79 @@ add_action( 'add_meta_boxes', function () {
 	add_meta_box( 'ymkrf_flyer_prd', 'チラシに載せた商品',
 		'ymkrf_flyer_box_prd', 'ymkrf_flyer', 'normal', 'default' );
 
-	/* お店の欄は、そのままだと商品と同じ「展示店舗」という題名になってしまいます。
-	   チラシの画面では意味が変わるので、題名だけ「対象のお店」に付けかえます。 */
+	/* お店の欄は、そのままだと商品と同じ「展示店舗」という題名になってしまい、
+	   並び順もばらばらです。チラシ用に作りなおします。 */
 	remove_meta_box( 'ymkrf_shopdiv', 'ymkrf_flyer', 'side' );
-	add_meta_box( 'ymkrf_flyer_shop', '対象のお店', 'post_categories_meta_box',
-		'ymkrf_flyer', 'side', 'high', array( 'taxonomy' => 'ymkrf_shop' ) );
+	add_meta_box( 'ymkrf_flyer_shop', 'このチラシを出すお店',
+		'ymkrf_flyer_box_shop', 'ymkrf_flyer', 'side', 'high' );
 }, 20 );
+
+/**
+ * 「このチラシを出すお店」の欄。
+ *
+ * ・お店の一覧は inc/functions-shops.php の並び（県ごと）に合わせています
+ * ・お店をえらぶ画面から「＋追加」で来たときは、そのお店にはじめから
+ *   チェックが入っています（?ymkrf_shop=komathu）
+ */
+function ymkrf_flyer_box_shop( $post ) {
+	wp_nonce_field( 'ymkrf_flyer_shop_save', 'ymkrf_flyer_shop_nonce' );
+
+	$now = wp_get_object_terms( $post->ID, 'ymkrf_shop', array( 'fields' => 'slugs' ) );
+	if ( is_wp_error( $now ) ) $now = array();
+
+	/* 新規追加でお店の指定つきのときは、はじめからチェックを入れます */
+	if ( ! $now && get_post_status( $post ) === 'auto-draft' && ! empty( $_GET['ymkrf_shop'] ) ) {
+		$now = array( sanitize_key( wp_unslash( $_GET['ymkrf_shop'] ) ) );
+	}
+
+	$shops = function_exists( 'ymkrf_shops' ) ? ymkrf_shops() : array();
+	$by_pref = array();
+	foreach ( $shops as $sp ) $by_pref[ $sp['pref'] ][] = $sp;
+	?>
+	<div class="ymkrf-fl__shop">
+	  <p class="ymkrf-fl__shopall">
+	    <label>
+	      <input type="checkbox" id="ymkrf-fl-shopnone" <?php checked( ! $now ); ?>>
+	      <b>全店共通にする</b>
+	    </label><br>
+	    <span class="description">どのお店でも出ます。全店で同じチラシのときに使います。</span>
+	  </p>
+
+	  <div id="ymkrf-fl-shoplist" class="ymkrf-fl__shoplist<?php echo $now ? '' : ' is-off'; ?>">
+	    <?php foreach ( $by_pref as $pref => $list ) : ?>
+	      <p class="ymkrf-fl__shoppref"><?php echo esc_html( $pref ); ?></p>
+	      <?php foreach ( $list as $sp ) : ?>
+	        <label class="ymkrf-fl__shopitem">
+	          <input type="checkbox" class="ymkrf-fl__shopchk" name="ymkrf_flyer_shop[]"
+	                 value="<?php echo esc_attr( $sp['slug'] ); ?>"
+	                 <?php checked( in_array( $sp['slug'], $now, true ) ); ?>>
+	          <span><?php echo esc_html( $sp['name'] ); ?></span>
+	        </label>
+	      <?php endforeach; ?>
+	    <?php endforeach; ?>
+	  </div>
+
+	  <p class="description ymkrf-fl__shophelp">
+	    お店にチェックを入れると、そのお店のチラシになります。<br>
+	    お客様のページでは、<b>そのお店のチラシ</b>と<b>全店共通のチラシ</b>の両方が出ます。
+	  </p>
+	</div>
+	<?php
+}
+
+add_action( 'save_post_ymkrf_flyer', function ( $post_id ) {
+	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
+	if ( ! isset( $_POST['ymkrf_flyer_shop_nonce'] ) ||
+	     ! wp_verify_nonce( $_POST['ymkrf_flyer_shop_nonce'], 'ymkrf_flyer_shop_save' ) ) return;
+	if ( ! current_user_can( 'edit_post', $post_id ) ) return;
+
+	$slugs = isset( $_POST['ymkrf_flyer_shop'] ) && is_array( $_POST['ymkrf_flyer_shop'] )
+		? array_map( 'sanitize_key', wp_unslash( $_POST['ymkrf_flyer_shop'] ) )
+		: array();
+
+	/* 空にすると「全店共通」になります */
+	wp_set_object_terms( $post_id, $slugs ? $slugs : null, 'ymkrf_shop', false );
+} );
 
 /** 画像を1枚えらぶ欄をひとつ出します */
 function ymkrf_flyer_imgfield( $key, $label, $post_id, $note = '' ) {
@@ -308,6 +382,14 @@ add_action( 'admin_head', function () {
 	  .ymkrf-fl__prdgrp:first-child .ymkrf-fl__prdttl{margin-top:0}
 	  .ymkrf-fl__prdlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:2px 10px}
 	  .ymkrf-fl__prditem{display:flex;gap:6px;align-items:flex-start;font-size:12.5px;line-height:1.5;padding:2px 0}
+	  .ymkrf-fl__shopall{margin:0 0 10px;padding-bottom:10px;border-bottom:1px solid #e5e5e5}
+	  .ymkrf-fl__shoplist{max-height:260px;overflow:auto}
+	  .ymkrf-fl__shoplist.is-off{opacity:.4;pointer-events:none}
+	  .ymkrf-fl__shoppref{margin:8px 0 3px;padding-left:6px;font-size:11.5px;font-weight:700;
+	    color:#646970;border-left:3px solid #fe3301;line-height:1.4}
+	  .ymkrf-fl__shoplist p:first-child{margin-top:0}
+	  .ymkrf-fl__shopitem{display:flex;gap:6px;align-items:center;font-size:13px;line-height:1.7;padding:1px 0}
+	  .ymkrf-fl__shophelp{margin-top:10px}
 	</style>';
 } );
 
@@ -373,9 +455,208 @@ add_action( 'admin_footer', function () {
 		}
 		$(document).on('change', '.ymkrf-fl__prdchk', syncPrd);
 		syncPrd();
+
+		/* 「全店共通にする」と、お店のチェックの連動 */
+		var $none = $('#ymkrf-fl-shopnone'), $list = $('#ymkrf-fl-shoplist');
+		function drawShop() {
+			$list.toggleClass('is-off', $none.prop('checked'));
+		}
+		$none.on('change', function () {
+			if ($none.prop('checked')) $('.ymkrf-fl__shopchk').prop('checked', false);
+			drawShop();
+		});
+		$(document).on('change', '.ymkrf-fl__shopchk', function () {
+			if ($('.ymkrf-fl__shopchk:checked').length) $none.prop('checked', false);
+			drawShop();
+		});
+		drawShop();
 	});
 	</script>
 	<?php
+} );
+
+
+/* ============================================================
+   3-b. ダッシュボードのメニュー（お店をえらぶ画面をいちばん先に）
+   ------------------------------------------------------------
+   「イベント・チラシ」を押すと、まずお店が11個ならびます。
+   お店を押すと、そのお店のチラシだけが一覧で出ます。
+   1つのお店に何種類あってもかまいません。
+   ============================================================ */
+add_action( 'admin_menu', function () {
+
+	add_menu_page(
+		'イベント・チラシ', 'イベント・チラシ', 'edit_posts',
+		'ymkrf-flyer-shops', 'ymkrf_flyer_shops_page', 'dashicons-tickets-alt', 8
+	);
+
+	add_submenu_page( 'ymkrf-flyer-shops', 'お店からえらぶ', 'お店からえらぶ',
+		'edit_posts', 'ymkrf-flyer-shops', 'ymkrf_flyer_shops_page' );
+
+	add_submenu_page( 'ymkrf-flyer-shops', 'チラシ一覧（ぜんぶ）', 'チラシ一覧（ぜんぶ）',
+		'edit_posts', 'edit.php?post_type=ymkrf_flyer' );
+
+	add_submenu_page( 'ymkrf-flyer-shops', 'チラシを新規追加', '新規追加',
+		'edit_posts', 'post-new.php?post_type=ymkrf_flyer' );
+} );
+
+/* チラシを編集しているあいだも、このメニューが開いたままになるようにします */
+add_filter( 'parent_file', function ( $parent ) {
+	$s = get_current_screen();
+	if ( $s && $s->post_type === 'ymkrf_flyer' ) return 'ymkrf-flyer-shops';
+	return $parent;
+} );
+add_filter( 'submenu_file', function ( $sub ) {
+	$s = get_current_screen();
+	if ( $s && $s->post_type === 'ymkrf_flyer' ) {
+		return ( $s->base === 'post' && $s->action === 'add' )
+			? 'post-new.php?post_type=ymkrf_flyer'
+			: 'edit.php?post_type=ymkrf_flyer';
+	}
+	return $sub;
+} );
+
+/** お店をえらぶ画面 */
+function ymkrf_flyer_shops_page() {
+
+	$shops = function_exists( 'ymkrf_shops' ) ? ymkrf_shops() : array();
+
+	/* お店ごとに「掲載中／期間外・下書き」を数えます */
+	$all = get_posts( array(
+		'post_type'      => 'ymkrf_flyer',
+		'post_status'    => array( 'publish', 'draft', 'pending', 'future' ),
+		'posts_per_page' => -1,
+		'no_found_rows'  => true,
+	) );
+
+	$count  = array();   /* slug => array( now, other ) */
+	$common = array( 'now' => 0, 'other' => 0 );
+
+	foreach ( $all as $p ) {
+		$live = ( $p->post_status === 'publish' && ymkrf_flyer_is_now( $p->ID ) );
+		$k    = $live ? 'now' : 'other';
+
+		$ts = get_the_terms( $p->ID, 'ymkrf_shop' );
+		if ( ! $ts || is_wp_error( $ts ) ) {
+			$common[ $k ]++;
+			continue;
+		}
+		foreach ( $ts as $t ) {
+			if ( ! isset( $count[ $t->slug ] ) ) $count[ $t->slug ] = array( 'now' => 0, 'other' => 0 );
+			$count[ $t->slug ][ $k ]++;
+		}
+	}
+
+	$list_url = function ( $slug ) {
+		return admin_url( 'edit.php?post_type=ymkrf_flyer' . ( $slug ? '&ymkrf_shop=' . rawurlencode( $slug ) : '&ymkrf_flyer_common=1' ) );
+	};
+	$new_url = function ( $slug ) {
+		return admin_url( 'post-new.php?post_type=ymkrf_flyer' . ( $slug ? '&ymkrf_shop=' . rawurlencode( $slug ) : '' ) );
+	};
+
+	/* 1枚のカードを出します */
+	$card = function ( $name, $slug, $c, $note = '' ) use ( $list_url, $new_url ) {
+		?>
+		<div class="ymkrf-fs__card<?php echo $slug ? '' : ' ymkrf-fs__card--common'; ?>">
+		  <p class="ymkrf-fs__name"><?php echo esc_html( $name ); ?></p>
+		  <?php if ( $note ) : ?><p class="ymkrf-fs__note"><?php echo esc_html( $note ); ?></p><?php endif; ?>
+		  <p class="ymkrf-fs__cnt">
+		    <?php if ( $c['now'] ) : ?>
+		      <span class="ymkrf-fs__now">掲載中 <?php echo (int) $c['now']; ?>件</span>
+		    <?php else : ?>
+		      <span class="ymkrf-fs__zero">掲載中のチラシなし</span>
+		    <?php endif; ?>
+		    <?php if ( $c['other'] ) : ?>
+		      <span class="ymkrf-fs__other">ほか <?php echo (int) $c['other']; ?>件（下書き・期間外）</span>
+		    <?php endif; ?>
+		  </p>
+		  <p class="ymkrf-fs__btns">
+		    <a class="button" href="<?php echo esc_url( $list_url( $slug ) ); ?>"><?php
+		      echo $slug ? 'このお店のチラシを見る' : '共通のチラシを見る'; ?></a>
+		    <a class="button button-primary" href="<?php echo esc_url( $new_url( $slug ) ); ?>">＋ 追加</a>
+		  </p>
+		</div>
+		<?php
+	};
+	?>
+	<div class="wrap ymkrf-fs">
+	  <h1>イベント・チラシ</h1>
+
+	  <p class="ymkrf-fs__lead">
+	    お店をえらんでください。そのお店のチラシだけが出ます。<br>
+	    1つのお店に<b>何種類あってもかまいません</b>（月に1〜3種類ある、といった使い方ができます）。
+	    チラシは<b>表面・裏面の2枚</b>で1件です。
+	  </p>
+
+	  <h2 class="ymkrf-fs__h2">全店共通</h2>
+	  <div class="ymkrf-fs__grid">
+	    <?php $card( '全店共通のチラシ', '', $common, 'どのお店でも出ます。全店で同じチラシのときに使います。' ); ?>
+	  </div>
+
+	  <?php
+	  $by_pref = array();
+	  foreach ( $shops as $sp ) $by_pref[ $sp['pref'] ][] = $sp;
+	  foreach ( $by_pref as $pref => $list ) : ?>
+	    <h2 class="ymkrf-fs__h2"><?php echo esc_html( $pref ); ?></h2>
+	    <div class="ymkrf-fs__grid">
+	      <?php foreach ( $list as $sp ) :
+	        $c = isset( $count[ $sp['slug'] ] ) ? $count[ $sp['slug'] ] : array( 'now' => 0, 'other' => 0 );
+	        $card( $sp['name'], $sp['slug'], $c, ! empty( $sp['soon'] ) ? '準備中のお店です' : '' );
+	      endforeach; ?>
+	    </div>
+	  <?php endforeach; ?>
+
+	  <div class="ymkrf-fs__help">
+	    <p><b>入れかたのめやす</b></p>
+	    <ul>
+	      <li>チラシ1件につき、<b>表面と裏面の画像2枚</b>と<b>掲載期間</b>を入れます。</li>
+	      <li>B4のたて・よこ、どちらでも大丈夫です。ページの並べ方は自動で変わります。</li>
+	      <li>掲載期間のおわりの日をすぎると、自動でページから消えます（削除は不要です）。</li>
+	      <li>お客様のページでは、<b>そのお店のチラシ</b>と<b>全店共通のチラシ</b>の両方が出ます。</li>
+	      <li>1つのお店に何種類かあるときは、編集画面の右下「ページ属性」の<b>順序</b>で並び順を決められます（数の小さいほうが先）。</li>
+	    </ul>
+	  </div>
+	</div>
+
+	<style>
+	  .ymkrf-fs__lead{max-width:820px;font-size:13.5px;line-height:1.9}
+	  .ymkrf-fs__h2{margin:26px 0 10px;padding-left:9px;font-size:15px;
+	    border-left:4px solid #fe3301;line-height:1.5}
+	  .ymkrf-fs__grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:12px}
+	  .ymkrf-fs__card{padding:14px 16px;background:#fff;border:1px solid #dcdcde;border-radius:6px}
+	  .ymkrf-fs__card--common{border-color:#fe3301;background:#fff8f5}
+	  .ymkrf-fs__name{margin:0;font-size:15px;font-weight:700;line-height:1.4}
+	  .ymkrf-fs__note{margin:3px 0 0;font-size:11.5px;color:#787878;line-height:1.5}
+	  .ymkrf-fs__cnt{margin:8px 0 12px;font-size:12.5px;line-height:1.6}
+	  .ymkrf-fs__cnt span{display:block}
+	  .ymkrf-fs__now{color:#00782a;font-weight:700}
+	  .ymkrf-fs__zero{color:#a7aaad}
+	  .ymkrf-fs__other{color:#787878}
+	  .ymkrf-fs__btns{margin:0;display:flex;gap:6px;flex-wrap:wrap}
+	  .ymkrf-fs__help{margin-top:32px;padding:14px 18px;background:#fffbe6;
+	    border:1px solid #f0dc9a;border-radius:6px;max-width:860px;font-size:13px;line-height:1.85}
+	  .ymkrf-fs__help ul{margin:6px 0 0 18px;list-style:disc}
+	</style>
+	<?php
+}
+
+/* 「全店共通のチラシを見る」を押したとき、お店の付いていないチラシだけを出します */
+add_action( 'pre_get_posts', function ( $q ) {
+	if ( ! is_admin() || ! $q->is_main_query() ) return;
+	if ( $q->get( 'post_type' ) !== 'ymkrf_flyer' ) return;
+	if ( empty( $_GET['ymkrf_flyer_common'] ) ) return;
+
+	$ids = get_terms( array(
+		'taxonomy' => 'ymkrf_shop', 'hide_empty' => false, 'fields' => 'ids',
+	) );
+	if ( is_wp_error( $ids ) || ! $ids ) return;
+
+	$q->set( 'tax_query', array( array(
+		'taxonomy' => 'ymkrf_shop',
+		'field'    => 'term_id',
+		'terms'    => $ids,
+		'operator' => 'NOT IN',
+	) ) );
 } );
 
 
@@ -389,9 +670,38 @@ add_filter( 'manage_ymkrf_flyer_posts_columns', function ( $cols ) {
 	$new['ymkrf_fshop'] = '対象のお店';
 	$new['ymkrf_fterm'] = '掲載期間';
 	$new['ymkrf_fnow']  = 'いまの状態';
+	$new['ymkrf_ford']  = '並び順';
 	$new['date']        = '登録日';
 	return $new;
 }, 20 );
+
+/* 一覧のいちばん上に「お店からえらぶ画面にもどる」を出します */
+add_action( 'admin_notices', function () {
+	$s = get_current_screen();
+	if ( ! $s || $s->id !== 'edit-ymkrf_flyer' ) return;
+
+	$name = '';
+	if ( ! empty( $_GET['ymkrf_shop'] ) ) {
+		$t = get_term_by( 'slug', sanitize_key( wp_unslash( $_GET['ymkrf_shop'] ) ), 'ymkrf_shop' );
+		if ( $t && ! is_wp_error( $t ) ) $name = $t->name;
+	} elseif ( ! empty( $_GET['ymkrf_flyer_common'] ) ) {
+		$name = '全店共通';
+	}
+	?>
+	<div class="notice notice-info" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+	  <p style="margin:8px 0">
+	    <?php if ( $name ) : ?>
+	      <b><?php echo esc_html( $name ); ?></b>のチラシを出しています。
+	    <?php else : ?>
+	      すべてのお店のチラシを出しています。
+	    <?php endif; ?>
+	  </p>
+	  <p style="margin:8px 0">
+	    <a class="button" href="<?php echo esc_url( admin_url( 'admin.php?page=ymkrf-flyer-shops' ) ); ?>">お店からえらぶ画面へ</a>
+	  </p>
+	</div>
+	<?php
+} );
 
 add_action( 'manage_ymkrf_flyer_posts_custom_column', function ( $col, $post_id ) {
 	$none = '<span style="color:#a7aaad">—</span>';
@@ -417,8 +727,21 @@ add_action( 'manage_ymkrf_flyer_posts_custom_column', function ( $col, $post_id 
 				? '<span style="color:#00a32a;font-weight:700">● 掲載中</span>'
 				: '<span style="color:#a7aaad">期間外</span>';
 			break;
+		case 'ymkrf_ford':
+			$o = (int) get_post_field( 'menu_order', $post_id );
+			echo $o ? (int) $o : $none;
+			break;
 	}
 }, 10, 2 );
+
+/* 一覧を「並び順 → 新しい順」にします。
+   1つのお店に何種類かあるとき、お客様のページと同じ順番で見えます。 */
+add_action( 'pre_get_posts', function ( $q ) {
+	if ( ! is_admin() || ! $q->is_main_query() ) return;
+	if ( $q->get( 'post_type' ) !== 'ymkrf_flyer' ) return;
+	if ( $q->get( 'orderby' ) ) return;   /* 見出しを押して並べかえたときはそのまま */
+	$q->set( 'orderby', array( 'menu_order' => 'ASC', 'date' => 'DESC' ) );
+} );
 
 add_action( 'admin_head', function () {
 	$s = get_current_screen();
@@ -427,6 +750,7 @@ add_action( 'admin_head', function () {
 	  .column-ymkrf_fshop{width:190px}
 	  .column-ymkrf_fterm{width:210px}
 	  .column-ymkrf_fnow{width:100px}
+	  .column-ymkrf_ford{width:70px}
 	</style>';
 } );
 
@@ -452,8 +776,12 @@ endif;
  *
  * $slug … お店のスラッグ（例 komathu）。空のときは全店共通のものだけ。
  *
- * ・そのお店だけのチラシがあれば、それを返します
- * ・なければ、全店共通のチラシを返します
+ * ★2026/09/03 ユーザー確認：1つのお店に1〜3種類ある月もあるとのことなので、
+ *   「そのお店のチラシ」と「全店共通のチラシ」の両方を返します。
+ *   お店のチラシが先、そのあとに全店共通です。
+ *
+ * 並びは、編集画面の「ページ属性 → 順序」の小さいほうが先です。
+ * 同じ順序のときは、新しく登録したほうが先になります。
  */
 if ( ! function_exists( 'ymkrf_flyers_for' ) ) :
 function ymkrf_flyers_for( $slug = '' ) {
@@ -462,12 +790,11 @@ function ymkrf_flyers_for( $slug = '' ) {
 		'post_type'      => 'ymkrf_flyer',
 		'post_status'    => 'publish',
 		'posts_per_page' => -1,
-		'orderby'        => 'date',
-		'order'          => 'DESC',
+		'orderby'        => array( 'menu_order' => 'ASC', 'date' => 'DESC' ),
 		'no_found_rows'  => true,
 	) );
 
-	$mine = array();
+	$mine   = array();
 	$common = array();
 
 	foreach ( $all as $p ) {
@@ -480,13 +807,13 @@ function ymkrf_flyers_for( $slug = '' ) {
 		}
 
 		if ( ! $slugs ) {
-			$common[] = $p;                                   /* 全店共通 */
+			$common[] = $p;                                 /* 全店共通 */
 		} elseif ( $slug !== '' && in_array( $slug, $slugs, true ) ) {
-			$mine[] = $p;                                   /* このお店だけ */
+			$mine[] = $p;                                   /* このお店のもの */
 		}
 	}
 
-	return $mine ? $mine : $common;
+	return array_merge( $mine, $common );
 }
 endif;
 
