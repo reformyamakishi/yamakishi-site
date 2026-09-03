@@ -142,5 +142,16 @@ $asset = get_stylesheet_directory_uri();
         <li><a href="<?php echo esc_url( ymkrf_cat_url( 'interior' ) ); ?>">内装・改装</a></li>
       </ul>
     <?php } ?>
+
+    <?php /* スマートフォンからは、フッターまで下りないとたどりつけない
+             ページがありました。よく見られるものだけ、ここにも置きます。 */ ?>
+    <p class="p-drawer__title">そのほか</p>
+    <ul class="p-drawer__list">
+      <li><a href="<?php echo esc_url( home_url( '/flyer/' ) ); ?>">イベント・チラシ</a></li>
+      <li><a href="<?php echo esc_url( home_url( '/works/' ) ); ?>">施工事例</a></li>
+      <li><a href="<?php echo esc_url( home_url( '/voice/' ) ); ?>">お客様の声</a></li>
+      <li><a href="<?php echo esc_url( home_url( '/shops/' ) ); ?>">店舗・対応エリア</a></li>
+      <li><a href="<?php echo esc_url( home_url( '/faq/' ) ); ?>">よくあるご質問</a></li>
+    </ul>
   </div>
 </div>

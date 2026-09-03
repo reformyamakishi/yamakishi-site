@@ -176,8 +176,16 @@ get_header();
       お近くのお店をえらんでください。
     </p>
 
-    <?php /* JavaScript が動かない環境でも使えるように、
+    <?php /* 地図からえらぶ（パソコンだけ）。
+             スマートフォンでは店名が小さくなって押しにくいので、
+             CSSで隠し、下の大きなボタンだけにしています。 */ ?>
+    <?php if ( function_exists( 'ymkrf_flyer_map' ) ) ymkrf_flyer_map( $shops, $sel, $map ); ?>
+
+    <?php /* 店名のボタン。
+             スマートフォンではこちらが主役です。
+             JavaScript が動かない環境でも使えるように、
              ふつうのリンク（?shop=◯◯）にしてあります。 */ ?>
+    <div class="p-flyer__picklist">
     <?php foreach ( $by_pref as $pref => $list ) : ?>
       <h3 class="p-flyer__pref"><?php echo esc_html( $pref ); ?></h3>
       <div class="p-flyer__picks">
@@ -196,6 +204,7 @@ get_header();
         <?php endforeach; ?>
       </div>
     <?php endforeach; ?>
+    </div>
   </div>
 </section>
 

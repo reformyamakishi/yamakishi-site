@@ -24,6 +24,80 @@
   line-height: 1.9;
 }
 
+/* --------------------------------------------------------------------------
+   地図からお店をえらぶ（パソコンのみ）
+
+   地図は画像ではなくSVGです。輪郭とピンの位置は、実際の緯度・経度から
+   計算しています（inc/functions-flyer.php の ymkrf_flyer_map）。
+   スマートフォンでは店名が小さくなって押しにくいので、出しません。
+   -------------------------------------------------------------------------- */
+.p-fmap {
+  max-width: 900px;
+  margin: 0 auto 34px;
+}
+
+.p-fmap__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* 県のかたち */
+.p-fmap__pref {
+  fill: #fbe3da;
+  stroke: #f0b6a2;
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.p-fmap__prefname {
+  fill: #d9a894;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: .1em;
+}
+
+/* ピンと店名のふだ（まるごとがリンクです） */
+.p-fmap__pin { cursor: pointer; }
+
+.p-fmap__lead {
+  stroke: #c9bdb5;
+  stroke-width: 1.6;
+}
+.p-fmap__dot {
+  fill: #fff;
+  stroke: var(--c-main, #fe3301);
+  stroke-width: 4;
+}
+.p-fmap__box {
+  fill: #fff;
+  stroke: var(--c-main, #fe3301);
+  stroke-width: 2;
+}
+.p-fmap__label {
+  fill: #2b2b2b;
+  font-size: 17px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+/* マウスを乗せたとき */
+.p-fmap__pin:hover .p-fmap__box { fill: #fff3ef; }
+.p-fmap__pin:hover .p-fmap__dot { r: 9; }
+.p-fmap__pin:hover .p-fmap__lead { stroke: var(--c-main, #fe3301); }
+
+/* いまえらんでいるお店 */
+.p-fmap__pin.is-on .p-fmap__box { fill: var(--c-main, #fe3301); }
+.p-fmap__pin.is-on .p-fmap__label { fill: #fff; }
+.p-fmap__pin.is-on .p-fmap__dot { fill: var(--c-main, #fe3301); stroke: #fff; }
+.p-fmap__pin.is-on .p-fmap__lead { stroke: var(--c-main, #fe3301); stroke-width: 2.4; }
+
+/* まだ開いていないお店 */
+.p-fmap__pin.is-soon .p-fmap__box { stroke: #c9bdb5; }
+.p-fmap__pin.is-soon .p-fmap__label { fill: #6f6f6f; }
+.p-fmap__pin.is-soon .p-fmap__dot { stroke: #c9bdb5; }
+
+
 .p-flyer__pref {
   margin: 26px 0 10px;
   padding-left: 10px;
@@ -305,6 +379,9 @@
    スマートフォン
    -------------------------------------------------------------------------- */
 @media (max-width: 767px) {
+
+  /* 店名が小さくなって押しにくいので、地図は出しません（ユーザー指定） */
+  .p-fmap { display: none; }
 
   .p-flyer__picks { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
   .p-flyer__pick { min-height: 56px; padding: 10px 6px; }
