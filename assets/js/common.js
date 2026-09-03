@@ -403,4 +403,52 @@
     });
   })();
 
+  /* ------------------------------------------------------------
+     郵便番号から住所を自動入力します（zipcloud の無料APIを利用）。
+
+     ボタンの id を「◯◯-zipbtn」にしておけば、同じ◯◯のついた
+     「◯◯-zip」「◯◯-addr」「◯◯-ziphelp」を自動で見つけます。
+       例）inq-zipbtn / inq-zip / inq-addr / inq-ziphelp
+
+     通信できなかったときは、手で入力していただければ問題ありません。
+     ------------------------------------------------------------ */
+  (function () {
+    var btns = document.querySelectorAll('[id$="-zipbtn"]');
+    if (!btns.length) return;
+
+    Array.prototype.forEach.call(btns, function (btn) {
+      var pre  = btn.id.replace(/-zipbtn$/, '');
+      var zip  = document.getElementById(pre + '-zip');
+      var addr = document.getElementById(pre + '-addr');
+      var help = document.getElementById(pre + '-ziphelp');
+      if (!zip || !addr) return;
+
+      var say = function (t) { if (help) help.textContent = t; };
+
+      btn.addEventListener('click', function () {
+        var v = (zip.value || '').replace(/[^0-9]/g, '');
+        if (v.length !== 7) { say('郵便番号を7桁でご入力ください。'); zip.focus(); return; }
+        say('住所を調べています…');
+        btn.disabled = true;
+
+        fetch('https://zipcloud.ibsnet.co.jp/api/search?zipcode=' + v)
+          .then(function (r) { return r.json(); })
+          .then(function (d) {
+            if (d && d.results && d.results[0]) {
+              var a = d.results[0];
+              addr.value = a.address1 + a.address2 + a.address3;
+              say('住所を入力しました。番地からは手入力してください。');
+              addr.focus();
+            } else {
+              say('見つかりませんでした。お手数ですが手入力してください。');
+            }
+          })
+          .catch(function () {
+            say('住所の取得に失敗しました。お手数ですが手入力してください。');
+          })
+          .then(function () { btn.disabled = false; });
+      });
+    });
+  })();
+
 })();

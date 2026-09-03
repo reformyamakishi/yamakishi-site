@@ -263,11 +263,12 @@ address{ font-style:normal; }
 .p-gnav__list a:hover::after,.p-gnav__list a.is-current::after{ transform:scaleX(1); }
 
 /* ヘッダーCTA（PC） */
-.p-header__cta{ margin-left:auto; display:none; align-items:center; gap:10px; flex:none; }
+.p-header__cta{ margin-left:auto; display:none; align-items:center; gap:8px; flex:none; }
 .p-header__tel{ text-decoration:none; color:var(--ink); text-align:right; line-height:1.2; white-space:nowrap; }
 .p-header__tel small{ display:block; font-size:11px; font-weight:800; color:var(--ink-sub); }
 .p-header__tel strong{ display:block; font-size:23px; font-weight:900; letter-spacing:0; color:var(--brand-dark); }
-.p-header__cta .c-btn{ min-height:48px; padding:10px 16px; font-size:14px; box-shadow:0 3px 0 var(--btn-shadow); }
+/* ボタンが4つ並ぶので、横幅を少し詰めています（LINE・お見積り・来店予約） */
+.p-header__cta .c-btn{ min-height:48px; padding:10px 13px; font-size:13.5px; white-space:nowrap; box-shadow:0 3px 0 var(--btn-shadow); }
 
 /* ハンバーガー */
 .p-hamburger{
@@ -406,9 +407,11 @@ address{ font-style:normal; }
   .p-footer__grid{ grid-template-columns:repeat(4,1fr); }
   .p-pagetop{ right:24px; bottom:24px; }
 }
-@media (min-width:1360px){
+/* メニューとボタンが4つ、同時に並べられる幅になってから
+   グローバルメニューを出します（1360pxだと窮屈で、はみ出します） */
+@media (min-width:1440px){
   .p-gnav{ display:block; }
-  .p-header__inner{ gap:22px; }
+  .p-header__inner{ gap:20px; }
 }
 
 /* 動きを減らす設定への配慮 */
