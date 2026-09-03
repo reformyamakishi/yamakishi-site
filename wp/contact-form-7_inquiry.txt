@@ -59,7 +59,7 @@ Contact Form 7 用 フォームタグ（お見積り・お問い合わせ）
 
 <div class="p-form__row">
   <span class="p-form__label">工事場所<small>（複数選択可）</small></span>
-  [checkbox place use_label_element "キッチン" "お風呂（ユニットバス）" "トイレ" "洗面化粧台" "水まわり4点パック" "給湯器" "エコキュート" "外壁・屋根" "窓・玄関ドア" "内装・改装" "修理・小工事" "その他"]
+  [checkbox place use_label_element "キッチン" "お風呂" "トイレ" "洗面化粧台" "給湯器" "エコキュート" "外壁・屋根" "窓・内窓・サッシ" "玄関・ドア" "床" "内装・改装" "修理・小工事" "その他"]
 </div>
 
 <div class="p-form__row">
@@ -67,11 +67,11 @@ Contact Form 7 用 フォームタグ（お見積り・お問い合わせ）
   [textarea message rows:6 class:p-form__textarea placeholder "例：築20年です。外壁の色あせが気になってきたので相談したい。"]
 </div>
 
-<div class="p-form__row">
-  <span class="p-form__label">ヤマキシでのリフォームの有無</span>
-  [checkbox repeat use_label_element "以前当社でリフォームしたことがある"]
-  <label class="p-form__sublabel">担当者名</label>
-  [text staff class:p-form__input class:p-form__input--half]
+<div class="p-form__row p-form__row--past">
+  <div class="p-form__pastrow">
+    [checkbox repeat use_label_element "以前当社でリフォームしたことがある"]
+    <span class="p-form__staff"><span class="p-form__staffttl">担当者名（</span>[text staff class:p-form__input]<span class="p-form__staffttl">）</span></span>
+  </div>
 </div>
 
 <p class="p-form__privacy">
@@ -180,8 +180,8 @@ https://yamakishi-reform.jp/
    1〜3日以内にご連絡いたします。
 
  ■ 送信に失敗したとき／迷惑メールと判定されたとき（2か所とも同じ文で）
-   送信できませんでした。お手数ですが、お電話（0800-777-3331／通話無料・
-   受付 9:00〜17:00）またはLINEからご連絡ください。
+   送信できませんでした。お手数ですが、LINEもしくはお近くの店舗へ直接
+   お電話ください。店舗の電話番号は、このすぐ下に載せています。
 
    ★reCAPTCHA v3 は、まれに本物のお客様を機械と判定してしまいます。
      そのときの逃げ道として、電話とLINEを書いておくことが大事です。

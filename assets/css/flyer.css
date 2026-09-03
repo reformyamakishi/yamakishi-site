@@ -1,0 +1,321 @@
+@charset "UTF-8";
+/* ==========================================================================
+   flyer.css ─ イベント・チラシ（/flyer/）
+
+   置き場所： wp-content/themes/ymkrf/assets/css/flyer.css
+
+   このページだけで読み込みます（inc/functions-flyer.php）。
+   商品の札（.p-cat__card）は product.css のものをそのまま使っているので、
+   ここには書いていません。
+   ========================================================================== */
+
+/* 出したり隠したりを、確実にきかせます。
+   .l-section などに display が入っていても、hidden が勝つようにします。 */
+[hidden] { display: none !important; }
+
+
+/* --------------------------------------------------------------------------
+   お店をえらぶ
+   -------------------------------------------------------------------------- */
+.p-flyer__lead {
+  margin: 0 0 24px;
+  text-align: center;
+  font-size: 1.05rem;
+  line-height: 1.9;
+}
+
+.p-flyer__pref {
+  margin: 26px 0 10px;
+  padding-left: 10px;
+  font-size: 1.02rem;
+  font-weight: 700;
+  line-height: 1.5;
+  border-left: 4px solid var(--c-main, #fe3301);
+}
+.p-flyer__pref:first-of-type { margin-top: 0; }
+
+.p-flyer__picks {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+.p-flyer__pick {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 62px;
+  padding: 12px 10px;
+  text-align: center;
+  text-decoration: none;
+  color: inherit;
+  background: #fff;
+  border: 2px solid #e2e2e2;
+  border-radius: 10px;
+  transition: border-color .15s, background-color .15s, color .15s;
+}
+.p-flyer__pick:hover { border-color: var(--c-main, #fe3301); }
+
+.p-flyer__pick.is-on {
+  color: #fff;
+  background: var(--c-main, #fe3301);
+  border-color: var(--c-main, #fe3301);
+}
+
+.p-flyer__pickname { font-weight: 700; font-size: 1.02rem; line-height: 1.4; }
+
+.p-flyer__picksoon,
+.p-flyer__picknone {
+  font-size: .78rem;
+  line-height: 1.3;
+  color: #8a8a8a;
+}
+.p-flyer__pick.is-on .p-flyer__picksoon,
+.p-flyer__pick.is-on .p-flyer__picknone { color: rgba(255,255,255,.85); }
+
+
+/* --------------------------------------------------------------------------
+   まだお店をえらんでいないとき／チラシが無いとき
+   -------------------------------------------------------------------------- */
+.p-flyer__ask,
+.p-flyer__none,
+.p-flyer__empty {
+  padding: 30px 22px;
+  text-align: center;
+  line-height: 1.9;
+  background: #fff;
+  border: 1px dashed #d6d6d6;
+  border-radius: 12px;
+}
+
+.p-flyer__askttl,
+.p-flyer__nonettl,
+.p-flyer__emptyttl {
+  margin: 0 0 8px;
+  font-size: 1.14rem;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.p-flyer__empty { position: relative; padding-bottom: 34px; }
+.p-flyer__emptychara {
+  display: block;
+  width: 96px;
+  height: auto;
+  margin: 0 auto 12px;
+}
+
+/* ログイン中のスタッフだけに見える案内 */
+.p-flyer__admin {
+  margin-top: 20px;
+  padding: 16px 18px;
+  font-size: .92rem;
+  line-height: 1.85;
+  background: #fffbe6;
+  border: 1px solid #f0dc9a;
+  border-radius: 10px;
+}
+.p-flyer__admin p { margin: 0 0 6px; }
+.p-flyer__admin p:last-child { margin-bottom: 0; }
+
+
+/* --------------------------------------------------------------------------
+   いま見ているお店
+   -------------------------------------------------------------------------- */
+.p-flyer__now {
+  margin: 0 0 22px;
+  padding: 14px 18px;
+  text-align: center;
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #e6e6e6;
+}
+.p-flyer__nowshop {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1.5;
+}
+.p-flyer__nowshop b { color: var(--c-main, #fe3301); }
+.p-flyer__nowinfo {
+  margin: 4px 0 0;
+  font-size: .9rem;
+  color: #6b6b6b;
+  line-height: 1.6;
+}
+.p-flyer__nowinfo:empty { display: none; }
+
+
+/* --------------------------------------------------------------------------
+   チラシ本体
+   -------------------------------------------------------------------------- */
+.p-flyer__item {
+  margin: 0 0 34px;
+  padding: 26px 22px 30px;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 14px rgba(0,0,0,.06);
+}
+.p-flyer__item:last-of-type { margin-bottom: 0; }
+
+.p-flyer__head { text-align: center; margin-bottom: 20px; }
+
+.p-flyer__catch {
+  margin: 0 0 6px;
+  font-family: "Zen Maru Gothic", system-ui, sans-serif;
+  font-weight: 900;
+  font-size: 1.16rem;
+  line-height: 1.5;
+  color: var(--c-main, #fe3301);
+}
+
+.p-flyer__title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.p-flyer__term {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding: 5px 14px;
+  font-size: .95rem;
+  font-weight: 700;
+  line-height: 1.5;
+  background: #f4f4f4;
+  border-radius: 999px;
+}
+.p-flyer__term span {
+  padding: 1px 8px;
+  font-size: .76rem;
+  color: #fff;
+  background: #555;
+  border-radius: 999px;
+}
+
+.p-flyer__body {
+  margin: 0 auto 22px;
+  max-width: 720px;
+  line-height: 1.9;
+}
+.p-flyer__body p { margin: 0 0 .8em; }
+.p-flyer__body p:last-child { margin-bottom: 0; }
+
+
+/* チラシの画像（表・裏）
+
+   チラシはB4で、縦のときも横のときもあります。
+   ・縦（たて長）… 表・裏を横に2枚ならべます
+   ・横（よこ長）… 横にならべると小さくなりすぎるので、上下にならべて
+                    1枚を大きく見せます（--land が付きます）
+   縦か横かは ymkrf-flyer.php が画像のかたちを見て決めています。 */
+.p-flyer__sheets {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 18px;
+  align-items: start;
+}
+
+.p-flyer__sheets--land {
+  grid-template-columns: 1fr;
+  gap: 24px;
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.p-flyer__sheet { margin: 0; }
+.p-flyer__sheet a {
+  display: block;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fafafa;
+}
+.p-flyer__sheet img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.p-flyer__sheet figcaption {
+  margin-top: 7px;
+  text-align: center;
+  font-size: .9rem;
+  font-weight: 700;
+  line-height: 1.5;
+}
+.p-flyer__sheet figcaption small {
+  font-weight: 400;
+  font-size: .8rem;
+  color: #7a7a7a;
+}
+
+.p-flyer__pdf { margin: 18px 0 0; text-align: center; }
+
+
+/* チラシに載せた商品 */
+.p-flyer__prd { margin-top: 34px; }
+.p-flyer__prdlead {
+  margin: 0 0 18px;
+  font-size: .95rem;
+  line-height: 1.85;
+  text-align: center;
+}
+
+.p-flyer__note {
+  margin: 24px 0 0;
+  font-size: .85rem;
+  line-height: 1.8;
+  color: #6b6b6b;
+}
+
+
+/* --------------------------------------------------------------------------
+   えらんだお店のご案内
+   -------------------------------------------------------------------------- */
+.p-flyer__card {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 24px 22px;
+  text-align: center;
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid #e6e6e6;
+}
+
+.p-flyer__cardaddr { margin: 0; font-size: 1.02rem; line-height: 1.75; }
+.p-flyer__cardhours { margin: 6px 0 0; font-size: .92rem; color: #6b6b6b; line-height: 1.6; }
+.p-flyer__cardhours:empty { display: none; }
+
+.p-flyer__cardbtns {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin: 18px 0 0;
+}
+
+.p-flyer__cardlink { margin: 14px 0 0; font-size: .92rem; }
+
+
+/* --------------------------------------------------------------------------
+   スマートフォン
+   -------------------------------------------------------------------------- */
+@media (max-width: 767px) {
+
+  .p-flyer__picks { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .p-flyer__pick { min-height: 56px; padding: 10px 6px; }
+  .p-flyer__pickname { font-size: .96rem; }
+
+  .p-flyer__item { padding: 20px 14px 24px; border-radius: 12px; }
+  .p-flyer__title { font-size: 1.24rem; }
+  .p-flyer__catch { font-size: 1.04rem; }
+  .p-flyer__sheets { grid-template-columns: 1fr; gap: 14px; }
+
+  .p-flyer__cardbtns { flex-direction: column; }
+  .p-flyer__cardbtns .c-btn { width: 100%; }
+}

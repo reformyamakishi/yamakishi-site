@@ -246,10 +246,11 @@ add_action( 'init', function () {
 	   22 … 給湯器・エコキュートの選び方（/products/boiler-guide/）を足したため
 	   23 … エラーコード一覧（/troubleshooting/）を足したため
 	   24 … お見積り・お問い合わせ（/inquiry/）を足したため
-	   25 … ネット来店予約（/inquiry/webrsv/）を足したため */
-	if ( get_option( 'ymkrf_rewrite_ver' ) === '25' ) return;
+	   25 … ネット来店予約（/inquiry/webrsv/）を足したため
+	   26 … イベント・チラシ（/flyer/）を足したため */
+	if ( get_option( 'ymkrf_rewrite_ver' ) === '26' ) return;
 	flush_rewrite_rules( false );
-	update_option( 'ymkrf_rewrite_ver', '25' );
+	update_option( 'ymkrf_rewrite_ver', '26' );
 }, 99 );
 
 

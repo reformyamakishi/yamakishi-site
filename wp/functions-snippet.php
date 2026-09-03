@@ -28,7 +28,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '2.7.5' );   // ファイル更新時はここを上げるとキャッシュが切れます
+if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '2.9.0' );   // ファイル更新時はここを上げるとキャッシュが切れます
 
 /* ============================================================
    1. CSS / JS の読み込み
@@ -64,6 +64,7 @@ add_action( 'wp_enqueue_scripts', function () {
 	           || ( function_exists( 'ymkrf_is_ts' ) && ymkrf_is_ts() )
 	           || ( function_exists( 'ymkrf_is_inquiry' ) && ymkrf_is_inquiry() )
 	           || ( function_exists( 'ymkrf_is_webrsv' ) && ymkrf_is_webrsv() )
+	           || ( function_exists( 'ymkrf_is_flyer' ) && ymkrf_is_flyer() )
 	           || ( function_exists( 'ymkrf_is_privacy' ) && ymkrf_is_privacy() );
 	$is_top = is_front_page() && ! $is_special;
 
@@ -342,6 +343,12 @@ endif;
         出すこと」を認めています。そちらのやり方にしています。
         （バッジを消すCSSは assets/css/page.css にあります）
    ============================================================ */
+/* Contact Form 7 は、フォームの中に <p> と <br> を自動で入れます。
+   こちらは <div class="p-form__row"> できちんと組んでいるので、
+   自動で入る分は余白が広がるだけで、じゃまになります。止めます。 */
+add_filter( 'wpcf7_autop_or_not', '__return_false' );
+
+
 if ( ! function_exists( 'ymkrf_recaptcha_note' ) ) :
 function ymkrf_recaptcha_note() {
 
@@ -805,7 +812,58 @@ function ymkrf_is_shops() {
 endif;
 
 /* ============================================================
-   1-9. プライバシーポリシーのページ（/privacy/）のURL
+   1-9. イベント・チラシのページ（/flyer/）のURL
+
+        お店をえらんだ状態で開くときは /flyer/?shop=komathu のように
+        うしろに付けます（店舗・対応エリアのページからのリンクがこの形です）。
+        ?shop= は WordPress の shop とはぶつからないよう、
+        ページの中で自分で読んでいます（ymkrf-flyer.php）。
+   ============================================================ */
+add_action( 'init', function () {
+	add_rewrite_rule( '^flyer/?$', 'index.php?ymkrf_flyer_page=1', 'top' );
+}, 20 );
+
+add_filter( 'query_vars', function ( $vars ) {
+	$vars[] = 'ymkrf_flyer_page';
+	return $vars;
+} );
+
+add_filter( 'template_include', function ( $tpl ) {
+	if ( ! get_query_var( 'ymkrf_flyer_page' ) ) return $tpl;
+	$found = locate_template( 'ymkrf-flyer.php' );
+	return $found ? $found : $tpl;
+} );
+
+add_action( 'wp', function () {
+	if ( ! get_query_var( 'ymkrf_flyer_page' ) ) return;
+	global $wp_query;
+	$wp_query->is_404        = false;
+	$wp_query->is_home       = false;
+	$wp_query->is_front_page = false;
+	$wp_query->is_page       = false;
+	$wp_query->is_singular   = false;
+	$wp_query->is_archive    = false;
+	$wp_query->is_post_type_archive = false;
+	status_header( 200 );
+} );
+
+add_filter( 'document_title_parts', function ( $parts ) {
+	if ( get_query_var( 'ymkrf_flyer_page' ) ) {
+		$parts['title'] = 'イベント・チラシ｜リフォームヤマキシ（石川県・福井県）';
+		unset( $parts['tagline'] );
+	}
+	return $parts;
+} );
+
+if ( ! function_exists( 'ymkrf_is_flyer' ) ) :
+function ymkrf_is_flyer() {
+	return (bool) get_query_var( 'ymkrf_flyer_page' );
+}
+endif;
+
+
+/* ============================================================
+   1-10. プライバシーポリシーのページ（/privacy/）のURL
    ============================================================ */
 add_action( 'init', function () {
 	add_rewrite_rule( '^privacy/?$', 'index.php?ymkrf_privacy=1', 'top' );

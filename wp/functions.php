@@ -7,6 +7,7 @@
  *   inc/functions-product.php … 商品（キッチン・お風呂ほか）
  *   inc/functions-column.php  … コラム（お役立ち情報）
  *   inc/functions-news.php    … お知らせ
+ *   inc/functions-flyer.php   … イベント・チラシ
  *   inc/functions-voice.php   … お客様の声（アンケートの自動読み取り）
  *   inc/functions-works.php   … 施工事例（Before/After・権限）
  *   inc/functions-works-import.php … いまのサイトから施工事例を取り込む
@@ -22,6 +23,7 @@ require_once get_stylesheet_directory() . '/inc/functions-works.php';
 require_once get_stylesheet_directory() . '/inc/functions-works-import.php';
 require_once get_stylesheet_directory() . '/inc/functions-shops.php';
 require_once get_stylesheet_directory() . '/inc/functions-staff.php';
+require_once get_stylesheet_directory() . '/inc/functions-flyer.php';
 
 /* アイキャッチ画像を使えるようにする */
 add_action( 'after_setup_theme', function () {

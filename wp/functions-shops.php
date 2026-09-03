@@ -30,11 +30,11 @@ function ymkrf_shops() {
 		'pref' => '石川県', 'slug' => 'higashikanazawa', 'name' => '東金沢店',
 		'tel'  => '',
 		'addr' => '石川県金沢市大樋町1番地4',
-		'hours' => '', 'hnote' => '',
+		'hours' => '10:00〜18:00', 'hnote' => '',
 		'closed' => '',
 		'areas' => array( '金沢市' ),
 		'sr' => false, 'srnote' => '',
-		'ld' => array(),
+		'ld' => array( 'Mo-Su 10:00-18:00' ),
 		'soon' => '2026年10月31日（土）グランドオープン！',
 		'pos'  => '50% 22%',   /* 写真の見せたい位置（上のほうを見せます） */
 	),
