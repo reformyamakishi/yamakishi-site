@@ -320,7 +320,11 @@ get_header();
                 <?php echo esc_html( $sp['tel'] ); ?>
               </a>
             <?php else : ?>
-              <p class="p-inq__shopsoontxt"><?php echo esc_html( $sp['soon'] ); ?></p>
+              <?php /* 直通番号がまだ決まっていないお店。
+                       空欄にせず、フリーコールをご案内します。 */ ?>
+              <p class="p-inq__shopsoontxt"><?php echo esc_html(
+                ! empty( $sp['soon'] ) ? $sp['soon'] : '直通番号は準備中です。0800-777-3331 へどうぞ'
+              ); ?></p>
             <?php endif; ?>
 
             <?php if ( ! empty( $sp['hours'] ) ) : ?>

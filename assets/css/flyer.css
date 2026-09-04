@@ -15,25 +15,15 @@
 
 
 /* --------------------------------------------------------------------------
-   お店をえらぶ
-   -------------------------------------------------------------------------- */
-.p-flyer__lead {
-  margin: 0 0 24px;
-  text-align: center;
-  font-size: 1.05rem;
-  line-height: 1.9;
-}
-
-/* --------------------------------------------------------------------------
    地図からお店をえらぶ（パソコンのみ）
 
-   地図は画像ではなくSVGです。輪郭とピンの位置は、実際の緯度・経度から
-   計算しています（inc/functions-flyer.php の ymkrf_flyer_map）。
+   地図そのものは、いただいた画像です。その上に店名のふだ・ピン・
+   引き出し線をSVGで重ねています（inc/functions-flyer.php の ymkrf_flyer_map）。
    スマートフォンでは店名が小さくなって押しにくいので、出しません。
    -------------------------------------------------------------------------- */
 .p-fmap {
-  max-width: 900px;
-  margin: 0 auto 34px;
+  max-width: 1000px;
+  margin: 0 auto 30px;
 }
 
 .p-fmap__svg {
@@ -42,87 +32,113 @@
   height: auto;
 }
 
-/* 県のかたち */
-.p-fmap__pref {
-  fill: #fbe3da;
-  stroke: #f0b6a2;
-  stroke-width: 2;
-  stroke-linejoin: round;
-}
-
-.p-fmap__prefname {
-  fill: #d9a894;
-  font-size: 26px;
-  font-weight: 700;
-  letter-spacing: .1em;
-}
 
 /* ピンと店名のふだ（まるごとがリンクです） */
 .p-fmap__pin { cursor: pointer; }
 
 .p-fmap__lead {
-  stroke: #c9bdb5;
-  stroke-width: 1.6;
+  stroke: #b9aaa2;
+  stroke-width: 2.4;
+}
+.p-fmap__ring {
+  fill: rgba(254, 51, 1, .16);
+  transition: fill .15s;
 }
 .p-fmap__dot {
-  fill: #fff;
-  stroke: var(--c-main, #fe3301);
-  stroke-width: 4;
+  fill: var(--c-main, #fe3301);
+  stroke: #fff;
+  stroke-width: 3;
 }
 .p-fmap__box {
   fill: #fff;
   stroke: var(--c-main, #fe3301);
-  stroke-width: 2;
+  stroke-width: 3;
 }
 .p-fmap__label {
   fill: #2b2b2b;
-  font-size: 17px;
+  font-size: 30px;
   font-weight: 700;
   text-anchor: middle;
-  dominant-baseline: middle;
+  dominant-baseline: central;
+  transition: fill .15s;
 }
+
 /* マウスを乗せたとき */
-.p-fmap__pin:hover .p-fmap__box { fill: #fff3ef; }
-.p-fmap__pin:hover .p-fmap__dot { r: 9; }
+.p-fmap__pin:hover .p-fmap__box { fill: #ffe9e2; }
+.p-fmap__pin:hover .p-fmap__label { fill: var(--c-main, #fe3301); }
+.p-fmap__pin:hover .p-fmap__ring { fill: rgba(254, 51, 1, .34); }
 .p-fmap__pin:hover .p-fmap__lead { stroke: var(--c-main, #fe3301); }
 
 /* いまえらんでいるお店 */
 .p-fmap__pin.is-on .p-fmap__box { fill: var(--c-main, #fe3301); }
 .p-fmap__pin.is-on .p-fmap__label { fill: #fff; }
-.p-fmap__pin.is-on .p-fmap__dot { fill: var(--c-main, #fe3301); stroke: #fff; }
-.p-fmap__pin.is-on .p-fmap__lead { stroke: var(--c-main, #fe3301); stroke-width: 2.4; }
+.p-fmap__pin.is-on .p-fmap__ring { fill: rgba(254, 51, 1, .45); }
+.p-fmap__pin.is-on .p-fmap__lead { stroke: var(--c-main, #fe3301); stroke-width: 3.4; }
 
 /* まだ開いていないお店 */
-.p-fmap__pin.is-soon .p-fmap__box { stroke: #c9bdb5; }
+.p-fmap__pin.is-soon .p-fmap__box { stroke: #b9aaa2; }
 .p-fmap__pin.is-soon .p-fmap__label { fill: #6f6f6f; }
-.p-fmap__pin.is-soon .p-fmap__dot { stroke: #c9bdb5; }
+.p-fmap__pin.is-soon .p-fmap__dot { fill: #b9aaa2; }
+.p-fmap__pin.is-soon .p-fmap__ring { fill: rgba(0, 0, 0, .08); }
 
+/* --------------------------------------------------------------------------
+   お店をえらぶ
 
-.p-flyer__pref {
-  margin: 26px 0 10px;
-  padding-left: 10px;
-  font-size: 1.02rem;
+   店舗・対応エリアのページ（/shops/）のカードと同じ見た目です。
+   上に店名、下にそのお店が担当する市や町が出ます。
+   -------------------------------------------------------------------------- */
+/* 「マップからえらぶ」「市町村からえらぶ」の小見出し */
+/* 「マップからえらぶ」「市町村からえらぶ」の小見出し。
+   まん中ぞろえで、下に短いオレンジの線を引いて目立たせています。 */
+.p-flyer__picklead {
+  margin: 0 0 20px;
+  text-align: center;
+  font-size: 1.38rem;
+  font-weight: 800;
+  line-height: 1.5;
+  letter-spacing: .04em;
+  color: #2b2b2b;
+}
+.p-flyer__picklead::after {
+  content: "";
+  display: block;
+  width: 56px;
+  height: 4px;
+  margin: 12px auto 0;
+  border-radius: 2px;
+  background: var(--c-main, #fe3301);
+}
+.p-flyer__picklead--map { margin-bottom: 18px; }
+
+.p-city { margin-bottom: 22px; }
+.p-city:last-child { margin-bottom: 0; }
+
+.p-city__pref {
+  margin: 0 0 12px;
+  padding-left: 12px;
+  font-size: 1.05rem;
   font-weight: 700;
   line-height: 1.5;
-  border-left: 4px solid var(--c-main, #fe3301);
+  border-left: 5px solid var(--c-main, #fe3301);
 }
-.p-flyer__pref:first-of-type { margin-top: 0; }
 
-.p-flyer__picks {
+.p-city__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 10px;
 }
+@media (max-width: 1000px) {
+  .p-city__list { grid-template-columns: repeat(2, 1fr); }
+}
 
-.p-flyer__pick {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  min-height: 62px;
-  padding: 12px 10px;
-  text-align: center;
+/* お店のカード */
+.p-fcard {
+  display: block;
+  height: 100%;
+  padding: 12px 15px;
   text-decoration: none;
   color: inherit;
   background: #fff;
@@ -130,30 +146,49 @@
   border-radius: 10px;
   transition: border-color .15s, background-color .15s, color .15s;
 }
-.p-flyer__pick:hover { border-color: var(--c-main, #fe3301); }
+.p-fcard:hover { border-color: var(--c-main, #fe3301); background: #fff6f3; }
 
-.p-flyer__pick.is-on {
+.p-fcard.is-on {
   color: #fff;
   background: var(--c-main, #fe3301);
   border-color: var(--c-main, #fe3301);
 }
 
-.p-flyer__pickname { font-weight: 700; font-size: 1.02rem; line-height: 1.4; }
-
-.p-flyer__picksoon,
-.p-flyer__picknone {
-  font-size: .78rem;
-  line-height: 1.3;
-  color: #8a8a8a;
+.p-fcard__name {
+  display: block;
+  font-size: 1.04rem;
+  font-weight: 700;
+  line-height: 1.5;
 }
-.p-flyer__pick.is-on .p-flyer__picksoon,
-.p-flyer__pick.is-on .p-flyer__picknone { color: rgba(255,255,255,.85); }
+
+.p-fcard__area {
+  display: block;
+  margin-top: 3px;
+  font-size: .8rem;
+  line-height: 1.7;
+  color: #7a7a7a;
+}
+.p-fcard__city { white-space: nowrap; }
+.p-fcard__sep { color: #c9c9c9; }
+.p-fcard.is-on .p-fcard__area { color: rgba(255,255,255,.9); }
+.p-fcard.is-on .p-fcard__sep { color: rgba(255,255,255,.6); }
+
+.p-fcard__none {
+  display: inline-block;
+  margin-top: 5px;
+  padding: 1px 9px;
+  font-size: .74rem;
+  line-height: 1.6;
+  color: #8a8a8a;
+  background: #f2f2f2;
+  border-radius: 999px;
+}
+.p-fcard.is-on .p-fcard__none { color: #fff; background: rgba(0,0,0,.18); }
 
 
 /* --------------------------------------------------------------------------
    まだお店をえらんでいないとき／チラシが無いとき
    -------------------------------------------------------------------------- */
-.p-flyer__ask,
 .p-flyer__none,
 .p-flyer__empty {
   padding: 30px 22px;
@@ -164,7 +199,6 @@
   border-radius: 12px;
 }
 
-.p-flyer__askttl,
 .p-flyer__nonettl,
 .p-flyer__emptyttl {
   margin: 0 0 8px;
@@ -380,12 +414,45 @@
    -------------------------------------------------------------------------- */
 @media (max-width: 767px) {
 
-  /* 店名が小さくなって押しにくいので、地図は出しません（ユーザー指定） */
-  .p-fmap { display: none; }
+  /* スマートフォンでも地図を出します。
+     画面のはばいっぱいに出し、横スクロールはしません（ユーザー指定）。
 
-  .p-flyer__picks { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-  .p-flyer__pick { min-height: 56px; padding: 10px 6px; }
-  .p-flyer__pickname { font-size: .96rem; }
+     店名まわりのオレンジのふちは出しません（ユーザー指定）。
+     ただし、ふだ自体は透明なまま残してあるので、
+     店名のあたりを押せば、これまでどおりえらべます。
+
+     ふだがないぶん、文字を大きくできます。
+     地図の上でも読めるように、白いふちどりを付けています。 */
+  .p-fmap { margin-bottom: 22px; }
+
+  .p-fmap__box {
+    fill: transparent;
+    stroke: none;
+  }
+  .p-fmap__label {
+    font-size: 42px;
+    paint-order: stroke fill;
+    stroke: #fff;
+    stroke-width: 6px;
+    stroke-linejoin: round;
+  }
+  /* ふだの色は変えず、店名の文字の色で「いま指している／えらんでいる」を出します */
+  .p-fmap__pin:hover .p-fmap__box { fill: transparent; }
+  .p-fmap__pin:hover .p-fmap__label { fill: var(--c-main, #fe3301); }
+  .p-fmap__pin.is-on .p-fmap__box { fill: transparent; }
+  .p-fmap__pin.is-on .p-fmap__label { fill: var(--c-main, #fe3301); }
+
+  .p-fmap__dot { r: 10; }
+  .p-fmap__ring { r: 20; }
+  .p-fmap__lead { stroke-width: 3.6; }
+
+  .p-flyer__picklead { font-size: 1.2rem; margin-bottom: 16px; }
+  .p-flyer__picklead::after { width: 46px; height: 3px; margin-top: 10px; }
+
+  .p-city__list { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .p-fcard { padding: 11px 12px; }
+  .p-fcard__name { font-size: .98rem; }
+  .p-fcard__area { font-size: .76rem; }
 
   .p-flyer__item { padding: 20px 14px 24px; border-radius: 12px; }
   .p-flyer__title { font-size: 1.24rem; }

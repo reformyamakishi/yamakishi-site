@@ -35,7 +35,10 @@ function ymkrf_shops() {
 		'areas' => array( '金沢市' ),
 		'sr' => false, 'srnote' => '',
 		'ld' => array( 'Mo-Su 10:00-18:00' ),
-		'soon' => '2026年10月31日（土）グランドオープン！',
+		/* 2026/09/04 ユーザー指示：サイト公開のころには開店しているので
+		   「準備中」の扱いをやめました（'soon' を外しました）。
+		   ★直通の電話番号が決まりましたら 'tel' に入れてください。
+		     空のあいだは、フリーコール 0800-777-3331 をご案内します。 */
 		'pos'  => '50% 22%',   /* 写真の見せたい位置（上のほうを見せます） */
 	),
 	array(
@@ -143,6 +146,44 @@ function ymkrf_shops() {
 		'sr' => true, 'srnote' => '',
 		'ld' => array( 'Mo-Su 07:00-21:30' ),
 	),
+	);
+}
+endif;
+
+/**
+ * 市や町から、担当するお店を引く表
+ *
+ * ★ここを直すと、店舗・対応エリアのページ（/shops/）と
+ *   イベント・チラシのページ（/flyer/）の両方に反映されます。
+ *
+ * 1つの市町に何店かあるときは、近い順・案内したい順にならべてください。
+ */
+if ( ! function_exists( 'ymkrf_shop_cities' ) ) :
+function ymkrf_shop_cities() {
+	return array(
+		'石川県' => array(
+			'金沢市'       => array( 'nonoichi', 'tagami', 'higashikanazawa' ),
+			'野々市市'     => array( 'nonoichi' ),
+			'白山市'       => array( 'nonoichi', 'kawakita' ),
+			'川北町'       => array( 'kawakita' ),
+			'能美市'       => array( 'komathu', 'kawakita' ),
+			'小松市'       => array( 'komathu' ),
+			'加賀市'       => array( 'shinkaga' ),
+			'七尾市'       => array( 'tazuruhama' ),
+			'羽咋市'       => array( 'hakui' ),
+			'志賀町'       => array( 'hakui', 'tazuruhama' ),
+			'中能登町'     => array( 'hakui' ),
+			'宝達志水町'   => array( 'hakui' ),
+		),
+		'福井県' => array(
+			'あわら市'     => array( 'kanadu' ),
+			'坂井市'       => array( 'kanadu' ),
+			'福井市'       => array( 'kahahothu' ),
+			'永平寺町'     => array( 'kahahothu' ),
+			'越前町'       => array( 'asahi' ),
+			'越前市'       => array( 'asahi' ),
+			'鯖江市'       => array( 'asahi' ),
+		),
 	);
 }
 endif;

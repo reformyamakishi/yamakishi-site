@@ -27,32 +27,9 @@ $asset = get_stylesheet_directory_uri();
    直すときはそちらを直してください。お問い合わせページにも反映されます。 */
 $shops = ymkrf_shops();
 
-/* 市町から担当のお店を引く表（本文にも出しますし、お客様も探しやすくなります） */
-$cities = array(
-	'石川県' => array(
-		'金沢市'       => array( 'nonoichi', 'tagami', 'higashikanazawa' ),
-		'野々市市'     => array( 'nonoichi' ),
-		'白山市'       => array( 'nonoichi', 'kawakita' ),
-		'川北町'       => array( 'kawakita' ),
-		'能美市'       => array( 'komathu', 'kawakita' ),
-		'小松市'       => array( 'komathu' ),
-		'加賀市'       => array( 'shinkaga' ),
-		'七尾市'       => array( 'tazuruhama' ),
-		'羽咋市'       => array( 'hakui' ),
-		'志賀町'       => array( 'hakui', 'tazuruhama' ),
-		'中能登町'     => array( 'hakui' ),
-		'宝達志水町'   => array( 'hakui' ),
-	),
-	'福井県' => array(
-		'あわら市'     => array( 'kanadu' ),
-		'坂井市'       => array( 'kanadu' ),
-		'福井市'       => array( 'kahahothu' ),
-		'永平寺町'     => array( 'kahahothu' ),
-		'越前町'       => array( 'asahi' ),
-		'越前市'       => array( 'asahi' ),
-		'鯖江市'       => array( 'asahi' ),
-	),
-);
+/* 市町から担当のお店を引く表（inc/functions-shops.php にまとめています。
+   /flyer/ でも同じ表を使っています） */
+$cities = ymkrf_shop_cities();
 
 /* 名前を引くための表 */
 $byslug = array();
@@ -72,7 +49,7 @@ foreach ( $shops as $s ) {
 		'@type'       => 'HomeAndConstructionBusiness',
 		'name'        => 'リフォームヤマキシ ' . $s['name'],
 		'parentOrganization' => array( '@type' => 'Organization', 'name' => '株式会社山岸' ),
-		'telephone'   => $s['tel'],
+		'telephone'   => $s['tel'],   /* 空のときは、下で外します */
 		'address'     => array(
 			'@type'           => 'PostalAddress',
 			'addressCountry'  => 'JP',
@@ -85,6 +62,9 @@ foreach ( $shops as $s ) {
 		'url'          => home_url( '/shops/#' . $s['slug'] ),
 		'image'        => get_stylesheet_directory_uri() . '/assets/img/shops/' . $s['slug'] . '.jpg',
 	);
+	/* 電話番号がまだ決まっていないお店は、空のまま出すと
+	   検索エンジンに「番号なし」と伝わってしまうので、項目ごと外します。 */
+	if ( $one['telephone'] === '' ) unset( $one['telephone'] );
 	$ld[] = $one;
 }
 

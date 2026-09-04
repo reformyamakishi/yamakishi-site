@@ -171,39 +171,61 @@ get_header();
       <h2 class="c-head__title">お店を<span class="marker">えらぶ</span></h2>
     </div>
 
-    <p class="p-flyer__lead">
-      チラシは、お店によって内容が違うことがあります。<br class="sp-only">
-      お近くのお店をえらんでください。
-    </p>
-
     <?php /* 地図からえらぶ（パソコンだけ）。
              スマートフォンでは店名が小さくなって押しにくいので、
              CSSで隠し、下の大きなボタンだけにしています。 */ ?>
+    <p class="p-flyer__picklead p-flyer__picklead--map">マップからえらぶ</p>
     <?php if ( function_exists( 'ymkrf_flyer_map' ) ) ymkrf_flyer_map( $shops, $sel, $map ); ?>
 
-    <?php /* 店名のボタン。
-             スマートフォンではこちらが主役です。
+    <?php /* お店をえらびます。
+             店舗・対応エリアのページ（/shops/）のカードと同じ見た目で、
+             上に店名、下にそのお店が担当する市や町を出します。
+
+             市町の表は inc/functions-shops.php にまとめてあります。
              JavaScript が動かない環境でも使えるように、
              ふつうのリンク（?shop=◯◯）にしてあります。 */ ?>
+    <?php
+      /* お店ごとに、担当する市や町を集めます */
+      $shop_cities = array();
+      if ( function_exists( 'ymkrf_shop_cities' ) ) {
+        foreach ( ymkrf_shop_cities() as $pref_c => $list_c ) {
+          foreach ( $list_c as $city => $slugs ) {
+            foreach ( $slugs as $sg ) $shop_cities[ $sg ][] = $city;
+          }
+        }
+      }
+    ?>
     <div class="p-flyer__picklist">
-    <?php foreach ( $by_pref as $pref => $list ) : ?>
-      <h3 class="p-flyer__pref"><?php echo esc_html( $pref ); ?></h3>
-      <div class="p-flyer__picks">
-        <?php foreach ( $list as $sp ) :
-          $n = isset( $map[ $sp['slug'] ] ) ? count( $map[ $sp['slug'] ] ) : 0; ?>
-          <a class="p-flyer__pick<?php echo ( $sel === $sp['slug'] ) ? ' is-on' : ''; ?>"
-             href="<?php echo esc_url( add_query_arg( 'shop', $sp['slug'], home_url( '/flyer/' ) ) ); ?>#flyer"
-             data-shop="<?php echo esc_attr( $sp['slug'] ); ?>">
-            <span class="p-flyer__pickname"><?php echo esc_html( $sp['name'] ); ?></span>
-            <?php if ( ! empty( $sp['soon'] ) ) : ?>
-              <span class="p-flyer__picksoon">準備中</span>
-            <?php elseif ( ! $n ) : ?>
-              <span class="p-flyer__picknone">チラシなし</span>
-            <?php endif; ?>
-          </a>
-        <?php endforeach; ?>
-      </div>
-    <?php endforeach; ?>
+      <p class="p-flyer__picklead">市町村からえらぶ</p>
+
+      <?php foreach ( $by_pref as $pref => $list ) : ?>
+        <div class="p-city">
+          <p class="p-city__pref"><?php echo esc_html( $pref ); ?></p>
+          <ul class="p-city__list">
+            <?php foreach ( $list as $sp ) :
+              $sg   = $sp['slug'];
+              $n    = isset( $map[ $sg ] ) ? count( $map[ $sg ] ) : 0;
+              $area = isset( $shop_cities[ $sg ] ) ? $shop_cities[ $sg ] : $sp['areas'];
+            ?>
+              <li>
+                <a class="p-flyer__pick p-fcard<?php echo ( $sel === $sg ) ? ' is-on' : ''; ?>"
+                   href="<?php echo esc_url( add_query_arg( 'shop', $sg, home_url( '/flyer/' ) ) ); ?>#flyer"
+                   data-shop="<?php echo esc_attr( $sg ); ?>">
+                  <span class="p-fcard__name"><?php echo esc_html( $sp['name'] ); ?></span>
+                  <span class="p-fcard__area"><?php
+                    $parts = array();
+                    foreach ( $area as $a ) $parts[] = '<span class="p-fcard__city">' . esc_html( $a ) . '</span>';
+                    echo implode( '<span class="p-fcard__sep">／</span>', $parts );
+                  ?></span>
+                  <?php if ( ! $n ) : ?>
+                    <span class="p-fcard__none">チラシなし</span>
+                  <?php endif; ?>
+                </a>
+              </li>
+            <?php endforeach; ?>
+          </ul>
+        </div>
+      <?php endforeach; ?>
     </div>
   </div>
 </section>
@@ -211,12 +233,6 @@ get_header();
 <!-- =========== チラシ =========== -->
 <section class="l-section l-section--soft" id="flyer">
   <div class="l-wrap">
-
-    <?php /* お店をまだえらんでいないとき（?shop= なしで来られたとき）に出します */ ?>
-    <div class="p-flyer__ask" id="flyer-ask"<?php echo $sel ? ' hidden' : ''; ?>>
-      <p class="p-flyer__askttl">↑ 上から、お店をえらんでください</p>
-      <p>えらんだお店のチラシだけを出しますので、すぐに開きます。</p>
-    </div>
 
     <?php
       $cur_hours = '';
