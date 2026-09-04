@@ -21,6 +21,8 @@ require_once get_stylesheet_directory() . '/inc/functions-news.php';
 require_once get_stylesheet_directory() . '/inc/functions-voice.php';
 require_once get_stylesheet_directory() . '/inc/functions-works.php';
 require_once get_stylesheet_directory() . '/inc/functions-works-import.php';
+/* ↓ 本番サイトからの取り込み。終わったらこの行とファイルを消してください */
+require_once get_stylesheet_directory() . '/inc/functions-works-import2.php';
 require_once get_stylesheet_directory() . '/inc/functions-shops.php';
 require_once get_stylesheet_directory() . '/inc/functions-staff.php';
 require_once get_stylesheet_directory() . '/inc/functions-flyer.php';
