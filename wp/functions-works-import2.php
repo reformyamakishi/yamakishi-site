@@ -156,6 +156,22 @@ function ymkrf_bulk_page() {
 		update_option( YMKRF_BULK_LOG, $log, false );
 	}
 
+	/* 投稿者が空の施工事例を、管理者にそろえます。
+	   裏で自動で取り込んだぶんは、誰もログインしていないので空になります。
+	   （2026/09/07 ユーザー指摘「所有の数字は何？」） */
+	if ( isset( $_POST['ymkrf_bulk_author'] ) && check_admin_referer( 'ymkrf_bulk' ) ) {
+		global $wpdb;
+		$uid = ymkrf_works_import_author();
+		$n = $wpdb->query( $wpdb->prepare(
+			"UPDATE {$wpdb->posts} SET post_author = %d
+			  WHERE post_type = 'ymkrf_works' AND ( post_author = 0 OR post_author IS NULL )",
+			$uid
+		) );
+		clean_post_cache( 0 );
+		wp_cache_flush();
+		$fixed = (int) $n;
+	}
+
 	/* 自動で取り込む（始める・止める） */
 	if ( isset( $_POST['ymkrf_bulk_auto_on'] ) && check_admin_referer( 'ymkrf_bulk' ) ) {
 		update_option( YMKRF_BULK_AUTO, '1', false );
@@ -231,6 +247,33 @@ function ymkrf_bulk_page() {
 	      </form>
 	    </div>
 	    <?php if ( $auto ) : ?><meta http-equiv="refresh" content="30"><?php endif; ?>
+
+	    <?php
+	    /* 投稿者が空のものが残っていたら、そろえるボタンを出します */
+	    global $wpdb;
+	    $noauthor = (int) $wpdb->get_var(
+	      "SELECT COUNT(*) FROM {$wpdb->posts}
+	        WHERE post_type = 'ymkrf_works' AND ( post_author = 0 OR post_author IS NULL )" );
+	    ?>
+	    <?php if ( isset( $fixed ) ) : ?>
+	      <div class="notice notice-success"><p>
+	        投稿者を <?php echo (int) $fixed; ?> 件そろえました。</p></div>
+	    <?php endif; ?>
+	    <?php if ( $noauthor ) : ?>
+	      <div style="margin:16px 0;padding:14px 18px;border:1px solid #dcdcde;border-radius:6px;background:#fff">
+	        <form method="post" style="margin:0">
+	          <?php wp_nonce_field( 'ymkrf_bulk' ); ?>
+	          <p style="margin:0 0 8px;font-weight:700">投稿者が空のものが <?php echo $noauthor; ?> 件あります</p>
+	          <p class="description" style="margin:0 0 10px">
+	            裏で自動で取り込んだぶんは、誰もログインしていない状態で入るので、
+	            投稿者の欄が空になります。表示や検索には影響しませんが、
+	            一覧の「所有」の数がずれて見えます。<br>
+	            押すと、管理者にそろえます。
+	          </p>
+	          <button class="button" name="ymkrf_bulk_author" value="1">投稿者をそろえる</button>
+	        </form>
+	      </div>
+	    <?php endif; ?>
 
 	    <form method="post">
 	      <?php wp_nonce_field( 'ymkrf_bulk' ); ?>

@@ -23,7 +23,9 @@ while ( have_posts() ) : the_post();
   $wrel   = ymkrf_works_related( $id, 3 );
   $witems = ymkrf_works_items_html( $id );
   $wgal   = ymkrf_works_gallery( $id );
-  $wstaff = (int) get_post_meta( $id, '_ymkrf_staff', true );
+  /* 営業担当。数字ならスタッフ、「shop-tazuruhama」ならお店そのものです */
+  $wstaff = trim( (string) get_post_meta( $id, '_ymkrf_staff', true ) );
+  if ( strpos( $wstaff, 'shop-' ) !== 0 ) $wstaff = (int) $wstaff;
   $wscom  = trim( (string) get_post_meta( $id, '_ymkrf_works_comment', true ) );
 ?>
 

@@ -103,6 +103,29 @@ placeholder="https://yamakishi-reform.jp/works/kitchen/3332/&#10;2601-0395"></te
 /* ============================================================
    2. 1件ぶんの取り込み
    ============================================================ */
+/**
+ * 取り込んだ施工事例の投稿者。
+ *
+ * ログインしていればその人、していなければ（裏で自動で動いているとき）
+ * いちばん先の管理者にします。こうしておくと、一覧の「所有」の数が
+ * 取り込みかたによってずれません。
+ */
+function ymkrf_works_import_author() {
+
+	$me = get_current_user_id();
+	if ( $me ) return $me;
+
+	$admins = get_users( array(
+		'role'    => 'administrator',
+		'number'  => 1,
+		'orderby' => 'ID',
+		'order'   => 'ASC',
+		'fields'  => 'ID',
+	) );
+	return $admins ? (int) $admins[0] : 1;
+}
+
+
 function ymkrf_works_import_one( $url, $case_no = '' ) {
 
 	$url = esc_url_raw( trim( $url ) );
@@ -137,6 +160,11 @@ function ymkrf_works_import_one( $url, $case_no = '' ) {
 		'post_title'   => $d['title'],
 		'post_content' => $d['body'],
 		'post_status'  => 'draft',
+		/* 投稿者を、かならず入れます。
+		   裏で自動で取り込むときは誰もログインしていないので、
+		   そのままだと投稿者が空になり、一覧の「所有」の数がずれます。
+		   （2026/09/07 ユーザー指摘） */
+		'post_author'  => ymkrf_works_import_author(),
 	);
 	if ( $exist ) {
 		$post['ID'] = (int) $exist[0];

@@ -352,10 +352,55 @@ function ymkrf_staff_face( $post_id, $size = 'thumbnail' ) {
 	     . ' width="117" height="117" alt="" loading="lazy">';
 }
 
+/**
+ * 「田鶴浜店が担当しました」の札。
+ *
+ * 担当された方が退職されて、お名前をえらべないときに使います。
+ * お名前と顔写真は出さず、お店の名前だけを出します。
+ * お店のページ（店舗・対応エリア）へのリンクも付けます。
+ */
+function ymkrf_staff_shop_card( $slug, $comment = '' ) {
+
+	$slug  = sanitize_title( (string) $slug );
+	$shops = ymkrf_staff_shops();
+	if ( ! isset( $shops[ $slug ] ) ) return '';
+
+	$name    = $shops[ $slug ];
+	$comment = trim( (string) $comment );
+	$asset   = get_stylesheet_directory_uri();
+
+	$h  = '<div class="p-staffcard p-staffcard--shop">';
+	$h .= '<span class="p-staffcard__face">'
+	    . '<img class="is-chara" src="' . esc_url( $asset . '/assets/img/character/char-icon.png' ) . '"'
+	    . ' width="117" height="117" alt="" loading="lazy"></span>';
+	$h .= '<span class="p-staffcard__txt">';
+	$h .= '<span class="p-staffcard__meta">リフォームヤマキシ</span>';
+	$h .= '<span class="p-staffcard__name">' . esc_html( $name ) . 'が担当しました</span>';
+
+	if ( $comment !== '' ) {
+		$h .= '<span class="p-staffcard__word">' . nl2br( esc_html( $comment ) ) . '</span>';
+	}
+
+	/* お店のページへ（/shops/#tazuruhama） */
+	$h .= '<a class="p-staffcard__more" href="'
+	    . esc_url( home_url( '/shops/' ) . '#' . $slug ) . '">'
+	    . esc_html( $name ) . 'のご案内を見る</a>';
+
+	$h .= '</span></div>';
+	return $h;
+}
+
 /** 施工事例のページに出す「担当しました」の札
  *  $comment … その工事についてのひとこと（空なら、スタッフの決まったひとこと）
  */
 function ymkrf_staff_card( $staff_id, $comment = '' ) {
+
+	/* 「shop-tazuruhama」のときは、お店そのものが担当したという意味です。
+	   担当された方が退職されて、お名前をえらべないときに使います。
+	   （2026/09/07 ユーザー要望「田鶴浜店が担当しました　みたいな感じに」） */
+	if ( is_string( $staff_id ) && strpos( $staff_id, 'shop-' ) === 0 ) {
+		return ymkrf_staff_shop_card( substr( $staff_id, 5 ), $comment );
+	}
 
 	$staff_id = (int) $staff_id;
 	$comment  = trim( (string) $comment );
@@ -629,6 +674,17 @@ add_action( 'pre_get_posts', function ( $q ) {
 if ( ! function_exists( 'ymkrf_staff_admin_cell' ) ) :
 function ymkrf_staff_admin_cell( $staff_id ) {
 	$none = '<span style="color:#a7aaad">—</span>';
+
+	/* お店そのものが担当のとき */
+	if ( is_string( $staff_id ) && strpos( $staff_id, 'shop-' ) === 0 ) {
+		$shops = ymkrf_staff_shops();
+		$slug  = sanitize_title( substr( $staff_id, 5 ) );
+		if ( ! isset( $shops[ $slug ] ) ) return $none;
+		return '<span style="color:#2271b1;font-weight:600">'
+		     . esc_html( $shops[ $slug ] ) . '</span>'
+		     . '<br><span style="color:#787878;font-size:11px">お店が担当</span>';
+	}
+
 	$staff_id = (int) $staff_id;
 	if ( ! $staff_id ) return $none;
 

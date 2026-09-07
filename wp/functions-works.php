@@ -375,7 +375,9 @@ function ymkrf_works_metabox( $post ) {
 
 	/* 営業をしない人（本部の事務など）は、ここには出しません */
 	$staffs   = function_exists( 'ymkrf_staff_sales_list' ) ? ymkrf_staff_sales_list() : array();
-	$staffcur = (int) $get( '_ymkrf_staff' );
+	/* 営業担当。数字ならスタッフの記事、「shop-tazuruhama」ならお店そのものです */
+	$staffraw = trim( (string) $get( '_ymkrf_staff' ) );
+	$staffcur = ( strpos( $staffraw, 'shop-' ) === 0 ) ? 0 : (int) $staffraw;
 	$items    = ymkrf_works_items_text( $post->ID );
 	?>
 	<div class="ymkrf-works">
@@ -457,18 +459,35 @@ function ymkrf_works_metabox( $post ) {
 	            }
 	          }
 	          $sdata = array();
+
+	          /* いちばん上に「お店が担当」をならべます。
+	             担当された方が退職されて、お名前をえらべないときに使います。
+	             お客様のページには「田鶴浜店が担当しました」と出ます。
+	             （2026/09/07 ユーザー要望） */
+	          foreach ( ymkrf_staff_shops() as $ssl => $snm ) {
+	            $sdata[] = array(
+	              'id'     => 'shop-' . $ssl,
+	              'name'   => $snm,
+	              'shop'   => $ssl,
+	              'sname'  => '',
+	              'role'   => 'お店が担当',
+	              'isshop' => 1,
+	            );
+	          }
+
 	          foreach ( $slist as $st ) {
 	            $sdata[] = array(
-	              'id'    => (int) $st->ID,
-	              'name'  => (string) get_the_title( $st ),
-	              'shop'  => (string) get_post_meta( $st->ID, '_ymkrf_staff_shop', true ),
-	              'sname' => (string) ymkrf_staff_shop_name( $st->ID ),
-	              'role'  => (string) get_post_meta( $st->ID, '_ymkrf_staff_role', true ),
+	              'id'     => (int) $st->ID,
+	              'name'   => (string) get_the_title( $st ),
+	              'shop'   => (string) get_post_meta( $st->ID, '_ymkrf_staff_shop', true ),
+	              'sname'  => (string) ymkrf_staff_shop_name( $st->ID ),
+	              'role'   => (string) get_post_meta( $st->ID, '_ymkrf_staff_role', true ),
+	              'isshop' => 0,
 	            );
 	          }
 	          ?>
 	          <div class="ymkrf-pick" id="ymkrf-staff-pick">
-	            <input type="hidden" name="_ymkrf_staff" id="ymkrf-staff-val" value="<?php echo (int) $staffcur; ?>">
+	            <input type="hidden" name="_ymkrf_staff" id="ymkrf-staff-val" value="<?php echo esc_attr( $staffraw ); ?>">
 	            <button type="button" class="button ymkrf-pick__btn" id="ymkrf-staff-btn">（えらんでください）</button>
 	            <div class="ymkrf-pick__menu" id="ymkrf-staff-menu" hidden></div>
 	          </div>
@@ -481,6 +500,9 @@ function ymkrf_works_metabox( $post ) {
 	            ほかの店舗や本部・工事部の人にするときは、いちばん下の
 	            <b>「その他」にマウスを乗せる</b>と、横に全員の名前が出ます。<br>
 	            名前と顔写真は「スタッフ」で登録してください。<br>
+	            担当された方が退職されて、お名前をえらべないときは、いちばん下の
+	            <b>「お店が担当」</b>からお店をえらんでください。
+	            お客様のページには「<b>◯◯店が担当しました</b>」と出ます。<br>
 	            <b>えらばないと公開できません。</b>
 	          </p>
 	        <?php endif; ?>
@@ -845,12 +867,15 @@ add_action( 'admin_footer', function () {
 			var $val  = $('#ymkrf-staff-val'), $btn = $('#ymkrf-staff-btn'), $menu = $('#ymkrf-staff-menu');
 			var $shopSel = $('#ymkrf-shop-sel');
 
+			/* id は、スタッフなら数字、お店なら「shop-tazuruhama」という文字です */
 			function byId(id) {
-				for (var i = 0; i < LIST.length; i++) if (LIST[i].id === +id) return LIST[i];
+				id = String(id);
+				for (var i = 0; i < LIST.length; i++) if (String(LIST[i].id) === id) return LIST[i];
 				return null;
 			}
 
 			function label(p) {
+				if (p.isshop) return p.name + 'が担当';
 				return p.name + (p.sname ? '（' + p.sname + '）' : '');
 			}
 
@@ -872,11 +897,12 @@ add_action( 'admin_footer', function () {
 			function allPanel() {
 				var $sub = $('<div class="ymkrf-pick__sub">');
 				var seen = {};
+				var people = LIST.filter(function (p) { return !p.isshop; });
 				var order = ORDER.slice();
-				LIST.forEach(function (p) { if (order.indexOf(p.shop) < 0) order.push(p.shop); });
+				people.forEach(function (p) { if (order.indexOf(p.shop) < 0) order.push(p.shop); });
 
 				order.forEach(function (sh) {
-					var mem = LIST.filter(function (p) { return p.shop === sh; });
+					var mem = people.filter(function (p) { return p.shop === sh; });
 					if (!mem.length || seen[sh]) return;
 					seen[sh] = 1;
 					$sub.append($('<p class="ymkrf-pick__gttl">').text(mem[0].sname || 'そのほか'));
@@ -895,8 +921,20 @@ add_action( 'admin_footer', function () {
 				   「その他」を外に出しておかないと、横に開く枠が切れてしまいます。 */
 				var $scroll = $('<div class="ymkrf-pick__scroll">');
 
-				var mem = sh ? LIST.filter(function (p) { return p.shop === sh; }) : LIST;
+				var all = LIST.filter(function (p) { return !p.isshop; });
+				var mem = sh ? all.filter(function (p) { return p.shop === sh; }) : all;
 				mem.forEach(function (p) { $scroll.append(row(p)); });
+
+				/* いちばん下に「お店が担当」。担当された方が退職されたときに使います。
+				   店舗をえらんでいれば、その店舗だけ。えらんでいなければ全店を出します。 */
+				var shops = LIST.filter(function (p) {
+					return p.isshop && (!sh || p.shop === sh);
+				});
+				if (shops.length) {
+					$scroll.append($('<p class="ymkrf-pick__gttl">')
+						.text('お店が担当（担当された方が退職された場合など）'));
+					shops.forEach(function (p) { $scroll.append(row(p)); });
+				}
 
 				if (sh && !mem.length) {
 					$scroll.append($('<p class="ymkrf-pick__empty">').text('この店舗のスタッフはまだ登録されていません。'));
@@ -925,10 +963,10 @@ add_action( 'admin_footer', function () {
 				close();
 			});
 
-			/* 店舗を変えたら、選んでいた人がその店舗にいなければ外します */
+			/* 店舗を変えたら、選んでいた人（またはお店）がその店舗でなければ外します */
 			$shopSel.on('change', function () {
 				var p = byId($val.val()), sh = $shopSel.val();
-				if (p && sh && p.shop !== sh) { $val.val(0); drawBtn(); }
+				if (p && sh && p.shop !== sh) { $val.val(''); drawBtn(); }
 				if (!$menu.prop('hidden')) build();
 			});
 
@@ -942,11 +980,12 @@ add_action( 'admin_footer', function () {
 			drawBtn();
 
 			/* 営業担当は必須です。えらんでいないと公開できません。
-			   （下書き保存は、書きかけを残せるように通します） */
+			   （下書き保存は、書きかけを残せるように通します）
+			   退職された方のぶんは「お店が担当」をえらべば通ります。 */
 			$('#publish').on('click', function (e) {
 				if (byId($val.val())) return;
 				e.preventDefault();
-				window.alert('営業担当をえらんでください。');
+				window.alert('営業担当をえらんでください。\n退職された方のときは、いちばん下の「お店が担当」からお店をえらべます。');
 				$('html, body').animate({ scrollTop: $pick.offset().top - 120 }, 200);
 				$btn.trigger('focus');
 				open();
@@ -985,9 +1024,20 @@ add_action( 'save_post_ymkrf_works', function ( $post_id ) {
 			ymkrf_works_items_clean( wp_unslash( $_POST['_ymkrf_work_items'] ) ) );
 	}
 
-	/* 営業担当と、そのひとこと */
+	/* 営業担当と、そのひとこと。
+	   スタッフをえらんだときは数字、お店をえらんだときは
+	   「shop-tazuruhama」という文字が入ります。 */
 	if ( isset( $_POST['_ymkrf_staff'] ) ) {
-		update_post_meta( $post_id, '_ymkrf_staff', (int) $_POST['_ymkrf_staff'] );
+		$sv = trim( (string) wp_unslash( $_POST['_ymkrf_staff'] ) );
+		if ( strpos( $sv, 'shop-' ) === 0 ) {
+			$slug = sanitize_title( substr( $sv, 5 ) );
+			$shops = ymkrf_staff_shops();
+			$sv = isset( $shops[ $slug ] ) ? 'shop-' . $slug : '';
+		} else {
+			$sv = (string) (int) $sv;
+			if ( $sv === '0' ) $sv = '';
+		}
+		update_post_meta( $post_id, '_ymkrf_staff', $sv );
 	}
 	if ( isset( $_POST['_ymkrf_works_comment'] ) ) {
 		update_post_meta( $post_id, '_ymkrf_works_comment',
@@ -1774,7 +1824,8 @@ add_action( 'manage_ymkrf_works_posts_custom_column', function ( $col, $post_id 
 			echo $v ? esc_html( $v ) : $none;
 			break;
 		case 'ymkrf_wstaff':
-			echo ymkrf_staff_admin_cell( (int) get_post_meta( $post_id, '_ymkrf_staff', true ) );
+			$sv = trim( (string) get_post_meta( $post_id, '_ymkrf_staff', true ) );
+			echo ymkrf_staff_admin_cell( strpos( $sv, 'shop-' ) === 0 ? $sv : (int) $sv );
 			break;
 
 		case 'ymkrf_wpart':
