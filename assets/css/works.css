@@ -227,6 +227,9 @@
   display:flex; align-items:flex-start; gap:16px;
   background:#fff; border:2px solid var(--border); border-radius:var(--radius); padding:16px;
 }
+/* お店そのものが担当したとき（担当された方が退職された場合など）。
+   お名前と顔写真は出さず、お店の名前だけを出します。 */
+.p-staffcard--shop .p-staffcard__name{ font-size:18px; }
 .p-staffcard__face{
   flex:0 0 auto; width:64px; height:64px; border-radius:50%; overflow:hidden;
   background:var(--brand-tint); display:block;
