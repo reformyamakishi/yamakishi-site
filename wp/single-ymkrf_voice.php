@@ -128,7 +128,15 @@ while ( have_posts() ) : the_post();
     <?php endif; ?>
 
     <?php $fig = ymkrf_voice_survey_figure( $id ); if ( $fig ) : ?>
-      <h2 class="p-voice__h2">いただいたアンケートの実物</h2>
+      <?php
+      /* 以前のアンケートは、用紙の様式も質問の並びも今と違います。
+         見出しを分けて、「不揃い」ではなく「時期のちがい」と
+         伝わるようにしています。（2026/09/07 ユーザー指摘） */
+      $old_sheet = ( get_post_meta( $id, '_ymkrf_old_voice', true ) === '1' );
+      ?>
+      <h2 class="p-voice__h2"><?php
+        echo $old_sheet ? 'いただいたアンケート（以前の様式）' : 'いただいたアンケートの実物';
+      ?></h2>
       <?php echo $fig; ?>
     <?php endif; ?>
 

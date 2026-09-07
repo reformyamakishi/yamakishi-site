@@ -19,6 +19,8 @@ require_once get_stylesheet_directory() . '/inc/functions-product.php';
 require_once get_stylesheet_directory() . '/inc/functions-column.php';
 require_once get_stylesheet_directory() . '/inc/functions-news.php';
 require_once get_stylesheet_directory() . '/inc/functions-voice.php';
+/* ↓ 本番サイトからのお客様の声の取り込み。終わったらこの行とファイルを消してください */
+require_once get_stylesheet_directory() . '/inc/functions-voice-import.php';
 require_once get_stylesheet_directory() . '/inc/functions-works.php';
 require_once get_stylesheet_directory() . '/inc/functions-works-import.php';
 /* ↓ 本番サイトからの取り込み。終わったらこの行とファイルを消してください */
