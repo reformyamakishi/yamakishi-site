@@ -1091,13 +1091,12 @@ add_action( 'admin_head', function () {
         たがいに ● 済 と出て、クリックで行き来できます。
    ============================================================ */
 add_filter( 'manage_ymkrf_works_posts_columns', function ( $cols ) {
+	/* 案件番号は、いちばん左の欄（題名の欄）に出しています。
+	   ここでは「お客様の声（済／未）」だけ足します。 */
 	$new = array();
 	foreach ( $cols as $k => $v ) {
 		$new[ $k ] = $v;
-		if ( $k === 'title' ) {
-			$new['ymkrf_case']  = '案件番号';
-			$new['ymkrf_voice'] = 'お客様の声';
-		}
+		if ( $k === 'title' ) $new['ymkrf_voice'] = 'お客様の声';
 	}
 	return $new;
 } );
@@ -1111,12 +1110,14 @@ add_action( 'manage_ymkrf_works_posts_custom_column', function ( $col, $post_id 
 	}
 }, 10, 2 );
 
-/* 案件番号・お客様の声（済／未）で並べ替えできます */
+/* 案件番号・お客様の声（済／未）で並べ替えできます。
+   案件番号は、いちばん左（題名の欄を借りている列）です。 */
 add_filter( 'manage_edit-ymkrf_works_sortable_columns', function ( $cols ) {
-	$cols['ymkrf_case']  = 'ymkrf_case';
+	$cols['title']       = 'ymkrf_case';
 	$cols['ymkrf_voice'] = 'ymkrf_link';
+	unset( $cols['ymkrf_case'] );
 	return $cols;
-} );
+}, 20 );
 add_action( 'pre_get_posts', function ( $q ) {
 	if ( ! is_admin() || ! $q->is_main_query() ) return;
 	if ( $q->get( 'post_type' ) !== 'ymkrf_works' ) return;

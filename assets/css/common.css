@@ -734,6 +734,41 @@ address{ font-style:normal; }
 }
 .c-lightbox__close:hover{ background:rgba(255,255,255,.28); }
 
+/* --------------------------------------------------------------------------
+   マウスを乗せたときに、そっと大きく出る写真（.c-hoverpop）
+
+   ・パソコン（マウスのある機械）でだけ出ます。
+     スマートフォンでは出ませんので、いままでどおり指で押して開きます。
+   ・0.25秒ほど乗せていないと出ません。通り過ぎただけでは出ません。
+   ・写真の上を追いかけないよう、マウスは素通りさせます。
+   -------------------------------------------------------------------------- */
+.c-hoverpop{
+  position:absolute; z-index:9990; display:none;
+  padding:8px; border-radius:12px; background:#fff;
+  border:2px solid var(--border, #e6e0dc);
+  box-shadow:0 18px 46px rgba(0,0,0,.28);
+  pointer-events:none;                    /* じゃまをしません */
+  opacity:0; transform:translateY(6px);
+  transition:opacity .16s ease, transform .16s ease;
+}
+.c-hoverpop.is-on{ display:block; opacity:1; transform:translateY(0); }
+
+.c-hoverpop__img{
+  display:block; width:auto; height:auto;
+  max-width:min(460px, 76vw); max-height:min(460px, 62vh);
+  border-radius:6px; background:var(--bg-gray, #f6f3f1);
+}
+.c-hoverpop__cap{
+  display:block; margin-top:6px; text-align:center;
+  font-size:12.5px; font-weight:900; color:var(--ink-sub, #6f6f6f);
+}
+.c-hoverpop__cap:empty{ display:none; }
+
+/* マウスのない機械（スマートフォンなど）では、けっして出しません */
+@media (hover: none), (pointer: coarse){
+  .c-hoverpop{ display:none !important; }
+}
+
 /* ==========================================================================
    今月のチラシのバナー（.p-fbanner）
 

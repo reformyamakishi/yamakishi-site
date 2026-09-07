@@ -401,6 +401,78 @@
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape' && box.classList.contains('is-open')) close();
     });
+
+    /* --------------------------------------------------------------
+       マウスを乗せるだけで、大きく見られるようにします。
+
+       ・マウスのあるパソコンのときだけ動きます。
+         スマートフォンは指で押して開く、いままでどおりです。
+       ・少し間（0.25秒）を置いてから出します。
+         写真の上をただ通り過ぎただけでは、出ません。
+       ・出す写真は、押したときに開くのと同じ大きい写真です。
+         はじめてマウスを乗せたときに読み込むので、
+         ページが重くなることはありません。
+       -------------------------------------------------------------- */
+    var canHover = window.matchMedia
+      && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+    if (canHover) {
+      var pop = document.createElement('div');
+      pop.className = 'c-hoverpop';
+      pop.setAttribute('aria-hidden', 'true');
+      pop.innerHTML = '<img class="c-hoverpop__img" alt=""><span class="c-hoverpop__cap"></span>';
+      document.body.appendChild(pop);
+
+      var pimg = pop.querySelector('.c-hoverpop__img');
+      var pcap = pop.querySelector('.c-hoverpop__cap');
+      var timer = null;
+      var cur   = null;
+
+      function popHide() {
+        if (timer) { clearTimeout(timer); timer = null; }
+        pop.classList.remove('is-on');
+        cur = null;
+      }
+
+      function popPlace(a) {
+        var r  = a.getBoundingClientRect();
+        var pw = pop.offsetWidth  || 360;
+        var ph = pop.offsetHeight || 300;
+
+        /* まずは写真の上に出します。上が足りなければ下に出します */
+        var top = r.top - ph - 12;
+        if (top < 8) top = r.bottom + 12;
+
+        /* 横は写真のまん中にそろえ、画面からはみ出さないようにします */
+        var left = r.left + r.width / 2 - pw / 2;
+        if (left < 8) left = 8;
+        if (left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8;
+
+        pop.style.top  = (top + window.pageYOffset) + 'px';
+        pop.style.left = (left + window.pageXOffset) + 'px';
+      }
+
+      Array.prototype.forEach.call(links, function (a) {
+        a.addEventListener('mouseenter', function () {
+          if (box.classList.contains('is-open')) return;   /* 大きく開いているときは出しません */
+          if (timer) clearTimeout(timer);
+          timer = setTimeout(function () {
+            cur = a;
+            pimg.src = a.getAttribute('href');
+            pcap.textContent = a.getAttribute('data-caption') || '';
+            pop.classList.add('is-on');
+            /* 写真の大きさが決まってから置きます */
+            if (pimg.complete) popPlace(a);
+            else pimg.onload = function () { if (cur === a) popPlace(a); };
+            popPlace(a);
+          }, 250);
+        });
+        a.addEventListener('mouseleave', popHide);
+        a.addEventListener('click', popHide);
+      });
+
+      window.addEventListener('scroll', function () { if (cur) popHide(); }, { passive: true });
+    }
   })();
 
   /* ------------------------------------------------------------

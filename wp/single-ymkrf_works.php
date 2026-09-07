@@ -51,6 +51,18 @@ while ( have_posts() ) : the_post();
       </p>
     <?php endif; ?>
     <h1 class="p-pagehead__title"><?php the_title(); ?></h1>
+    <?php
+    /* お客様の声とひもづいているときだけ、そのお客様のイラストを出します。
+       同じお客様だと、ひと目で分かるようにするためです。
+       ひもづいていない事例には、何も出しません。 */
+    $will = '';
+    if ( $wvoice && function_exists( 'ymkrf_voice_illust_img' ) ) {
+      $will = ymkrf_voice_illust_img( $wvoice[0]->ID, 104 );
+    }
+    ?>
+    <?php if ( $will ) : ?>
+      <p class="p-work__headill"><?php echo $will; ?></p>
+    <?php endif; ?>
     <?php if ( $wshop ) : ?>
       <p class="p-work__headshop">施工店舗：<?php echo esc_html( $wshop ); ?></p>
     <?php endif; ?>
@@ -69,12 +81,16 @@ while ( have_posts() ) : the_post();
     <?php /* そのほかの写真。小さく並べて、押すと大きく開きます */ ?>
     <?php if ( $wgal ) : ?>
       <?php echo $wgal; ?>
-      <p class="p-work__thumbnote">写真をおすと、大きく見られます。</p>
+      <?php /* パソコンは「乗せるだけ」、スマホは「おす」。出し分けはCSSでしています */ ?>
+      <p class="p-work__thumbnote">
+        <span class="p-work__thumbnote--hover">写真にマウスを乗せると、大きく見られます。</span>
+        <span class="p-work__thumbnote--tap">写真をおすと、大きく見られます。</span>
+      </p>
     <?php endif; ?>
 
     <?php /* 工事のデータ */ ?>
     <?php if ( $wprice || $wperi || $wdone || $wshop || $wcat || $warea ) : ?>
-      <h2 class="p-work__h2">この工事のデータ</h2>
+      <h2 class="p-work__h2">こちらの施工事例</h2>
       <table class="p-work__spec">
         <tbody>
           <?php if ( $wcat ) : ?>
@@ -119,8 +135,26 @@ while ( have_posts() ) : the_post();
     <?php /* 使った商品 */ ?>
     <?php if ( $wprods || $wptext ) : ?>
       <h2 class="p-work__h2">この工事で使った商品</h2>
-      <?php if ( $wptext ) : ?>
-        <p class="p-work__ptext"><?php echo esc_html( $wptext ); ?></p>
+      <?php
+      /* 商品名は1行に1つ入れてあります。1つずつカードにして並べます。
+         メーカー名がわかるものは、メーカー名だけ小さく上に出します。 */
+      $wplines = function_exists( 'ymkrf_works_ptext_lines' )
+                 ? ymkrf_works_ptext_lines( $wptext ) : array();
+      ?>
+      <?php if ( $wplines ) : ?>
+        <ul class="p-work__ptexts">
+          <?php foreach ( $wplines as $line ) :
+            $maker = ymkrf_works_ptext_maker( $line );
+            $name  = ( $maker !== '' ) ? trim( mb_substr( $line, mb_strlen( $maker ) ) ) : $line;
+          ?>
+            <li class="p-work__ptext">
+              <?php if ( $maker !== '' ) : ?>
+                <span class="p-work__pmaker"><?php echo esc_html( $maker ); ?></span>
+              <?php endif; ?>
+              <span class="p-work__pname"><?php echo esc_html( $name ); ?></span>
+            </li>
+          <?php endforeach; ?>
+        </ul>
       <?php endif; ?>
       <?php if ( $wopack ) : ?>
         <p class="p-work__oldpack">※こちらはヤマキシ旧パック商品となります</p>

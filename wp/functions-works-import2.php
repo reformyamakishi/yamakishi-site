@@ -1,422 +1,270 @@
 <?php
 /**
- * 施工事例を、いまの公開サイト（yamakishi-reform.jp）から取り込むしくみ。
+ * 施工事例を、いまの公開サイトから「まとめて」取り込むしくみ。
  *
- * ・一時的なものです。取り込みが終わったら、このファイルは消してください。
- * ・使いかた
- *     1. ブラウザで本番サイトの管理画面にログインして、施工事例を読み取る
- *        （読み取った中身は、ブラウザの中に ymk_scan という名前でしまわれます）
- *     2. その中身を、このファイルの受け口へ送る
- *     3. 管理画面「施工事例 ＞ 本番から取り込み」で、20件ずつ取り込む
+ * ・1件ぶんの取り込みは、すでにある ymkrf_works_import_one() をそのまま使います。
+ *   （公開ページを読んで、写真も項目も取ってくる、実績のある処理です）
+ * ・このファイルは、その処理に「2,169件ぶんの行列をつくって、
+ *   20件ずつ順ぐりに渡す」役目だけをします。
  *
- * ・案件No.が同じものが すでにあるときは、飛ばします（二重登録をふせぎます）
- * ・写真は https://yamakishi-reform.jp/uploads/raw/◯◯ から取ってきます
+ * 使いかた
+ *   1. wp-content/ymkrf-works.json を置く
+ *      （本番サイトの管理画面から読み取った中身。案件No.のあるものだけ）
+ *   2. 管理画面「施工事例 ＞ まとめて取り込み」をひらく
+ *   3.「つづきを20件 取り込む」を押していく。押すたびに20件ずつ進みます
+ *
+ * ※ 取り込みが終わったら、このファイルと、functions.php の読み込み行を
+ *    消してください。
  *
  * @package ymkrf
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'YMKRF_IMP_ORIGIN', 'https://yamakishi-reform.jp' );
-define( 'YMKRF_IMP_OPT',    'ymkrf_works_import_data' );   // 送られてきた中身
-define( 'YMKRF_IMP_POS',    'ymkrf_works_import_pos'  );   // どこまで済んだか
-define( 'YMKRF_IMP_LOG',    'ymkrf_works_import_log'  );   // 記録
+define( 'YMKRF_BULK_FILE', WP_CONTENT_DIR . '/ymkrf-works.json' );
+define( 'YMKRF_BULK_POS',  'ymkrf_works_bulk_pos' );   // どこまで済んだか
+define( 'YMKRF_BULK_LOG',  'ymkrf_works_bulk_log' );   // 記録
 
 
-/* ============================================================
-   1. 受け口 — ブラウザから中身を受け取ります
-   ============================================================ */
+/** 読み取ったデータを配列で返します */
+function ymkrf_bulk_rows() {
+	static $rows = null;
+	if ( $rows !== null ) return $rows;
 
-add_action( 'admin_post_ymkrf_imp_recv',        'ymkrf_imp_recv' );
-add_action( 'admin_post_nopriv_ymkrf_imp_recv', 'ymkrf_imp_recv' );
-
-function ymkrf_imp_recv() {
-
-	/* 本番サイトの画面から送れるようにします（この作業のあいだだけ） */
-	header( 'Access-Control-Allow-Origin: ' . YMKRF_IMP_ORIGIN );
-	header( 'Access-Control-Allow-Methods: POST, OPTIONS' );
-	header( 'Access-Control-Allow-Headers: Content-Type' );
-
-	if ( isset( $_SERVER['REQUEST_METHOD'] ) && $_SERVER['REQUEST_METHOD'] === 'OPTIONS' ) {
-		status_header( 200 ); exit;
+	$rows = array();
+	if ( file_exists( YMKRF_BULK_FILE ) ) {
+		$j = json_decode( (string) file_get_contents( YMKRF_BULK_FILE ), true );
+		if ( isset( $j['rows'] ) ) $j = $j['rows'];
+		if ( is_array( $j ) ) $rows = $j;
 	}
+	return $rows;
+}
 
-	$raw  = file_get_contents( 'php://input' );
-	$json = json_decode( $raw, true );
-
-	if ( ! is_array( $json ) || ! isset( $json['rows'] ) || ! is_array( $json['rows'] ) ) {
-		wp_send_json( array( 'ok' => false, 'msg' => '中身が読めませんでした' ) );
-	}
-
-	update_option( YMKRF_IMP_OPT, wp_json_encode( $json['rows'] ), false );
-	update_option( YMKRF_IMP_POS, 0, false );
-	update_option( YMKRF_IMP_LOG, array(), false );
-
-	wp_send_json( array( 'ok' => true, 'count' => count( $json['rows'] ) ) );
+/** 1件ぶんの、公開ページのURLを組み立てます */
+function ymkrf_bulk_url( $r ) {
+	$c = isset( $r['c'] ) ? preg_replace( '/[^a-z]/', '', $r['c'] ) : '';
+	$i = isset( $r['i'] ) ? preg_replace( '/[^0-9]/', '', $r['i'] ) : '';
+	if ( $c === '' || $i === '' ) return '';
+	return 'https://' . YMKRF_IMPORT_HOST . '/works/' . $c . '/' . $i . '/';
 }
 
 
 /* ============================================================
-   2. 入れかたの決めごと
+   裏で少しずつ取り込みつづけるしくみ
+
+   ブラウザのタブを開いたままにしなくても進むようにします。
+   管理画面のどこかを見ているあいだ、1分おきに10件ずつ取り込みます。
+   「自動で取り込む」のボタンで、始める・止めるができます。
    ============================================================ */
 
-/** 本番の店舗番号 → 新サイトの店舗スラッグ */
-function ymkrf_imp_shop( $n ) {
-	$m = array(
-		'1'  => 'kawakita',   '2'  => 'tazuruhama', '3'  => 'nonoichi',
-		'4'  => 'komathu',    '5'  => 'shinkaga',   '6'  => 'kanadu',
-		'7'  => 'kahahothu',  '8'  => 'asahi',      '9'  => 'hakui',
-		'10' => 'tagami',
-	);
-	$n = (string) $n;
-	return isset( $m[ $n ] ) ? $m[ $n ] : '';
-}
+define( 'YMKRF_BULK_AUTO', 'ymkrf_works_bulk_auto' );
 
-/** 本番の担当者番号 → 名前 */
-function ymkrf_imp_staff_name( $n ) {
-	$m = array(
-		'6'=>'山岸 直貴','8'=>'藪腰 洋一','9'=>'末永 耕司','13'=>'渡邉 栄',
-		'17'=>'久保 宜之','21'=>'谷 外善志','22'=>'西尻 剛宏','23'=>'清水 美由紀',
-		'24'=>'下内 貴博','26'=>'池田 昌史','27'=>'松田 祥司','28'=>'島川 朱美',
-		'31'=>'才田 憲明','32'=>'池端 治夫','34'=>'神沢 将慶','35'=>'川田 昌和',
-		'36'=>'市村 俊英','37'=>'茶木原 豊二','38'=>'西田 芳明','39'=>'山尻 新太郎',
-		'40'=>'長谷川 佳代子','41'=>'山本 和也','43'=>'吉田 忍','46'=>'細川 達也',
-		'48'=>'中川 ひとみ','51'=>'伊達 雅裕','54'=>'寺西 喜郎','60'=>'とんとこトン',
-		'61'=>'泉 雄太','63'=>'筒井 照瑛','65'=>'荒井 敏文','68'=>'三井 一晃',
-		'69'=>'林 健二','71'=>'山岸 文佳','77'=>'鈴木 竜司','79'=>'久保 武雄',
-		'80'=>'木村 行博','83'=>'八島 智春','85'=>'池田 昌史','86'=>'吉田 忍',
-		'87'=>'孫崎 将幸','88'=>'田中 由浩','89'=>'山田 健司','90'=>'今村 英樹',
-		'91'=>'山崎 純也','92'=>'倉 光貴','93'=>'西島 和正','94'=>'才田 勇',
-		'95'=>'山田 航','96'=>'湊屋 碧偉','97'=>'山口 裕人',
-	);
-	$n = (string) $n;
-	return isset( $m[ $n ] ) ? $m[ $n ] : '';
-}
+add_action( 'ymkrf_bulk_tick', 'ymkrf_bulk_tick' );
 
-/** 名前から、新サイトのスタッフを探します（空白のちがいは見ません） */
-function ymkrf_imp_staff_id( $name ) {
-	static $list = null;
-	if ( $name === '' ) return 0;
+function ymkrf_bulk_tick() {
 
-	if ( $list === null ) {
-		$list = array();
-		$posts = get_posts( array(
-			'post_type' => 'ymkrf_staff', 'posts_per_page' => -1,
-			'post_status' => 'any',
-		) );
-		foreach ( $posts as $p ) {
-			$k = preg_replace( '/[\s　]/u', '', $p->post_title );
-			$list[ $k ] = $p->ID;
+	if ( get_option( YMKRF_BULK_AUTO ) !== '1' ) return;
+
+	$rows = ymkrf_bulk_rows();
+	$pos  = (int) get_option( YMKRF_BULK_POS, 0 );
+	if ( ! $rows || $pos >= count( $rows ) ) {
+		update_option( YMKRF_BULK_AUTO, '', false );   /* 終わったら止めます */
+		return;
+	}
+
+	$log = (array) get_option( YMKRF_BULK_LOG, array() );
+	$n = 0; $t0 = time();
+
+	while ( $pos < count( $rows ) && $n < 10 && ( time() - $t0 ) < 100 ) {
+		$r   = $rows[ $pos ];
+		$url = ymkrf_bulk_url( $r );
+		$no  = isset( $r['process_num'] ) ? trim( $r['process_num'] ) : '';
+		if ( $url === '' ) {
+			array_unshift( $log, 'NG : URLが作れませんでした（' . $no . '）' );
+		} else {
+			$res = ymkrf_works_import_one( $url, $no );
+			array_unshift( $log, ( $res['ok'] ? 'OK' : 'NG' ) . ' : ' . wp_strip_all_tags( $res['msg'] ) );
 		}
+		$pos++; $n++;
 	}
-	$k = preg_replace( '/[\s　]/u', '', $name );
-	return isset( $list[ $k ] ) ? (int) $list[ $k ] : 0;
+
+	update_option( YMKRF_BULK_POS, $pos, false );
+	update_option( YMKRF_BULK_LOG, array_slice( $log, 0, 80 ), false );
+
+	/* つぎの回を予約します */
+	if ( $pos < count( $rows ) ) {
+		wp_schedule_single_event( time() + 30, 'ymkrf_bulk_tick' );
+	} else {
+		update_option( YMKRF_BULK_AUTO, '', false );
+	}
 }
 
-/** 工事の中身の文字から、新サイトの分類スラッグを決めます */
-function ymkrf_imp_cat( $r ) {
-
-	$t = '';
-	foreach ( array( 'constructions','description','product_1','product_2',
-	                 'product_3','spec','image_alt' ) as $k ) {
-		if ( ! empty( $r[ $k ] ) ) $t .= ' ' . $r[ $k ];
+/* 予約が消えてしまったときのために、管理画面を見るたびに見はります */
+add_action( 'admin_init', function () {
+	if ( get_option( YMKRF_BULK_AUTO ) !== '1' ) return;
+	if ( ! wp_next_scheduled( 'ymkrf_bulk_tick' ) ) {
+		wp_schedule_single_event( time() + 10, 'ymkrf_bulk_tick' );
 	}
-
-	$c = isset( $r['c'] ) ? $r['c'] : '';
-
-	switch ( $c ) {
-		case 'kitchen':  return 'kitchen';
-		case 'bathroom': return 'bathroom';
-		case 'toilet':   return 'toilet';
-		case 'lavatory': return 'lavatory';
-		case 'painting': return 'outer-wall';
-		case 'repair':   return 'repair';
-		case 'whole':    return 'renovation';
-
-		case 'boiler':
-			if ( preg_match( '/オイルタンク|ｵｲﾙﾀﾝｸ/u', $t ) )                        return 'oiltank';
-			if ( preg_match( '/エコキュート|ヒートポンプ|オール電化|エコワン/u', $t ) ) return 'ecocute';
-			if ( preg_match( '/IHクッキング|IHヒーター|ＩＨ/u', $t ) )                 return 'ih';
-			return 'boiler';
-
-		case 'exterior':
-			if ( preg_match( '/物置|イナバ|ヨド|タクボ/u', $t ) )                       return 'storage';
-			if ( preg_match( '/カーポート|ｶｰﾎﾟｰﾄ|ガレージ|車庫/u', $t ) )               return 'carport';
-			if ( preg_match( '/サンルーム|テラス|ベランダ|バルコニー|波板/u', $t ) )      return 'veranda';
-			if ( preg_match( '/玄関ドア|玄関引戸|玄関リフォーム|玄関工事|玄関取替|ドアリモ/u', $t ) ) return 'door';
-			if ( preg_match( '/シャッター|ｼｬｯﾀｰ|手すり|手摺|融雪|解けルモ|防草|除草/u', $t ) )        return 'repair';
-			return 'other';
-
-		case 'interior':
-			if ( preg_match( '/クロス|壁紙|床|フローリング|クッションフロア|畳/u', $t ) ) return 'interior';
-			return 'renovation';
-	}
-	return 'other';
-}
-
-/** 現場住所を、市町村の単位にそろえます */
-function ymkrf_imp_area( $a ) {
-
-	$t = preg_replace( '/[\s　]/u', '', (string) $a );
-	if ( $t === '' ) return '';
-
-	$t = preg_replace( '/^(石川県|福井県|富山県)/u', '', $t );
-
-	/* 郡の名前だけのとき（町がひとつしかない郡は、その町にします） */
-	if ( preg_match( '/^鹿島郡$/u', $t ) ) return '中能登町';
-	if ( preg_match( '/^(能美郡|能美群)$/u', $t ) ) return '川北町';
-	if ( preg_match( '/^丹生郡$/u', $t ) ) return '越前町';
-	if ( preg_match( '/^吉田郡$/u', $t ) ) return '永平寺町';
-	/* 羽咋郡・鳳珠郡は町が2つ以上あるので決められません → 空にします */
-	if ( preg_match( '/^(羽咋郡|鳳珠郡)$/u', $t ) ) return '';
-
-	$t = preg_replace( '/^(鹿島郡|能美郡|能美群|羽咋郡|鳳珠郡|丹生郡|吉田郡)/u', '', $t );
-
-	if ( preg_match( '/^(.+?市)/u', $t, $m ) ) {
-		$v = $m[1];
-		if ( $v === '野々市' ) $v = '野々市市';
-		return $v;
-	}
-	if ( preg_match( '/^(中能登町|志賀町|宝達志水町|川北町|津幡町|内灘町|穴水町|能登町|越前町|池田町|永平寺町)/u', $t, $m ) ) {
-		return $m[1];
-	}
-	if ( preg_match( '/^(.+?[町村])/u', $t, $m ) ) return $m[1];
-
-	if ( preg_match( '/^野々市/u', $t ) ) return '野々市市';
-	if ( preg_match( '/^金津/u',   $t ) ) return 'あわら市';
-
-	return '';
-}
-
-/** 写真を1枚もらってきて、メディアに入れます */
-function ymkrf_imp_photo( $key, $post_id, $alt = '' ) {
-
-	if ( $key === '' ) return 0;
-
-	/* 同じ写真を二度もらわないように、印をつけておきます */
-	$found = get_posts( array(
-		'post_type' => 'attachment', 'posts_per_page' => 1, 'fields' => 'ids',
-		'post_status' => 'any',
-		'meta_query' => array( array( 'key' => '_ymkrf_imp_key', 'value' => $key ) ),
-	) );
-	if ( $found ) return (int) $found[0];
-
-	require_once ABSPATH . 'wp-admin/includes/file.php';
-	require_once ABSPATH . 'wp-admin/includes/media.php';
-	require_once ABSPATH . 'wp-admin/includes/image.php';
-
-	$url = YMKRF_IMP_ORIGIN . '/uploads/raw/' . rawurlencode( $key );
-	$tmp = download_url( $url, 60 );
-	if ( is_wp_error( $tmp ) ) return 0;
-
-	$file = array(
-		'name'     => 'ymk-' . strtolower( preg_replace( '/[^0-9A-Za-z]/', '', $key ) ) . '.jpg',
-		'tmp_name' => $tmp,
-	);
-	$id = media_handle_sideload( $file, $post_id, $alt );
-
-	if ( is_wp_error( $id ) ) {
-		if ( file_exists( $tmp ) ) @unlink( $tmp );
-		return 0;
-	}
-	update_post_meta( $id, '_ymkrf_imp_key', $key );
-	if ( $alt !== '' ) update_post_meta( $id, '_wp_attachment_image_alt', $alt );
-	return (int) $id;
-}
+} );
 
 
 /* ============================================================
-   3. 1件を入れます
-   ============================================================ */
-
-function ymkrf_imp_one( $r, $status = 'draft' ) {
-
-	$no = isset( $r['process_num'] ) ? trim( $r['process_num'] ) : '';
-	if ( $no === '' ) return array( 'skip', '案件No.がありません' );
-
-	/* すでに入っていたら飛ばします */
-	$dup = get_posts( array(
-		'post_type' => 'ymkrf_works', 'posts_per_page' => 1, 'fields' => 'ids',
-		'post_status' => 'any',
-		'meta_query' => array( array( 'key' => '_ymkrf_case_no', 'value' => $no ) ),
-	) );
-	if ( $dup ) return array( 'skip', '案件No. ' . $no . ' はすでにあります' );
-
-	$body = isset( $r['description'] ) ? $r['description'] : '';
-
-	$id = wp_insert_post( array(
-		'post_type'    => 'ymkrf_works',
-		'post_status'  => $status,
-		'post_title'   => '取り込み中 ' . $no,
-		'post_content' => $body,
-	), true );
-	if ( is_wp_error( $id ) ) return array( 'ng', $id->get_error_message() );
-
-	$put = function ( $k, $v ) use ( $id ) {
-		if ( $v !== '' && $v !== null ) update_post_meta( $id, $k, $v );
-	};
-
-	$put( '_ymkrf_case_no', $no );
-	$put( '_ymkrf_initial', isset( $r['client_name'] )
-	      ? preg_replace( '/様$/u', '', trim( $r['client_name'] ) ) : '' );
-	$put( '_ymkrf_shop',    ymkrf_imp_shop( isset( $r['shop'] ) ? $r['shop'] : '' ) );
-	$put( '_ymkrf_price',   isset( $r['price'] ) ? $r['price'] : '' );
-	$put( '_ymkrf_period',  isset( $r['work_period'] ) ? $r['work_period'] : '' );
-	$put( '_ymkrf_done',    isset( $r['work_complete'] ) ? $r['work_complete'] : '' );
-	$put( '_ymkrf_work_items', isset( $r['constructions'] ) ? $r['constructions'] : '' );
-	$put( '_ymkrf_works_comment', isset( $r['point'] ) ? $r['point'] : '' );
-
-	/* 商品名（3つまで）＋その他の部材 */
-	$pr = array();
-	foreach ( array( 'product_1','product_2','product_3','spec' ) as $k ) {
-		if ( ! empty( $r[ $k ] ) ) $pr[] = trim( $r[ $k ] );
-	}
-	$put( '_ymkrf_product_text', implode( "\n", $pr ) );
-
-	/* 担当者 */
-	$sid = ymkrf_imp_staff_id( ymkrf_imp_staff_name( isset( $r['staff'] ) ? $r['staff'] : '' ) );
-	if ( $sid ) update_post_meta( $id, '_ymkrf_staff', $sid );
-
-	/* 分類とエリア */
-	wp_set_object_terms( $id, ymkrf_imp_cat( $r ), 'ymkrf_works_cat', false );
-	$area = ymkrf_imp_area( isset( $r['area'] ) ? $r['area'] : '' );
-	if ( $area !== '' ) wp_set_object_terms( $id, $area, 'ymkrf_works_area', false );
-
-	/* 写真 */
-	$alt = isset( $r['image_alt'] ) ? $r['image_alt'] : '';
-	$ph  = isset( $r['ph'] ) && is_array( $r['ph'] ) ? $r['ph'] : array();
-
-	$grab = function ( $prefix ) use ( $ph, $id, $alt ) {
-		$out = array();
-		for ( $i = 1; $i <= 5; $i++ ) {
-			$k = $prefix . '_photo_' . $i;
-			if ( empty( $ph[ $k ] ) ) continue;
-			$a = ! empty( $ph[ $k . '_alt' ] ) ? $ph[ $k . '_alt' ] : $alt;
-			$att = ymkrf_imp_photo( $ph[ $k ], $id, $a );
-			if ( $att ) $out[] = $att;
-		}
-		return $out;
-	};
-
-	$before = $grab( 'before' );
-	$after  = $grab( 'after' );
-	$during = $grab( 'work' );          // 工事情報写真
-	if ( ! $during ) $during = $grab( 'during' );
-
-	if ( $before ) ymkrf_works_photos_save( $id, 'before', $before );
-	if ( $during ) ymkrf_works_photos_save( $id, 'during', $during );
-	if ( $after )  ymkrf_works_photos_save( $id, 'after',  $after );
-
-	/* 一覧画像（アイキャッチ）。Afterが無いときだけ使います */
-	if ( ! $after && ! empty( $r['image'] ) ) {
-		$att = ymkrf_imp_photo( $r['image'], $id, $alt );
-		if ( $att ) set_post_thumbnail( $id, $att );
-	}
-
-	/* 題名とURLを、いまのしくみに合わせて作り直します */
-	if ( function_exists( 'ymkrf_works_auto_title' ) ) {
-		$t = ymkrf_works_auto_title( $id );
-		wp_update_post( array( 'ID' => $id, 'post_title' => $t ) );
-		update_post_meta( $id, '_ymkrf_auto_title', $t );
-	}
-
-	return array( 'ok', '#' . $id . ' ' . get_the_title( $id )
-	              . '（写真 ' . ( count( $before ) + count( $during ) + count( $after ) ) . '枚）' );
-}
-
-
-/* ============================================================
-   4. 管理画面
+   管理画面
    ============================================================ */
 
 add_action( 'admin_menu', function () {
 	add_submenu_page(
 		'edit.php?post_type=ymkrf_works',
-		'本番から取り込み', '本番から取り込み',
-		'manage_options', 'ymkrf-works-import', 'ymkrf_imp_page'
+		'まとめて取り込み', 'まとめて取り込み',
+		'manage_options', 'ymkrf-works-bulk', 'ymkrf_bulk_page'
 	);
 }, 30 );
 
-function ymkrf_imp_page() {
+function ymkrf_bulk_page() {
 
-	/* ファイルが置いてあれば、そちらを先に読みます。
-	   置き場所： wp-content/ymkrf-works.json                       */
-	$file = WP_CONTENT_DIR . '/ymkrf-works.json';
-	if ( file_exists( $file ) ) {
-		$rows = json_decode( (string) file_get_contents( $file ), true );
-		if ( isset( $rows['rows'] ) ) $rows = $rows['rows'];
-	} else {
-		$rows = json_decode( (string) get_option( YMKRF_IMP_OPT, '[]' ), true );
-	}
-	if ( ! is_array( $rows ) ) $rows = array();
-	$pos = (int) get_option( YMKRF_IMP_POS, 0 );
-	$log = (array) get_option( YMKRF_IMP_LOG, array() );
+	if ( ! current_user_can( 'manage_options' ) ) return;
 
-	/* 取り込みを進めます */
-	if ( isset( $_POST['ymkrf_imp_go'] ) && check_admin_referer( 'ymkrf_imp' ) ) {
-		$status = ( isset( $_POST['st'] ) && $_POST['st'] === 'publish' ) ? 'publish' : 'draft';
+	$rows = ymkrf_bulk_rows();
+	$pos  = (int) get_option( YMKRF_BULK_POS, 0 );
+	$log  = (array) get_option( YMKRF_BULK_LOG, array() );
+
+	/* 20件ぶん進めます */
+	if ( isset( $_POST['ymkrf_bulk_go'] ) && check_admin_referer( 'ymkrf_bulk' ) ) {
+
+		$want = isset( $_POST['n'] ) ? max( 1, min( 50, (int) $_POST['n'] ) ) : 20;
 		$n = 0;
 		$t0 = time();
-		while ( $pos < count( $rows ) && $n < 20 && ( time() - $t0 ) < 120 ) {
-			list( $kind, $msg ) = ymkrf_imp_one( $rows[ $pos ], $status );
-			array_unshift( $log, $kind . ' : ' . $msg );
+
+		while ( $pos < count( $rows ) && $n < $want && ( time() - $t0 ) < 150 ) {
+
+			$r   = $rows[ $pos ];
+			$url = ymkrf_bulk_url( $r );
+			$no  = isset( $r['process_num'] ) ? trim( $r['process_num'] ) : '';
+
+			if ( $url === '' ) {
+				array_unshift( $log, 'NG : URLが作れませんでした（' . $no . '）' );
+			} else {
+				$res = ymkrf_works_import_one( $url, $no );
+				array_unshift( $log, ( $res['ok'] ? 'OK' : 'NG' ) . ' : '
+				               . wp_strip_all_tags( $res['msg'] ) );
+			}
 			$pos++; $n++;
 		}
-		$log = array_slice( $log, 0, 60 );
-		update_option( YMKRF_IMP_POS, $pos, false );
-		update_option( YMKRF_IMP_LOG, $log, false );
+
+		$log = array_slice( $log, 0, 80 );
+		update_option( YMKRF_BULK_POS, $pos, false );
+		update_option( YMKRF_BULK_LOG, $log, false );
 	}
 
-	/* まっさらに戻します（入れた記事は消しません） */
-	if ( isset( $_POST['ymkrf_imp_reset'] ) && check_admin_referer( 'ymkrf_imp' ) ) {
-		update_option( YMKRF_IMP_POS, 0, false );
-		update_option( YMKRF_IMP_LOG, array(), false );
+	/* 自動で取り込む（始める・止める） */
+	if ( isset( $_POST['ymkrf_bulk_auto_on'] ) && check_admin_referer( 'ymkrf_bulk' ) ) {
+		update_option( YMKRF_BULK_AUTO, '1', false );
+		if ( ! wp_next_scheduled( 'ymkrf_bulk_tick' ) ) {
+			wp_schedule_single_event( time() + 5, 'ymkrf_bulk_tick' );
+		}
+	}
+	if ( isset( $_POST['ymkrf_bulk_auto_off'] ) && check_admin_referer( 'ymkrf_bulk' ) ) {
+		update_option( YMKRF_BULK_AUTO, '', false );
+		wp_clear_scheduled_hook( 'ymkrf_bulk_tick' );
+	}
+
+	/* 数えなおし（入れた記事は消しません） */
+	if ( isset( $_POST['ymkrf_bulk_reset'] ) && check_admin_referer( 'ymkrf_bulk' ) ) {
+		update_option( YMKRF_BULK_POS, 0, false );
+		update_option( YMKRF_BULK_LOG, array(), false );
 		$pos = 0; $log = array();
 	}
+
+	/* いま入っている施工事例の数 */
+	$have = (int) wp_count_posts( 'ymkrf_works' )->draft
+	      + (int) wp_count_posts( 'ymkrf_works' )->publish;
 	?>
 	<div class="wrap">
-	  <h1>施工事例を、本番サイトから取り込む</h1>
+	  <h1>施工事例を まとめて取り込む</h1>
 
 	  <?php if ( ! $rows ) : ?>
 	    <div class="notice notice-warning"><p>
-	      まだ中身が届いていません。<br>
-	      本番サイトの管理画面から、読み取った中身を送ってください。
+	      <b>読み取ったデータが見つかりません。</b><br>
+	      <code><?php echo esc_html( YMKRF_BULK_FILE ); ?></code> に
+	      <code>ymkrf-works.json</code> を置いてください。
 	    </p></div>
 	  <?php else : ?>
-	    <table class="widefat" style="max-width:640px;margin-bottom:16px">
-	      <tr><th style="width:12em">届いている件数</th><td><?php echo count( $rows ); ?> 件</td></tr>
+
+	    <table class="widefat" style="max-width:680px;margin-bottom:16px">
+	      <tr><th style="width:14em">読み取ったデータ</th>
+	          <td><?php echo count( $rows ); ?> 件</td></tr>
 	      <tr><th>取り込みずみ</th><td><?php echo (int) $pos; ?> 件</td></tr>
-	      <tr><th>のこり</th><td><?php echo max( 0, count( $rows ) - $pos ); ?> 件</td></tr>
+	      <tr><th>のこり</th>
+	          <td><?php echo max( 0, count( $rows ) - $pos ); ?> 件</td></tr>
+	      <tr><th>いまの施工事例の数</th><td><?php echo $have; ?> 件</td></tr>
 	    </table>
 
+	    <?php if ( $pos < count( $rows ) ) :
+	      $next = ymkrf_bulk_rows(); $nr = $next[ $pos ]; ?>
+	      <p class="description">つぎに取り込むのは
+	        <code><?php echo esc_html( ymkrf_bulk_url( $nr ) ); ?></code>
+	        （案件No. <?php echo esc_html( isset( $nr['process_num'] ) ? $nr['process_num'] : '' ); ?>）です。</p>
+	    <?php endif; ?>
+
+	    <?php $auto = ( get_option( YMKRF_BULK_AUTO ) === '1' ); ?>
+	    <div style="margin:16px 0;padding:14px 18px;border-radius:6px;
+	                border:2px solid <?php echo $auto ? '#00782a' : '#dcdcde'; ?>;
+	                background:<?php echo $auto ? '#f2fbf5' : '#fff'; ?>">
+	      <form method="post" style="margin:0">
+	        <?php wp_nonce_field( 'ymkrf_bulk' ); ?>
+	        <?php if ( $auto ) : ?>
+	          <p style="margin:0 0 8px;font-weight:700;color:#00782a">
+	            ● 自動で取り込んでいます（30秒ごとに10件ずつ）</p>
+	          <p class="description" style="margin:0 0 10px">
+	            ボタンを押しつづけなくても進みます。この画面はひとりでに新しくなります。<br>
+	            WordPressのしくみ上、<b>管理画面のどこかを開いているあいだ</b>だけ進みます。
+	          </p>
+	          <button class="button" name="ymkrf_bulk_auto_off" value="1">自動をやめる</button>
+	        <?php else : ?>
+	          <p style="margin:0 0 10px;font-weight:700">自動で取り込む</p>
+	          <p class="description" style="margin:0 0 10px">
+	            押したあとは、30秒ごとに10件ずつひとりでに取り込みます。<br>
+	            管理画面を開いているあいだ進みます。いつでも止められます。
+	          </p>
+	          <button class="button button-primary" name="ymkrf_bulk_auto_on" value="1">自動で取り込みはじめる</button>
+	        <?php endif; ?>
+	      </form>
+	    </div>
+	    <?php if ( $auto ) : ?><meta http-equiv="refresh" content="30"><?php endif; ?>
+
 	    <form method="post">
-	      <?php wp_nonce_field( 'ymkrf_imp' ); ?>
+	      <?php wp_nonce_field( 'ymkrf_bulk' ); ?>
 	      <p>
-	        <label><input type="radio" name="st" value="draft" checked> 下書きで入れる（おすすめ）</label>
-	        <label><input type="radio" name="st" value="publish"> 公開で入れる</label>
+	        いちどに
+	        <select name="n">
+	          <option value="10">10</option>
+	          <option value="20" selected>20</option>
+	          <option value="30">30</option>
+	        </select> 件ずつ
 	      </p>
 	      <p>
-	        <button class="button button-primary" name="ymkrf_imp_go" value="1">
-	          つづきを20件 取り込む
+	        <button class="button button-primary button-hero" name="ymkrf_bulk_go" value="1">
+	          つづきを取り込む
 	        </button>
-	        <button class="button" name="ymkrf_imp_reset" value="1"
-	          onclick="return confirm('はじめの1件目から数え直します。入れた記事は消えません。よろしいですか？')">
-	          はじめから数え直す
+	        <button class="button" name="ymkrf_bulk_reset" value="1"
+	          onclick="return confirm('1件目から数えなおします。取り込んだ記事は消えません。よろしいですか？')">
+	          はじめから数えなおす
 	        </button>
 	      </p>
 	      <p class="description">
-	        写真をもらってくるので、20件で1〜2分かかります。<br>
-	        案件No.が同じものがすでにあるときは、飛ばします。
+	        写真をもらってくるので、20件で1〜2分かかります。押したまま、しばらくお待ちください。<br>
+	        同じ事例をもう一度取り込んだときは、上書きされます（増えません）。<br>
+	        取り込んだ事例は<b>下書き</b>で入ります。
 	      </p>
 	    </form>
 	  <?php endif; ?>
 
 	  <?php if ( $log ) : ?>
 	    <h2>記録（新しい順）</h2>
-	    <ol style="background:#fff;border:1px solid #ccd0d4;padding:12px 12px 12px 32px;
-	               max-height:420px;overflow:auto">
+	    <ol style="background:#fff;border:1px solid #ccd0d4;padding:12px 12px 12px 34px;
+	               max-height:460px;overflow:auto;line-height:1.9">
 	      <?php foreach ( $log as $l ) : ?>
-	        <li style="<?php echo strpos( $l, 'ng' ) === 0 ? 'color:#b32d2e' : ''; ?>">
+	        <li style="<?php echo strpos( $l, 'NG' ) === 0 ? 'color:#b32d2e' : ''; ?>">
 	          <?php echo esc_html( $l ); ?></li>
 	      <?php endforeach; ?>
 	    </ol>

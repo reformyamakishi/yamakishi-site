@@ -1085,6 +1085,64 @@ function ymkrf_works_area_name( $post_id ) {
  * ・検索結果で切れないよう、長いときは 工期 → 金額 の順にはずします
  */
 
+/* ------------------------------------------------------------
+   「この工事で使った商品」の文字を、1つずつに分けます。
+
+   1行に1商品で入れてありますが、むかしに取り込んだものは
+   「リクシル リシェル この商品の情報を見る ミーレ 食洗器 …」の
+   ように数珠つなぎになっています。どちらの形でも、
+   1商品ずつに切り分けて返します。
+   ------------------------------------------------------------ */
+function ymkrf_works_ptext_lines( $raw ) {
+
+	$t = (string) $raw;
+	if ( trim( $t ) === '' ) return array();
+
+	/* いまのサイトのリンクの文字は、切れ目の目印にします */
+	$t = preg_replace( '/(この商品(の情報)?を(見る|みる)|商品ページを見る|くわしく見る)/u', "\n", $t );
+	$t = str_replace( array( "\r\n", "\r", '　' ), array( "\n", "\n", ' ' ), $t );
+
+	$out = array();
+	foreach ( preg_split( '/\n/u', $t ) as $line ) {
+		$line = trim( preg_replace( '/[ \t]+/u', ' ', $line ) );
+		/* 前後の「・」「／」などを取ります。
+		   trim( $line, '・…' ) はバイト単位で削ってしまい、
+		   日本語が壊れるので使いません。 */
+		$line = preg_replace( '/^[・\/／、,\s]+|[・\/／、,\s]+$/u', '', $line );
+		if ( $line === '' ) continue;
+		if ( in_array( $line, $out, true ) ) continue;
+		$out[] = $line;
+	}
+	return $out;
+}
+
+/**
+ * 商品名の頭にあるメーカー名を取り出します。
+ * 見つからないときは空を返します（そのときは全部を商品名にします）。
+ */
+function ymkrf_works_ptext_maker( $line ) {
+
+	$makers = array(
+		'クリナップ', 'LIXIL', 'リクシル', 'TOTO', 'タカラスタンダード', 'タカラ',
+		'パナソニック', 'Panasonic', 'トクラス', 'ノーリツ', 'リンナイ',
+		'三菱', 'ダイキン', 'コロナ', '日立', '東芝', 'サンウェーブ',
+		'YKK AP', 'YKKAP', 'YKK', '三協アルミ', '三協立山', 'LIXILリフォーム',
+		'ウッドワン', 'WOODONE', 'ミーレ', 'Miele', 'サンゲツ', 'リリカラ',
+		'イナバ', 'ヨドコウ', 'ヨド', 'タクボ', 'サンワカンパニー', 'トステム',
+		'ハウステック', 'ジャニス', 'アサヒ衛陶', 'キャニオン',
+	);
+
+	$t = trim( (string) $line );
+	foreach ( $makers as $m ) {
+		/* 「クリナップ社製」「LIXIL製」なども拾います */
+		if ( preg_match( '/^' . preg_quote( $m, '/' ) . '(社製|製)?/u', $t, $hit ) ) {
+			return $hit[0];
+		}
+	}
+	return '';
+}
+
+
 /** 題名に出す金額。かっこ書きは省き、「約」を付けます */
 function ymkrf_works_price_short( $post_id ) {
 	$v = trim( (string) get_post_meta( $post_id, '_ymkrf_price', true ) );
@@ -1670,23 +1728,42 @@ function ymkrf_works_related( $post_id, $num = 3 ) {
 /* 列の並び。
    inc/functions-voice.php で 案件番号 と お客様の声 が足されたあとに
    組み立て直すので、順番は 20（あと）にしています。 */
+/* 一覧の列。案件番号を主役にして、題名の列は出しません。
+   （題名は長くて、探すときの手がかりになりにくいためです）
+   案件番号の欄が、そのまま編集をひらくリンクになります。 */
 add_filter( 'manage_ymkrf_works_posts_columns', function ( $cols ) {
 	$new = array();
-	if ( isset( $cols['cb'] ) )    $new['cb']    = $cols['cb'];
-	if ( isset( $cols['title'] ) ) $new['title'] = $cols['title'];
+	if ( isset( $cols['cb'] ) ) $new['cb'] = $cols['cb'];
 
-	$new['ymkrf_case']  = isset( $cols['ymkrf_case'] ) ? $cols['ymkrf_case'] : '案件番号';
-	$new['ymkrf_wshop'] = '施工店舗';
-	$new['ymkrf_wstaff'] = '担当';
-	$new['ymkrf_wpart'] = 'リフォーム箇所';
-	$new['ymkrf_voice'] = isset( $cols['ymkrf_voice'] ) ? $cols['ymkrf_voice'] : 'お客様の声';
+	/* WordPressの「題名」の列をそのまま借りて、名前だけ案件番号にします。
+	   こうすると、編集・ゴミ箱などのリンクもこの欄に出ます。 */
+	$new['title'] = '案件番号';
+
+	$new['ymkrf_wshop']  = '施工店舗';
+	$new['ymkrf_wstaff'] = '担当者';
+	$new['ymkrf_wpart']  = 'リフォーム箇所';
+	$new['ymkrf_voice']  = isset( $cols['ymkrf_voice'] ) ? $cols['ymkrf_voice'] : 'お客様の声';
 
 	/* 残り（日付など）は、そのうしろに置きます */
 	foreach ( $cols as $k => $v ) {
+		if ( $k === 'title' ) continue;
 		if ( ! isset( $new[ $k ] ) ) $new[ $k ] = $v;
 	}
 	return $new;
 }, 20 );
+
+/* 題名の欄に出す文字を、案件番号に差し替えます。
+   案件番号がまだ入っていない記事は、題名のままにします
+   （まっ白だと、どれを直せばよいか分からなくなるためです）。 */
+add_filter( 'the_title', function ( $title, $post_id = 0 ) {
+	if ( ! is_admin() ) return $title;
+	$s = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+	if ( ! $s || $s->id !== 'edit-ymkrf_works' ) return $title;
+	if ( get_post_type( $post_id ) !== 'ymkrf_works' ) return $title;
+
+	$no = trim( (string) get_post_meta( $post_id, '_ymkrf_case_no', true ) );
+	return ( $no !== '' ) ? $no : '（案件番号なし）' . $title;
+}, 10, 2 );
 
 add_action( 'manage_ymkrf_works_posts_custom_column', function ( $col, $post_id ) {
 	$none = '<span style="color:#a7aaad">—</span>';
@@ -1790,13 +1867,178 @@ add_action( 'admin_head', function () {
 	$s = get_current_screen();
 	if ( ! $s || $s->id !== 'edit-ymkrf_works' ) return;
 	echo '<style>
-	  .column-ymkrf_case{width:100px}
+	  .column-title{width:130px}
 	  .column-ymkrf_wshop{width:110px}
 	  .column-ymkrf_wstaff{width:130px}
 	  .column-ymkrf_wpart{width:180px}
 	  .column-ymkrf_voice{width:110px}
 	  .column-date{width:130px}
 	</style>';
+} );
+
+
+/* ============================================================
+   4-b. 左メニューを「部位ごと」に分けます
+        （2026/09/07 ユーザー指示「見にくいし探しにくいので
+          施工箇所により分けたい／商品登録のように」）
+
+        施工事例
+        　キッチン（79）
+        　お風呂（87）
+        　トイレ（495）
+        　…（部位の数だけ）
+
+        商品の登録画面とまったく同じ作りです。
+        いちばん上には、見えない「施工事例（すべて）」が残っています。
+        WordPress は「施工事例」を押したとき、いちばん上の項目を開く
+        しくみなので、消すと押しただけでキッチンが開いてしまいます。
+        そのため、置いたまま画面上だけ隠しています。
+   ============================================================ */
+
+/* 左メニューに、部位ごとの入口を並べます（1件も無い部位は出しません） */
+add_action( 'admin_menu', function () {
+
+	$terms = get_terms( array(
+		'taxonomy'   => 'ymkrf_works_cat',
+		'hide_empty' => false,
+	) );
+	if ( is_wp_error( $terms ) || ! $terms ) return;
+
+	/* 下書きも数えます。
+	   WordPressの $t->count は公開ぶんしか数えないので、
+	   取り込んだばかりの下書きが「0」に見えてしまうためです。 */
+	$counts = ymkrf_works_cat_counts();
+
+	/* 並べる順は、施工事例の部位の決めごと（1-a）と同じにします。
+	   ここに無い分類は、うしろに付きます。 */
+	$order = array_keys( ymkrf_works_parts_master() );
+	usort( $terms, function ( $a, $b ) use ( $order ) {
+		$ia = array_search( $a->slug, $order, true );
+		$ib = array_search( $b->slug, $order, true );
+		if ( $ia === false ) $ia = 900;
+		if ( $ib === false ) $ib = 900;
+		if ( $ia === $ib ) return strcmp( $a->slug, $b->slug );
+		return $ia - $ib;
+	} );
+
+	foreach ( $terms as $t ) {
+		$n = isset( $counts[ $t->term_id ] ) ? (int) $counts[ $t->term_id ] : 0;
+		if ( $n === 0 ) continue;   /* 1件も無い部位は出しません */
+		add_submenu_page(
+			'edit.php?post_type=ymkrf_works',
+			$t->name . 'の施工事例',
+			'　' . $t->name . '（' . $n . '）',
+			'edit_posts',
+			'edit.php?post_type=ymkrf_works&ymkrf_works_cat=' . $t->slug
+		);
+	}
+} );
+
+/**
+ * 部位ごとの件数（下書き・公開の両方）。
+ * 1回のSQLで数えて、5分だけ覚えておきます。
+ * （2,000件をこえるので、毎回数えると管理画面が重くなります）
+ */
+function ymkrf_works_cat_counts() {
+
+	$hit = get_transient( 'ymkrf_works_cat_counts' );
+	if ( is_array( $hit ) ) return $hit;
+
+	global $wpdb;
+	$rows = $wpdb->get_results(
+		"SELECT tt.term_id AS tid, COUNT(*) AS n
+		   FROM {$wpdb->term_relationships} tr
+		   JOIN {$wpdb->term_taxonomy} tt ON tt.term_taxonomy_id = tr.term_taxonomy_id
+		   JOIN {$wpdb->posts} p          ON p.ID = tr.object_id
+		  WHERE tt.taxonomy = 'ymkrf_works_cat'
+		    AND p.post_type = 'ymkrf_works'
+		    AND p.post_status IN ('publish','draft','pending','future','private')
+		  GROUP BY tt.term_id"
+	);
+
+	$out = array();
+	foreach ( (array) $rows as $r ) $out[ (int) $r->tid ] = (int) $r->n;
+
+	set_transient( 'ymkrf_works_cat_counts', $out, 5 * MINUTE_IN_SECONDS );
+	return $out;
+}
+
+/* 施工事例を足したり消したりしたら、覚えていた件数を捨てます */
+add_action( 'save_post_ymkrf_works', function () { delete_transient( 'ymkrf_works_cat_counts' ); } );
+add_action( 'deleted_post',          function () { delete_transient( 'ymkrf_works_cat_counts' ); } );
+
+/* 並べかた ── すべて（かくれています） → 部位 → そのほか */
+add_action( 'admin_menu', function () {
+	global $submenu;
+	$key = 'edit.php?post_type=ymkrf_works';
+	if ( empty( $submenu[ $key ] ) ) return;
+
+	$all = array(); $cats = array(); $sets = array();
+	foreach ( $submenu[ $key ] as $row ) {
+		if ( ! isset( $row[2] ) ) continue;
+		if ( $row[2] === $key ) {
+			/* ★消してはいけません（消すと「施工事例」を押しただけで
+			     キッチンが開いてしまいます）。下で隠しています。 */
+			$all[] = $row;
+		} elseif ( strpos( $row[2], 'ymkrf_works_cat=' ) !== false ) {
+			$cats[] = $row;
+		} else {
+			$sets[] = $row;
+		}
+	}
+	$submenu[ $key ] = array_merge( $all, $cats, $sets );
+}, 999 );
+
+/* いまえらんでいる部位に、色を付けます。
+   WordPress は URL のうしろ（?ymkrf_works_cat=kitchen）に気づかないので教えます。 */
+add_filter( 'submenu_file', function ( $file, $parent_file ) {
+
+	if ( $parent_file !== 'edit.php?post_type=ymkrf_works' ) return $file;
+
+	$slug = '';
+
+	/* ① 一覧を部位でしぼっているとき */
+	if ( ! empty( $_GET['ymkrf_works_cat'] ) ) {
+		$slug = sanitize_title( wp_unslash( $_GET['ymkrf_works_cat'] ) );
+	}
+
+	/* ② 事例を1つ開いているとき */
+	if ( $slug === '' && isset( $GLOBALS['pagenow'] )
+		&& in_array( $GLOBALS['pagenow'], array( 'post.php', 'post-new.php' ), true )
+		&& ! empty( $GLOBALS['post'] ) && $GLOBALS['post']->post_type === 'ymkrf_works' ) {
+
+		$ts = get_the_terms( $GLOBALS['post']->ID, 'ymkrf_works_cat' );
+		if ( $ts && ! is_wp_error( $ts ) ) $slug = $ts[0]->slug;
+	}
+
+	if ( $slug === '' ) return $file;
+	return 'edit.php?post_type=ymkrf_works&ymkrf_works_cat=' . $slug;
+}, 10, 2 );
+
+add_action( 'admin_head', function () {
+	?>
+	<style>
+	#menu-posts-ymkrf_works .wp-submenu li.current a,
+	#menu-posts-ymkrf_works .wp-submenu a.current{
+		background:#a7d8f5; color:#0a2540; border-radius:3px; font-weight:700;
+	}
+	</style>
+	<?php
+} );
+
+/* 「施工事例（すべて）」の入口は、画面上だけ隠します */
+add_action( 'admin_footer', function () {
+	?>
+	<script>
+	(function () {
+		var ul = document.querySelector('#menu-posts-ymkrf_works .wp-submenu');
+		if (!ul) return;
+		var a = ul.querySelector('a[href$="edit.php?post_type=ymkrf_works"]');
+		var li = a && a.closest ? a.closest('li') : null;
+		if (li && !li.classList.contains('wp-submenu-head')) li.style.display = 'none';
+	})();
+	</script>
+	<?php
 } );
 
 
