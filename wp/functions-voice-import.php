@@ -205,6 +205,23 @@ function ymkrf_vimp_one( $r ) {
 	) );
 
 	$nos  = ymkrf_vimp_case_nos( isset( $r['process_num'] ) ? $r['process_num'] : '' );
+
+	/* ★ 同じ案件番号のものが、すでに手で登録されていたら飛ばします。
+	     新しい様式で入れていただいた14件は、お困りごと・満足度・評価まで
+	     そろっていて中身が濃いので、そちらを残します。
+	     （2026/09/08 ユーザー確認「はい」＝すでにあるものを優先） */
+	if ( ! $exist && $nos ) {
+		$same = get_posts( array(
+			'post_type' => 'ymkrf_voice', 'posts_per_page' => 1, 'fields' => 'ids',
+			'post_status' => 'any',
+			'meta_query' => array( array( 'key' => '_ymkrf_case_no', 'value' => $nos[0] ) ),
+		) );
+		if ( $same ) {
+			return array( true, '飛ばしました：案件No. ' . $nos[0]
+			              . ' は、すでに登録ずみです（#' . (int) $same[0] . ' '
+			              . get_the_title( (int) $same[0] ) . '）' );
+		}
+	}
 	list( $city, $ini ) = ymkrf_vimp_who( isset( $r['client_name'] ) ? $r['client_name'] : '' );
 	$parts = ymkrf_vimp_parts( $r );
 	$word  = trim( (string) ( isset( $r['title'] ) ? $r['title'] : '' ) );
@@ -343,6 +360,44 @@ add_action( 'admin_init', function () {
 } );
 
 
+/**
+ * 案件番号が二重になっているものを探します。
+ * 残す＝手で登録していただいたほう、外す＝取り込んだほう。
+ */
+function ymkrf_vimp_find_dups() {
+
+	global $wpdb;
+	$rows = $wpdb->get_results(
+		"SELECT p.ID, m.meta_value AS no,
+		        ( SELECT meta_value FROM {$wpdb->postmeta}
+		           WHERE post_id = p.ID AND meta_key = '_ymkrf_old_voice' LIMIT 1 ) AS is_old
+		   FROM {$wpdb->posts} p
+		   JOIN {$wpdb->postmeta} m ON m.post_id = p.ID AND m.meta_key = '_ymkrf_case_no'
+		  WHERE p.post_type = 'ymkrf_voice'
+		    AND p.post_status IN ('publish','draft','pending','private')
+		    AND m.meta_value <> ''
+		  ORDER BY p.ID ASC"
+	);
+
+	$by = array();
+	foreach ( (array) $rows as $r ) $by[ $r->no ][] = $r;
+
+	$out = array();
+	foreach ( $by as $no => $list ) {
+		if ( count( $list ) < 2 ) continue;
+		/* 手で入れたもの（印なし）を残します。無ければ、いちばん古いものを残します */
+		$keep = null;
+		foreach ( $list as $r ) { if ( $r->is_old !== '1' ) { $keep = $r; break; } }
+		if ( ! $keep ) $keep = $list[0];
+		foreach ( $list as $r ) {
+			if ( (int) $r->ID === (int) $keep->ID ) continue;
+			$out[] = array( 'no' => $no, 'keep' => (int) $keep->ID, 'drop' => (int) $r->ID );
+		}
+	}
+	return $out;
+}
+
+
 /* ============================================================
    6. 管理画面
    ============================================================ */
@@ -390,6 +445,16 @@ function ymkrf_vimp_page() {
 		update_option( YMKRF_VIMP_POS, 0, false );
 		update_option( YMKRF_VIMP_LOG, array(), false );
 		$pos = 0; $log = array();
+	}
+
+	/* 案件番号が二重になっているものを、ゴミ箱に入れます。
+	   残すのは、手で登録していただいたほう（新しい様式で中身が濃い）。
+	   取り込んだほう（_ymkrf_old_voice の印が付いたもの）を外します。 */
+	if ( isset( $_POST['ymkrf_vimp_dedup'] ) && check_admin_referer( 'ymkrf_vimp' ) ) {
+		$dups = ymkrf_vimp_find_dups();
+		$n = 0;
+		foreach ( $dups as $d ) { if ( wp_trash_post( $d['drop'] ) ) $n++; }
+		$deduped = $n;
 	}
 
 	$auto = ( get_option( YMKRF_VIMP_AUTO ) === '1' );
@@ -441,6 +506,34 @@ function ymkrf_vimp_page() {
 	      </form>
 	    </div>
 	    <?php if ( $auto ) : ?><meta http-equiv="refresh" content="30"><?php endif; ?>
+
+	    <?php
+	    /* 案件番号が二重になっているものがあれば、外すボタンを出します */
+	    $dups = ymkrf_vimp_find_dups();
+	    ?>
+	    <?php if ( isset( $deduped ) ) : ?>
+	      <div class="notice notice-success"><p>
+	        二重だったもの <?php echo (int) $deduped; ?> 件をゴミ箱に入れました。</p></div>
+	    <?php endif; ?>
+	    <?php if ( $dups ) : ?>
+	      <div style="margin:16px 0;padding:14px 18px;border:2px solid #b26a00;border-radius:6px;background:#fffaf3">
+	        <form method="post" style="margin:0">
+	          <?php wp_nonce_field( 'ymkrf_vimp' ); ?>
+	          <p style="margin:0 0 8px;font-weight:700;color:#b26a00">
+	            案件番号が二重になっているものが <?php echo count( $dups ); ?> 件あります</p>
+	          <p class="description" style="margin:0 0 10px">
+	            手で登録していただいたぶんと、取り込んだぶんが重なっています。<br>
+	            押すと、<b>取り込んだほうをゴミ箱に入れます</b>（手で入れたほうを残します）。<br>
+	            <?php foreach ( array_slice( $dups, 0, 8 ) as $d ) : ?>
+	              ・<?php echo esc_html( $d['no'] ); ?> …
+	              のこす #<?php echo $d['keep']; ?>／はずす #<?php echo $d['drop']; ?><br>
+	            <?php endforeach; ?>
+	            <?php if ( count( $dups ) > 8 ) : ?>…ほか<?php echo count( $dups ) - 8; ?>件<?php endif; ?>
+	          </p>
+	          <button class="button" name="ymkrf_vimp_dedup" value="1">二重のものをゴミ箱へ</button>
+	        </form>
+	      </div>
+	    <?php endif; ?>
 
 	    <form method="post">
 	      <?php wp_nonce_field( 'ymkrf_vimp' ); ?>
