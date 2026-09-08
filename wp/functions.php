@@ -19,11 +19,17 @@ require_once get_stylesheet_directory() . '/inc/functions-product.php';
 require_once get_stylesheet_directory() . '/inc/functions-column.php';
 require_once get_stylesheet_directory() . '/inc/functions-news.php';
 require_once get_stylesheet_directory() . '/inc/functions-voice.php';
-/* ↓ 本番サイトからのお客様の声の取り込み。終わったらこの行とファイルを消してください */
+/* ↓ 本番サイトからのお客様の声の取り込み。
+      制作中はいまのサイトにも登録されるので、
+      新しいサイトを公開するまで残します（2026/09/08 ユーザー指示）。
+      公開したら、この行と inc/functions-voice-import.php を消してください */
 require_once get_stylesheet_directory() . '/inc/functions-voice-import.php';
 require_once get_stylesheet_directory() . '/inc/functions-works.php';
 require_once get_stylesheet_directory() . '/inc/functions-works-import.php';
-/* ↓ 本番サイトからの取り込み。終わったらこの行とファイルを消してください */
+/* ↓ 本番サイトからの施工事例の取り込み。
+      制作中はいまのサイトにも登録されるので、
+      新しいサイトを公開するまで残します（2026/09/08 ユーザー指示）。
+      公開したら、この行と inc/functions-works-import2.php を消してください */
 require_once get_stylesheet_directory() . '/inc/functions-works-import2.php';
 require_once get_stylesheet_directory() . '/inc/functions-shops.php';
 require_once get_stylesheet_directory() . '/inc/functions-staff.php';

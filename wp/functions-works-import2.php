@@ -13,8 +13,18 @@
  *   2. 管理画面「施工事例 ＞ まとめて取り込み」をひらく
  *   3.「つづきを20件 取り込む」を押していく。押すたびに20件ずつ進みます
  *
- * ※ 取り込みが終わったら、このファイルと、functions.php の読み込み行を
- *    消してください。
+ * ※ このファイルは、新しいサイトを公開するまで残します。
+ *    制作中のあいだは、いまのサイトのほうにも施工事例が登録されるので、
+ *    ふえたぶんを取り込めるようにしておく必要があるためです。
+ *    （2026/09/08 ユーザー指示）
+ *    公開したら、このファイルと functions.php の読み込み行を消してください。
+ *
+ * ふえたぶんだけ取り込むには
+ *   1. いまのサイトの管理画面をもう一度読み取って、
+ *      新しい ymkrf-works.json を wp-content に置く
+ *   2.「はじめから数えなおす」を押す
+ *   3.「すでに入っているものは飛ばす」にチェックを入れて始める
+ *      → 入っているものは読みにいかないので、すぐ終わります
  *
  * @package ymkrf
  */
@@ -24,6 +34,22 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 define( 'YMKRF_BULK_FILE', WP_CONTENT_DIR . '/ymkrf-works.json' );
 define( 'YMKRF_BULK_POS',  'ymkrf_works_bulk_pos' );   // どこまで済んだか
 define( 'YMKRF_BULK_LOG',  'ymkrf_works_bulk_log' );   // 記録
+define( 'YMKRF_BULK_SKIP', 'ymkrf_works_bulk_skip' );  // 入っているものを飛ばすか
+
+
+/**
+ * このURLの施工事例は、もう入っている？
+ *
+ * 取り込むと `_ymkrf_src_url` にいまのサイトのURLを控えるので、それで見ます。
+ * ゴミ箱のものも「入っている」とみなします（うっかり戻さないため）。
+ */
+function ymkrf_bulk_have( $url ) {
+	global $wpdb;
+	if ( $url === '' ) return false;
+	return (bool) $wpdb->get_var( $wpdb->prepare(
+		"SELECT post_id FROM {$wpdb->postmeta}
+		  WHERE meta_key = '_ymkrf_src_url' AND meta_value = %s LIMIT 1", $url ) );
+}
 
 
 /** 読み取ったデータを配列で返します */
@@ -72,7 +98,8 @@ function ymkrf_bulk_tick() {
 		return;
 	}
 
-	$log = (array) get_option( YMKRF_BULK_LOG, array() );
+	$log  = (array) get_option( YMKRF_BULK_LOG, array() );
+	$skip = ( get_option( YMKRF_BULK_SKIP ) === '1' );
 	$n = 0; $t0 = time();
 
 	while ( $pos < count( $rows ) && $n < 10 && ( time() - $t0 ) < 100 ) {
@@ -81,6 +108,10 @@ function ymkrf_bulk_tick() {
 		$no  = isset( $r['process_num'] ) ? trim( $r['process_num'] ) : '';
 		if ( $url === '' ) {
 			array_unshift( $log, 'NG : URLが作れませんでした（' . $no . '）' );
+		} elseif ( $skip && ymkrf_bulk_have( $url ) ) {
+			/* もう入っているので、読みにいきません。件数にも数えません */
+			$pos++;
+			continue;
 		} else {
 			$res = ymkrf_works_import_one( $url, $no );
 			array_unshift( $log, ( $res['ok'] ? 'OK' : 'NG' ) . ' : ' . wp_strip_all_tags( $res['msg'] ) );
@@ -238,12 +269,20 @@ function ymkrf_bulk_page() {
 	$pos  = (int) get_option( YMKRF_BULK_POS, 0 );
 	$log  = (array) get_option( YMKRF_BULK_LOG, array() );
 
+	/* 「すでに入っているものは飛ばす」の入り切りを、先に控えます */
+	if ( ( isset( $_POST['ymkrf_bulk_go'] ) || isset( $_POST['ymkrf_bulk_auto_on'] ) )
+	     && check_admin_referer( 'ymkrf_bulk' ) ) {
+		update_option( YMKRF_BULK_SKIP,
+			isset( $_POST['ymkrf_bulk_skip'] ) ? '1' : '', false );
+	}
+
 	/* 20件ぶん進めます */
 	if ( isset( $_POST['ymkrf_bulk_go'] ) && check_admin_referer( 'ymkrf_bulk' ) ) {
 
 		$want = isset( $_POST['n'] ) ? max( 1, min( 50, (int) $_POST['n'] ) ) : 20;
 		$n = 0;
 		$t0 = time();
+		$skip = ( get_option( YMKRF_BULK_SKIP ) === '1' );
 
 		while ( $pos < count( $rows ) && $n < $want && ( time() - $t0 ) < 150 ) {
 
@@ -253,6 +292,9 @@ function ymkrf_bulk_page() {
 
 			if ( $url === '' ) {
 				array_unshift( $log, 'NG : URLが作れませんでした（' . $no . '）' );
+			} elseif ( $skip && ymkrf_bulk_have( $url ) ) {
+				$pos++;
+				continue;
 			} else {
 				$res = ymkrf_works_import_one( $url, $no );
 				array_unshift( $log, ( $res['ok'] ? 'OK' : 'NG' ) . ' : '
@@ -424,6 +466,11 @@ function ymkrf_bulk_page() {
 	            押したあとは、30秒ごとに10件ずつひとりでに取り込みます。<br>
 	            管理画面を開いているあいだ進みます。いつでも止められます。
 	          </p>
+	          <p style="margin:0 0 10px">
+	            <label><input type="checkbox" name="ymkrf_bulk_skip" value="1"
+	              <?php checked( get_option( YMKRF_BULK_SKIP ), '1' ); ?>>
+	              <b>すでに入っているものは飛ばす</b>（新しくふえたぶんだけ取り込む）</label>
+	          </p>
 	          <button class="button button-primary" name="ymkrf_bulk_auto_on" value="1">自動で取り込みはじめる</button>
 	        <?php endif; ?>
 	      </form>
@@ -460,6 +507,11 @@ function ymkrf_bulk_page() {
 	    <form method="post">
 	      <?php wp_nonce_field( 'ymkrf_bulk' ); ?>
 	      <p>
+	        <label><input type="checkbox" name="ymkrf_bulk_skip" value="1"
+	          <?php checked( get_option( YMKRF_BULK_SKIP ), '1' ); ?>>
+	          <b>すでに入っているものは飛ばす</b>（新しくふえたぶんだけ取り込む）</label>
+	      </p>
+	      <p>
 	        いちどに
 	        <select name="n">
 	          <option value="10">10</option>
@@ -481,6 +533,20 @@ function ymkrf_bulk_page() {
 	        同じ事例をもう一度取り込んだときは、上書きされます（増えません）。<br>
 	        取り込んだ事例は<b>下書き</b>で入ります。
 	      </p>
+
+	      <div style="margin-top:18px;padding:12px 16px;border-left:4px solid #fe3301;background:#fff7f4">
+	        <p style="margin:0 0 6px;font-weight:700">あとからふえたぶんを取り込むには</p>
+	        <ol style="margin:0 0 0 18px;line-height:1.9">
+	          <li>いまのサイトの管理画面をもう一度読み取って、新しい
+	              <code>ymkrf-works.json</code> を <code>wp-content</code> に置く</li>
+	          <li><b>はじめから数えなおす</b>を押す</li>
+	          <li><b>すでに入っているものは飛ばす</b>にチェックを入れて、始める</li>
+	        </ol>
+	        <p class="description" style="margin:8px 0 0">
+	          入っているものは読みにいかないので、すぐ終わります。
+	          新しいサイトを公開するまで、この画面は残しておきます。
+	        </p>
+	      </div>
 	    </form>
 	  <?php endif; ?>
 

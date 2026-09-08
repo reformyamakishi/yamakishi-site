@@ -2,8 +2,15 @@
 /**
  * お客様の声を、いまの公開サイト（yamakishi-reform.jp）から取り込むしくみ。
  *
- * ・一時的なものです。取り込みが終わったら、このファイルと
- *   functions.php の読み込み行を消してください。
+ * ・このファイルは、新しいサイトを公開するまで残します。
+ *   制作中のあいだは、いまのサイトのほうにもお客様の声が登録されるので、
+ *   ふえたぶんを取り込めるようにしておく必要があるためです。
+ *   （2026/09/08 ユーザー指示）
+ *   公開したら、このファイルと functions.php の読み込み行を消してください。
+ *
+ * ・ふえたぶんだけ取り込むには、新しい ymkrf-voices.json を置いて
+ *   「はじめから数えなおす」→「すでに入っているものは飛ばす」に
+ *   チェックを入れて始めてください。
  *
  * 使いかた
  *   1. wp-content/ymkrf-voices.json を置く
@@ -16,9 +23,10 @@
  *     1件ずつのページは<b>検索エンジンに登録させません</b>（noindex）。
  *     保存はできて、施工事例のページには出るので、お客様には届きます。
  *
- *   ・アンケートの画像は、お名前が塗りつぶされていません。
- *     そのため <b>「元の画像」の欄にだけ</b>入れ、公開用の欄には入れません。
- *     管理画面では見られますが、お客様のページには出ません。
+ *   ・アンケートの画像は、<b>お名前がすでに伏せてあります</b>
+ *     （「野々市市　Y様」と白い箱で置きかえずみ）。そのため公開用の欄にも入れ、
+ *     お客様のページにも出します。見出しは「いただいたアンケート（以前の様式）」です。
+ *     （2026/09/07 実物を確認。はじめ「お名前が出る」と書いたのは誤りでした）
  *
  * @package ymkrf
  */
@@ -30,6 +38,7 @@ define( 'YMKRF_VIMP_FILE', WP_CONTENT_DIR . '/ymkrf-voices.json' );
 define( 'YMKRF_VIMP_POS',  'ymkrf_voice_imp_pos' );
 define( 'YMKRF_VIMP_LOG',  'ymkrf_voice_imp_log' );
 define( 'YMKRF_VIMP_AUTO', 'ymkrf_voice_imp_auto' );
+define( 'YMKRF_VIMP_SKIP', 'ymkrf_voice_imp_skip' );   // 入っているものを飛ばすか
 
 /* 取り込んだ印。この印が付いたものは検索エンジンに登録させません */
 define( 'YMKRF_VIMP_MARK', '_ymkrf_old_voice' );
@@ -192,6 +201,16 @@ function ymkrf_vimp_photo( $key, $post_id ) {
    3. 1件を入れます
    ============================================================ */
 
+/** このお客様の声は、もう入っている？（いまのサイトのIDで見ます） */
+function ymkrf_vimp_have( $r ) {
+	global $wpdb;
+	$src = isset( $r['i'] ) ? trim( (string) $r['i'] ) : '';
+	if ( $src === '' ) return false;
+	return (bool) $wpdb->get_var( $wpdb->prepare(
+		"SELECT post_id FROM {$wpdb->postmeta}
+		  WHERE meta_key = '_ymkrf_old_src' AND meta_value = %s LIMIT 1", $src ) );
+}
+
 function ymkrf_vimp_one( $r ) {
 
 	$src = isset( $r['i'] ) ? (string) $r['i'] : '';
@@ -203,6 +222,13 @@ function ymkrf_vimp_one( $r ) {
 		'post_status' => 'any',
 		'meta_query' => array( array( 'key' => '_ymkrf_old_src', 'value' => $src ) ),
 	) );
+
+	/* 「すでに入っているものは飛ばす」に入があるときは、
+	   もう入っているぶんは、写真も取りにいかずにそのまま返します。
+	   新しくふえたぶんだけを取り込むときに使います。（2026/09/08） */
+	if ( $exist && get_option( YMKRF_VIMP_SKIP ) === '1' ) {
+		return array( true, '飛ばしました：#' . (int) $exist[0] . '（すでに入っています）' );
+	}
 
 	$nos  = ymkrf_vimp_case_nos( isset( $r['process_num'] ) ? $r['process_num'] : '' );
 
@@ -333,10 +359,13 @@ function ymkrf_vimp_tick() {
 		return;
 	}
 
-	$log = (array) get_option( YMKRF_VIMP_LOG, array() );
+	$log  = (array) get_option( YMKRF_VIMP_LOG, array() );
+	$skip = ( get_option( YMKRF_VIMP_SKIP ) === '1' );
 	$n = 0; $t0 = time();
 
 	while ( $pos < count( $rows ) && $n < 10 && ( time() - $t0 ) < 100 ) {
+		/* もう入っているものは、件数に数えずに読み飛ばします */
+		if ( $skip && ymkrf_vimp_have( $rows[ $pos ] ) ) { $pos++; continue; }
 		list( $ok, $msg ) = ymkrf_vimp_one( $rows[ $pos ] );
 		array_unshift( $log, ( $ok ? 'OK' : 'NG' ) . ' : ' . $msg );
 		$pos++; $n++;
@@ -418,10 +447,19 @@ function ymkrf_vimp_page() {
 	$pos  = (int) get_option( YMKRF_VIMP_POS, 0 );
 	$log  = (array) get_option( YMKRF_VIMP_LOG, array() );
 
+	/* 「すでに入っているものは飛ばす」の入り切りを、先に控えます */
+	if ( ( isset( $_POST['ymkrf_vimp_go'] ) || isset( $_POST['ymkrf_vimp_auto_on'] ) )
+	     && check_admin_referer( 'ymkrf_vimp' ) ) {
+		update_option( YMKRF_VIMP_SKIP,
+			isset( $_POST['ymkrf_vimp_skip'] ) ? '1' : '', false );
+	}
+
 	if ( isset( $_POST['ymkrf_vimp_go'] ) && check_admin_referer( 'ymkrf_vimp' ) ) {
 		$want = isset( $_POST['n'] ) ? max( 1, min( 30, (int) $_POST['n'] ) ) : 10;
+		$skip = ( get_option( YMKRF_VIMP_SKIP ) === '1' );
 		$n = 0; $t0 = time();
 		while ( $pos < count( $rows ) && $n < $want && ( time() - $t0 ) < 150 ) {
+			if ( $skip && ymkrf_vimp_have( $rows[ $pos ] ) ) { $pos++; continue; }
 			list( $ok, $msg ) = ymkrf_vimp_one( $rows[ $pos ] );
 			array_unshift( $log, ( $ok ? 'OK' : 'NG' ) . ' : ' . $msg );
 			$pos++; $n++;
@@ -475,8 +513,9 @@ function ymkrf_vimp_page() {
 	      <b>古いアンケートについて</b><br>
 	      ・1件ずつのページは<b>検索エンジンに登録させません</b>
 	        （中身がうすいため。施工事例のページには出ます）<br>
-	      ・アンケートの画像は<b>お名前が塗りつぶされていない</b>ので、
-	        管理画面だけで見られる欄に入れます。<b>お客様のページには出ません。</b>
+	      ・アンケートの画像は<b>お名前がすでに伏せてある</b>ので、
+	        お客様のページにも出します
+	        （見出しは「いただいたアンケート（<b>以前の様式</b>）」）
 	    </p></div>
 
 	    <table class="widefat" style="max-width:680px;margin-bottom:16px">
@@ -501,6 +540,11 @@ function ymkrf_vimp_page() {
 	          <button class="button" name="ymkrf_vimp_auto_off" value="1">自動をやめる</button>
 	        <?php else : ?>
 	          <p style="margin:0 0 10px;font-weight:700">自動で取り込む</p>
+	          <p style="margin:0 0 10px">
+	            <label><input type="checkbox" name="ymkrf_vimp_skip" value="1"
+	              <?php checked( get_option( YMKRF_VIMP_SKIP ), '1' ); ?>>
+	              <b>すでに入っているものは飛ばす</b>（新しくふえたぶんだけ取り込む）</label>
+	          </p>
 	          <button class="button button-primary" name="ymkrf_vimp_auto_on" value="1">自動で取り込みはじめる</button>
 	        <?php endif; ?>
 	      </form>
@@ -537,6 +581,11 @@ function ymkrf_vimp_page() {
 
 	    <form method="post">
 	      <?php wp_nonce_field( 'ymkrf_vimp' ); ?>
+	      <p>
+	        <label><input type="checkbox" name="ymkrf_vimp_skip" value="1"
+	          <?php checked( get_option( YMKRF_VIMP_SKIP ), '1' ); ?>>
+	          <b>すでに入っているものは飛ばす</b>（新しくふえたぶんだけ取り込む）</label>
+	      </p>
 	      <p>いちどに
 	        <select name="n">
 	          <option value="5">5</option>
@@ -549,6 +598,20 @@ function ymkrf_vimp_page() {
 	          onclick="return confirm('1件目から数えなおします。取り込んだ記事は消えません。よろしいですか？')">
 	          はじめから数えなおす</button>
 	      </p>
+
+	      <div style="margin-top:18px;padding:12px 16px;border-left:4px solid #fe3301;background:#fff7f4">
+	        <p style="margin:0 0 6px;font-weight:700">あとからふえたぶんを取り込むには</p>
+	        <ol style="margin:0 0 0 18px;line-height:1.9">
+	          <li>いまのサイトの管理画面をもう一度読み取って、新しい
+	              <code>ymkrf-voices.json</code> を <code>wp-content</code> に置く</li>
+	          <li><b>はじめから数えなおす</b>を押す</li>
+	          <li><b>すでに入っているものは飛ばす</b>にチェックを入れて、始める</li>
+	        </ol>
+	        <p class="description" style="margin:8px 0 0">
+	          入っているものは写真も取りにいかないので、すぐ終わります。
+	          新しいサイトを公開するまで、この画面は残しておきます。
+	        </p>
+	      </div>
 	    </form>
 	  <?php endif; ?>
 
