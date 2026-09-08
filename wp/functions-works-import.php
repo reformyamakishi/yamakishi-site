@@ -439,8 +439,11 @@ function ymkrf_works_import_cat( $url, $text ) {
 			elseif ( $has( array( '物置', '収納庫', 'サイクルハウス',
 			                      '保管庫', 'ダストボックス' ) ) )                  $cat = 'storage';
 			elseif ( $has( array( 'カーポート', 'ｶｰﾎﾟｰﾄ', 'ガレージ' ) ) )           $cat = 'carport';
-			elseif ( $has( array( 'サンルーム', 'テラス', 'ベランダ',
-			                      'ウッドデッキ' ) ) )                              $cat = 'veranda';
+			elseif ( $has( array( '風除室', 'サンルーム', 'ベランダ',
+			                      'ウッドデッキ', 'テラス' ) ) )                    $cat = 'exterior';
+			elseif ( $has( array( 'フェンス', '門扉', '門柱', 'ブロック塀',
+			                      '目隠し' ) ) )                                    $cat = 'fence';
+			elseif ( $has( array( 'レンジフード', '換気扇' ) ) )                     $cat = 'ventilation';
 			elseif ( $has( array( '玄関ドア', '玄関戸', '玄関引戸', '勝手口' ) ) )   $cat = 'door';
 			elseif ( $has( array( '内窓', 'サッシ', '窓' ) ) )                       $cat = 'window';
 			elseif ( $has( array( '外壁', '屋根', '雨樋', '軒天' ) ) )               $cat = 'outer-wall';

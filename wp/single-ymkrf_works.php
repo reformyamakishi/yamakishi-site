@@ -18,9 +18,6 @@ while ( have_posts() ) : the_post();
   $wcase  = trim( (string) get_post_meta( $id, '_ymkrf_case_no', true ) );
   $wprods = ymkrf_works_products( $id );
   $wptext = trim( (string) get_post_meta( $id, '_ymkrf_product_text', true ) );
-  /* 給湯器・エコキュートは、品番が年ごとに変わるので
-     「メーカーだけ」でも登録できるようにしています。（2026/09/08） */
-  $wmakers = function_exists( 'ymkrf_works_makers' ) ? ymkrf_works_makers( $id ) : array();
   $wopack = get_post_meta( $id, '_ymkrf_oldpack', true ) === '1';
   $wvoice = ymkrf_works_linked_voices( $id );
   $wrel   = ymkrf_works_related( $id, 3 );
@@ -138,51 +135,111 @@ while ( have_posts() ) : the_post();
     <?php endif; ?>
 
     <?php /* 使った商品 */ ?>
-    <?php if ( $wprods || $wptext || $wmakers ) : ?>
+    <?php $wcatlink0 = function_exists( 'ymkrf_works_catlinks' ) ? ymkrf_works_catlinks( $id ) : array(); ?>
+    <?php if ( $wprods || $wptext || $wcatlink0 ) : ?>
       <h2 class="p-work__h2">この工事で使った商品</h2>
       <?php
       /* 商品名は1行に1つ入れてあります。1つずつカードにして並べます。
          メーカー名がわかるものは、メーカー名だけ小さく上に出します。 */
       $wplines = function_exists( 'ymkrf_works_ptext_lines' )
                  ? ymkrf_works_ptext_lines( $wptext ) : array();
+
+      /* 旧パック商品にチェックが入っている商品名（1行に1つ） */
+      $wppack = array_values( array_filter( array_map( 'trim',
+        preg_split( '/\R/u', (string) get_post_meta( $id, '_ymkrf_ptext_pack', true ) ) ),
+        function ( $v ) { return $v !== ''; } ) );
+
+      /* 商品名 => 関連ページのURL（「商品名|URL」の形でしまってあります） */
+      $wpurl = array();
+      foreach ( preg_split( '/\R/u', (string) get_post_meta( $id, '_ymkrf_ptext_url', true ) ) as $u ) {
+        $u = trim( $u );
+        if ( $u === '' || strpos( $u, '|' ) === false ) continue;
+        list( $un, $uu ) = array_map( 'trim', explode( '|', $u, 2 ) );
+        if ( $un !== '' && $uu !== '' ) $wpurl[ $un ] = ( strpos( $uu, '/' ) === 0 ) ? home_url( $uu ) : $uu;
+      }
       ?>
-      <?php if ( $wplines || $wmakers ) : ?>
-        <ul class="p-work__ptexts">
-          <?php /* メーカーだけのぶんは、メーカー名を上に、箇所の名前を下に出します */ ?>
-          <?php foreach ( $wmakers as $wm ) : ?>
-            <li class="p-work__ptext">
-              <span class="p-work__pmaker"><?php echo esc_html( $wm['maker'] ); ?></span>
-              <span class="p-work__pname"><?php echo esc_html( $wm['label'] ); ?></span>
-            </li>
+      <?php
+      /* 関連ページのある商品を先に、無いものはその下に控えめに出します。
+         幅は商品ページのカードとそろえます。
+         （2026/09/08 ユーザー指示「かんれんURLのない商品は下にして
+           もっと控えめに。長さもそろえて」） */
+      $wcatlink = function_exists( 'ymkrf_works_catlinks' ) ? ymkrf_works_catlinks( $id ) : array();
+      $wgnames  = function_exists( 'ymkrf_works_prod_groups_master' ) ? ymkrf_works_prod_groups_master() : array();
+
+      $wlink  = array();
+      $wplain = array();
+      foreach ( $wplines as $line ) {
+        $t = trim( $line );
+        if ( isset( $wpurl[ $t ] ) && $wpurl[ $t ] !== '' ) $wlink[] = $line;
+        else                                                $wplain[] = $line;
+      }
+      ?>
+
+      <?php if ( $wprods || $wlink || $wcatlink ) : ?>
+        <div class="p-work__prods">
+          <?php /* 品番をえらばないもの（給湯器・エコキュートなど）。
+                   その一覧ページへお送りします。 */ ?>
+          <?php foreach ( $wcatlink as $cl ) :
+            $clname = isset( $wgnames[ $cl ] ) ? $wgnames[ $cl ] : $cl; ?>
+            <a class="p-work__prod p-work__prod--txt" href="<?php echo esc_url( ymkrf_cat_url( $cl ) ); ?>">
+              <span class="p-work__prodtxt">
+                <span class="p-work__prodname"><?php echo esc_html( $clname ); ?></span>
+                <span class="p-work__prodmore">くわしく見る</span>
+              </span>
+            </a>
           <?php endforeach; ?>
-          <?php foreach ( $wplines as $line ) :
+
+          <?php foreach ( $wprods as $pr ) :
+            $pimg = get_the_post_thumbnail( $pr->ID, 'medium', array( 'loading' => 'lazy', 'alt' => '' ) ); ?>
+            <a class="p-work__prod" href="<?php echo esc_url( get_permalink( $pr ) ); ?>">
+              <?php if ( $pimg ) : ?><span class="p-work__prodimg"><?php echo $pimg; ?></span><?php endif; ?>
+              <span class="p-work__prodtxt">
+                <span class="p-work__prodname"><?php echo esc_html( get_the_title( $pr ) ); ?></span>
+                <span class="p-work__prodmore">商品ページを見る</span>
+              </span>
+            </a>
+          <?php endforeach; ?>
+
+          <?php foreach ( $wlink as $line ) :
             $maker = ymkrf_works_ptext_maker( $line );
-            $name  = ( $maker !== '' ) ? trim( mb_substr( $line, mb_strlen( $maker ) ) ) : $line;
-          ?>
+            $name  = ( $maker !== '' ) ? trim( mb_substr( $line, mb_strlen( $maker ) ) ) : $line; ?>
+            <a class="p-work__prod p-work__prod--txt" href="<?php echo esc_url( $wpurl[ trim( $line ) ] ); ?>">
+              <span class="p-work__prodtxt">
+                <?php if ( $maker !== '' ) : ?>
+                  <span class="p-work__pmaker"><?php echo esc_html( $maker ); ?></span>
+                <?php endif; ?>
+                <span class="p-work__prodname"><?php echo esc_html( $name ); ?></span>
+                <?php if ( in_array( trim( $line ), $wppack, true ) ) : ?>
+                  <span class="p-work__ppack">※ヤマキシ旧パック商品</span>
+                <?php endif; ?>
+                <span class="p-work__prodmore">くわしく見る</span>
+              </span>
+            </a>
+          <?php endforeach; ?>
+        </div>
+      <?php endif; ?>
+
+      <?php if ( $wplain ) : ?>
+        <ul class="p-work__ptexts p-work__ptexts--sub">
+          <?php foreach ( $wplain as $line ) :
+            $maker = ymkrf_works_ptext_maker( $line );
+            $name  = ( $maker !== '' ) ? trim( mb_substr( $line, mb_strlen( $maker ) ) ) : $line; ?>
             <li class="p-work__ptext">
               <?php if ( $maker !== '' ) : ?>
                 <span class="p-work__pmaker"><?php echo esc_html( $maker ); ?></span>
               <?php endif; ?>
               <span class="p-work__pname"><?php echo esc_html( $name ); ?></span>
+              <?php if ( in_array( trim( $line ), $wppack, true ) ) : ?>
+                <span class="p-work__ppack">※ヤマキシ旧パック商品</span>
+              <?php endif; ?>
             </li>
           <?php endforeach; ?>
         </ul>
       <?php endif; ?>
+
       <?php if ( $wopack ) : ?>
         <p class="p-work__oldpack">※こちらはヤマキシ旧パック商品となります</p>
       <?php endif; ?>
-      <div class="p-work__prods">
-        <?php foreach ( $wprods as $pr ) :
-          $pimg = get_the_post_thumbnail( $pr->ID, 'medium', array( 'loading' => 'lazy', 'alt' => '' ) ); ?>
-          <a class="p-work__prod" href="<?php echo esc_url( get_permalink( $pr ) ); ?>">
-            <?php if ( $pimg ) : ?><span class="p-work__prodimg"><?php echo $pimg; ?></span><?php endif; ?>
-            <span class="p-work__prodtxt">
-              <span class="p-work__prodname"><?php echo esc_html( get_the_title( $pr ) ); ?></span>
-              <span class="p-work__prodmore">商品ページを見る</span>
-            </span>
-          </a>
-        <?php endforeach; ?>
-      </div>
     <?php endif; ?>
 
     <?php /* この工事を担当した営業 */ ?>

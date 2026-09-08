@@ -140,6 +140,42 @@ add_action( 'admin_init', function () {
 
 
 /* ============================================================
+   担当者のコメントを入れる
+
+   いまのサイトの「point」（工事のポイント／担当者のコメント）は、
+   公開ページからは取れなかったため、取り込みで抜けていました。
+   読み取ったデータには入っているので、そこから入れます。
+   すでに手で書いてあるものは、上書きしません。
+   （2026/09/08 ユーザー指摘「旧サイトにあった担当者のコメントが抜けてない？」）
+   ============================================================ */
+
+define( 'YMKRF_CMT_POS', 'ymkrf_works_cmt_pos' );
+
+/** 1件ぶん。入れたら true */
+function ymkrf_bulk_comment_one( $r ) {
+
+	$point = isset( $r['point'] ) ? trim( (string) $r['point'] ) : '';
+	if ( $point === '' ) return false;
+
+	$url = ymkrf_bulk_url( $r );
+	if ( $url === '' ) return false;
+
+	global $wpdb;
+	$id = (int) $wpdb->get_var( $wpdb->prepare(
+		"SELECT post_id FROM {$wpdb->postmeta}
+		  WHERE meta_key = '_ymkrf_src_url' AND meta_value = %s LIMIT 1", $url ) );
+	if ( ! $id ) return false;
+
+	/* 手で書いてあるものは、そのままにします */
+	$now = trim( (string) get_post_meta( $id, '_ymkrf_works_comment', true ) );
+	if ( $now !== '' ) return false;
+
+	update_post_meta( $id, '_ymkrf_works_comment', sanitize_textarea_field( $point ) );
+	return true;
+}
+
+
+/* ============================================================
    リフォーム箇所を付けなおす
 
    さいしょの取り込みでは、いまのサイトのURL（/works/boiler/ など）を
@@ -155,7 +191,7 @@ add_action( 'admin_init', function () {
    ============================================================ */
 
 define( 'YMKRF_RECAT_MARK', '_ymkrf_recat' );   /* 付けなおしずみの印 */
-define( 'YMKRF_RECAT_VER',  '2' );
+define( 'YMKRF_RECAT_VER',  '3' );   /* 上げると、もう一度つけなおせます */
 
 /** まだ付けなおしていない施工事例のID（先頭から $limit 件） */
 function ymkrf_recat_todo( $limit = 200 ) {
@@ -211,6 +247,16 @@ function ymkrf_recat_one( $id ) {
 		if ( $title !== '' && $title !== get_post_field( 'post_title', $id ) ) {
 			update_post_meta( $id, '_ymkrf_auto_title', $title );
 			wp_update_post( array( 'ID' => $id, 'post_title' => $title ) );
+		}
+	}
+
+	/* 抜粋（＝検索結果に出る説明文）が空なら、ここで入れておきます。
+	   取り込んだぶんは本文が空なので、おこなった工事から作ります。（2026/09/08） */
+	$p = get_post( $id );
+	if ( $p && trim( (string) $p->post_excerpt ) === '' ) {
+		$x = trim( ymkrf_works_excerpt( $id, 90 ) );
+		if ( $x !== '' && $x !== '…' ) {
+			wp_update_post( array( 'ID' => $id, 'post_excerpt' => $x ) );
 		}
 	}
 
@@ -324,6 +370,21 @@ function ymkrf_bulk_page() {
 		$fixed = (int) $n;
 	}
 
+	/* 担当者のコメントを入れる */
+	if ( isset( $_POST['ymkrf_cmt_go'] ) && check_admin_referer( 'ymkrf_bulk' ) ) {
+		$cpos = (int) get_option( YMKRF_CMT_POS, 0 );
+		$t0 = time(); $cn = 0;
+		while ( $cpos < count( $rows ) && ( time() - $t0 ) < 100 ) {
+			if ( ymkrf_bulk_comment_one( $rows[ $cpos ] ) ) $cn++;
+			$cpos++;
+		}
+		update_option( YMKRF_CMT_POS, $cpos, false );
+		$cmt_n = $cn;
+	}
+	if ( isset( $_POST['ymkrf_cmt_reset'] ) && check_admin_referer( 'ymkrf_bulk' ) ) {
+		update_option( YMKRF_CMT_POS, 0, false );
+	}
+
 	/* リフォーム箇所を付けなおす */
 	if ( isset( $_POST['ymkrf_recat_go'] ) && check_admin_referer( 'ymkrf_bulk' ) ) {
 		$t0 = time(); $recat = array(); $n = 0;
@@ -374,6 +435,31 @@ function ymkrf_bulk_page() {
 	?>
 	<div class="wrap">
 	  <h1>施工事例を まとめて取り込む</h1>
+
+	  <?php $cpos = (int) get_option( YMKRF_CMT_POS, 0 ); ?>
+	  <?php if ( isset( $cmt_n ) ) : ?>
+	    <div class="notice notice-success"><p>
+	      担当者のコメントを <?php echo (int) $cmt_n; ?> 件入れました
+	      （<?php echo (int) $cpos; ?> / <?php echo count( $rows ); ?> 件まで確認）。</p></div>
+	  <?php endif; ?>
+	  <?php if ( $rows && $cpos < count( $rows ) ) : ?>
+	    <div style="margin:16px 0;padding:14px 18px;border-radius:6px;
+	                border:2px solid #fe3301;background:#fff7f4">
+	      <p style="margin:0 0 8px;font-weight:700">
+	        担当者のコメントを入れる（のこり <?php echo count( $rows ) - $cpos; ?> 件）</p>
+	      <p class="description" style="margin:0 0 10px">
+	        いまのサイトの「工事のポイント（担当者のコメント）」は、公開ページから
+	        取れなかったため、取り込みで抜けていました。読み取ったデータには
+	        入っているので、そこから入れます。<br>
+	        <b>すでに手で書いてあるものは、上書きしません。</b>
+	      </p>
+	      <form method="post" style="margin:0">
+	        <?php wp_nonce_field( 'ymkrf_bulk' ); ?>
+	        <button class="button button-primary" name="ymkrf_cmt_go" value="1">つづきを入れる</button>
+	        <button class="button" name="ymkrf_cmt_reset" value="1">はじめから数えなおす</button>
+	      </form>
+	    </div>
+	  <?php endif; ?>
 
 	  <?php
 	  /* ---- リフォーム箇所の付けなおし ---- */

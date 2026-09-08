@@ -30,13 +30,83 @@ if ( ! defined( 'ABSPATH' ) ) exit;
    ============================================================ */
 
 function ymkrf_voice_parts_list() {
+
+	/* 施工事例の「部位」と、いつも同じ顔ぶれ・同じ順番にします。
+	   もとは inc/functions-works.php の ymkrf_works_parts_master() です。
+	   （トップページの「リフォームメニュー」とも同じ並びです）
+	   片方だけ増やしてずれる、ということが起きないように、
+	   一覧はあちらから借りてきます。
+	   （2026/09/08 ユーザー指示「これらをお客様の声、施工事例同じにして」） */
+	if ( function_exists( 'ymkrf_works_parts_names' ) ) {
+		return array_values( ymkrf_works_parts_names() );
+	}
+
+	/* 念のための控え（ふだんは使いません） */
 	return array(
-		'キッチン','浴室','トイレ','洗面室',
-		'エコキュート','給湯器','オイルタンク','エクステリア',
-		'カーポート','外壁','屋根','窓・サッシ',
-		'レンジフード','ドア','蓄電池','太陽光発電',
-		'修理・小工事','改装・内装','その他',
+		'キッチン','お風呂','トイレ','洗面化粧台',
+		'給湯器','オイルタンク','エコキュート','IH・ガスコンロ','換気扇・レンジフード',
+		'クロス・床','内装・改装','窓・断熱','ドア',
+		'エクステリア','カーポート','物置','フェンス・門まわり','外壁・屋根',
+		'修理・小工事','解体','その他',
 	);
+}
+
+/**
+ * むかしの言い方 => いまの言い方。
+ *
+ * 取り込んだ古いお客様の声には、むかしの言い方が入っています。
+ * 表示のときにここで読みかえるので、記録はそのまま残しておけます。
+ */
+function ymkrf_voice_parts_alias() {
+	return array(
+		'浴室'       => 'お風呂',
+		'洗面室'     => '洗面化粧台',
+		'改装・内装' => '内装・改装',
+		'窓・サッシ' => '窓・断熱',
+		'玄関ドア'   => 'ドア',
+		'内装・クロス・床' => 'クロス・床',
+		'外壁'       => '外壁・屋根',
+		'屋根'       => '外壁・屋根',
+		/* 「レンジフード」は「換気扇」に言い方をそろえました（2026/09/08） */
+		'レンジフード' => '換気扇・レンジフード',
+		'換気扇'       => '換気扇・レンジフード',
+		/* 蓄電池・太陽光発電は、別のサイトでご案内しています（2026/09/08） */
+		'蓄電池'     => 'その他',
+		'太陽光発電' => 'その他',
+	);
+}
+
+/**
+ * むかしの言い方を、いまの言い方にそろえます。
+ *
+ * 上の一覧にも読みかえ表にも無いものは、「その他」にします。
+ * 施工事例の「部位」と、いつも同じ顔ぶれにしておくためです。
+ * （2026/09/08 ユーザー指示「もしその他の箇所の登録があれば
+ *   その他にしておいて」）
+ */
+function ymkrf_voice_parts_fix( $parts ) {
+
+	$map  = ymkrf_voice_parts_alias();
+	$list = ymkrf_voice_parts_list();
+	$out  = array();
+
+	foreach ( (array) $parts as $p ) {
+		$p = trim( (string) $p );
+		if ( $p === '' ) continue;
+		if ( isset( $map[ $p ] ) ) $p = $map[ $p ];
+		if ( ! in_array( $p, $list, true ) ) $p = 'その他';
+		if ( ! in_array( $p, $out, true ) ) $out[] = $p;
+	}
+
+	/* 決めた順（キッチン → お風呂 → …）に並べなおします */
+	usort( $out, function ( $a, $b ) use ( $list ) {
+		$ia = array_search( $a, $list, true ); if ( $ia === false ) $ia = 900;
+		$ib = array_search( $b, $list, true ); if ( $ib === false ) $ib = 900;
+		if ( $ia === $ib ) return 0;
+		return ( $ia < $ib ) ? -1 : 1;
+	} );
+
+	return $out;
 }
 function ymkrf_voice_reasons_list() {
 	return array(
@@ -570,8 +640,13 @@ add_action( 'wp_ajax_ymkrf_voice_pub_image', function () {
    ============================================================ */
 
 function ymkrf_voice_meta_array( $post_id, $key ) {
-	$v = (string) get_post_meta( $post_id, $key, true );
-	return array_values( array_filter( array_map( 'trim', explode( ',', $v ) ) ) );
+	$v   = (string) get_post_meta( $post_id, $key, true );
+	$out = array_values( array_filter( array_map( 'trim', explode( ',', $v ) ) ) );
+
+	/* 工事箇所だけは、むかしの言い方をいまの言い方にそろえて返します */
+	if ( $key === '_ymkrf_parts' ) $out = ymkrf_voice_parts_fix( $out );
+
+	return $out;
 }
 
 /**
@@ -729,6 +804,46 @@ function ymkrf_voice_excerpt( $post_id, $len = 90 ) {
 	if ( $c === '' ) $c = ymkrf_voice_summary( $post_id );
 	return mb_strimwidth( $c, 0, $len * 2, '…', 'UTF-8' );
 }
+
+
+/* 抜粋（＝検索結果に出る説明文）が空のときは、
+   ご感想から自動で入れておきます。1,590件を手で書くのは無理なので、
+   空欄のまま検索結果に何も出ない、ということが起きないようにします。
+   （2026/09/08） */
+add_action( 'save_post_ymkrf_voice', function ( $post_id ) {
+
+	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
+	if ( wp_is_post_revision( $post_id ) ) return;
+
+	$p = get_post( $post_id );
+	if ( ! $p || trim( (string) $p->post_excerpt ) !== '' ) return;
+
+	$x = trim( ymkrf_voice_excerpt( $post_id, 90 ) );
+	if ( $x === '' ) return;
+
+	remove_action( 'save_post_ymkrf_voice', __FUNCTION__, 40 );
+	wp_update_post( array( 'ID' => $post_id, 'post_excerpt' => $x ) );
+	add_action( 'save_post_ymkrf_voice', __FUNCTION__, 40 );
+}, 40 );
+
+
+/* 抜粋の欄に、何を書く欄かを出します */
+add_action( 'admin_footer-post.php', function () {
+	$s = get_current_screen();
+	if ( ! $s || $s->post_type !== 'ymkrf_voice' ) return;
+	?>
+	<script>
+	jQuery(function ($) {
+		var $box = $('#postexcerpt');
+		if (!$box.length) return;
+		$box.find('.inside p').html(
+			'<b>Googleの検索結果に出る説明文</b>です（青いリンクの下に出る2行）。<br>' +
+			'空のままで大丈夫です。そのときは、いただいたご感想から自動で入ります。'
+		);
+	});
+	</script>
+	<?php
+} );
 
 
 /* ============================================================

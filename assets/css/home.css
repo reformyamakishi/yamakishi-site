@@ -335,6 +335,14 @@
 .p-menu__item[data-icon="oiltank"] .p-menu__icon{ background-image:url("../img/icon/sim-oiltank.png"); }
 .p-menu__item[data-icon="demolition"] .p-menu__icon{ background-image:url("../img/icon/sim-demolition.png"); }
 
+/* 2026/09/08 に支給いただいた絵です */
+.p-menu__item[data-icon="fence"] .p-menu__icon{ background-image:url("../img/icon/sim-fence.png"); }
+.p-menu__item[data-icon="ventilation"] .p-menu__icon{ background-image:url("../img/icon/sim-ventilation.png"); }
+
+/* エクステリア（ベランダ・サンルーム・風除室・テラス）は、
+   サンルームの絵がぴったりなので、そちらを使います。 */
+.p-menu__item[data-icon="exterior"] .p-menu__icon{ background-image:url("../img/icon/sim-veranda.png"); }
+
 /* 給湯器・物置・解体は、絵のまわりに空きが多く（湯気やアームの分）
    ほかより小さく見えてしまうので、この3つだけ枠を大きくしています。
    マイナスのmarginで、文字の位置は動かないようにしています。 */

@@ -108,13 +108,19 @@ function ymkrf_works_parts_master() {
 		'oiltank'    => array( 'オイルタンク',        'オイルタンク工事の事例' ),
 		'ecocute'    => array( 'エコキュート',        'エコキュート交換の事例' ),
 		'ih'         => array( 'IH・ガスコンロ',       'IH・ガスコンロ交換の事例' ),
-		'interior'   => array( '内装・クロス・床',    '内装リフォーム事例' ),
+		/* もとは「レンジフード」でしたが、言い方を「換気扇」にそろえました
+		   （2026/09/08 ユーザー指示） */
+		'ventilation'=> array( '換気扇・レンジフード','換気扇・レンジフード交換の事例' ),
+		'interior'   => array( 'クロス・床',          'クロス・床リフォーム事例' ),
 		'renovation' => array( '内装・改装',          '内装・改装の事例' ),
 		'window'     => array( '窓・断熱',            '窓・断熱リフォーム事例' ),
-		'door'       => array( '玄関ドア',            '玄関ドア交換の事例' ),
-		'veranda'    => array( 'ベランダ・サンルーム','ベランダ・サンルームの事例' ),
+		'door'       => array( 'ドア',                'ドア交換の事例' ),
+		/* ベランダ・サンルーム・風除室・テラスは、同じ仲間なので
+		   「エクステリア」にまとめました（2026/09/08 ユーザー指示） */
+		'exterior'   => array( 'エクステリア',        'エクステリア工事の事例' ),
 		'carport'    => array( 'カーポート',          'カーポート設置の事例' ),
 		'storage'    => array( '物置',                '物置設置の事例' ),
+		'fence'      => array( 'フェンス・門まわり',  'フェンス工事の事例' ),
 		'outer-wall' => array( '外壁・屋根',          '外壁・屋根リフォーム事例' ),
 		'repair'     => array( '修理・小工事',        '修理・小工事の事例' ),
 		'demolition' => array( '解体',                '解体工事の事例' ),
@@ -140,7 +146,7 @@ function ymkrf_works_part_title_word( $name ) {
 /* 足りない項目を作り、名前が変わったものは付けかえます
    （数字を上げると、もう一度だけ走ります） */
 add_action( 'admin_init', function () {
-	if ( get_option( 'ymkrf_works_cat_ver' ) === '4' ) return;
+	if ( get_option( 'ymkrf_works_cat_ver' ) === '10' ) return;
 	if ( ! taxonomy_exists( 'ymkrf_works_cat' ) ) return;
 
 	foreach ( ymkrf_works_parts_names() as $slug => $name ) {
@@ -149,6 +155,33 @@ add_action( 'admin_init', function () {
 			wp_insert_term( $name, 'ymkrf_works_cat', array( 'slug' => $slug ) );
 		} elseif ( $t->name !== $name ) {
 			wp_update_term( $t->term_id, 'ymkrf_works_cat', array( 'name' => $name ) );
+		}
+	}
+
+	/* ベランダ・サンルーム／風除室／テラス は「エクステリア」にまとめました。
+	   すでに付いている事例を、こちらへ移してから片づけます。（2026/09/08） */
+	$to = get_term_by( 'slug', 'exterior', 'ymkrf_works_cat' );
+	if ( $to && ! is_wp_error( $to ) ) {
+		foreach ( array( 'veranda', 'windbreak', 'terrace' ) as $slug ) {
+			$from = get_term_by( 'slug', $slug, 'ymkrf_works_cat' );
+			if ( ! $from || is_wp_error( $from ) ) continue;
+
+			$ids = get_posts( array(
+				'post_type'      => 'ymkrf_works',
+				'post_status'    => 'any',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+				'tax_query'      => array( array(
+					'taxonomy' => 'ymkrf_works_cat',
+					'field'    => 'term_id',
+					'terms'    => $from->term_id,
+				) ),
+			) );
+			foreach ( $ids as $pid ) {
+				wp_set_object_terms( $pid, (int) $to->term_id, 'ymkrf_works_cat', true );
+				wp_remove_object_terms( $pid, (int) $from->term_id, 'ymkrf_works_cat' );
+			}
+			wp_delete_term( $from->term_id, 'ymkrf_works_cat' );
 		}
 	}
 
@@ -163,7 +196,7 @@ add_action( 'admin_init', function () {
 		}
 	}
 
-	update_option( 'ymkrf_works_cat_ver', '4' );
+	update_option( 'ymkrf_works_cat_ver', '10' );
 } );
 
 /** 箇所の項目を、決めた順に並べて返します */
@@ -187,6 +220,10 @@ function ymkrf_works_part_terms() {
         商品がまだ1つも無いまとまりも、見出しだけ出しておきます。
    ------------------------------------------------------------ */
 function ymkrf_works_prod_groups_master() {
+	/* トップページの「リフォームメニュー」と、名前も順番もそろえてあります。
+	   （2026/09/08 ユーザー指示「すべてこのサイト内、リフォームメニューに
+	     合わせてほしい」）
+	   「手洗い付きカウンタートイレ」だけは、トイレの中の分けかたです。 */
 	return array(
 		'kitchen'        => 'キッチン',
 		'bathroom'       => 'お風呂',
@@ -194,63 +231,54 @@ function ymkrf_works_prod_groups_master() {
 		'toilet-counter' => '手洗い付きカウンタートイレ',
 		'lavatory'       => '洗面化粧台',
 		'boiler'         => '給湯器',
+		'oiltank'        => 'オイルタンク',
 		'ecocute'        => 'エコキュート',
+		'ih'             => 'IH・ガスコンロ',
+		'ventilation'    => '換気扇・レンジフード',
+		'interior'       => 'クロス・床',
+		'renovation'     => '内装・改装',
+		'window'         => '窓・断熱',
+		'door'           => 'ドア',
+		'exterior'       => 'エクステリア',
+		'carport'        => 'カーポート',
+		'storage'        => '物置',
+		'fence'          => 'フェンス・門まわり',
 		'outer-wall'     => '外壁・屋根',
-		'window'         => '窓・玄関ドア',
-		'interior'       => '内装・改装',
+		'repair'         => '修理・小工事',
+		'demolition'     => '解体',
 		'other'          => 'その他',
 	);
 }
 
 /* ------------------------------------------------------------
-   1-c. メーカーだけを選べるまとまり
+   1-c. 品番をえらばないまとまり
 
-   給湯器・エコキュートは、同じ働きの機械でも品番が年ごとに変わります。
-   むかしの工事のぶんは、いまのカタログに載っていない品番も多いので、
-   商品ページをひとつずつ作るのは現実的ではありません。
-   そこで、この2つは「メーカーだけ」を選べるようにしています。
-   （2026/09/08 ユーザー指摘「エコキュートは品番がころころ変わる。
-     メーカーを選ぶだけで良いかも」「給湯器もそうですね」）
+   給湯器・エコキュート・外壁・屋根・窓・玄関ドア・内装・改装は、
+   品番が年ごとに変わったり、そもそも品番で選ぶものではありません。
+   施工事例では「これを使いました」だけをえらび、
+   お客様のページでは、その一覧ページへのリンクを出します。
+   （2026/09/08 ユーザー指示「エコキュートと給湯器、品番不要！
+     エコキュートのみ選択、給湯器のみ、選択！」
+     「外壁・屋根、窓、ドア、内装改装もね」）
    ------------------------------------------------------------ */
-function ymkrf_works_maker_master() {
-	return array(
-		'boiler'  => array(
-			'ノーリツ', 'リンナイ', 'パロマ', 'パーパス',
-			'コロナ', '長府製作所', 'サンポット', '三菱電機', '日立',
-		),
-		'ecocute' => array(
-			'三菱電機', 'ダイキン', 'パナソニック', '日立', 'コロナ', '東芝',
-		),
-	);
+function ymkrf_works_catlink_groups() {
+	/* 商品ページをえらぶのは、キッチン・お風呂・トイレ・洗面化粧台だけ。
+	   のこりは「この工事に入っています」のチェック1つです。 */
+	$pick = array( 'kitchen', 'bathroom', 'toilet', 'toilet-counter', 'lavatory', 'other' );
+	$out  = array();
+	foreach ( array_keys( ymkrf_works_prod_groups_master() ) as $g ) {
+		if ( ! in_array( $g, $pick, true ) ) $out[] = $g;
+	}
+	return $out;
 }
 
-/**
- * この施工事例で選ばれている「メーカーだけ」のぶん。
- * 保存の形は 1行に「まとまり|メーカー名」です。
- *
- * @return array array( array( 'group' => 'ecocute', 'label' => 'エコキュート',
- *                             'maker' => '三菱電機' ), … )
- */
-function ymkrf_works_makers( $post_id ) {
-
-	$raw = (string) get_post_meta( $post_id, '_ymkrf_makers', true );
-	if ( trim( $raw ) === '' ) return array();
-
-	$names  = ymkrf_works_prod_groups_master();
-	$master = ymkrf_works_maker_master();
-	$out    = array();
-
-	foreach ( preg_split( '/\R/u', $raw ) as $line ) {
-		$line = trim( $line );
-		if ( $line === '' || strpos( $line, '|' ) === false ) continue;
-		list( $g, $m ) = array_map( 'trim', explode( '|', $line, 2 ) );
-		if ( ! isset( $master[ $g ] ) ) continue;
-		if ( ! in_array( $m, $master[ $g ], true ) ) continue;
-		$out[] = array(
-			'group' => $g,
-			'label' => isset( $names[ $g ] ) ? $names[ $g ] : $g,
-			'maker' => $m,
-		);
+/** この施工事例でえらばれている、一覧ページへのリンク（英字の配列） */
+function ymkrf_works_catlinks( $post_id ) {
+	$v   = (string) get_post_meta( $post_id, '_ymkrf_catlink', true );
+	$out = array();
+	foreach ( explode( ',', $v ) as $g ) {
+		$g = trim( $g );
+		if ( $g !== '' && in_array( $g, ymkrf_works_catlink_groups(), true ) ) $out[] = $g;
 	}
 	return $out;
 }
@@ -418,10 +446,8 @@ function ymkrf_works_metabox( $post ) {
 	};
 	$shops = get_terms( array( 'taxonomy' => 'ymkrf_shop', 'hide_empty' => false ) );
 	$sel   = array_map( 'intval', array_filter( explode( ',', (string) $get( '_ymkrf_products' ) ) ) );
-	/* 「メーカーだけ」で選んであるぶん（給湯器・エコキュート） */
-	$pmakers = ymkrf_works_maker_master();
-	$selmk   = array();
-	foreach ( ymkrf_works_makers( $post->ID ) as $r ) $selmk[] = $r['group'] . '|' . $r['maker'];
+	$selcl = ymkrf_works_catlinks( $post->ID );
+
 
 	$parts    = ymkrf_works_part_terms();
 	$partsel  = wp_get_object_terms( $post->ID, 'ymkrf_works_cat', array( 'fields' => 'ids' ) );
@@ -626,15 +652,11 @@ function ymkrf_works_metabox( $post ) {
 	    </tr>
 
 	    <tr>
-	      <th>おこなった工事</th>
+	      <th>備考</th>
 	      <td>
 	        <textarea name="_ymkrf_work_items" rows="6" class="large-text ymkrf-works__items"
-	                  placeholder="キッチン交換工事&#10;止水栓交換&#10;既存品撤去・処分"><?php
+	                  placeholder="工夫した箇所、お客様からの要望など参考になることがあれば入力してください。"><?php
 	          echo esc_textarea( $items ); ?></textarea>
-	        <p class="description">
-	          <b>1行に1つずつ</b>書いてください。ページでは、オレンジのチェック印を付けて並べます。<br>
-	          記号（・や※）は要りません。空の行はとばします。
-	        </p>
 	      </td>
 	    </tr>
 
@@ -643,64 +665,123 @@ function ymkrf_works_metabox( $post ) {
 	      <td>
 	        <div class="ymkrf-works__pgroups">
 	          <?php foreach ( $pgroups as $gk => $g ) : ?>
-	            <div class="ymkrf-works__pgroup">
-	              <p class="ymkrf-works__pttl"><?php echo esc_html( $g['label'] ); ?>
-	                <?php if ( $gk !== 'other' ) : ?>
-	                  <span class="ymkrf-works__pnum"><?php echo count( $g['items'] ); ?></span>
+            <?php $iscl0 = in_array( $gk, ymkrf_works_catlink_groups(), true ); ?>
+	            <div class="ymkrf-works__pgroup<?php echo $iscl0 ? ' ymkrf-works__pgroup--one' : ''; ?>">
+	              <?php $iscl = in_array( $gk, ymkrf_works_catlink_groups(), true ); ?>
+	              <p class="ymkrf-works__pttl">
+	                <?php if ( $iscl ) : ?>
+	                  <?php /* 品番はえらばないので、見出しの左にチェックを置きます
+	                           （2026/09/08 ユーザー指示） */ ?>
+	                  <label class="ymkrf-works__pttlchk">
+	                    <input type="checkbox" name="_ymkrf_catlink[]"
+	                           value="<?php echo esc_attr( $gk ); ?>"
+	                      <?php checked( in_array( $gk, $selcl, true ) ); ?>>
+	                    <span><?php echo esc_html( $g['label'] ); ?></span>
+	                  </label>
+	                <?php else : ?>
+	                  <?php echo esc_html( $g['label'] ); ?>
+	                  <?php if ( $gk !== 'other' ) : ?>
+	                    <span class="ymkrf-works__pnum"><?php echo count( $g['items'] ); ?></span>
+	                  <?php endif; ?>
 	                <?php endif; ?>
 	              </p>
 
-	              <?php if ( $g['items'] ) : ?>
+	              <?php if ( $iscl ) : ?>
+	                <?php /* もし前に品番をえらんであったら、そのまま残します */ ?>
+	                <?php foreach ( $g['items'] as $pr ) :
+	                  if ( ! in_array( (int) $pr->ID, $sel, true ) ) continue; ?>
+	                  <input type="hidden" name="_ymkrf_products[]" value="<?php echo (int) $pr->ID; ?>">
+	                <?php endforeach; ?>
+	              <?php elseif ( $g['items'] ) : ?>
 	                <div class="ymkrf-works__prods">
 	                  <?php foreach ( $g['items'] as $pr ) : ?>
 	                    <label>
 	                      <input type="checkbox" name="_ymkrf_products[]" value="<?php echo (int) $pr->ID; ?>"
 	                        <?php checked( in_array( (int) $pr->ID, $sel, true ) ); ?>>
-	                      <span><?php echo esc_html( get_the_title( $pr ) ); ?></span>
+	                      <span><?php
+	                        /* 「手洗い付きカウンタートイレ」のまとまりでは、
+	                           商品名のうしろの【手洗いカウンター付】は出しません。
+	                           見出しに書いてあるので、二重になるためです。
+	                           （2026/09/08 ユーザー指示）
+	                           ※商品そのものの名前は変えていません。商品ページでは、
+	                             手洗いカウンターの有り無しを見分けるのに使っています。 */
+	                        $plabel = (string) get_the_title( $pr );
+	                        if ( $gk === 'toilet-counter' ) {
+	                          $plabel = trim( preg_replace( '/【[^】]*(手洗い|カウンター)[^】]*】/u', '', $plabel ) );
+	                        }
+	                        echo esc_html( $plabel );
+	                      ?></span>
 	                    </label>
 	                  <?php endforeach; ?>
 	                </div>
-	              <?php elseif ( $gk !== 'other' && ! isset( $pmakers[ $gk ] ) ) : ?>
+	              <?php elseif ( $gk !== 'other' ) : ?>
 	                <p class="ymkrf-works__pempty">商品ページができたら、ここに出ます。<br>
 	                  それまでは、いちばん下の「その他」に商品名を書いてください。</p>
 	              <?php endif; ?>
 
-	              <?php
-	              /* 給湯器・エコキュートは、品番が年ごとに変わるので
-	                 「メーカーだけ」でも選べるようにしています。（2026/09/08） */
-	              if ( isset( $pmakers[ $gk ] ) ) : ?>
-	                <div class="ymkrf-works__makers">
-	                  <p class="ymkrf-works__makerttl">メーカーだけ選ぶ<span>品番がわからないときは、こちらだけで大丈夫です</span></p>
-	                  <div class="ymkrf-works__makerlist">
-	                    <?php foreach ( $pmakers[ $gk ] as $mk ) : ?>
-	                      <label>
-	                        <input type="checkbox" name="_ymkrf_makers[<?php echo esc_attr( $gk ); ?>][]"
-	                               value="<?php echo esc_attr( $mk ); ?>"
-	                          <?php checked( in_array( $gk . '|' . $mk, $selmk, true ) ); ?>>
-	                        <span><?php echo esc_html( $mk ); ?></span>
-	                      </label>
-	                    <?php endforeach; ?>
-	                  </div>
-	                </div>
-	              <?php endif; ?>
-
 	              <?php if ( $gk === 'other' ) : ?>
-	                <div class="ymkrf-works__ptext">
-	                  <label for="_ymkrf_product_text">ページが無い商品は、ここに名前を書いてください</label>
-	                  <input type="text" id="_ymkrf_product_text" name="_ymkrf_product_text"
-	                         value="<?php echo esc_attr( $get( '_ymkrf_product_text' ) ); ?>"
-	                         class="large-text" placeholder="例：トクラス　Bbプラス">
+	                <?php
+	                /* 商品ページが無いものは、ここに書きます。1行に1商品。
+	                   左が「旧パック商品」のチェック、右がこのサイトの中の
+	                   関連ページ（エコキュートや給湯器の一覧など）のURLです。
+	                   （2026/09/08 ユーザー指示「一行にしたい。その下に、
+	                     このサイトの関連ぺージのURLを入力する欄作って」） */
+	                $ptlines = array_values( array_filter( array_map( 'trim',
+	                  preg_split( '/\R/u', (string) $get( '_ymkrf_product_text' ) ) ),
+	                  function ( $v ) { return $v !== ''; } ) );
+	                $ptpack  = array_values( array_filter( array_map( 'trim',
+	                  preg_split( '/\R/u', (string) $get( '_ymkrf_ptext_pack' ) ) ),
+	                  function ( $v ) { return $v !== ''; } ) );
 
-	                  <label class="ymkrf-works__oldpack">
-	                    <input type="checkbox" name="_ymkrf_oldpack" value="1"
-	                      <?php checked( (string) $get( '_ymkrf_oldpack' ), '1' ); ?>>
-	                    <span>※こちらはヤマキシ旧パック商品となります</span>
-	                  </label>
+	                /* URLは「商品名|URL」の形でしまってあります */
+	                $pturl = array();
+	                foreach ( preg_split( '/\R/u', (string) $get( '_ymkrf_ptext_url' ) ) as $u ) {
+	                  $u = trim( $u );
+	                  if ( $u === '' || strpos( $u, '|' ) === false ) continue;
+	                  list( $un, $uu ) = array_map( 'trim', explode( '|', $u, 2 ) );
+	                  if ( $un !== '' ) $pturl[ $un ] = $uu;
+	                }
+
+	                $ptrows = max( 5, count( $ptlines ) + 1 );
+	                ?>
+	                <div class="ymkrf-works__ptext">
+	                  <p class="ymkrf-works__ptextttl">関連ページが無い商品</p>
+
+	                  <div class="ymkrf-works__ptrows">
+	                    <div class="ymkrf-works__pthead">
+	                      <span>旧パック<br>✓欄</span><span>商品名</span><span>関連ページのURL（任意）</span>
+	                    </div>
+	                    <?php for ( $i = 0; $i < $ptrows; $i++ ) :
+	                      $pv = isset( $ptlines[ $i ] ) ? $ptlines[ $i ] : '';
+	                      $uv = ( $pv !== '' && isset( $pturl[ $pv ] ) ) ? $pturl[ $pv ] : ''; ?>
+	                      <div class="ymkrf-works__ptrow">
+	                        <label class="ymkrf-works__ptchk">
+	                          <input type="checkbox" name="_ymkrf_ptext_pack[<?php echo $i; ?>]" value="1"
+	                            <?php checked( $pv !== '' && in_array( $pv, $ptpack, true ) ); ?>>
+	                          <span class="screen-reader-text">旧パック商品</span>
+	                        </label>
+	                        <?php /* 何行目かを入力例に書いておくと、
+	                                 「1行に1商品」がひと目で伝わります（2026/09/08） */ ?>
+	                        <input type="text" name="_ymkrf_ptext[<?php echo $i; ?>]"
+	                               value="<?php echo esc_attr( $pv ); ?>"
+	                               placeholder="<?php echo esc_attr(
+	                                 ( $i + 1 ) . 'つめの商品'
+	                                 . ( $i === 0 ? '（例：トクラス　Bbプラス）' : '' ) ); ?>">
+	                        <input type="text" name="_ymkrf_ptext_url[<?php echo $i; ?>]"
+	                               value="<?php echo esc_attr( $uv ); ?>"
+	                               placeholder="<?php echo $i === 0 ? '例：/products/ecocute/' : ''; ?>">
+	                      </div>
+	                    <?php endfor; ?>
+	                  </div>
+
 	                  <p class="ymkrf-works__oldpacknote">
-	                    えらんだ商品の<b>取り扱いが終わって非表示になると、公開中の事例には
-	                    自動でチェックが入ります</b>（下書きのあいだは何もしません）。<br>
-	                    自動で外れることはないので、はずしたいときは手でチェックを外してください。
+	                    <b>旧パック</b>にチェックを入れた商品には、ページで
+	                    「※こちらはヤマキシ旧パック商品となります」と出ます。<br>
+	                    <b>関連ページのURL</b>を入れると、その商品がリンクになります。
+	                    このサイトの中のページにしてください
+	                    （例：<code>/products/ecocute/</code>　<code>/products/boiler/</code>）。
 	                  </p>
+
 	                </div>
 	              <?php endif; ?>
 	            </div>
@@ -734,14 +815,25 @@ add_action( 'admin_head', function () {
 	  .ymkrf-works__parts input{margin:0}
 
 	  /* 使った商品 */
+	  /* 中で縦にスクロールさせず、そのまま全部出します（2026/09/08 ユーザー指示） */
 	  .ymkrf-works__pgroups{
-	    max-width:1240px;border:1px solid #dcdcde;border-radius:8px;
-	    background:#fff;max-height:520px;overflow:auto}
+	    max-width:1240px;border:1px solid #dcdcde;border-radius:8px;background:#fff}
 	  .ymkrf-works__pgroup{border-bottom:1px solid #f0f0f1;padding:10px 14px 14px}
 	  .ymkrf-works__pgroup:last-child{border-bottom:0}
 	  .ymkrf-works__pttl{
 	    margin:0 0 8px;font-size:13px;font-weight:700;color:#1d2327;
 	    display:flex;align-items:center;gap:8px}
+	  /* 品番をえらばないまとまりは、チェック1つだけなので、
+	     枠を付けず、高さもつめます（2026/09/08 ユーザー指示） */
+	  .ymkrf-works__pgroup--one{padding:3px 14px;border-bottom:0}
+	  .ymkrf-works__pgroup--one .ymkrf-works__pttl{margin:0}
+	  .ymkrf-works__pgroup--one + .ymkrf-works__pgroup:not(.ymkrf-works__pgroup--one){
+	    border-top:1px solid #f0f0f1;padding-top:12px}
+	  .ymkrf-works__pttlchk{
+	    display:inline-flex;align-items:center;gap:8px;margin:0;cursor:pointer}
+	  .ymkrf-works__pttlchk input{margin:0}
+	  .ymkrf-works__pttlchk span{font-size:13px;font-weight:700;color:#1d2327}
+	  .ymkrf-works__pttlchk:hover span{color:#fe3301}
 	  .ymkrf-works__pnum{
 	    font-size:11px;font-weight:700;color:#646970;background:#f0f0f1;
 	    border-radius:999px;padding:1px 8px}
@@ -753,33 +845,46 @@ add_action( 'admin_head', function () {
 	  @media (max-width:1280px){ .ymkrf-works__prods{grid-template-columns:repeat(3,minmax(0,1fr))} }
 	  @media (max-width:980px){  .ymkrf-works__prods{grid-template-columns:repeat(2,minmax(0,1fr))} }
 	  @media (max-width:700px){  .ymkrf-works__prods{grid-template-columns:1fr} }
-
-	  /* メーカーだけ選ぶ欄（給湯器・エコキュート） */
-	  .ymkrf-works__makers{
-	    margin-top:10px;padding:10px 12px;border:1px dashed #dcdcde;
-	    border-radius:6px;background:#fbfbfc}
-	  .ymkrf-works__makerttl{
-	    margin:0 0 8px;font-size:12px;font-weight:700;color:#1d2327}
-	  .ymkrf-works__makerttl span{
-	    display:inline-block;margin-left:8px;font-weight:400;color:#646970}
-	  .ymkrf-works__makerlist{
-	    display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:4px 14px}
-	  .ymkrf-works__makerlist label{
-	    display:grid;grid-template-columns:22px 1fr;align-items:center;
-	    line-height:1.5;padding:2px 0;font-size:13px}
-	  .ymkrf-works__makerlist input{margin:0}
+	  /* チェックと商品名は、かならず横に並べます。
+	     名前が長いときは、名前のほうだけで折り返します。 */
 	  .ymkrf-works__prods label{
-	    display:grid;grid-template-columns:22px 1fr;align-items:start;
+	    display:grid;grid-template-columns:22px minmax(0,1fr);align-items:start;
 	    line-height:1.5;padding:2px 0}
+	  .ymkrf-works__prods label > span{min-width:0;word-break:break-word}
 	  .ymkrf-works__prods input{margin:2px 0 0}
+
+	  /* ページが無い商品の入力欄（1行＝旧パック／商品名／関連ページのURL） */
 	  .ymkrf-works__pempty{margin:0;font-size:12px;color:#8c8f94;line-height:1.7}
-	  .ymkrf-works__ptext label{display:block;font-size:12px;color:#646970;margin-bottom:4px}
+	  .ymkrf-works__ptextttl{margin:0 0 8px;font-size:12px;font-weight:700;color:#1d2327}
+	  .ymkrf-works__ptextttl span{display:inline-block;margin-left:8px;font-weight:400;color:#646970}
+	  .ymkrf-works__ptrows{display:grid;gap:6px;max-width:840px}
+	  .ymkrf-works__pthead,
+	  .ymkrf-works__ptrow{
+	    display:grid;grid-template-columns:66px minmax(0,1fr) minmax(0,1fr);
+	    gap:8px;align-items:center}
+	  .ymkrf-works__pthead{font-size:11px;font-weight:700;color:#646970;line-height:1.4}
+	  .ymkrf-works__pthead span:first-child{text-align:center}
+	  .ymkrf-works__ptrow input[type=text]{width:100%;margin:0;height:30px}
+	  /* 枠は付けず、商品名の欄と同じ高さのまん中にチェックを置きます
+	     （2026/09/08 ユーザー指示） */
+	  .ymkrf-works__ptchk{
+	    display:flex !important;align-items:center;justify-content:center;margin:0 !important;
+	    height:30px}
+	  .ymkrf-works__ptchk input{margin:0}
+	  .ymkrf-works__oldpacknote{
+	    margin:10px 0 0;font-size:12px;color:#646970;line-height:1.8}
+	  .ymkrf-works__oldpacknote code{font-size:12px}
 	  .ymkrf-works__oldpack{
 	    display:grid !important;grid-template-columns:22px 1fr;align-items:center;
-	    margin:8px 0 0 !important;padding:6px 10px;
+	    margin:10px 0 0 !important;padding:6px 10px;max-width:840px;
 	    border:1px solid #dcdcde;border-radius:6px;background:#fff;
 	    font-size:13px !important;color:#1d2327 !important;line-height:1.5}
 	  .ymkrf-works__oldpack input{margin:0}
+	  @media (max-width:860px){
+	    .ymkrf-works__pthead{display:none}
+	    .ymkrf-works__ptrow{grid-template-columns:66px minmax(0,1fr)}
+	    .ymkrf-works__ptrow input[type=text]:last-child{grid-column:2}
+	  }
 
 	  /* 写真（Before・施工中・After）を横に並べます */
 	  .ymkrf-photos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;max-width:1100px}
@@ -862,6 +967,30 @@ add_action( 'admin_head', function () {
 	  .ymkrf-pick__grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 8px}
 	</style>';
 } );
+
+/* 「抜粋」の欄に、この現場ならではの説明を出します。
+   WordPressのそのままの文だと、何を書く欄か分かりにくいためです。
+   （2026/09/08 ユーザー「抜粋って何を入れるの？」） */
+add_action( 'admin_footer-post.php', function () {
+	$s = get_current_screen();
+	if ( ! $s || $s->post_type !== 'ymkrf_works' ) return;
+	?>
+	<script>
+	jQuery(function ($) {
+		var $box = $('#postexcerpt');
+		if (!$box.length) return;
+		$box.find('.inside p').html(
+			'<b>Googleの検索結果に出る説明文</b>です（青いリンクの下に出る2行）。<br>' +
+			'この現場ならではの見どころを、<b>40〜80文字</b>くらいで書いてください。<br>' +
+			'空のままでも大丈夫です。そのときは本文の頭から90文字が自動で使われます。'
+		);
+		$box.find('#excerpt').attr('placeholder',
+			'例：築24年のキッチンを対面のI型に。袖壁を撤去して、キッチンからリビングまで見渡せるようにしました。');
+	});
+	</script>
+	<?php
+} );
+
 
 /* 写真えらび／営業担当のしぼり込み */
 add_action( 'admin_footer', function () {
@@ -1099,13 +1228,10 @@ add_action( 'save_post_ymkrf_works', function ( $post_id ) {
 	if ( ! current_user_can( 'edit_post', $post_id ) ) return;
 
 	foreach ( array( '_ymkrf_case_no', '_ymkrf_price', '_ymkrf_period',
-	                 '_ymkrf_done', '_ymkrf_shop', '_ymkrf_initial',
-	                 '_ymkrf_product_text' ) as $k ) {
+	                 '_ymkrf_done', '_ymkrf_shop', '_ymkrf_initial' ) as $k ) {
 		update_post_meta( $post_id, $k, isset( $_POST[ $k ] ) ? sanitize_text_field( $_POST[ $k ] ) : '' );
 	}
 
-	/* ヤマキシの旧パック商品かどうか */
-	update_post_meta( $post_id, '_ymkrf_oldpack', empty( $_POST['_ymkrf_oldpack'] ) ? '' : '1' );
 	/* 写真（Before・施工中・After）。それぞれ5枚まで。
 	   Beforeの1枚目は _ymkrf_before_img に、Afterの1枚目はアイキャッチ画像に入ります。 */
 	foreach ( ymkrf_works_photo_keys() as $which => $conf ) {
@@ -1126,7 +1252,7 @@ add_action( 'save_post_ymkrf_works', function ( $post_id ) {
 	if ( isset( $_POST['_ymkrf_staff'] ) ) {
 		$sv = trim( (string) wp_unslash( $_POST['_ymkrf_staff'] ) );
 		if ( strpos( $sv, 'shop-' ) === 0 ) {
-			$slug = sanitize_title( substr( $sv, 5 ) );
+			$slug  = sanitize_title( substr( $sv, 5 ) );
 			$shops = ymkrf_staff_shops();
 			$sv = isset( $shops[ $slug ] ) ? 'shop-' . $slug : '';
 		} else {
@@ -1140,27 +1266,48 @@ add_action( 'save_post_ymkrf_works', function ( $post_id ) {
 			sanitize_textarea_field( wp_unslash( $_POST['_ymkrf_works_comment'] ) ) );
 	}
 
+	/* ページが無い商品（1行に1商品）と、旧パックの印、関連ページのURL。
+	   空の行はとばして、上から詰めて入れなおします。（2026/09/08） */
+	if ( isset( $_POST['_ymkrf_ptext'] ) ) {
+		$ptin  = (array) wp_unslash( $_POST['_ymkrf_ptext'] );
+		$ptck  = isset( $_POST['_ymkrf_ptext_pack'] ) ? (array) $_POST['_ymkrf_ptext_pack'] : array();
+		$ptu   = isset( $_POST['_ymkrf_ptext_url'] ) ? (array) wp_unslash( $_POST['_ymkrf_ptext_url'] ) : array();
+		$lines = array();
+		$packs = array();
+		$urls  = array();
+		foreach ( $ptin as $i => $v ) {
+			$v = trim( sanitize_text_field( $v ) );
+			if ( $v === '' ) continue;
+			if ( in_array( $v, $lines, true ) ) continue;
+			$lines[] = $v;
+			if ( ! empty( $ptck[ $i ] ) ) $packs[] = $v;
+
+			$u = isset( $ptu[ $i ] ) ? trim( (string) $ptu[ $i ] ) : '';
+			if ( $u !== '' ) {
+				/* 「/products/ecocute/」のような、サイトの中の書きかたも受けます */
+				if ( strpos( $u, '/' ) !== 0 ) $u = esc_url_raw( $u );
+				if ( $u !== '' ) $urls[] = $v . '|' . $u;
+			}
+		}
+		update_post_meta( $post_id, '_ymkrf_product_text', implode( "\n", $lines ) );
+		if ( $packs ) update_post_meta( $post_id, '_ymkrf_ptext_pack', implode( "\n", $packs ) );
+		else          delete_post_meta( $post_id, '_ymkrf_ptext_pack' );
+		if ( $urls )  update_post_meta( $post_id, '_ymkrf_ptext_url', implode( "\n", $urls ) );
+		else          delete_post_meta( $post_id, '_ymkrf_ptext_url' );
+	}
+
+	/* えらんだ商品ページ（キッチン・お風呂・トイレ・洗面化粧台） */
 	$ids = isset( $_POST['_ymkrf_products'] ) ? (array) $_POST['_ymkrf_products'] : array();
 	$ids = array_values( array_unique( array_filter( array_map( 'intval', $ids ) ) ) );
 	update_post_meta( $post_id, '_ymkrf_products', implode( ',', $ids ) );
 
-	/* 「メーカーだけ」で選んだぶん（給湯器・エコキュート）。
-	   1行に「まとまり|メーカー名」の形でしまいます。
-	   決めてある名前と合わないものは入れません。（2026/09/08） */
-	$master = ymkrf_works_maker_master();
-	$mkin   = isset( $_POST['_ymkrf_makers'] ) ? (array) wp_unslash( $_POST['_ymkrf_makers'] ) : array();
-	$mklines = array();
-	foreach ( $master as $gk => $list ) {
-		if ( empty( $mkin[ $gk ] ) ) continue;
-		foreach ( (array) $mkin[ $gk ] as $mk ) {
-			$mk = trim( (string) $mk );
-			if ( ! in_array( $mk, $list, true ) ) continue;
-			$line = $gk . '|' . $mk;
-			if ( ! in_array( $line, $mklines, true ) ) $mklines[] = $line;
-		}
-	}
-	if ( $mklines ) update_post_meta( $post_id, '_ymkrf_makers', implode( "\n", $mklines ) );
-	else            delete_post_meta( $post_id, '_ymkrf_makers' );
+	/* 品番をえらばないまとまり（給湯器・エコキュートほか）。
+	   ページでは一覧ページへのリンクになります。（2026/09/08） */
+	$cl = isset( $_POST['_ymkrf_catlink'] ) ? (array) wp_unslash( $_POST['_ymkrf_catlink'] ) : array();
+	$cl = array_values( array_intersect( ymkrf_works_catlink_groups(),
+	        array_map( 'sanitize_text_field', $cl ) ) );
+	if ( $cl ) update_post_meta( $post_id, '_ymkrf_catlink', implode( ',', $cl ) );
+	else       delete_post_meta( $post_id, '_ymkrf_catlink' );
 
 	/* リフォームした箇所。右側の「部位」の箱は消してあるので、ここで入れます。
 	   URLに使うのは、この中でいちばん上にある箇所です。 */
@@ -1836,6 +1983,25 @@ function ymkrf_works_excerpt( $post_id, $len = 80 ) {
 	$t = trim( preg_replace( '/\s+/u', ' ', $t ) );
 	return mb_strimwidth( $t, 0, $len * 2, '…', 'UTF-8' );
 }
+
+/* 抜粋（＝検索結果に出る説明文）が空のときは、
+   本文やおこなった工事から自動で入れておきます。（2026/09/08） */
+add_action( 'save_post_ymkrf_works', function ( $post_id ) {
+
+	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
+	if ( wp_is_post_revision( $post_id ) ) return;
+
+	$p = get_post( $post_id );
+	if ( ! $p || trim( (string) $p->post_excerpt ) !== '' ) return;
+
+	$x = trim( ymkrf_works_excerpt( $post_id, 90 ) );
+	if ( $x === '' || $x === '…' ) return;
+
+	remove_action( 'save_post_ymkrf_works', __FUNCTION__, 40 );
+	wp_update_post( array( 'ID' => $post_id, 'post_excerpt' => $x ) );
+	add_action( 'save_post_ymkrf_works', __FUNCTION__, 40 );
+}, 40 );
+
 
 /** 同じ案件番号のお客様の声（公開ぶんだけ） */
 function ymkrf_works_linked_voices( $post_id ) {

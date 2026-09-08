@@ -28,7 +28,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '3.1.4' );   // ファイル更新時はここを上げるとキャッシュが切れます
+if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '3.2.1' );   // ファイル更新時はここを上げるとキャッシュが切れます
 
 /* ============================================================
    1. CSS / JS の読み込み
@@ -1135,7 +1135,10 @@ add_action( 'init', function () {
 		'menu_icon'    => 'dashicons-format-quote',
 		'menu_position'=> 6,
 		'rewrite'      => array( 'slug' => 'voice/%ymkrf_vpart%', 'with_front' => false ),
-		'supports'     => array( 'title' ),
+		/* 抜粋（＝検索結果の説明文）も書けるようにします。
+		   空のままなら、保存のときにご感想から自動で入ります。
+		   （2026/09/08 ユーザー「抜粋あった方が良いよね？」） */
+		'supports'     => array( 'title', 'excerpt' ),
 		'show_in_rest' => true,
 	) );
 } );

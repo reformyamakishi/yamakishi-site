@@ -208,19 +208,27 @@ add_filter( 'request', function ( $qv ) {
    いちど登録されたものは、そのままにします。
    （数字を1つ上げると、次の表示のときに1回だけ登録し直します） */
 add_action( 'init', function () {
-	if ( get_option( 'ymkrf_maker_ver' ) === '2' ) return;
+	if ( get_option( 'ymkrf_maker_ver' ) === '3' ) return;
 
 	$makers = array(
 		'ykkap'       => 'YKK AP',
 		'woodone'     => 'WOODONE（ウッドワン）',
 		'nichiha'     => 'ニチハ',
 		'sankyoalumi' => '三協アルミ',
+		/* 給湯器・エコキュートのメーカー。施工事例の「メーカーだけ選ぶ」欄にも
+		   ここの名前がそのまま並びます。（2026/09/08） */
+		'paloma'      => 'パロマ',
+		'purpose'     => 'パーパス',
+		'corona'      => 'コロナ',
+		'chofu'       => '長府製作所',
+		'sunpot'      => 'サンポット',
+		'toshiba'     => '東芝',
 	);
 	foreach ( $makers as $slug => $name ) {
 		if ( term_exists( $slug, 'ymkrf_maker' ) ) continue;
 		wp_insert_term( $name, 'ymkrf_maker', array( 'slug' => $slug ) );
 	}
-	update_option( 'ymkrf_maker_ver', '2' );
+	update_option( 'ymkrf_maker_ver', '3' );
 }, 25 );
 
 /* 分類を足す・変える・消したときは、URLのルールを作り直します */
