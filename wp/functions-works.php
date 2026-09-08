@@ -1815,6 +1815,50 @@ add_filter( 'the_title', function ( $title, $post_id = 0 ) {
 	return ( $no !== '' ) ? $no : '（案件番号なし）' . $title;
 }, 10, 2 );
 
+/* 案件番号の形がおかしいものを、一覧で赤字にします。
+
+   ただしい形は「4けた－4けた」（例：2601-0395）です。
+   取り込んだぶんに、いくつかおかしいものがまざっています。
+     ・2026年3月           … 完工時期が入ってしまっている
+     ・2410-00732410-0073  … 同じ番号が2回
+     ・1910-020            … けたが足りない
+
+   一覧の1列目は、WordPressの「題名」の欄を借りているので、
+   こちらから色の指定（HTML）を入れられません。
+   そこで、画面が出たあとに色を付けています。
+   施工事例と、お客様の声の両方に効きます。
+   （2026/09/08 ユーザー依頼「おかしい物は案件番号を赤字にしておいて」） */
+add_action( 'admin_footer-edit.php', function () {
+
+	$s = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+	if ( ! $s ) return;
+	if ( ! in_array( $s->id, array( 'edit-ymkrf_works', 'edit-ymkrf_voice' ), true ) ) return;
+	?>
+	<style>
+	  .ymkrf-caseng{color:#d63638!important;font-weight:700}
+	  .ymkrf-caseng-note{color:#d63638;font-size:11px;margin-left:6px;white-space:nowrap}
+	</style>
+	<script>
+	(function () {
+	  var ok = /^[0-9]{4}-[0-9]{4}$/;
+	  var rows = document.querySelectorAll('#the-list .row-title');
+	  for (var i = 0; i < rows.length; i++) {
+	    var el = rows[i];
+	    var t  = (el.textContent || '').trim();
+	    if (t === '') continue;
+	    if (t.indexOf('（案件番号なし）') === 0) continue;   /* 未入力はそのまま */
+	    if (ok.test(t)) continue;                            /* 正しい形 */
+	    el.classList.add('ymkrf-caseng');
+	    var n = document.createElement('span');
+	    n.className = 'ymkrf-caseng-note';
+	    n.textContent = '要確認';
+	    el.parentNode.insertBefore(n, el.nextSibling);
+	  }
+	})();
+	</script>
+	<?php
+} );
+
 add_action( 'manage_ymkrf_works_posts_custom_column', function ( $col, $post_id ) {
 	$none = '<span style="color:#a7aaad">—</span>';
 
