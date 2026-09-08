@@ -827,25 +827,6 @@ add_action( 'save_post_ymkrf_voice', function ( $post_id ) {
 }, 40 );
 
 
-/* 抜粋の欄に、何を書く欄かを出します */
-add_action( 'admin_footer-post.php', function () {
-	$s = get_current_screen();
-	if ( ! $s || $s->post_type !== 'ymkrf_voice' ) return;
-	?>
-	<script>
-	jQuery(function ($) {
-		var $box = $('#postexcerpt');
-		if (!$box.length) return;
-		$box.find('.inside p').html(
-			'<b>Googleの検索結果に出る説明文</b>です（青いリンクの下に出る2行）。<br>' +
-			'空のままで大丈夫です。そのときは、いただいたご感想から自動で入ります。'
-		);
-	});
-	</script>
-	<?php
-} );
-
-
 /* ============================================================
    4. 管理画面の一覧に出す列
       一覧の主役は「案件番号」です。

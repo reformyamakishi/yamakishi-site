@@ -272,6 +272,21 @@ function ymkrf_works_catlink_groups() {
 	return $out;
 }
 
+/**
+ * 「この工事に◯◯が入っています」のカードの行き先。
+ *
+ * チェックを入れたものは、どれも<b>商品ページ</b>へお送りします。
+ * その箇所の商品ページがまだ無いときは、商品・価格のトップに着きます。
+ * 商品ページができたら、自動でそちらへ切りかわります。
+ * （2026/09/08 ユーザー指示「チェック入れた項目は全て商品ページをみる にして」）
+ */
+function ymkrf_works_catlink_link( $slug ) {
+	return array(
+		'url'   => function_exists( 'ymkrf_cat_url' ) ? ymkrf_cat_url( $slug ) : home_url( '/' ),
+		'label' => '商品ページを見る',
+	);
+}
+
 /** この施工事例でえらばれている、一覧ページへのリンク（英字の配列） */
 function ymkrf_works_catlinks( $post_id ) {
 	$v   = (string) get_post_meta( $post_id, '_ymkrf_catlink', true );
@@ -1428,6 +1443,21 @@ function ymkrf_works_ptext_lines( $raw ) {
 }
 
 /**
+ * 商品名を、つき合わせ用の形にそろえます。
+ *
+ * ymkrf_works_ptext_lines() は、全角スペースを半角にするなど
+ * 見た目をととのえてから返します。旧パックの印や関連ページのURLは
+ * 「書いたままの商品名」で控えてあるので、そのままでは一致しません。
+ * 両方をこの関数に通してから見くらべます。
+ * （2026/09/08 ユーザー「URL入れましたがリンクされない？」）
+ */
+function ymkrf_works_ptext_key( $s ) {
+	$s = str_replace( array( "\r\n", "\r", '　' ), array( "\n", "\n", ' ' ), (string) $s );
+	$s = trim( preg_replace( '/[ \t]+/u', ' ', $s ) );
+	return preg_replace( '/^[・\/／、,\s]+|[・\/／、,\s]+$/u', '', $s );
+}
+
+/**
  * 商品名の頭にあるメーカー名を取り出します。
  * 見つからないときは空を返します（そのときは全部を商品名にします）。
  */
@@ -1470,21 +1500,57 @@ function ymkrf_works_price_short( $post_id ) {
 }
 
 /** 工事の種類（部位）の部分。1個所・2個所・3個所以上で書き分けます */
-function ymkrf_works_title_head( $post_id ) {
+function ymkrf_works_title_head( $post_id, $short = false ) {
+
 	$cats = ymkrf_works_term_names( $post_id, 'ymkrf_works_cat' );
 	$cats = array_values( array_filter( $cats, function ( $v ) { return $v !== 'その他'; } ) );
 
-	if ( ! $cats ) return 'リフォーム事例';
+	if ( ! $cats ) return $short ? '' : 'リフォーム事例';
+
+	/* 2個所は両方、3個所以上は「など」でまとめます（題名が長くなりすぎるため） */
+	$name = implode( '・', array_slice( $cats, 0, 2 ) );
+	$name .= ( count( $cats ) > 2 ) ? 'など' : '';
+
+	/* ページの見出しでは「リフォーム事例」を付けません。
+	   パンくずにも「施工事例」と出ているので、二重になるためです。
+	   （2026/09/08 ユーザー「フロントではリフォーム事例はいらんくない？」） */
+	if ( $short ) return $name;
 
 	/* 1個所のときは、その箇所に合った言い方を使います
 	   （例：解体 →「解体工事の事例」、給湯器 →「給湯器交換の事例」） */
 	if ( count( $cats ) === 1 ) return ymkrf_works_part_title_word( $cats[0] );
 
-	/* 2個所は両方、3個所以上は「ほか」でまとめます（題名が長くなりすぎるため） */
-	$name = implode( '・', array_slice( $cats, 0, 2 ) );
-	if ( count( $cats ) > 2 ) $name .= 'ほか';
+	/* 「お風呂・洗面化粧台などリフォーム事例」だと言葉のつながりが悪いので、
+	   あいだに「の」を入れます。（2026/09/08 ユーザー指摘） */
+	return $name . 'のリフォーム事例';
+}
 
-	return $name . 'リフォーム事例';
+/**
+ * ページの大見出し（H1）。
+ *
+ * ブラウザのタブとGoogleの検索結果には「◯◯リフォーム事例｜…」を使い、
+ * ページの中の見出しからは「リフォーム事例」を外します。
+ * 例）お風呂・洗面化粧台など｜能美市 S様｜約255万円・工期1週間
+ */
+function ymkrf_works_h1( $post_id ) {
+
+	$head = ymkrf_works_title_head( $post_id, true );
+
+	$area = ymkrf_works_area_name( $post_id );
+	$ini  = trim( (string) get_post_meta( $post_id, '_ymkrf_initial', true ) );
+	$who  = trim( $area . ( $ini !== '' ? ' ' . $ini . '様' : '' ) );
+
+	$price = ymkrf_works_price_short( $post_id );
+	$peri  = trim( (string) get_post_meta( $post_id, '_ymkrf_period', true ) );
+	$peri  = ( $peri !== '' ) ? '工期' . $peri : '';
+
+	$parts = array_values( array_filter( array( $head, $who ) ) );
+	$t     = implode( '｜', $parts );
+
+	$tail = array_values( array_filter( array( $price, $peri ) ) );
+	if ( $tail ) $t .= ( $t !== '' ? '｜' : '' ) . implode( '・', $tail );
+
+	return $t !== '' ? $t : get_the_title( $post_id );
 }
 
 /** 題名ぜんぶ */

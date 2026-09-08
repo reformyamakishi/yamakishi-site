@@ -28,7 +28,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '3.2.1' );   // ファイル更新時はここを上げるとキャッシュが切れます
+if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '3.2.2' );   // ファイル更新時はここを上げるとキャッシュが切れます
 
 /* ============================================================
    1. CSS / JS の読み込み
@@ -953,6 +953,56 @@ add_action( 'admin_init', function () {
 	}
 } );
 
+/* 一覧の検索で、案件番号でも見つかるようにします。
+
+   WordPressの検索は、題名・本文・抜粋しか見ません。
+   施工事例とお客様の声は、一覧の1列目に案件番号を出しているのに、
+   その番号で検索しても出てこない、ということが起きていました。
+   （2026/09/08 ユーザー「案件番号を検索しても出てきません」） */
+add_filter( 'posts_search', function ( $search, $q ) {
+
+	if ( ! is_admin() || ! $q->is_main_query() ) return $search;
+	if ( ! $q->is_search() || $search === '' ) return $search;
+
+	$pt = $q->get( 'post_type' );
+	if ( ! in_array( $pt, array( 'ymkrf_works', 'ymkrf_voice' ), true ) ) return $search;
+
+	$term = trim( (string) $q->get( 's' ) );
+	if ( $term === '' ) return $search;
+
+	global $wpdb;
+	$like = '%' . $wpdb->esc_like( $term ) . '%';
+
+	/* 案件番号のほか、お客様の頭文字・商品名でも探せるようにします */
+	$add = $wpdb->prepare(
+		" OR ( {$wpdb->posts}.ID IN (
+			SELECT post_id FROM {$wpdb->postmeta}
+			 WHERE meta_key IN ( '_ymkrf_case_no', '_ymkrf_case_no_more',
+			                     '_ymkrf_product_text', '_ymkrf_work_items' )
+			   AND meta_value LIKE %s ) ) ", $like );
+
+	/* いちばん外側のカッコの中に足します */
+	return preg_replace( '/\)\s*$/', $add . ')', $search, 1 );
+}, 10, 2 );
+
+
+/* SEO SIMPLE PACK の「SEO設定」の箱は出しません。
+   説明文を書く欄が「抜粋」と2つになって、どちらに書けばよいか
+   分からなくなるためです。書くところは「抜粋」ひとつにします。
+   （抜粋が、そのまま検索結果の説明文になります）
+   （2026/09/08 ユーザー「SEO設定が出てきましたね。でも抜粋があるの？」）
+
+   プラグインの箱は add_meta_boxes のときに作られるので、
+   そのあと（優先度999）で外します。 */
+add_action( 'add_meta_boxes', function () {
+	$s = get_current_screen();
+	if ( ! $s ) return;
+	foreach ( array( 'side', 'normal', 'advanced' ) as $ctx ) {
+		remove_meta_box( 'ssp_metabox', $s->post_type, $ctx );
+	}
+}, 999 );
+
+
 /* ============================================================
    1-11. 「投稿」は使いません
         「投稿」はWordPress本体の機能なので、取り除くことはできません。
@@ -1135,10 +1185,11 @@ add_action( 'init', function () {
 		'menu_icon'    => 'dashicons-format-quote',
 		'menu_position'=> 6,
 		'rewrite'      => array( 'slug' => 'voice/%ymkrf_vpart%', 'with_front' => false ),
-		/* 抜粋（＝検索結果の説明文）も書けるようにします。
-		   空のままなら、保存のときにご感想から自動で入ります。
-		   （2026/09/08 ユーザー「抜粋あった方が良いよね？」） */
-		'supports'     => array( 'title', 'excerpt' ),
+		/* 抜粋の欄は出しません。お客様の声の説明文は、テーマのほうで
+		   お客様のことば・満足度から組み立てているので、書く必要が
+		   ないためです。（2026/09/08 ユーザー「うん、不要かな」）
+		   ※ 保存のときに post_excerpt へ自動で入れる処理は残してあります。 */
+		'supports'     => array( 'title' ),
 		'show_in_rest' => true,
 	) );
 } );

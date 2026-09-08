@@ -37,7 +37,7 @@ while ( have_posts() ) : the_post();
       $wc1 = reset( $wct ); ?>
       <li><a href="<?php echo esc_url( get_term_link( $wc1 ) ); ?>"><?php echo esc_html( $wc1->name ); ?></a></li>
     <?php endif; ?>
-    <li><?php the_title(); ?></li>
+    <li><?php echo esc_html( ymkrf_works_h1( $id ) ); ?></li>
   </ol>
 </nav>
 
@@ -52,7 +52,7 @@ while ( have_posts() ) : the_post();
         <?php foreach ( $warea as $t ) : ?><span class="p-work__badge p-work__badge--a"><?php echo esc_html( $t ); ?></span><?php endforeach; ?>
       </p>
     <?php endif; ?>
-    <h1 class="p-pagehead__title"><?php the_title(); ?></h1>
+    <h1 class="p-pagehead__title"><?php echo esc_html( ymkrf_works_h1( $id ) ); ?></h1>
     <?php
     /* お客様の声とひもづいているときだけ、そのお客様のイラストを出します。
        同じお客様だと、ひと目で分かるようにするためです。
@@ -145,9 +145,11 @@ while ( have_posts() ) : the_post();
                  ? ymkrf_works_ptext_lines( $wptext ) : array();
 
       /* 旧パック商品にチェックが入っている商品名（1行に1つ） */
-      $wppack = array_values( array_filter( array_map( 'trim',
-        preg_split( '/\R/u', (string) get_post_meta( $id, '_ymkrf_ptext_pack', true ) ) ),
-        function ( $v ) { return $v !== ''; } ) );
+      $wppack = array();
+      foreach ( preg_split( '/\R/u', (string) get_post_meta( $id, '_ymkrf_ptext_pack', true ) ) as $v ) {
+        $v = ymkrf_works_ptext_key( $v );
+        if ( $v !== '' ) $wppack[] = $v;
+      }
 
       /* 商品名 => 関連ページのURL（「商品名|URL」の形でしまってあります） */
       $wpurl = array();
@@ -155,6 +157,7 @@ while ( have_posts() ) : the_post();
         $u = trim( $u );
         if ( $u === '' || strpos( $u, '|' ) === false ) continue;
         list( $un, $uu ) = array_map( 'trim', explode( '|', $u, 2 ) );
+        $un = ymkrf_works_ptext_key( $un );
         if ( $un !== '' && $uu !== '' ) $wpurl[ $un ] = ( strpos( $uu, '/' ) === 0 ) ? home_url( $uu ) : $uu;
       }
       ?>
@@ -169,7 +172,7 @@ while ( have_posts() ) : the_post();
       $wlink  = array();
       $wplain = array();
       foreach ( $wplines as $line ) {
-        $t = trim( $line );
+        $t = ymkrf_works_ptext_key( $line );
         if ( isset( $wpurl[ $t ] ) && $wpurl[ $t ] !== '' ) $wlink[] = $line;
         else                                                $wplain[] = $line;
       }
@@ -180,11 +183,12 @@ while ( have_posts() ) : the_post();
           <?php /* 品番をえらばないもの（給湯器・エコキュートなど）。
                    その一覧ページへお送りします。 */ ?>
           <?php foreach ( $wcatlink as $cl ) :
-            $clname = isset( $wgnames[ $cl ] ) ? $wgnames[ $cl ] : $cl; ?>
-            <a class="p-work__prod p-work__prod--txt" href="<?php echo esc_url( ymkrf_cat_url( $cl ) ); ?>">
+            $clname = isset( $wgnames[ $cl ] ) ? $wgnames[ $cl ] : $cl;
+            $cllink = ymkrf_works_catlink_link( $cl ); ?>
+            <a class="p-work__prod p-work__prod--txt" href="<?php echo esc_url( $cllink['url'] ); ?>">
               <span class="p-work__prodtxt">
                 <span class="p-work__prodname"><?php echo esc_html( $clname ); ?></span>
-                <span class="p-work__prodmore">くわしく見る</span>
+                <span class="p-work__prodmore">商品ページを見る</span>
               </span>
             </a>
           <?php endforeach; ?>
@@ -203,16 +207,16 @@ while ( have_posts() ) : the_post();
           <?php foreach ( $wlink as $line ) :
             $maker = ymkrf_works_ptext_maker( $line );
             $name  = ( $maker !== '' ) ? trim( mb_substr( $line, mb_strlen( $maker ) ) ) : $line; ?>
-            <a class="p-work__prod p-work__prod--txt" href="<?php echo esc_url( $wpurl[ trim( $line ) ] ); ?>">
+            <a class="p-work__prod p-work__prod--txt" href="<?php echo esc_url( $wpurl[ ymkrf_works_ptext_key( $line ) ] ); ?>">
               <span class="p-work__prodtxt">
                 <?php if ( $maker !== '' ) : ?>
                   <span class="p-work__pmaker"><?php echo esc_html( $maker ); ?></span>
                 <?php endif; ?>
                 <span class="p-work__prodname"><?php echo esc_html( $name ); ?></span>
-                <?php if ( in_array( trim( $line ), $wppack, true ) ) : ?>
+                <?php if ( in_array( ymkrf_works_ptext_key( $line ), $wppack, true ) ) : ?>
                   <span class="p-work__ppack">※ヤマキシ旧パック商品</span>
                 <?php endif; ?>
-                <span class="p-work__prodmore">くわしく見る</span>
+                <span class="p-work__prodmore">関連ページを見る</span>
               </span>
             </a>
           <?php endforeach; ?>
@@ -229,7 +233,7 @@ while ( have_posts() ) : the_post();
                 <span class="p-work__pmaker"><?php echo esc_html( $maker ); ?></span>
               <?php endif; ?>
               <span class="p-work__pname"><?php echo esc_html( $name ); ?></span>
-              <?php if ( in_array( trim( $line ), $wppack, true ) ) : ?>
+              <?php if ( in_array( ymkrf_works_ptext_key( $line ), $wppack, true ) ) : ?>
                 <span class="p-work__ppack">※ヤマキシ旧パック商品</span>
               <?php endif; ?>
             </li>

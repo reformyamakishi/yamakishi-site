@@ -50,13 +50,16 @@
 }
 .p-work__badge--a{ background:var(--bg-gray); color:var(--ink-sub); }
 .p-work__headshop{
-  margin:12px 0 0; font-size:17px; font-weight:900; color:var(--brand);
+  margin:10px 0 0; font-size:17px; font-weight:900; color:var(--brand);
   letter-spacing:.03em;
 }
 
 /* お客様の声とひもづいたときだけ出る、お客様のイラスト。
    お客様の声のページと同じ絵になります。 */
-.p-work__headill{ margin:14px 0 0; }
+/* 絵が左に寄っていたので、まん中に置きます。
+   （img が block なので、text-align:center では中央になりません）
+   （2026/09/08 ユーザー「イラスト、真ん中 施工店舗：の上に」） */
+.p-work__headill{ display:flex; justify-content:center; margin:16px 0 0; }
 .p-work__headill .p-voice__illust{
   width:104px; height:104px; border-radius:50%;
   background:#fff; border:3px solid var(--border);
