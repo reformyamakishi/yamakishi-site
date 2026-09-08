@@ -18,6 +18,9 @@ while ( have_posts() ) : the_post();
   $wcase  = trim( (string) get_post_meta( $id, '_ymkrf_case_no', true ) );
   $wprods = ymkrf_works_products( $id );
   $wptext = trim( (string) get_post_meta( $id, '_ymkrf_product_text', true ) );
+  /* 給湯器・エコキュートは、品番が年ごとに変わるので
+     「メーカーだけ」でも登録できるようにしています。（2026/09/08） */
+  $wmakers = function_exists( 'ymkrf_works_makers' ) ? ymkrf_works_makers( $id ) : array();
   $wopack = get_post_meta( $id, '_ymkrf_oldpack', true ) === '1';
   $wvoice = ymkrf_works_linked_voices( $id );
   $wrel   = ymkrf_works_related( $id, 3 );
@@ -135,7 +138,7 @@ while ( have_posts() ) : the_post();
     <?php endif; ?>
 
     <?php /* 使った商品 */ ?>
-    <?php if ( $wprods || $wptext ) : ?>
+    <?php if ( $wprods || $wptext || $wmakers ) : ?>
       <h2 class="p-work__h2">この工事で使った商品</h2>
       <?php
       /* 商品名は1行に1つ入れてあります。1つずつカードにして並べます。
@@ -143,8 +146,15 @@ while ( have_posts() ) : the_post();
       $wplines = function_exists( 'ymkrf_works_ptext_lines' )
                  ? ymkrf_works_ptext_lines( $wptext ) : array();
       ?>
-      <?php if ( $wplines ) : ?>
+      <?php if ( $wplines || $wmakers ) : ?>
         <ul class="p-work__ptexts">
+          <?php /* メーカーだけのぶんは、メーカー名を上に、箇所の名前を下に出します */ ?>
+          <?php foreach ( $wmakers as $wm ) : ?>
+            <li class="p-work__ptext">
+              <span class="p-work__pmaker"><?php echo esc_html( $wm['maker'] ); ?></span>
+              <span class="p-work__pname"><?php echo esc_html( $wm['label'] ); ?></span>
+            </li>
+          <?php endforeach; ?>
           <?php foreach ( $wplines as $line ) :
             $maker = ymkrf_works_ptext_maker( $line );
             $name  = ( $maker !== '' ) ? trim( mb_substr( $line, mb_strlen( $maker ) ) ) : $line;
