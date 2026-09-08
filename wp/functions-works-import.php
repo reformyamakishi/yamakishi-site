@@ -302,12 +302,7 @@ function ymkrf_works_import_parse( $html, $url ) {
 	/* 工事費（100 万円 → 100万円） */
 	$price = preg_replace( '/\s+/u', '', $get( 'リフォーム金額' ) );
 
-	/* 部位（URLの /works/kitchen/ から） */
-	$cat = '';
-	if ( preg_match( '#/works/([a-z0-9-]+)/#', $url, $m ) ) {
-		$t = get_term_by( 'slug', $m[1], 'ymkrf_works_cat' );
-		if ( $t && ! is_wp_error( $t ) ) $cat = $t->slug;
-	}
+	/* 部位は、工事の中身がそろってから決めます（この下のほう） */
 
 	/* エリア（現場住所から。無ければ作ります） */
 	$area = '';
@@ -375,7 +370,13 @@ function ymkrf_works_import_parse( $html, $url ) {
 		'period' => trim( $get( '工期' ) ),
 		'done'   => trim( $get( '完工時期' ) ),
 		'shop'   => $shop,
-		'cat'    => $cat,
+		/* 部位は、いまのサイトのURL（/works/boiler/ など）だけでは足りません。
+		   新しいサイトは分けかたが細かいので、工事の中身も見て決めます。
+		   （2026/09/08 「リフォーム箇所が—になっている」より） */
+		'cat'    => ymkrf_works_import_cat(
+			$url,
+			$title . ' ' . implode( ' ', $items ) . ' ' . $spec
+		),
 		'area'   => $area,
 		'initial'=> $initial,
 		'spec'   => $spec,
@@ -383,6 +384,88 @@ function ymkrf_works_import_parse( $html, $url ) {
 		'after'  => $pick( 'after' ),
 	);
 }
+
+/**
+ * リフォーム箇所（ymkrf_works_cat）を決めます。
+ *
+ * いまのサイトの分けかたは10種類しかなく、新しいサイトのほうが細かいので、
+ * URLの英字だけでは決まりません。工事の中身の文字も見て決めます。
+ *
+ *   いまのサイト        新しいサイト
+ *   ────────────────────────────────────────────────
+ *   kitchen            キッチン           そのまま
+ *   bathroom           お風呂             そのまま
+ *   toilet             トイレ             そのまま
+ *   lavatory           洗面化粧台         そのまま
+ *   interior           内装・クロス・床   そのまま
+ *   repair             修理・小工事       そのまま
+ *   boiler             給湯器 ／ エコキュート ／ オイルタンク ／ IH に分ける
+ *   exterior           物置 ／ カーポート ／ ベランダ・サンルーム ／
+ *                      玄関ドア ／ 窓・断熱 ／ 外壁・屋根 ／ 解体 ／ その他 に分ける
+ *   painting           外壁・屋根
+ *   whole              内装・改装
+ *
+ * @param string $url  いまのサイトのページのURL
+ * @param string $text 題名＋リフォーム内容＋商品仕様をつなげた文字
+ * @return string 分類の英字（見つからなければ空）
+ */
+function ymkrf_works_import_cat( $url, $text ) {
+
+	$slug = '';
+	if ( preg_match( '#/works/([a-z0-9-]+)/#', $url, $m ) ) $slug = $m[1];
+
+	$t = (string) $text;
+	$has = function ( $words ) use ( $t ) {
+		foreach ( (array) $words as $w ) {
+			if ( $w !== '' && mb_strpos( $t, $w ) !== false ) return true;
+		}
+		return false;
+	};
+
+	switch ( $slug ) {
+
+		case 'boiler':
+			/* エコキュートが出てきたら、それが主役です
+			   （「石油給湯器からエコキュートへ」など） */
+			if ( $has( array( 'エコキュート' ) ) )                                  $cat = 'ecocute';
+			elseif ( $has( array( 'オイルタンク', '灯油タンク', 'ホームタンク',
+			                      '油タンク' ) ) )                                  $cat = 'oiltank';
+			elseif ( $has( array( 'ＩＨ', 'IH', 'コンロ' ) ) )                       $cat = 'ih';
+			else                                                                    $cat = 'boiler';
+			break;
+
+		case 'exterior':
+			if ( $has( array( 'オイルタンク', '灯油タンク', 'ホームタンク' ) ) )     $cat = 'oiltank';
+			elseif ( $has( array( '物置', '収納庫', 'サイクルハウス',
+			                      '保管庫', 'ダストボックス' ) ) )                  $cat = 'storage';
+			elseif ( $has( array( 'カーポート', 'ｶｰﾎﾟｰﾄ', 'ガレージ' ) ) )           $cat = 'carport';
+			elseif ( $has( array( 'サンルーム', 'テラス', 'ベランダ',
+			                      'ウッドデッキ' ) ) )                              $cat = 'veranda';
+			elseif ( $has( array( '玄関ドア', '玄関戸', '玄関引戸', '勝手口' ) ) )   $cat = 'door';
+			elseif ( $has( array( '内窓', 'サッシ', '窓' ) ) )                       $cat = 'window';
+			elseif ( $has( array( '外壁', '屋根', '雨樋', '軒天' ) ) )               $cat = 'outer-wall';
+			elseif ( $has( array( '解体' ) ) )                                      $cat = 'demolition';
+			elseif ( $has( array( '手すり', '手摺', '修理', '補修' ) ) )            $cat = 'repair';
+			/* フェンス・門扉・土間・防草などは、あてはまる箇所がないので「その他」 */
+			else                                                                    $cat = 'other';
+			break;
+
+		case 'painting':
+			$cat = 'outer-wall';
+			break;
+
+		case 'whole':
+			$cat = 'renovation';
+			break;
+
+		default:
+			$cat = $slug;
+	}
+
+	$term = get_term_by( 'slug', $cat, 'ymkrf_works_cat' );
+	return ( $term && ! is_wp_error( $term ) ) ? $term->slug : '';
+}
+
 
 /** 「野々市」→「野々市市」のように、市町の形にそろえます */
 function ymkrf_works_import_city( $addr ) {

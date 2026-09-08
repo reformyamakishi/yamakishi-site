@@ -109,6 +109,116 @@ add_action( 'admin_init', function () {
 
 
 /* ============================================================
+   リフォーム箇所を付けなおす
+
+   さいしょの取り込みでは、いまのサイトのURL（/works/boiler/ など）を
+   そのまま分類にしていました。ところが
+   　　exterior（外まわり）・painting（塗装）・whole（まるごと）
+   は新しいサイトに同じ名前がなく、分類が付かないままになりました。
+   また boiler は、新しいサイトでは
+   　　給湯器／エコキュート／オイルタンク／IH
+   の4つに分かれるのに、ぜんぶ「給湯器」に入ってしまいました。
+
+   ここでは、写真を取りなおさずに、分類だけを付けなおします。
+   （2026/09/08）
+   ============================================================ */
+
+define( 'YMKRF_RECAT_MARK', '_ymkrf_recat' );   /* 付けなおしずみの印 */
+define( 'YMKRF_RECAT_VER',  '2' );
+
+/** まだ付けなおしていない施工事例のID（先頭から $limit 件） */
+function ymkrf_recat_todo( $limit = 200 ) {
+	global $wpdb;
+	return $wpdb->get_col( $wpdb->prepare(
+		"SELECT p.ID FROM {$wpdb->posts} p
+		   JOIN {$wpdb->postmeta} src ON src.post_id = p.ID AND src.meta_key = '_ymkrf_src_url'
+		   LEFT JOIN {$wpdb->postmeta} mk
+		          ON mk.post_id = p.ID AND mk.meta_key = %s AND mk.meta_value = %s
+		  WHERE p.post_type = 'ymkrf_works'
+		    AND p.post_status IN ('publish','draft','pending','future','private')
+		    AND mk.post_id IS NULL
+		  ORDER BY p.ID ASC LIMIT %d",
+		YMKRF_RECAT_MARK, YMKRF_RECAT_VER, (int) $limit
+	) );
+}
+
+/** まだ付けなおしていない件数 */
+function ymkrf_recat_left() {
+	global $wpdb;
+	return (int) $wpdb->get_var( $wpdb->prepare(
+		"SELECT COUNT(*) FROM {$wpdb->posts} p
+		   JOIN {$wpdb->postmeta} src ON src.post_id = p.ID AND src.meta_key = '_ymkrf_src_url'
+		   LEFT JOIN {$wpdb->postmeta} mk
+		          ON mk.post_id = p.ID AND mk.meta_key = %s AND mk.meta_value = %s
+		  WHERE p.post_type = 'ymkrf_works'
+		    AND p.post_status IN ('publish','draft','pending','future','private')
+		    AND mk.post_id IS NULL",
+		YMKRF_RECAT_MARK, YMKRF_RECAT_VER
+	) );
+}
+
+/** 1件ぶん、分類と題名を付けなおします */
+function ymkrf_recat_one( $id ) {
+
+	$id  = (int) $id;
+	$url = (string) get_post_meta( $id, '_ymkrf_src_url', true );
+
+	/* 判定に使う文字は、取り込みのときと同じものを、保存ずみの欄から組み立てます */
+	$text = get_post_field( 'post_title', $id ) . ' '
+	      . (string) get_post_meta( $id, '_ymkrf_work_items', true ) . ' '
+	      . (string) get_post_meta( $id, '_ymkrf_product_text', true ) . ' '
+	      . (string) get_post_field( 'post_content', $id );
+
+	$cat = ymkrf_works_import_cat( $url, $text );
+
+	if ( $cat !== '' ) {
+		wp_set_object_terms( $id, $cat, 'ymkrf_works_cat' );
+
+		/* 題名は分類で決まるので、付けなおします
+		   （分類がないと「リフォーム事例｜…」になってしまいます） */
+		$title = ymkrf_works_auto_title( $id );
+		if ( $title !== '' && $title !== get_post_field( 'post_title', $id ) ) {
+			update_post_meta( $id, '_ymkrf_auto_title', $title );
+			wp_update_post( array( 'ID' => $id, 'post_title' => $title ) );
+		}
+	}
+
+	update_post_meta( $id, YMKRF_RECAT_MARK, YMKRF_RECAT_VER );
+	return $cat;
+}
+
+
+/* 付けなおしも、裏で少しずつ進められるようにします */
+define( 'YMKRF_RECAT_AUTO', 'ymkrf_works_recat_auto' );
+
+add_action( 'ymkrf_recat_tick', 'ymkrf_recat_tick' );
+
+function ymkrf_recat_tick() {
+	if ( get_option( YMKRF_RECAT_AUTO ) !== '1' ) return;
+
+	$ids = ymkrf_recat_todo( 200 );
+	if ( ! $ids ) { update_option( YMKRF_RECAT_AUTO, '', false ); return; }
+
+	$t0 = time();
+	foreach ( $ids as $rid ) {
+		ymkrf_recat_one( $rid );
+		if ( ( time() - $t0 ) > 100 ) break;
+	}
+	delete_transient( 'ymkrf_works_cat_counts' );
+
+	if ( ymkrf_recat_left() > 0 ) wp_schedule_single_event( time() + 20, 'ymkrf_recat_tick' );
+	else                          update_option( YMKRF_RECAT_AUTO, '', false );
+}
+
+add_action( 'admin_init', function () {
+	if ( get_option( YMKRF_RECAT_AUTO ) !== '1' ) return;
+	if ( ! wp_next_scheduled( 'ymkrf_recat_tick' ) ) {
+		wp_schedule_single_event( time() + 10, 'ymkrf_recat_tick' );
+	}
+} );
+
+
+/* ============================================================
    管理画面
    ============================================================ */
 
@@ -172,6 +282,31 @@ function ymkrf_bulk_page() {
 		$fixed = (int) $n;
 	}
 
+	/* リフォーム箇所を付けなおす */
+	if ( isset( $_POST['ymkrf_recat_go'] ) && check_admin_referer( 'ymkrf_bulk' ) ) {
+		$t0 = time(); $recat = array(); $n = 0;
+		foreach ( ymkrf_recat_todo( 400 ) as $rid ) {
+			$c = ymkrf_recat_one( $rid );
+			$recat[ $c === '' ? '（付きませんでした）' : $c ] =
+				( isset( $recat[ $c === '' ? '（付きませんでした）' : $c ] )
+				  ? $recat[ $c === '' ? '（付きませんでした）' : $c ] : 0 ) + 1;
+			$n++;
+			if ( ( time() - $t0 ) > 100 ) break;
+		}
+		$recat_n = $n;
+		delete_transient( 'ymkrf_works_cat_counts' );
+	}
+	if ( isset( $_POST['ymkrf_recat_auto_on'] ) && check_admin_referer( 'ymkrf_bulk' ) ) {
+		update_option( YMKRF_RECAT_AUTO, '1', false );
+		if ( ! wp_next_scheduled( 'ymkrf_recat_tick' ) ) {
+			wp_schedule_single_event( time() + 5, 'ymkrf_recat_tick' );
+		}
+	}
+	if ( isset( $_POST['ymkrf_recat_auto_off'] ) && check_admin_referer( 'ymkrf_bulk' ) ) {
+		update_option( YMKRF_RECAT_AUTO, '', false );
+		wp_clear_scheduled_hook( 'ymkrf_recat_tick' );
+	}
+
 	/* 自動で取り込む（始める・止める） */
 	if ( isset( $_POST['ymkrf_bulk_auto_on'] ) && check_admin_referer( 'ymkrf_bulk' ) ) {
 		update_option( YMKRF_BULK_AUTO, '1', false );
@@ -197,6 +332,53 @@ function ymkrf_bulk_page() {
 	?>
 	<div class="wrap">
 	  <h1>施工事例を まとめて取り込む</h1>
+
+	  <?php
+	  /* ---- リフォーム箇所の付けなおし ---- */
+	  $rleft = ymkrf_recat_left();
+	  $rauto = ( get_option( YMKRF_RECAT_AUTO ) === '1' );
+	  ?>
+	  <?php if ( isset( $recat_n ) ) : ?>
+	    <div class="notice notice-success"><p>
+	      リフォーム箇所を <?php echo (int) $recat_n; ?> 件つけなおしました。<br>
+	      <?php foreach ( (array) $recat as $k => $v ) :
+	        $names = ymkrf_works_parts_names(); ?>
+	        <?php echo esc_html( isset( $names[ $k ] ) ? $names[ $k ] : $k ); ?>
+	        <?php echo (int) $v; ?>件
+	      <?php endforeach; ?>
+	    </p></div>
+	  <?php endif; ?>
+
+	  <?php if ( $rleft || $rauto ) : ?>
+	    <div style="margin:16px 0;padding:14px 18px;border-radius:6px;
+	                border:2px solid <?php echo $rauto ? '#00782a' : '#fe3301'; ?>;
+	                background:<?php echo $rauto ? '#f2fbf5' : '#fff7f4'; ?>">
+	      <p style="margin:0 0 8px;font-weight:700">
+	        リフォーム箇所を つけなおす（のこり <?php echo (int) $rleft; ?> 件）</p>
+	      <p class="description" style="margin:0 0 10px">
+	        さいしょの取り込みでは、いまのサイトのURLをそのまま分類にしていました。
+	        そのため<b>外まわり・塗装・まるごとリフォーム</b>には分類が付かず、
+	        一覧の「リフォーム箇所」が「—」になっています。
+	        また<b>給湯器</b>は、新しいサイトの
+	        給湯器／エコキュート／オイルタンク／IH に分かれていません。<br>
+	        押すと、<b>写真は取りなおさずに</b>、分類と題名だけを付けなおします。
+	      </p>
+	      <form method="post" style="margin:0">
+	        <?php wp_nonce_field( 'ymkrf_bulk' ); ?>
+	        <?php if ( $rauto ) : ?>
+	          <p style="margin:0 0 8px;font-weight:700;color:#00782a">
+	            ● 自動でつけなおしています（20秒ごとに200件ずつ）</p>
+	          <button class="button" name="ymkrf_recat_auto_off" value="1">自動をやめる</button>
+	        <?php else : ?>
+	          <button class="button button-primary" name="ymkrf_recat_go" value="1">
+	            400件つけなおす</button>
+	          <button class="button" name="ymkrf_recat_auto_on" value="1">
+	            自動でぜんぶつけなおす</button>
+	        <?php endif; ?>
+	      </form>
+	    </div>
+	    <?php if ( $rauto ) : ?><meta http-equiv="refresh" content="25"><?php endif; ?>
+	  <?php endif; ?>
 
 	  <?php if ( ! $rows ) : ?>
 	    <div class="notice notice-warning"><p>
