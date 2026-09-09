@@ -17,6 +17,8 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 require_once get_stylesheet_directory() . '/inc/functions-snippet.php';
 require_once get_stylesheet_directory() . '/inc/functions-product.php';
 require_once get_stylesheet_directory() . '/inc/functions-column.php';
+/* ↓ 旧ブログ（コラム）の取り込み。終わったらこの行とファイルを消してください */
+require_once get_stylesheet_directory() . '/inc/functions-column-import.php';
 require_once get_stylesheet_directory() . '/inc/functions-news.php';
 require_once get_stylesheet_directory() . '/inc/functions-voice.php';
 /* ↓ 本番サイトからのお客様の声の取り込み。

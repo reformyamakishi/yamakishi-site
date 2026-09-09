@@ -37,7 +37,13 @@ while ( have_posts() ) : the_post();
       $wc1 = reset( $wct ); ?>
       <li><a href="<?php echo esc_url( get_term_link( $wc1 ) ); ?>"><?php echo esc_html( $wc1->name ); ?></a></li>
     <?php endif; ?>
-    <li><?php echo esc_html( ymkrf_works_h1( $id ) ); ?></li>
+    <?php /* パンくずは短く。箇所とお客様だけにします */ ?>
+    <li><?php
+      $wcrumb = trim( ymkrf_works_title_head( $id, true ) );
+      $wwho   = trim( ymkrf_works_area_name( $id ) . ' '
+                    . ( get_post_meta( $id, '_ymkrf_initial', true ) ? get_post_meta( $id, '_ymkrf_initial', true ) . '様' : '' ) );
+      echo esc_html( trim( $wcrumb . ( $wwho !== '' ? '｜' . $wwho : '' ), '｜' ) );
+    ?></li>
   </ol>
 </nav>
 

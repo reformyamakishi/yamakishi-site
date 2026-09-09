@@ -2069,6 +2069,39 @@ add_action( 'save_post_ymkrf_works', function ( $post_id ) {
 }, 40 );
 
 
+/* 検索結果の説明文。
+   SEO SIMPLE PACK の「%_page_contents_%」は本文しか見ないため、
+   本文が空の取り込みぶんでは説明文が出ませんでした。
+   抜粋 → 備考 → 使った商品 の順に組み立てて、こちらで出します。
+   （2026/09/09） */
+add_action( 'wp_head', function () {
+
+	if ( ! is_singular( 'ymkrf_works' ) ) return;
+	$id = get_the_ID();
+
+	$d = trim( (string) get_post_field( 'post_excerpt', $id ) );
+	if ( $d === '' ) $d = trim( wp_strip_all_tags( (string) get_post_field( 'post_content', $id ) ) );
+	if ( $d === '' ) $d = implode( '／', ymkrf_works_items( $id ) );
+
+	/* 「どこの・だれの・いくら」を頭に付けて、1件ずつ違う文にします */
+	$head = array();
+	$area = ymkrf_works_area_name( $id );
+	$cats = ymkrf_works_term_names( $id, 'ymkrf_works_cat' );
+	if ( $area ) $head[] = $area;
+	if ( $cats ) $head[] = implode( '・', array_slice( $cats, 0, 3 ) ) . 'のリフォーム';
+	$pr = ymkrf_works_price_short( $id );
+	if ( $pr ) $head[] = $pr;
+
+	$desc = implode( '／', $head );
+	if ( $d !== '' ) $desc .= ( $desc !== '' ? '。' : '' ) . $d;
+	$desc = trim( preg_replace( '/\s+/u', ' ', $desc ) );
+	if ( $desc === '' ) return;
+
+	echo '<meta name="description" content="'
+	   . esc_attr( mb_strimwidth( $desc, 0, 240, '…', 'UTF-8' ) ) . '">' . "\n";
+}, 1 );
+
+
 /** 同じ案件番号のお客様の声（公開ぶんだけ） */
 function ymkrf_works_linked_voices( $post_id ) {
 	$no = trim( (string) get_post_meta( $post_id, '_ymkrf_case_no', true ) );

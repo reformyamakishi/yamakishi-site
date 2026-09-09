@@ -238,26 +238,38 @@ function ymkrf_recat_one( $id ) {
 
 	$cat = ymkrf_works_import_cat( $url, $text );
 
-	if ( $cat !== '' ) {
-		wp_set_object_terms( $id, $cat, 'ymkrf_works_cat' );
+	/* 手で2箇所以上えらんである事例は、そのままにします。
+	   1回目のつけなおしで、手で付けた5箇所を1箇所に上書きしてしまいました。
+	   （2026/09/09 2502-0029 で発生。同じことが起きないようにします） */
+	$now = wp_get_object_terms( $id, 'ymkrf_works_cat', array( 'fields' => 'slugs' ) );
+	$now = is_wp_error( $now ) ? array() : $now;
 
-		/* 題名は分類で決まるので、付けなおします
-		   （分類がないと「リフォーム事例｜…」になってしまいます） */
-		$title = ymkrf_works_auto_title( $id );
-		if ( $title !== '' && $title !== get_post_field( 'post_title', $id ) ) {
-			update_post_meta( $id, '_ymkrf_auto_title', $title );
-			wp_update_post( array( 'ID' => $id, 'post_title' => $title ) );
-		}
+	if ( $cat !== '' && count( $now ) < 2 ) {
+		wp_set_object_terms( $id, $cat, 'ymkrf_works_cat' );
+	}
+
+	/* 題名と抜粋は、1回の保存でまとめて直します。
+	   2回に分けると、保存のたびに走るしくみ（分類の数えなおしなど）が
+	   2倍動いてしまい、とても遅くなるためです。（2026/09/09） */
+	$p    = get_post( $id );
+	$upd  = array();
+
+	$title = ymkrf_works_auto_title( $id );
+	if ( $title !== '' && $p && $title !== $p->post_title ) {
+		update_post_meta( $id, '_ymkrf_auto_title', $title );
+		$upd['post_title'] = $title;
 	}
 
 	/* 抜粋（＝検索結果に出る説明文）が空なら、ここで入れておきます。
-	   取り込んだぶんは本文が空なので、おこなった工事から作ります。（2026/09/08） */
-	$p = get_post( $id );
+	   取り込んだぶんは本文が空なので、備考から作ります。 */
 	if ( $p && trim( (string) $p->post_excerpt ) === '' ) {
 		$x = trim( ymkrf_works_excerpt( $id, 90 ) );
-		if ( $x !== '' && $x !== '…' ) {
-			wp_update_post( array( 'ID' => $id, 'post_excerpt' => $x ) );
-		}
+		if ( $x !== '' && $x !== '…' ) $upd['post_excerpt'] = $x;
+	}
+
+	if ( $upd ) {
+		$upd['ID'] = $id;
+		wp_update_post( $upd );
 	}
 
 	update_post_meta( $id, YMKRF_RECAT_MARK, YMKRF_RECAT_VER );
@@ -276,11 +288,16 @@ function ymkrf_recat_tick() {
 	$ids = ymkrf_recat_todo( 200 );
 	if ( ! $ids ) { update_option( YMKRF_RECAT_AUTO, '', false ); return; }
 
+	/* 分類の数えなおしは、最後に1回だけにします（速くするため） */
+	wp_defer_term_counting( true );
+
 	$t0 = time();
 	foreach ( $ids as $rid ) {
 		ymkrf_recat_one( $rid );
 		if ( ( time() - $t0 ) > 100 ) break;
 	}
+
+	wp_defer_term_counting( false );
 	delete_transient( 'ymkrf_works_cat_counts' );
 
 	if ( ymkrf_recat_left() > 0 ) wp_schedule_single_event( time() + 20, 'ymkrf_recat_tick' );
@@ -388,6 +405,7 @@ function ymkrf_bulk_page() {
 	/* リフォーム箇所を付けなおす */
 	if ( isset( $_POST['ymkrf_recat_go'] ) && check_admin_referer( 'ymkrf_bulk' ) ) {
 		$t0 = time(); $recat = array(); $n = 0;
+		wp_defer_term_counting( true );
 		foreach ( ymkrf_recat_todo( 400 ) as $rid ) {
 			$c = ymkrf_recat_one( $rid );
 			$recat[ $c === '' ? '（付きませんでした）' : $c ] =
@@ -396,6 +414,7 @@ function ymkrf_bulk_page() {
 			$n++;
 			if ( ( time() - $t0 ) > 100 ) break;
 		}
+		wp_defer_term_counting( false );
 		$recat_n = $n;
 		delete_transient( 'ymkrf_works_cat_counts' );
 	}
