@@ -650,3 +650,86 @@
   font-size:14px; font-weight:900; color:var(--brand-dark);
 }
 .p-voice__card--link .p-voice__more::after{ content:" ›"; }
+
+/* ==========================================================================
+   トップページのコラム（お役立ち情報）
+   ・記事ページ側と同じ見た目にしています（product.css の写し）。
+     トップでは product.css を読み込まないため、ここにも置いています。
+   ========================================================================== */
+.p-col__lead{
+  margin:-8px 0 18px; text-align:center; font-size:clamp(12.5px,3.3vw,15px);
+  line-height:1.85; color:var(--ink-sub); text-wrap:pretty;
+}
+.p-col__cards{ display:grid; grid-template-columns:1fr; gap:14px; }
+.p-col__card{
+  display:grid; grid-template-rows:auto 1fr;
+  background:#fff; border:1px solid var(--border); border-radius:14px;
+  box-shadow:var(--shadow); overflow:hidden; color:inherit; text-decoration:none;
+  transition:box-shadow .2s ease, transform .2s ease;
+}
+.p-col__card:hover{ box-shadow:var(--shadow-md); transform:translateY(-2px); }
+.p-col__ph{ position:relative; background:var(--bg-soft); aspect-ratio:16/10; overflow:hidden; }
+.p-col__ph img{ width:100%; height:100%; object-fit:cover; display:block; }
+.p-col__tag{
+  position:absolute; left:10px; top:10px;
+  background:rgba(255,255,255,.94); color:var(--brand-dark);
+  border-radius:999px; padding:4px 12px; font-size:11.5px; font-weight:900;
+}
+.p-col__body{ padding:14px 16px 16px; display:flex; flex-direction:column; }
+.p-col__date{
+  font-size:12px; font-weight:800; color:var(--ink-light); letter-spacing:.04em;
+  font-family:"Helvetica Neue",Arial,sans-serif;
+}
+.p-col__title{
+  margin:5px 0 0; font-size:clamp(15px,4vw,17px); font-weight:900; line-height:1.55;
+  color:var(--ink); text-wrap:pretty;
+}
+.p-col__excerpt{
+  margin:8px 0 0; font-size:13px; line-height:1.85; color:var(--ink-sub); text-wrap:pretty;
+}
+.p-col__more{
+  margin-top:auto; padding-top:12px; font-size:13px; font-weight:900; color:var(--brand);
+}
+.p-col__more::after{ content:"　＞"; }
+
+@media (min-width:600px){
+  .p-col__cards{ grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
+}
+@media (min-width:1024px){
+  .p-col__cards{ grid-template-columns:repeat(3,minmax(0,1fr)); }
+}
+
+/* ==========================================================================
+   トップページ 最終CTAのSNSアイコン
+   ・小さめの丸アイコンを横にならべます。文字は読み上げ用にだけ残します。
+   ========================================================================== */
+.u-vh{
+  position:absolute; width:1px; height:1px; margin:-1px; padding:0;
+  overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0;
+}
+.p-sns{ margin-top:22px; text-align:center; }
+.p-sns__lead{
+  margin:0 0 10px; font-size:12.5px; font-weight:800;
+  color:rgba(255,255,255,.9); letter-spacing:.04em;
+}
+.p-sns__list{
+  list-style:none; margin:0; padding:0;
+  display:flex; justify-content:center; align-items:center; gap:12px;
+}
+.p-sns__btn{
+  display:grid; place-items:center; width:38px; height:38px;
+  border-radius:50%; background:#fff; color:var(--ink);
+  text-decoration:none; box-shadow:0 2px 8px rgba(0,0,0,.16);
+  transition:transform .18s ease, box-shadow .18s ease;
+}
+.p-sns__btn svg{ width:19px; height:19px; display:block; }
+.p-sns__btn:hover{ transform:translateY(-2px); box-shadow:0 6px 16px rgba(0,0,0,.24); }
+.p-sns__btn--line{ color:#06c755; }
+.p-sns__btn--insta{ color:#c9367f; }
+.p-sns__btn--fb{ color:#1877f2; }
+.p-sns__btn--x{ color:#111; }
+
+@media (min-width:768px){
+  .p-sns__btn{ width:42px; height:42px; }
+  .p-sns__btn svg{ width:21px; height:21px; }
+}
