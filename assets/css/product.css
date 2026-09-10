@@ -1387,7 +1387,7 @@ a.p-pack__item:hover{ border-color:var(--brand); transform:translateY(-4px); box
    コラム：この記事を書いた人
    -------------------------------------------------------------------------- */
 .p-colwriter{
-  display:flex; align-items:center; gap:14px;
+  display:flex; align-items:flex-start; gap:14px;
   margin:34px 0 0; padding:18px 20px;
   background:var(--bg-gray); border-radius:var(--radius);
 }
@@ -1405,6 +1405,21 @@ a.p-pack__item:hover{ border-color:var(--brand); transform:translateY(-4px); box
 .p-colwriter__name a:hover{ color:var(--brand-dark); text-decoration:underline; }
 .p-colwriter__shop{
   margin:3px 0 0 !important; font-size:12.5px; color:var(--ink-sub); line-height:1.6;
+}
+/* 趣味 … 小さな見出しをつけて1行で */
+.p-colwriter__hobby{
+  margin:8px 0 0 !important; font-size:13px; color:var(--ink); line-height:1.7;
+}
+.p-colwriter__tag{
+  display:inline-block; margin-right:8px; padding:1px 9px; border-radius:999px;
+  background:var(--brand-tint); color:var(--brand-dark);
+  font-size:11px; font-weight:900; vertical-align:1px;
+}
+/* ひとこと … 本人の言葉なので、左に線を引いて引用らしく */
+.p-colwriter__word{
+  margin:10px 0 0 !important; padding-left:12px;
+  border-left:3px solid var(--brand); border-radius:2px;
+  font-size:13.5px; line-height:1.9; color:var(--ink-sub); text-wrap:pretty;
 }
 
 @media (min-width:768px){
