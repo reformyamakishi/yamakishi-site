@@ -980,3 +980,12 @@ address{ font-style:normal; }
 }
 .p-footer__col--contact .p-gsites__item--text{ margin-bottom:0; }
 .p-footer__col--contact .p-gsites__item--text a{ padding:3px 0; }
+
+/* ==========================================================================
+   reCAPTCHA のバッジ（右下に出る四角）
+   ・お問い合わせフォームのある無しにかかわらず、全ページに出てしまうので
+     どのページでも隠します（右下の「先頭にもどる」ボタンと重なるため）。
+   ・かわりに、フォームの下にご案内文（.p-form__recaptcha）を出しています。
+     Googleの規約で決められていることなので、あの文は消さないでください。
+   ========================================================================== */
+.grecaptcha-badge{ visibility:hidden !important; }
