@@ -126,25 +126,91 @@
   margin-top:10px; font-size:clamp(13px,3.5vw,15px); line-height:1.85; color:var(--ink-sub);
   text-wrap:balance;
 }
-.p-pagecta__btns{ display:grid; gap:12px; max-width:420px; margin:22px auto 0; }
+/* ==========================================================================
+   お問い合わせボタン（来店・LINE・お見積り・電話）
+   ・4つを同じかたちのカードにそろえています。
+   ・上にしるし（アイコン）、まん中に見出し、下に補足。
+   ・パソコンでは横一列、スマホでは縦にならびます。
+   ========================================================================== */
+.p-pagecta__btns{
+  display:grid; gap:12px; max-width:420px; margin:22px auto 0;
+}
 
-/* パソコンでは、ボタンを横一列にならべます。
-   ならぶ本数が3本でも4本でも、同じはばになります。 */
+.c-cta{
+  --cta:var(--brand);
+  --cta-deep:var(--brand-dark);
+  position:relative; display:grid; gap:6px; justify-items:center;
+  align-content:center; padding:16px 14px; min-height:118px;
+  background:#fff; color:var(--ink); text-decoration:none;
+  border:2px solid var(--cta); border-radius:16px;
+  box-shadow:0 2px 0 rgba(0,0,0,.05);
+  transition:transform .18s ease, box-shadow .18s ease, background .18s ease;
+}
+.c-cta::after{
+  content:"›"; position:absolute; right:12px; bottom:8px;
+  font-size:18px; font-weight:900; color:var(--cta); opacity:.55; line-height:1;
+}
+.c-cta:hover{
+  transform:translateY(-3px);
+  box-shadow:0 10px 22px rgba(0,0,0,.12);
+}
+
+/* しるし（アイコン）は、うすい色の丸のなかに置きます */
+.c-cta__ico{
+  display:grid; place-items:center; width:40px; height:40px; border-radius:50%;
+  background:color-mix(in srgb, var(--cta) 12%, #fff);
+  color:var(--cta-deep);
+}
+.c-cta__ico svg{ width:21px; height:21px; display:block; }
+
+.c-cta__name{
+  font-size:16px; font-weight:900; line-height:1.4; text-align:center;
+  color:var(--cta-deep); word-break:auto-phrase; text-wrap:balance;
+}
+.c-cta__sub{
+  font-size:12px; font-weight:700; line-height:1.6; text-align:center;
+  color:var(--ink-sub); word-break:auto-phrase;
+}
+
+/* いちばん押してほしい2つは、色でぬりつぶします */
+.c-cta--rsv,
+.c-cta--line{ color:#fff; background:var(--cta); border-color:var(--cta); }
+.c-cta--rsv .c-cta__name,
+.c-cta--line .c-cta__name{ color:#fff; }
+.c-cta--rsv .c-cta__sub,
+.c-cta--line .c-cta__sub{ color:rgba(255,255,255,.92); }
+.c-cta--rsv .c-cta__ico,
+.c-cta--line .c-cta__ico{ background:rgba(255,255,255,.18); color:#fff; }
+.c-cta--rsv::after,
+.c-cta--line::after{ color:#fff; opacity:.7; }
+
+.c-cta--line{ --cta:var(--line-green); --cta-deep:#048c40; }
+.c-cta--mail{ --cta:var(--brand); --cta-deep:var(--brand-dark); }
+.c-cta--tel{
+  --cta:#c9c2bc; --cta-deep:var(--ink);
+  background:var(--bg-soft);
+}
+.c-cta--tel .c-cta__name{
+  font-size:clamp(14px,1.25vw,18px); letter-spacing:-.02em; white-space:nowrap;
+  max-width:100%;
+}
+.c-cta--tel .c-cta__sub{ font-size:11.5px; }
+/* 文字がカードからはみ出さないようにします */
+.c-cta__name,
+.c-cta__sub{ max-width:100%; overflow-wrap:anywhere; }
+.c-cta--tel .c-cta__ico{ background:#fff; color:var(--brand-dark); }
+
+@media (prefers-reduced-motion:reduce){
+  .c-cta{ transition:none; }
+  .c-cta:hover{ transform:none; }
+}
+
+/* パソコンでは横一列に。本数が3本でも4本でも同じはばになります */
 @media (min-width:900px){
   .p-pagecta__btns{
-    display:flex; flex-wrap:nowrap; gap:12px; max-width:1100px;
+    display:flex; flex-wrap:nowrap; gap:14px; max-width:1000px;
   }
-  .p-pagecta__btns > .c-btn{
-    flex:1 1 0; min-width:0; padding-left:14px; padding-right:14px;
-  }
-  /* はばがせまくなるので、見出しの文字も折り返せるようにします */
-  .p-pagecta__btns > .c-btn .c-btn__label{
-    white-space:normal; font-size:15px; line-height:1.35;
-    text-wrap:balance; word-break:auto-phrase;
-  }
-  .p-pagecta__btns > .c-btn .c-btn__sub{
-    font-size:11.5px; line-height:1.45; word-break:auto-phrase;
-  }
+  .p-pagecta__btns > .c-cta{ flex:1 1 0; min-width:0; }
 }
 
 @media (min-width:768px){
