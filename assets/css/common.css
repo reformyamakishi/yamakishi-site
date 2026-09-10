@@ -869,3 +869,87 @@ address{ font-style:normal; }
   .p-fbanner__title { font-size: 1.26rem; }
   .p-fbanner__btn { display: block; }
 }
+
+/* ==========================================================================
+   SNSのアイコン（LINE・Instagram・Facebook・X）
+   ・トップの最終CTA（濃い背景）と、フッター（うすい背景）の両方で使います。
+   ・出力は inc/functions-snippet.php の ymkrf_sns_icons() です。
+   ========================================================================== */
+.u-vh{
+  position:absolute; width:1px; height:1px; margin:-1px; padding:0;
+  overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0;
+}
+.p-sns{ margin-top:16px; }
+.p-sns__lead{
+  margin:0 0 8px; font-size:12.5px; font-weight:800;
+  color:var(--ink-sub); letter-spacing:.04em;
+}
+.p-sns__list{
+  list-style:none; margin:0; padding:0;
+  display:flex; align-items:center; gap:12px;
+}
+.p-sns__list li{ margin:0; }
+.p-sns__btn{
+  display:grid; place-items:center; width:38px; height:38px; padding:0;
+  border-radius:50%; background:#fff; color:var(--ink);
+  text-decoration:none; box-shadow:0 2px 8px rgba(0,0,0,.16);
+  transition:transform .18s ease, box-shadow .18s ease;
+}
+.p-sns__btn svg{ width:19px; height:19px; display:block; }
+.p-sns__btn:hover{ transform:translateY(-2px); box-shadow:0 6px 16px rgba(0,0,0,.24); }
+/* フッターの「.p-footer__col a」に負けないよう、.p-sns を付けています */
+.p-sns .p-sns__btn--line{ color:#06c755; }
+.p-sns .p-sns__btn--fb{ color:#1877f2; }
+.p-sns .p-sns__btn--x{ color:#111; }
+/* Instagramは公式の角丸四角のマークなので、線のアイコンより少し大きく出します */
+.p-sns__btn--insta svg{ width:23px; height:23px; }
+
+/* フッターのリンクの見た目（下線・余白）を打ち消します */
+.p-footer__col .p-sns__btn{ padding:0; }
+.p-footer__col .p-sns__btn:hover{ text-decoration:none; }
+
+/* 濃い背景のところ（トップの最終CTA） */
+.p-sns--dark{ margin-top:22px; text-align:center; }
+.p-sns--dark .p-sns__lead{ color:rgba(255,255,255,.9); }
+.p-sns--dark .p-sns__list{ justify-content:center; }
+
+@media (min-width:768px){
+  .p-sns__btn{ width:42px; height:42px; }
+  .p-sns__btn svg{ width:21px; height:21px; }
+  .p-sns__btn--insta svg{ width:26px; height:26px; }
+}
+
+/* ==========================================================================
+   ヤマキシのほかのサイト（外壁・太陽光・不動産・コーポレート）
+   ・assets/img/group/ にロゴを置くと、ロゴのならびになります。
+     置いていないあいだは、文字のリンクのまま出ます。
+   ========================================================================== */
+.p-gsites{ margin-top:18px; }
+.p-gsites__lead{
+  margin:0 0 8px; font-size:12.5px; font-weight:800;
+  color:var(--ink-sub); letter-spacing:.04em;
+}
+.p-gsites__list{ list-style:none; margin:0; padding:0; }
+.p-gsites__item--text{ margin-bottom:4px; }
+.p-gsites__item--logo{
+  display:inline-block; margin:0 10px 10px 0; vertical-align:top;
+}
+.p-gsites__item--logo a{
+  display:grid; place-items:center; padding:8px 10px;
+  background:#fff; border:1px solid var(--border); border-radius:10px;
+  transition:box-shadow .18s ease, transform .18s ease;
+}
+.p-gsites__item--logo a:hover{
+  box-shadow:0 4px 12px rgba(0,0,0,.12); transform:translateY(-2px); text-decoration:none;
+}
+/* ロゴは縦長・横長がまざるので、同じ大きさの枠のなかに
+   かたちを変えずにおさめます（object-fit:contain）。 */
+.p-gsites__item--logo img{
+  display:block; height:52px; width:auto; max-width:150px; object-fit:contain;
+}
+/* 横に長いロゴ（ちく電市場）は、はばいっぱいまで使います */
+.p-gsites__item--logo--wide{ display:block; margin-right:0; }
+.p-gsites__item--logo--wide img{ height:auto; width:100%; max-width:230px; }
+@media (min-width:768px){
+  .p-gsites__item--logo img{ height:58px; max-width:160px; }
+}
