@@ -563,6 +563,10 @@ address{ font-style:normal; }
 .p-price__card--soon{ background:var(--bg-gray, #f7f7f7); }
 .p-price__card--soon:hover{ transform:none; box-shadow:var(--shadow); border-color:var(--border); }
 .p-price__card--soon .p-price__photo{ opacity:.62; }
+/* 背景をぬいた商品画像（PNG）のとき。
+   切り取らずに全体を見せ、うしろは白にします。 */
+.p-price__photo--cut{ background:#fff; }
+.p-price__photo--cut img{ object-fit:contain; padding:14px; }
 .p-price__soon{
   display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
   min-height:50px; padding:10px 14px; border-radius:14px;
@@ -898,7 +902,8 @@ address{ font-style:normal; }
 .p-sns__btn svg{ width:19px; height:19px; display:block; }
 .p-sns__btn:hover{ transform:translateY(-2px); box-shadow:0 6px 16px rgba(0,0,0,.24); }
 /* フッターの「.p-footer__col a」に負けないよう、.p-sns を付けています */
-.p-sns .p-sns__btn--line{ color:#06c755; }
+/* LINEは公式の緑の四角のマークなので、Instagramと同じく少し大きく出します */
+.p-sns .p-sns__btn--line svg{ width:23px; height:23px; }
 .p-sns .p-sns__btn--fb{ color:#1877f2; }
 .p-sns .p-sns__btn--x{ color:#111; }
 /* Instagramは公式の角丸四角のマークなので、線のアイコンより少し大きく出します */
@@ -916,7 +921,8 @@ address{ font-style:normal; }
 @media (min-width:768px){
   .p-sns__btn{ width:42px; height:42px; }
   .p-sns__btn svg{ width:21px; height:21px; }
-  .p-sns__btn--insta svg{ width:26px; height:26px; }
+  .p-sns__btn--insta svg,
+  .p-sns .p-sns__btn--line svg{ width:26px; height:26px; }
 }
 
 /* ==========================================================================
@@ -953,3 +959,24 @@ address{ font-style:normal; }
 @media (min-width:768px){
   .p-gsites__item--logo img{ height:58px; max-width:160px; }
 }
+
+/* ==========================================================================
+   フッターの「お問い合わせ」のらん
+   ・行と行のあいだを、すこしつめています。
+   ========================================================================== */
+.p-footer__col--contact .p-footer__company{ line-height:1.7; }
+.p-footer__col--contact .p-footer__tel{ margin:2px 0; line-height:1.2; }
+.p-footer__col--contact .p-footer__company a:not(.p-footer__tel){
+  display:inline; padding:0; font-size:14.5px;
+}
+.p-footer__links{ margin-top:6px; }
+.p-footer__col--contact .p-footer__links li{ margin-bottom:0; }
+.p-footer__col--contact .p-footer__links a{ padding:3px 0; }
+.p-footer__col--contact .p-gsites{ margin-top:18px; }
+/* 見出しは「お問い合わせ」と同じ色・大きさにそろえます */
+.p-footer__col .p-gsites__lead{
+  font-size:14px; font-weight:900; color:var(--brand-dark);
+  letter-spacing:.04em; margin-bottom:12px;
+}
+.p-footer__col--contact .p-gsites__item--text{ margin-bottom:0; }
+.p-footer__col--contact .p-gsites__item--text a{ padding:3px 0; }
