@@ -1396,6 +1396,10 @@ a.p-pack__item:hover{ border-color:var(--brand); transform:translateY(-4px); box
   object-fit:cover; background:#fff;
 }
 .p-colwriter__body{ flex:1 1 auto; min-width:0; }
+/* 個人名を出さない「広報」のとき。顔写真がないので、少し詰めます */
+.p-colwriter--pr{ padding:16px 20px; }
+/* お店が書いた記事。外観写真を丸く小さく出します */
+.p-colwriter--shop .p-colwriter__ph{ object-fit:cover; }
 .p-colwriter__lab{
   margin:0 0 3px !important; font-size:11.5px; font-weight:900;
   color:var(--ink-light); letter-spacing:.06em;

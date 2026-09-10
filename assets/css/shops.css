@@ -261,3 +261,10 @@
   .p-shop__link{ padding:7px 8px; font-size:11.5px; gap:5px; }
   .p-shop__noimg img{ width:62px; }
 }
+
+/* このお店ならではのこと（管理画面で直せます） */
+.p-shop__feature{
+  margin:0 0 14px; padding:12px 14px;
+  background:var(--brand-tint); border-radius:10px;
+  font-size:13.5px; line-height:1.85; color:var(--ink); text-wrap:pretty;
+}
