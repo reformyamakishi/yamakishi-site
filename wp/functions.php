@@ -11,6 +11,7 @@
  *   inc/functions-voice.php   … お客様の声（アンケートの自動読み取り）
  *   inc/functions-works.php   … 施工事例（Before/After・権限）
  *   inc/functions-works-import.php … いまのサイトから施工事例を取り込む
+ *   inc/functions-media.php   … メディアを使い道べつに分けて見る
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
@@ -36,6 +37,7 @@ require_once get_stylesheet_directory() . '/inc/functions-works-import2.php';
 require_once get_stylesheet_directory() . '/inc/functions-shops.php';
 require_once get_stylesheet_directory() . '/inc/functions-staff.php';
 require_once get_stylesheet_directory() . '/inc/functions-flyer.php';
+require_once get_stylesheet_directory() . '/inc/functions-media.php';
 
 /* アイキャッチ画像を使えるようにする */
 add_action( 'after_setup_theme', function () {

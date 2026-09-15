@@ -2369,22 +2369,27 @@ add_action( 'admin_head', function () {
         そのため、置いたまま画面上だけ隠しています。
    ============================================================ */
 
-/* 左メニューに、部位ごとの入口を並べます（1件も無い部位は出しません） */
-add_action( 'admin_menu', function () {
+/* ------------------------------------------------------------
+   左メニューの「部位ごとの入口」は出しません
+   （2026/09/16 ユーザー指示「商品と同じようにしてほしい」）
+
+   部位は「施工事例」を押したときの画面（下の ymkrf_works_cats_page）で
+   カードからえらびます。左メニューに同じものを並べると二重になるため、
+   やめました。
+   ------------------------------------------------------------ */
+
+/** 部位をえらぶ画面（「施工事例」を押すと、これが出ます） */
+if ( ! function_exists( 'ymkrf_works_cats_page' ) ) :
+function ymkrf_works_cats_page() {
 
 	$terms = get_terms( array(
 		'taxonomy'   => 'ymkrf_works_cat',
 		'hide_empty' => false,
+		'parent'     => 0,
 	) );
-	if ( is_wp_error( $terms ) || ! $terms ) return;
+	if ( is_wp_error( $terms ) ) $terms = array();
 
-	/* 下書きも数えます。
-	   WordPressの $t->count は公開ぶんしか数えないので、
-	   取り込んだばかりの下書きが「0」に見えてしまうためです。 */
-	$counts = ymkrf_works_cat_counts();
-
-	/* 並べる順は、施工事例の部位の決めごと（1-a）と同じにします。
-	   ここに無い分類は、うしろに付きます。 */
+	/* 並べる順は、施工事例の部位の決めごと（1-a）と同じにします。 */
 	$order = array_keys( ymkrf_works_parts_master() );
 	usort( $terms, function ( $a, $b ) use ( $order ) {
 		$ia = array_search( $a->slug, $order, true );
@@ -2395,18 +2400,92 @@ add_action( 'admin_menu', function () {
 		return $ia - $ib;
 	} );
 
-	foreach ( $terms as $t ) {
-		$n = isset( $counts[ $t->term_id ] ) ? (int) $counts[ $t->term_id ] : 0;
-		if ( $n === 0 ) continue;   /* 1件も無い部位は出しません */
-		add_submenu_page(
-			'edit.php?post_type=ymkrf_works',
-			$t->name . 'の施工事例',
-			'　' . $t->name . '（' . $n . '）',
-			'edit_posts',
-			'edit.php?post_type=ymkrf_works&ymkrf_works_cat=' . $t->slug
-		);
-	}
-} );
+	$counts = ymkrf_works_cat_counts();
+
+	/* ぜんぶの件数（カードの「すべての施工事例」に使います） */
+	$n   = wp_count_posts( 'ymkrf_works' );
+	$all = array(
+		'pub'   => (int) $n->publish,
+		'other' => (int) $n->draft + (int) $n->pending + (int) $n->future + (int) $n->private,
+	);
+
+	$url = function ( $slug ) {
+		return admin_url( 'edit.php?post_type=ymkrf_works'
+			. ( $slug ? '&ymkrf_works_cat=' . rawurlencode( $slug ) : '' ) );
+	};
+
+	/* カードまるごとがリンクです。押すと、その部位の一覧が開きます。 */
+	$card = function ( $name, $slug, $c, $note = '' ) use ( $url ) {
+		?>
+		<a class="ymkrf-wc__card<?php echo $slug ? ' ymkrf-wc__card--cat' : ' ymkrf-wc__card--all'; ?>"
+		   href="<?php echo esc_url( $url( $slug ) ); ?>">
+		  <span class="ymkrf-wc__name"><?php echo esc_html( $name ); ?></span>
+		  <?php if ( $note ) : ?><span class="ymkrf-wc__note"><?php echo esc_html( $note ); ?></span><?php endif; ?>
+		  <span class="ymkrf-wc__cnt">
+		    <?php if ( $c['pub'] ) : ?>
+		      <span class="ymkrf-wc__pub">公開中 <?php echo (int) $c['pub']; ?>件</span>
+		    <?php else : ?>
+		      <span class="ymkrf-wc__zero">公開中の事例なし</span>
+		    <?php endif; ?>
+		    <?php if ( $c['other'] ) : ?>
+		      <span class="ymkrf-wc__other">ほか <?php echo (int) $c['other']; ?>件（下書き・非公開）</span>
+		    <?php endif; ?>
+		  </span>
+		</a>
+		<?php
+	};
+	?>
+	<div class="wrap ymkrf-wc">
+	  <h1>施工事例</h1>
+
+	  <h2 class="ymkrf-wc__h2">部位からえらぶ</h2>
+	  <div class="ymkrf-wc__grid">
+	    <?php foreach ( $terms as $t ) {
+	      $c = isset( $counts[ $t->term_id ] ) ? $counts[ $t->term_id ]
+	                                           : array( 'pub' => 0, 'other' => 0 );
+	      $card( $t->name, $t->slug, $c );
+	    } ?>
+	  </div>
+
+	  <h2 class="ymkrf-wc__h2">まとめて見る</h2>
+	  <div class="ymkrf-wc__grid">
+	    <?php $card( 'すべての施工事例', '', $all, '部位を分けずに、ぜんぶ見ます。' ); ?>
+	  </div>
+	</div>
+
+	<style>
+	  .ymkrf-wc__h2{margin:26px 0 10px;padding-left:9px;font-size:15px;
+	    border-left:4px solid #fe3301;line-height:1.5}
+	  .ymkrf-wc__grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:12px}
+	  .ymkrf-wc__card{display:block;padding:13px 16px;background:#fff;border:1px solid #dcdcde;
+	    border-radius:6px;text-decoration:none;color:inherit;transition:border-color .15s,box-shadow .15s}
+	  .ymkrf-wc__card:hover{box-shadow:0 1px 6px rgba(0,0,0,.08)}
+	  /* 「すべての施工事例」はオレンジ、部位はグリーンで囲みます */
+	  .ymkrf-wc__card--all{border-color:#fe3301;background:#fff8f5}
+	  .ymkrf-wc__card--all:hover{border-color:#fe3301}
+	  .ymkrf-wc__card--cat{border-color:#00782a;background:#eff8f2}
+	  .ymkrf-wc__card--cat:hover{border-color:#005a1f;background:#e4f3ea}
+	  .ymkrf-wc__name{display:block;font-size:15px;font-weight:700;line-height:1.4}
+	  .ymkrf-wc__note{display:block;margin-top:3px;font-size:11.5px;color:#787878;line-height:1.5}
+	  .ymkrf-wc__cnt{display:block;margin-top:7px;font-size:12.5px;line-height:1.6}
+	  .ymkrf-wc__cnt span{display:block}
+	  .ymkrf-wc__pub{color:#00782a;font-weight:700}
+	  .ymkrf-wc__zero{color:#a7aaad}
+	  .ymkrf-wc__other{color:#787878}
+	</style>
+	<?php
+}
+endif;
+
+/* ★いちばん上に置くと、「施工事例」を押したときにこの画面が開きます。
+     並べかえは、下の「並べかた」でしています。 */
+add_action( 'admin_menu', function () {
+	add_submenu_page(
+		'edit.php?post_type=ymkrf_works',
+		'部位からえらぶ', '部位からえらぶ',
+		'edit_posts', 'ymkrf-works-cats', 'ymkrf_works_cats_page'
+	);
+}, 996 );
 
 /**
  * 部位ごとの件数（下書き・公開の両方）。
@@ -2415,12 +2494,16 @@ add_action( 'admin_menu', function () {
  */
 function ymkrf_works_cat_counts() {
 
+	/* 公開ぶんと、それ以外（下書きなど）を分けて返します。
+	   むかしの形（数字だけ）を覚えていたときは、数えなおします。 */
 	$hit = get_transient( 'ymkrf_works_cat_counts' );
-	if ( is_array( $hit ) ) return $hit;
+	if ( is_array( $hit ) && ( ! $hit || is_array( reset( $hit ) ) ) ) return $hit;
 
 	global $wpdb;
 	$rows = $wpdb->get_results(
-		"SELECT tt.term_id AS tid, COUNT(*) AS n
+		"SELECT tt.term_id AS tid,
+		        SUM( p.post_status = 'publish' ) AS pub,
+		        SUM( p.post_status <> 'publish' ) AS other
 		   FROM {$wpdb->term_relationships} tr
 		   JOIN {$wpdb->term_taxonomy} tt ON tt.term_taxonomy_id = tr.term_taxonomy_id
 		   JOIN {$wpdb->posts} p          ON p.ID = tr.object_id
@@ -2431,7 +2514,12 @@ function ymkrf_works_cat_counts() {
 	);
 
 	$out = array();
-	foreach ( (array) $rows as $r ) $out[ (int) $r->tid ] = (int) $r->n;
+	foreach ( (array) $rows as $r ) {
+		$out[ (int) $r->tid ] = array(
+			'pub'   => (int) $r->pub,
+			'other' => (int) $r->other,
+		);
+	}
 
 	set_transient( 'ymkrf_works_cat_counts', $out, 5 * MINUTE_IN_SECONDS );
 	return $out;
@@ -2447,9 +2535,10 @@ add_action( 'admin_menu', function () {
 	$key = 'edit.php?post_type=ymkrf_works';
 	if ( empty( $submenu[ $key ] ) ) return;
 
-	$all = array(); $cats = array(); $sets = array();
+	$top = array(); $all = array(); $cats = array(); $sets = array();
 	foreach ( $submenu[ $key ] as $row ) {
 		if ( ! isset( $row[2] ) ) continue;
+		if ( $row[2] === 'ymkrf-works-cats' ) { $top[] = $row; continue; }
 		if ( $row[2] === $key ) {
 			/* ★消してはいけません（消すと「施工事例」を押しただけで
 			     キッチンが開いてしまいます）。下で隠しています。 */
@@ -2460,7 +2549,7 @@ add_action( 'admin_menu', function () {
 			$sets[] = $row;
 		}
 	}
-	$submenu[ $key ] = array_merge( $all, $cats, $sets );
+	$submenu[ $key ] = array_merge( $top, $all, $cats, $sets );
 }, 999 );
 
 /* いまえらんでいる部位に、色を付けます。
@@ -2507,9 +2596,16 @@ add_action( 'admin_footer', function () {
 	(function () {
 		var ul = document.querySelector('#menu-posts-ymkrf_works .wp-submenu');
 		if (!ul) return;
-		var a = ul.querySelector('a[href$="edit.php?post_type=ymkrf_works"]');
-		var li = a && a.closest ? a.closest('li') : null;
-		if (li && !li.classList.contains('wp-submenu-head')) li.style.display = 'none';
+		var hide = [
+			'a[href$="edit.php?post_type=ymkrf_works"]',
+			/* 「部位からえらぶ」は、左の「施工事例」を押せば開くので出しません */
+			'a[href*="page=ymkrf-works-cats"]'
+		];
+		hide.forEach(function (sel) {
+			var a  = ul.querySelector(sel);
+			var li = a && a.closest ? a.closest('li') : null;
+			if (li && !li.classList.contains('wp-submenu-head')) li.style.display = 'none';
+		});
 	})();
 	</script>
 	<?php

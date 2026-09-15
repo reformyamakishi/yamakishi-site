@@ -1288,19 +1288,28 @@ add_filter( 'posts_clauses', function ( $clauses, $q ) {
 
 
 /* ------------------------------------------------------------
-   6-b. 左メニューに「カテゴリ別の入口」を出す
-        商品 → キッチン ／ お風呂 ／ トイレ … と直接開けるようにします。
-        商品が1件も無いカテゴリは出しません（メニューが長くなるのを防ぐため）。
+   6-b. 左メニューの「カテゴリ別の入口」は出しません
+        （2026/09/16 ユーザー指示「左側のプルダウンで出てくるカテゴリはなくす」）
+
+        カテゴリは「商品」を押したときの画面（6-b1）でカードからえらびます。
+        左メニューに同じものを並べると二重になるため、やめました。
    ------------------------------------------------------------ */
-add_action( 'admin_menu', function () {
 
-	$terms = get_terms( array(
-		'taxonomy'   => 'ymkrf_product_cat',
-		'hide_empty' => true,
-	) );
-	if ( is_wp_error( $terms ) || ! $terms ) return;
 
-	/* 並べる順は、商品一覧ページ（/products/）のカードと同じにします。
+/* ============================================================
+   6-b1. 「商品」を押したときの、カテゴリをえらぶ画面
+   ------------------------------------------------------------
+   （2026/09/16 ユーザー指示「イベント・チラシみたいにカテゴリに分けて」）
+
+   「商品」を押すと、まずキッチン・お風呂…とカードがならびます。
+   カードを押すと、そのカテゴリの商品だけが一覧で出ます。
+   イベント・チラシの「お店をえらぶ画面」と同じ作りです。
+   ============================================================ */
+
+/** 商品カテゴリを、ならべたい順にそろえます */
+if ( ! function_exists( 'ymkrf_product_cat_sort' ) ) :
+function ymkrf_product_cat_sort( $terms ) {
+	/* 商品一覧ページ（/products/）のカードと同じ順にします。
 	   ここに無い分類は、うしろに付きます。 */
 	$order = array( 'kitchen', 'bathroom', 'toilet', 'lavatory', 'boiler', 'ecocute',
 	                'outer-wall', 'window', 'interior' );
@@ -1312,17 +1321,143 @@ add_action( 'admin_menu', function () {
 		if ( $ia === $ib ) return strcmp( $a->slug, $b->slug );
 		return $ia - $ib;
 	} );
+	return $terms;
+}
+endif;
 
-	foreach ( $terms as $t ) {
-		add_submenu_page(
-			'edit.php?post_type=ymkrf_product',                       // 親メニュー
-			$t->name . 'の商品',                                       // ページの見出し
-			'　' . $t->name . '（' . $t->count . '）',                 // メニューに出る文字
-			'edit_posts',
-			'edit.php?post_type=ymkrf_product&ymkrf_product_cat=' . $t->slug
-		);
+/** カテゴリごとの件数（公開・下書きなど）を数えます */
+if ( ! function_exists( 'ymkrf_product_cat_counts' ) ) :
+function ymkrf_product_cat_counts() {
+
+	$out = array( '' => array( 'pub' => 0, 'other' => 0 ) );   /* '' は「すべて」 */
+
+	$ids = get_posts( array(
+		'post_type'      => 'ymkrf_product',
+		'post_status'    => array( 'publish', 'future', 'draft', 'pending', 'private' ),
+		'posts_per_page' => -1,
+		'fields'         => 'ids',
+		'no_found_rows'  => true,
+	) );
+	if ( ! $ids ) return $out;
+
+	/* どの商品がどの分類か、1回でまとめて引きます */
+	$map  = array();
+	$rows = wp_get_object_terms( $ids, 'ymkrf_product_cat',
+		array( 'fields' => 'all_with_object_id' ) );
+	if ( ! is_wp_error( $rows ) ) {
+		foreach ( $rows as $r ) $map[ $r->object_id ][] = $r->slug;
 	}
-} );
+
+	foreach ( $ids as $id ) {
+		$k = ( get_post_status( $id ) === 'publish' ) ? 'pub' : 'other';
+		$out[''][ $k ]++;
+		if ( empty( $map[ $id ] ) ) continue;
+		foreach ( $map[ $id ] as $slug ) {
+			if ( ! isset( $out[ $slug ] ) ) $out[ $slug ] = array( 'pub' => 0, 'other' => 0 );
+			$out[ $slug ][ $k ]++;
+		}
+	}
+	return $out;
+}
+endif;
+
+/** カテゴリをえらぶ画面 */
+if ( ! function_exists( 'ymkrf_product_cats_page' ) ) :
+function ymkrf_product_cats_page() {
+
+	$terms = get_terms( array(
+		'taxonomy'   => 'ymkrf_product_cat',
+		'hide_empty' => false,
+		'parent'     => 0,
+	) );
+	if ( is_wp_error( $terms ) ) $terms = array();
+	$terms = ymkrf_product_cat_sort( $terms );
+
+	$count = ymkrf_product_cat_counts();
+
+	$url = function ( $slug ) {
+		return admin_url( 'edit.php?post_type=ymkrf_product'
+			. ( $slug ? '&ymkrf_product_cat=' . rawurlencode( $slug ) : '' ) );
+	};
+
+	/* カードまるごとがリンクです。押すと、その分類の商品一覧が開きます。 */
+	$card = function ( $name, $slug, $note = '' ) use ( $url, $count ) {
+		$c = isset( $count[ $slug ] ) ? $count[ $slug ] : array( 'pub' => 0, 'other' => 0 );
+		?>
+		<a class="ymkrf-pc__card<?php echo $slug ? ' ymkrf-pc__card--cat' : ' ymkrf-pc__card--all'; ?>"
+		   href="<?php echo esc_url( $url( $slug ) ); ?>">
+		  <span class="ymkrf-pc__name"><?php echo esc_html( $name ); ?></span>
+		  <?php if ( $note ) : ?><span class="ymkrf-pc__note"><?php echo esc_html( $note ); ?></span><?php endif; ?>
+		  <span class="ymkrf-pc__cnt">
+		    <?php if ( $c['pub'] ) : ?>
+		      <span class="ymkrf-pc__pub">公開中 <?php echo (int) $c['pub']; ?>件</span>
+		    <?php else : ?>
+		      <span class="ymkrf-pc__zero">公開中の商品なし</span>
+		    <?php endif; ?>
+		    <?php if ( $c['other'] ) : ?>
+		      <span class="ymkrf-pc__other">ほか <?php echo (int) $c['other']; ?>件（下書き・非公開）</span>
+		    <?php endif; ?>
+		  </span>
+		</a>
+		<?php
+	};
+	?>
+	<div class="wrap ymkrf-pc">
+	  <h1>商品</h1>
+
+	  <h2 class="ymkrf-pc__h2">カテゴリからえらぶ</h2>
+	  <div class="ymkrf-pc__grid">
+	    <?php foreach ( $terms as $t ) $card( $t->name, $t->slug ); ?>
+	  </div>
+
+	  <h2 class="ymkrf-pc__h2">まとめて見る</h2>
+	  <div class="ymkrf-pc__grid">
+	    <?php $card( 'すべての商品', '', 'カテゴリを分けずに、ぜんぶ見ます。' ); ?>
+	  </div>
+
+	  <p class="ymkrf-pc__foot">
+	    カテゴリそのものを作る・直すときは
+	    <a href="<?php echo esc_url( admin_url( 'edit.php?post_type=ymkrf_product&page=ymkrf-product-settings' ) ); ?>">その他設定</a>
+	    からどうぞ。
+	  </p>
+	</div>
+
+	<style>
+	  .ymkrf-pc__h2{margin:26px 0 10px;padding-left:9px;font-size:15px;
+	    border-left:4px solid #fe3301;line-height:1.5}
+	  .ymkrf-pc__grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:12px}
+	  .ymkrf-pc__card{display:block;padding:13px 16px;background:#fff;border:1px solid #dcdcde;
+	    border-radius:6px;text-decoration:none;color:inherit;transition:border-color .15s,box-shadow .15s}
+	  .ymkrf-pc__card:hover{box-shadow:0 1px 6px rgba(0,0,0,.08)}
+	  /* 「すべての商品」はオレンジ、カテゴリはグリーンで囲みます */
+	  .ymkrf-pc__card--all{border-color:#fe3301;background:#fff8f5}
+	  .ymkrf-pc__card--all:hover{border-color:#fe3301}
+	  .ymkrf-pc__card--cat{border-color:#00782a;background:#eff8f2}
+	  .ymkrf-pc__card--cat:hover{border-color:#005a1f;background:#e4f3ea}
+	  .ymkrf-pc__name{display:block;font-size:15px;font-weight:700;line-height:1.4}
+	  .ymkrf-pc__note{display:block;margin-top:3px;font-size:11.5px;color:#787878;line-height:1.5}
+	  .ymkrf-pc__cnt{display:block;margin-top:7px;font-size:12.5px;line-height:1.6}
+	  .ymkrf-pc__cnt span{display:block}
+	  .ymkrf-pc__pub{color:#00782a;font-weight:700}
+	  .ymkrf-pc__zero{color:#a7aaad}
+	  .ymkrf-pc__other{color:#787878}
+	  .ymkrf-pc__foot{margin-top:22px;font-size:13px;color:#50575e}
+	</style>
+	<?php
+}
+endif;
+
+/* 小メニューに登録します。
+   ★いちばん上に置くと、「商品」を押したときにこの画面が開きます
+     （WordPress は、いちばん上の小メニューを行き先にするしくみです）。
+     並べかえは 6-b2 でしています。 */
+add_action( 'admin_menu', function () {
+	add_submenu_page(
+		'edit.php?post_type=ymkrf_product',
+		'カテゴリからえらぶ', 'カテゴリからえらぶ',
+		'edit_posts', 'ymkrf-product-cats', 'ymkrf_product_cats_page'
+	);
+}, 996 );
 
 
 /* ------------------------------------------------------------
@@ -1408,11 +1543,13 @@ add_action( 'admin_menu', function () {
 	$key = 'edit.php?post_type=ymkrf_product';
 	if ( empty( $submenu[ $key ] ) ) return;
 
+	$top  = array();   // カテゴリをえらぶ画面（「商品」を押したときの行き先）
 	$all  = array();   // すべての商品
 	$cats = array();   // カテゴリ別の入口
 	$sets = array();   // その他設定
 	foreach ( $submenu[ $key ] as $row ) {
 		if ( ! isset( $row[2] ) ) continue;
+		if ( $row[2] === 'ymkrf-product-cats' ) { $top[] = $row; continue; }
 		/* 分類をつくる3つの画面は「その他設定」にまとめたので出しません */
 		if ( strpos( $row[2], 'edit-tags.php' ) === 0 ) continue;
 		/* 新規追加は、分類から入る形にしたので出しません */
@@ -1430,7 +1567,7 @@ add_action( 'admin_menu', function () {
 			$sets[] = $row;
 		}
 	}
-	$submenu[ $key ] = array_merge( $all, $cats, $sets );
+	$submenu[ $key ] = array_merge( $top, $all, $cats, $sets );
 }, 999 );
 
 
@@ -1498,9 +1635,16 @@ add_action( 'admin_footer', function () {
 	(function () {
 		var ul = document.querySelector('#menu-posts-ymkrf_product .wp-submenu');
 		if (!ul) return;
-		var a = ul.querySelector('a[href$="edit.php?post_type=ymkrf_product"]');
-		var li = a && a.closest ? a.closest('li') : null;
-		if (li && !li.classList.contains('wp-submenu-head')) li.style.display = 'none';
+		var hide = [
+			'a[href$="edit.php?post_type=ymkrf_product"]',
+			/* 「カテゴリからえらぶ」は、左の「商品」を押せば開くので出しません */
+			'a[href*="page=ymkrf-product-cats"]'
+		];
+		hide.forEach(function (sel) {
+			var a  = ul.querySelector(sel);
+			var li = a && a.closest ? a.closest('li') : null;
+			if (li && !li.classList.contains('wp-submenu-head')) li.style.display = 'none';
+		});
 	})();
 	</script>
 	<?php
