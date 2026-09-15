@@ -28,7 +28,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '3.2.2' );   // ファイル更新時はここを上げるとキャッシュが切れます
+if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '3.6.2' );   // ファイル更新時はここを上げるとキャッシュが切れます
 
 /* ============================================================
    1. CSS / JS の読み込み
@@ -1411,3 +1411,174 @@ add_action( 'wp_enqueue_scripts', function () {
 /* 抜粋の長さと省略記号 */
 add_filter( 'excerpt_length', function () { return 90; } );
 add_filter( 'excerpt_more',   function () { return '…'; } );
+
+/* ============================================================
+   SNSのアイコン（LINE・Instagram・Facebook・X）
+
+   使い方： <?php ymkrf_sns_icons(); ?>
+            <?php ymkrf_sns_icons( 'dark' ); ?>  ← 背景が濃いところ
+
+   ★リンク先を変えるときは、下の $sns の url だけ書きかえてください。
+   ============================================================ */
+if ( ! function_exists( 'ymkrf_sns_icons' ) ) :
+function ymkrf_sns_icons( $mod = '', $lead = 'SNSでも発信しています' ) {
+
+	$sns = array(
+		'line'  => array(
+			'label' => 'LINEで相談する',
+			'url'   => 'https://line.me/R/ti/p/@233okcdx',
+		),
+		'insta' => array(
+			'label' => 'Instagram',
+			'url'   => 'https://www.instagram.com/yamakishi_official_account/',
+		),
+		'fb'    => array(
+			'label' => 'Facebook',
+			'url'   => 'https://www.facebook.com/yamakishi.reform/',
+		),
+		'x'     => array(
+			'label' => 'X（旧Twitter）',
+			'url'   => 'https://x.com/yamakishi_9_',
+		),
+	);
+
+	$icon = array(
+
+		/* LINE は公式の緑の四角のマークです */
+		'line' => '<svg viewBox="0 0 24 24" aria-hidden="true">'
+		        . '<rect x="0" y="0" width="24" height="24" rx="5.4" fill="#06c755"/>'
+		        /* 白いふきだし */
+		        . '<path fill="#fff" d="M12 4.1c-4.6 0-8.3 3-8.3 6.7 0 3.3 2.9 6.1 6.9 6.6.3.1.6.2.7.4.1.2.1.5 0 .7'
+		        . 'l-.1.7c0 .2-.2.8.7.4.9-.4 4.8-2.8 6.5-4.8 1.2-1.3 1.8-2.6 1.8-4C20.3 7.1 16.6 4.1 12 4.1z"/>'
+		        /* ふきだしの中の LINE の文字 */
+		        . '<g fill="#06c755">'
+		        . '<path d="M6.6 8.7h.95v3.15h1.7v.9H6.6z"/>'
+		        . '<path d="M9.85 8.7h.95v4.05h-.95z"/>'
+		        . '<path d="M11.5 8.7h.9l1.6 2.2V8.7h.95v4.05h-.9l-1.6-2.2v2.2h-.95z"/>'
+		        . '<path d="M15.75 8.7h2.6v.88h-1.66v.72h1.6v.86h-1.6v.73h1.66v.86h-2.6z"/>'
+		        . '</g></svg>',
+
+		/* Instagram は公式のグラデーションのマークです */
+		'insta' => '<svg viewBox="0 0 24 24" aria-hidden="true">'
+		         . '<defs><radialGradient id="ymkrfIg' . esc_attr( $mod ) . '" cx="0.3" cy="1.05" r="1.25">'
+		         . '<stop offset="0%" stop-color="#fdf497"/><stop offset="12%" stop-color="#fdf497"/>'
+		         . '<stop offset="34%" stop-color="#fd5949"/><stop offset="58%" stop-color="#d6249f"/>'
+		         . '<stop offset="90%" stop-color="#285aeb"/></radialGradient></defs>'
+		         . '<rect x="1.4" y="1.4" width="21.2" height="21.2" rx="6.2" fill="url(#ymkrfIg'
+		         . esc_attr( $mod ) . ')"/>'
+		         . '<rect x="5.3" y="5.3" width="13.4" height="13.4" rx="4.1" fill="none" stroke="#fff" stroke-width="1.75"/>'
+		         . '<circle cx="12" cy="12" r="3.5" fill="none" stroke="#fff" stroke-width="1.75"/>'
+		         . '<circle cx="16.5" cy="7.5" r="1.05" fill="#fff"/></svg>',
+
+		'fb' => '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">'
+		      . '<path d="M22 12a10 10 0 1 0-11.6 9.9v-7H7.9V12h2.5V9.8c0-2.5 1.5-3.8 3.7-3.8 1.1 0 2.2.2 2.2.2v2.4'
+		      . 'h-1.2c-1.2 0-1.6.8-1.6 1.6V12h2.7l-.4 2.9h-2.3v7A10 10 0 0 0 22 12z"/></svg>',
+
+		'x' => '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">'
+		     . '<path d="M17.5 3h3.1l-6.8 7.7L21.8 21h-6.2l-4.9-6.4L5.1 21H2l7.3-8.3L2.4 3h6.4l4.4 5.8L17.5 3z'
+		     . 'm-1.1 16.1h1.7L7.7 4.8H5.9l10.5 14.3z"/></svg>',
+	);
+
+	$class = 'p-sns' . ( $mod === 'dark' ? ' p-sns--dark' : '' );
+	?>
+	<div class="<?php echo esc_attr( $class ); ?>">
+	  <?php if ( $lead !== '' ) : ?>
+	    <p class="p-sns__lead"><?php echo esc_html( $lead ); ?></p>
+	  <?php endif; ?>
+	  <ul class="p-sns__list">
+	    <?php foreach ( $sns as $key => $s ) : ?>
+	      <li>
+	        <a class="p-sns__btn p-sns__btn--<?php echo esc_attr( $key ); ?>"
+	           href="<?php echo esc_url( $s['url'] ); ?>"
+	           aria-label="<?php echo esc_attr( $s['label'] ); ?>"
+	           title="<?php echo esc_attr( $s['label'] ); ?>"
+	           target="_blank" rel="noopener"
+	           data-cta="sns_<?php echo esc_attr( $key ); ?>">
+	          <?php echo $icon[ $key ]; ?>
+	          <span class="u-vh"><?php echo esc_html( $s['label'] ); ?></span>
+	        </a>
+	      </li>
+	    <?php endforeach; ?>
+	  </ul>
+	</div>
+	<?php
+}
+endif;
+
+/* ============================================================
+   グループのサイト（外壁・太陽光・不動産・コーポレート）
+
+   使い方： <?php ymkrf_group_sites(); ?>
+
+   ★ロゴの画像は assets/img/group/ に置いてください。
+     ファイル名は下の 'img' のとおりです。
+     画像が無いときは、これまでどおり文字のリンクで出ます。
+   ============================================================ */
+if ( ! function_exists( 'ymkrf_group_sites' ) ) :
+function ymkrf_group_sites( $lead = 'ヤマキシのほかのサイト', $use_logo = true ) {
+
+	$sites = array(
+		array(
+			'name' => '外壁・屋根',
+			'url'  => 'https://yamakishi-paint.jp/',
+			'img'  => 'paint.png',
+		),
+		array(
+			'name' => '太陽光・蓄電池',
+			'url'  => 'https://www.yamakishi-solar.biz/',
+			'img'  => 'solar.png',
+			'wide' => true,   /* 横に長いロゴなので、はばいっぱいに出します */
+		),
+		array(
+			'name' => 'トレーラーハウス',
+			'url'  => 'https://www.yamakishi.co.jp/trailerhouse/',
+			'img'  => 'trailer.png',
+		),
+		array(
+			'name' => '不動産',
+			'url'  => 'https://www.yamakishi-f.com/',
+			'img'  => 'estate.png',
+		),
+		array(
+			'name' => 'コーポレート',
+			'url'  => 'https://www.yamakishi.co.jp/',
+			'img'  => 'corporate.png',
+		),
+		array(
+			'name' => 'リクルート',
+			'url'  => 'https://yamakishi.co.jp/recruit/',
+			'img'  => 'recruit.png',
+		),
+	);
+
+	$dir = get_stylesheet_directory() . '/assets/img/group/';
+	$uri = get_stylesheet_directory_uri() . '/assets/img/group/';
+	?>
+	<div class="p-gsites">
+	  <?php if ( $lead !== '' ) : ?>
+	    <p class="p-gsites__lead"><?php echo esc_html( $lead ); ?></p>
+	  <?php endif; ?>
+	  <ul class="p-gsites__list">
+	    <?php foreach ( $sites as $s ) : ?>
+	      <?php $has = $use_logo && file_exists( $dir . $s['img'] ); ?>
+	      <?php
+	      $cls = $has ? 'p-gsites__item--logo' : 'p-gsites__item--text';
+	      if ( $has && ! empty( $s['wide'] ) ) $cls .= ' p-gsites__item--logo--wide';
+	      ?>
+	      <li class="<?php echo esc_attr( $cls ); ?>">
+	        <a href="<?php echo esc_url( $s['url'] ); ?>" target="_blank" rel="noopener"
+	           title="<?php echo esc_attr( $s['name'] ); ?>">
+	          <?php if ( $has ) : ?>
+	            <img src="<?php echo esc_url( $uri . $s['img'] ); ?>"
+	                 alt="<?php echo esc_attr( $s['name'] ); ?>" loading="lazy" decoding="async">
+	          <?php else : ?>
+	            <?php echo esc_html( $s['name'] ); ?>
+	          <?php endif; ?>
+	        </a>
+	      </li>
+	    <?php endforeach; ?>
+	  </ul>
+	</div>
+	<?php
+}
+endif;

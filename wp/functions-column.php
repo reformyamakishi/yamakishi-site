@@ -305,14 +305,55 @@ add_filter( 'use_block_editor_for_post_type', function ( $use, $type ) {
 	return ( $type === 'ymkrf_column' ) ? false : $use;
 }, 10, 2 );
 
+/* 個人ではなく「広報担当」として出すときの目じるし（スタッフIDのかわりの数字） */
+if ( ! defined( 'YMKRF_WRITER_PR' ) ) define( 'YMKRF_WRITER_PR', -1 );
+
+/**
+ * 執筆者の値を、しまえる形にそろえます。
+ *   スタッフ … 投稿ID（数字）
+ *   広報     … -1
+ *   店舗     … 'shop:shinkaga' のような文字
+ */
+function ymkrf_column_writer_clean( $v ) {
+	$v = trim( (string) $v );
+	if ( preg_match( '#^shop:[a-z0-9_-]+$#', $v ) ) return $v;
+	return (string) (int) $v;
+}
+
+/** 店舗の英字を返します（店舗でなければ空） */
+function ymkrf_column_writer_shop( $v ) {
+	$v = (string) $v;
+	return ( strpos( $v, 'shop:' ) === 0 ) ? substr( $v, 5 ) : '';
+}
+
+/** プルダウンに出す、お店のえらび肢 */
+function ymkrf_column_shop_options() {
+	$out = array();
+	if ( ! function_exists( 'ymkrf_shops' ) ) return $out;
+	foreach ( ymkrf_shops() as $s ) {
+		if ( empty( $s['slug'] ) || empty( $s['name'] ) ) continue;
+		$out[ 'shop:' . $s['slug'] ] = $s['name'];
+	}
+	return $out;
+}
+
+/** 英字から店舗の情報を引きます */
+function ymkrf_column_shop_info( $slug ) {
+	if ( ! function_exists( 'ymkrf_shops' ) ) return null;
+	foreach ( ymkrf_shops() as $s ) {
+		if ( isset( $s['slug'] ) && $s['slug'] === $slug ) return $s;
+	}
+	return null;
+}
+
 add_action( 'add_meta_boxes', function () {
-	add_meta_box( 'ymkrf_column_writer', '書いた人',
+	add_meta_box( 'ymkrf_column_writer', '執筆者',
 		'ymkrf_column_writer_box', 'ymkrf_column', 'side', 'high' );
 } );
 
 function ymkrf_column_writer_box( $post ) {
 	wp_nonce_field( 'ymkrf_column_save', 'ymkrf_column_nonce' );
-	$cur = (int) get_post_meta( $post->ID, '_ymkrf_staff', true );
+	$cur = ymkrf_column_writer_clean( get_post_meta( $post->ID, '_ymkrf_staff', true ) );
 
 	$list = function_exists( 'ymkrf_staff_list' ) ? ymkrf_staff_list() : array();
 	/* すでにえらばれている人が一覧に無いときも、消えないように足します */
@@ -324,25 +365,80 @@ function ymkrf_column_writer_box( $post ) {
 			if ( $sp && $sp->post_type === 'ymkrf_staff' ) $list[] = $sp;
 		}
 	}
+
+	/* 「スタッフ」の一覧と同じ順番にそろえます。
+	   本部 → 工事部 → 各店舗、同じ所属なら役職の高い順です。 */
+	$list = ymkrf_column_writer_sort( $list );
+
+	/* 所属ごとにまとめて出します（本部が先頭にきます） */
+	$groups = array();
+	foreach ( $list as $st ) {
+		$shop = function_exists( 'ymkrf_staff_shop_name' )
+		      ? trim( (string) ymkrf_staff_shop_name( $st->ID ) ) : '';
+		if ( $shop === '' ) $shop = 'その他';
+		if ( ! isset( $groups[ $shop ] ) ) $groups[ $shop ] = array();
+		$groups[ $shop ][] = $st;
+	}
 	?>
 	<?php if ( $list ) : ?>
 		<select name="_ymkrf_staff" style="width:100%">
 			<option value="0">（出さない）</option>
-			<?php foreach ( $list as $st ) :
-				$shop = function_exists( 'ymkrf_staff_shop_name' ) ? ymkrf_staff_shop_name( $st->ID ) : ''; ?>
-				<option value="<?php echo (int) $st->ID; ?>" <?php selected( $cur, (int) $st->ID ); ?>>
-					<?php echo esc_html( get_the_title( $st ) . ( $shop ? '（' . $shop . '）' : '' ) ); ?>
-				</option>
+			<?php /* 個人名を出さないとき用。旧ブログの「広報担当」と同じあつかいです */ ?>
+			<option value="<?php echo (int) YMKRF_WRITER_PR; ?>"
+				<?php selected( $cur, (string) YMKRF_WRITER_PR ); ?>>広報</option>
+			<optgroup label="お店から">
+				<?php foreach ( ymkrf_column_shop_options() as $val => $lab ) : ?>
+					<option value="<?php echo esc_attr( $val ); ?>"
+						<?php selected( $cur, $val ); ?>><?php echo esc_html( $lab ); ?></option>
+				<?php endforeach; ?>
+			</optgroup>
+			<?php foreach ( $groups as $shop => $members ) : ?>
+				<optgroup label="<?php echo esc_attr( $shop ); ?>">
+					<?php foreach ( $members as $st ) :
+						$role = trim( (string) get_post_meta( $st->ID, '_ymkrf_staff_role', true ) ); ?>
+						<option value="<?php echo (int) $st->ID; ?>" <?php selected( $cur, (string) $st->ID ); ?>>
+							<?php echo esc_html( get_the_title( $st ) . ( $role !== '' ? '（' . $role . '）' : '' ) ); ?>
+						</option>
+					<?php endforeach; ?>
+				</optgroup>
 			<?php endforeach; ?>
 		</select>
-		<p class="description">
-			記事の下に、<b>顔写真と名前</b>が出ます。空（出さない）でもかまいません。<br>
-			名前と顔写真は「スタッフ」で登録してください。
-		</p>
 	<?php else : ?>
 		<p class="description">スタッフがまだ登録されていません。</p>
 	<?php endif; ?>
 	<?php
+}
+
+/**
+ * 執筆者のえらぶ順番。「スタッフ」の一覧と同じにそろえます。
+ *   所属（本部 → 工事部 → 各店舗）→ 役職の高い順 → 並び順 → 名前
+ */
+function ymkrf_column_writer_sort( $list ) {
+
+	/* 本部は0番なので、「空のとき」だけ900にします（0を900にしないこと） */
+	$num = function ( $post_id, $key ) {
+		$v = get_post_meta( $post_id, $key, true );
+		return ( $v === '' || $v === null ) ? 900 : (int) $v;
+	};
+
+	$key = function ( $st ) use ( $num ) {
+		return array(
+			$num( $st->ID, '_ymkrf_staff_shoprank' ),
+			$num( $st->ID, '_ymkrf_staff_rank' ),
+			(int) $st->menu_order,
+			(string) $st->post_title,
+		);
+	};
+
+	usort( $list, function ( $a, $b ) use ( $key ) {
+		$ka = $key( $a ); $kb = $key( $b );
+		for ( $i = 0; $i < 3; $i++ ) {
+			if ( $ka[ $i ] !== $kb[ $i ] ) return $ka[ $i ] <=> $kb[ $i ];
+		}
+		return strcmp( $ka[3], $kb[3] );
+	} );
+
+	return $list;
 }
 
 add_action( 'save_post_ymkrf_column', function ( $post_id ) {
@@ -351,7 +447,8 @@ add_action( 'save_post_ymkrf_column', function ( $post_id ) {
 	     ! wp_verify_nonce( $_POST['ymkrf_column_nonce'], 'ymkrf_column_save' ) ) return;
 	if ( ! current_user_can( 'edit_post', $post_id ) ) return;
 	if ( isset( $_POST['_ymkrf_staff'] ) ) {
-		update_post_meta( $post_id, '_ymkrf_staff', (int) $_POST['_ymkrf_staff'] );
+		update_post_meta( $post_id, '_ymkrf_staff',
+			ymkrf_column_writer_clean( wp_unslash( $_POST['_ymkrf_staff'] ) ) );
 	}
 } );
 
@@ -359,8 +456,66 @@ add_action( 'save_post_ymkrf_column', function ( $post_id ) {
 if ( ! function_exists( 'ymkrf_column_writer' ) ) :
 function ymkrf_column_writer( $post_id = 0 ) {
 	$post_id = $post_id ? (int) $post_id : get_the_ID();
-	$sid = (int) get_post_meta( $post_id, '_ymkrf_staff', true );
+	$raw = ymkrf_column_writer_clean( get_post_meta( $post_id, '_ymkrf_staff', true ) );
+
+	/* お店から。お店の名前と、そのお店の特徴を出します */
+	$shopslug = ymkrf_column_writer_shop( $raw );
+	if ( $shopslug !== '' ) {
+		$sp = ymkrf_column_shop_info( $shopslug );
+		if ( ! $sp ) return;
+		$dir = get_stylesheet_directory();
+		$uri = get_stylesheet_directory_uri();
+		$ph  = '';
+		if ( empty( $sp['nophoto'] ) ) {
+			foreach ( array( 'webp', 'jpg' ) as $ext ) {
+				if ( file_exists( $dir . '/assets/img/shops/' . $shopslug . '.' . $ext ) ) {
+					$ph = $uri . '/assets/img/shops/' . $shopslug . '.' . $ext;
+					break;
+				}
+			}
+		}
+		?>
+		<div class="p-colwriter p-colwriter--shop">
+		  <?php if ( $ph !== '' ) : ?>
+		    <img class="p-colwriter__ph" src="<?php echo esc_url( $ph ); ?>"
+		         width="88" height="88" alt="" loading="lazy" decoding="async"
+		         <?php if ( ! empty( $sp['pos'] ) ) : ?>style="object-position:<?php
+		           echo esc_attr( $sp['pos'] ); ?>"<?php endif; ?>>
+		  <?php endif; ?>
+		  <div class="p-colwriter__body">
+		    <p class="p-colwriter__lab">この記事に該当するお店</p>
+		    <p class="p-colwriter__name">
+		      <a href="<?php echo esc_url( home_url( '/shops/#' . $shopslug ) ); ?>"><?php
+		        echo esc_html( $sp['name'] ); ?></a>
+		    </p>
+		    <?php if ( ! empty( $sp['feature'] ) ) : ?>
+		      <p class="p-colwriter__word"><?php echo esc_html( $sp['feature'] ); ?></p>
+		    <?php endif; ?>
+		  </div>
+		</div>
+		<?php
+		return;
+	}
+
+	$sid = (int) $raw;
 	if ( ! $sid ) return;
+
+	/* 個人名を出さない「広報」のとき。
+	   イベントやお店のできごとなど、社内から発信する記事に使います。
+	   ★文言を変えたいときは、下の2行を直してください。 */
+	if ( $sid === (int) YMKRF_WRITER_PR ) {
+		?>
+		<div class="p-colwriter p-colwriter--pr">
+		  <div class="p-colwriter__body">
+		    <p class="p-colwriter__lab">執筆</p>
+		    <p class="p-colwriter__name">広報</p>
+		    <p class="p-colwriter__word">地域イベントやヤマキシの活動情報をリアルタイムで発信しています。気になるイベントがありましたら、ぜひチェックしてみてください！</p>
+		  </div>
+		</div>
+		<?php
+		return;
+	}
+
 	$sp = get_post( $sid );
 	/* 退職などで非公開にした人は出しません（リンク先が無くなるため） */
 	if ( ! $sp || $sp->post_type !== 'ymkrf_staff' || $sp->post_status !== 'publish' ) return;
@@ -370,6 +525,11 @@ function ymkrf_column_writer( $post_id = 0 ) {
 	$shop  = function_exists( 'ymkrf_staff_shop_name' ) ? (string) ymkrf_staff_shop_name( $sid ) : '';
 	$role  = trim( (string) get_post_meta( $sid, '_ymkrf_staff_role', true ) );
 	$thumb = get_the_post_thumbnail_url( $sid, 'medium' );
+
+	/* スタッフ紹介に入れてある「趣味」と「ひとこと」も出します
+	   （2026/09/10 ユーザー指示）。空のときは、その行ごと出しません。 */
+	$hobby = trim( (string) get_post_meta( $sid, '_ymkrf_staff_hobby', true ) );
+	$word  = trim( (string) get_post_meta( $sid, '_ymkrf_staff_word',  true ) );
 	?>
 	<div class="p-colwriter">
 	  <?php if ( $thumb ) : ?>
@@ -385,8 +545,523 @@ function ymkrf_column_writer( $post_id = 0 ) {
 	      <p class="p-colwriter__shop"><?php
 	        echo esc_html( trim( $shop . ( $role !== '' ? '　' . $role : '' ) ) ); ?></p>
 	    <?php endif; ?>
+
+	    <?php if ( $hobby !== '' ) : ?>
+	      <p class="p-colwriter__hobby">
+	        <span class="p-colwriter__tag">趣味</span><?php echo esc_html( $hobby ); ?>
+	      </p>
+	    <?php endif; ?>
+
+	    <?php if ( $word !== '' ) : ?>
+	      <p class="p-colwriter__word"><?php echo nl2br( esc_html( $word ) ); ?></p>
+	    <?php endif; ?>
 	  </div>
 	</div>
 	<?php
 }
 endif;
+
+
+
+/* ============================================================
+   管理画面のコラム一覧
+   「日付」→「掲載日時」に、そのうしろに「状態」をならべます
+   ============================================================ */
+
+add_filter( 'manage_ymkrf_column_posts_columns', function ( $cols ) {
+
+	/* もとの「日付」は消します */
+	unset( $cols['date'] );
+
+	$new = array();
+	foreach ( $cols as $key => $label ) {
+		$new[ $key ] = $label;
+		/* チェックらんのすぐ後ろ＝題名の前にならべます */
+		if ( $key === 'cb' ) {
+			$new['ymkrf_pub']    = '掲載日時';
+			$new['ymkrf_status'] = '状態';
+			$new['ymkrf_writer'] = '執筆者';
+		}
+	}
+	/* チェックらんが無いときは、いちばん前に足します */
+	if ( ! isset( $new['ymkrf_pub'] ) ) {
+		$new = array(
+			'ymkrf_pub'    => '掲載日時',
+			'ymkrf_status' => '状態',
+			'ymkrf_writer' => '執筆者',
+		) + $new;
+	}
+	return $new;
+} );
+
+add_action( 'manage_ymkrf_column_posts_custom_column', function ( $col, $post_id ) {
+
+	$p = get_post( $post_id );
+	if ( ! $p ) return;
+
+	/* ---- 掲載日時 ---- */
+	if ( $col === 'ymkrf_pub' ) {
+		if ( $p->post_date === '0000-00-00 00:00:00' ) { echo '—'; return; }
+		$t = strtotime( $p->post_date );
+		echo '<span style="display:block;color:#1d2327;font-weight:700;'
+		   . 'font-size:14px;line-height:1.35">'
+		   . esc_html( date_i18n( 'Y/m/d', $t ) ) . '</span>';
+		echo '<span style="color:#3c434a;font-size:13px">'
+		   . esc_html( date_i18n( 'H:i', $t ) ) . '</span>';
+		return;
+	}
+
+	/* ---- 執筆者 ---- */
+	if ( $col === 'ymkrf_writer' ) {
+		echo ymkrf_column_writer_name( $post_id, true );
+		/* クイック編集がいまの値を読むための、見えない目じるし */
+		echo '<span class="ymkrf-wnow" style="display:none">'
+		   . esc_html( ymkrf_column_writer_clean( get_post_meta( $post_id, '_ymkrf_staff', true ) ) )
+		   . '</span>';
+		return;
+	}
+
+	/* ---- 状態 ---- */
+	if ( $col === 'ymkrf_status' ) {
+
+		$now  = current_time( 'timestamp' );
+		$mine = $p->post_status;
+
+		if ( $mine === 'publish' && strtotime( $p->post_date ) > $now ) $mine = 'future';
+
+		$map = array(
+			'publish' => array( '公開',   '#00782a', '#eaf6ee' ),
+			'draft'   => array( '下書き', '#996800', '#fcf3e3' ),
+			'pending' => array( '確認待ち', '#996800', '#fcf3e3' ),
+			'future'  => array( '予約',   '#2271b1', '#eaf2fa' ),
+			'private' => array( '非公開', '#646970', '#f0f0f1' ),
+			'trash'   => array( 'ゴミ箱', '#b32d2e', '#fcf0f1' ),
+		);
+		$m = isset( $map[ $mine ] ) ? $map[ $mine ] : array( $mine, '#646970', '#f0f0f1' );
+
+		printf(
+			'<span style="display:inline-block;padding:2px 10px;border-radius:11px;'
+			. 'font-weight:700;font-size:12px;color:%s;background:%s">%s</span>',
+			esc_attr( $m[1] ), esc_attr( $m[2] ), esc_html( $m[0] )
+		);
+		return;
+	}
+
+}, 10, 2 );
+
+/* 見出しを押すと、並べかえられます */
+add_filter( 'manage_edit-ymkrf_column_sortable_columns', function ( $cols ) {
+	$cols['ymkrf_pub']    = 'date';
+	$cols['ymkrf_status'] = 'ymkrf_status';
+	$cols['ymkrf_writer'] = 'ymkrf_writer';
+	return $cols;
+} );
+
+/**
+ * 「状態」の並べかた。
+ * WordPress は状態のじゅんに並べる機能をもっていないので、
+ * ここで自分で順番を決めています。
+ *   公開 → 予約 → 確認待ち → 下書き → 非公開
+ * 同じ状態のなかでは、掲載日の新しいものが上にきます。
+ */
+add_filter( 'posts_orderby', function ( $orderby, $q ) {
+
+	if ( ! is_admin() || ! $q->is_main_query() ) return $orderby;
+	if ( $q->get( 'post_type' ) !== 'ymkrf_column' ) return $orderby;
+	if ( $q->get( 'orderby' ) !== 'ymkrf_status' )   return $orderby;
+
+	global $wpdb;
+	$ord = ( strtoupper( (string) $q->get( 'order' ) ) === 'ASC' ) ? 'ASC' : 'DESC';
+
+	return "FIELD( {$wpdb->posts}.post_status,"
+	     . " 'publish','future','pending','draft','private' ) {$ord},"
+	     . " {$wpdb->posts}.post_date DESC";
+
+}, 10, 2 );
+
+/* 列はばをととのえます */
+add_action( 'admin_head-edit.php', function () {
+	$s = get_current_screen();
+	if ( ! $s || $s->post_type !== 'ymkrf_column' ) return;
+	echo '<style>
+	.column-ymkrf_pub{width:7.5em}
+	.column-ymkrf_status{width:6.5em}
+	.column-title{width:auto}
+	</style>';
+} );
+
+/* 題名のうしろの「— 下書き」は消します（右の「状態」らんに出しているため） */
+add_filter( 'display_post_states', function ( $states, $post ) {
+	if ( $post && $post->post_type === 'ymkrf_column' ) return array();
+	return $states;
+}, 10, 2 );
+
+/* ============================================================
+   管理画面のコラム一覧「執筆者」らん
+
+   書いた人は2とおりの入りかたがあります。
+     ① スタッフをえらんだもの … _ymkrf_staff（スタッフの投稿ID）
+     ② 旧ブログから取り込んだもの … _ymkrf_old_writer（お名前の文字）
+   どちらも同じらんに出します。
+   ============================================================ */
+
+/**
+ * 執筆者のお名前を返します。
+ * $html を true にすると、一覧に出す形（リンクや色つき）で返します。
+ */
+function ymkrf_column_writer_name( $post_id, $html = false ) {
+
+	$raw = ymkrf_column_writer_clean( get_post_meta( $post_id, '_ymkrf_staff', true ) );
+
+	/* お店から */
+	$shop = ymkrf_column_writer_shop( $raw );
+	if ( $shop !== '' ) {
+		$s    = ymkrf_column_shop_info( $shop );
+		$name = $s ? $s['name'] : $shop;
+		return $html ? '<b>' . esc_html( $name ) . '</b>' : $name;
+	}
+
+	$sid = (int) $raw;
+
+	if ( $sid === (int) YMKRF_WRITER_PR ) {
+		return $html ? '<b>広報</b>' : '広報';
+	}
+
+	if ( $sid ) {
+		$sp = get_post( $sid );
+		if ( $sp && $sp->post_type === 'ymkrf_staff' ) {
+			$name = trim( (string) get_the_title( $sp ) );
+			if ( $name !== '' ) {
+				if ( ! $html ) return $name;
+				$shop = function_exists( 'ymkrf_staff_shop_name' )
+				      ? trim( (string) ymkrf_staff_shop_name( $sid ) ) : '';
+				$out  = '<a href="' . esc_url( (string) get_edit_post_link( $sid ) ) . '">'
+				      . esc_html( $name ) . '</a>';
+				if ( $shop !== '' ) {
+					$out .= '<br><span style="color:#646970;font-size:12px">'
+					      . esc_html( $shop ) . '</span>';
+				}
+				return $out;
+			}
+		}
+	}
+
+	/* 旧ブログのお名前（スタッフとひもづいていないもの） */
+	$old = trim( (string) get_post_meta( $post_id, '_ymkrf_old_writer', true ) );
+	if ( $old !== '' ) {
+		if ( ! $html ) return $old;
+		return '<span style="color:#646970">' . esc_html( $old ) . '</span>'
+		     . '<br><span style="color:#a7aaad;font-size:11px">旧ブログ</span>';
+	}
+
+	return $html ? '<span style="color:#a7aaad">—</span>' : '';
+}
+
+/**
+ * 「執筆者」の見出しを押したときの並べかえ。
+ * WordPress は2つのちがう項目をまとめて並べる機能がないので、
+ * ここで自分でつなぎ合わせています。
+ * お名前の無いものは、いちばん後ろにきます。
+ */
+add_filter( 'posts_clauses', function ( $c, $q ) {
+
+	if ( ! is_admin() || ! $q->is_main_query() ) return $c;
+	if ( $q->get( 'post_type' ) !== 'ymkrf_column' ) return $c;
+	if ( $q->get( 'orderby' ) !== 'ymkrf_writer' )   return $c;
+
+	global $wpdb;
+	$ord = ( strtoupper( (string) $q->get( 'order' ) ) === 'DESC' ) ? 'DESC' : 'ASC';
+
+	$c['join'] .= "
+		LEFT JOIN {$wpdb->postmeta} ymkw1
+		       ON ( ymkw1.post_id = {$wpdb->posts}.ID AND ymkw1.meta_key = '_ymkrf_staff' )
+		LEFT JOIN {$wpdb->posts} ymkws
+		       ON ( ymkws.ID = ymkw1.meta_value AND ymkws.post_type = 'ymkrf_staff' )
+		LEFT JOIN {$wpdb->postmeta} ymkw2
+		       ON ( ymkw2.post_id = {$wpdb->posts}.ID AND ymkw2.meta_key = '_ymkrf_old_writer' )";
+
+	/* 名前をひとつにまとめます（スタッフ名 → 旧ブログの名前 → 空） */
+	$name = "COALESCE( NULLIF( ymkws.post_title, '' ), NULLIF( ymkw2.meta_value, '' ), '' )";
+
+	/* 名前の無いものは、昇順でも降順でも、いちばん後ろにします */
+	$c['orderby'] = "( {$name} = '' ) ASC, {$name} {$ord}, {$wpdb->posts}.post_date DESC";
+
+	return $c;
+}, 10, 2 );
+
+/* 列はばをととのえます */
+add_action( 'admin_head-edit.php', function () {
+	$s = get_current_screen();
+	if ( ! $s || $s->post_type !== 'ymkrf_column' ) return;
+	echo '<style>.column-ymkrf_writer{width:9em}</style>';
+} );
+
+/* ============================================================
+   コラム一覧の「クイック編集」「一括編集」でも執筆者を変えられるように
+
+   一覧から直したいとき、これまでは記事をひらく必要がありました。
+   （2026/09/10 ユーザーからの「一覧が変更されない」という指摘より）
+   ============================================================ */
+
+/** クイック編集・一括編集の中に出す、執筆者のえらび欄 */
+function ymkrf_column_writer_inline_select( $name = '_ymkrf_staff', $bulk = false ) {
+
+	$list = function_exists( 'ymkrf_staff_list' ) ? ymkrf_staff_list() : array();
+	$list = ymkrf_column_writer_sort( $list );
+
+	$groups = array();
+	foreach ( $list as $st ) {
+		$shop = function_exists( 'ymkrf_staff_shop_name' )
+		      ? trim( (string) ymkrf_staff_shop_name( $st->ID ) ) : '';
+		if ( $shop === '' ) $shop = 'その他';
+		$groups[ $shop ][] = $st;
+	}
+	?>
+	<select name="<?php echo esc_attr( $name ); ?>" class="ymkrf-wsel">
+		<?php if ( $bulk ) : ?>
+			<option value="">— 変更しない —</option>
+		<?php endif; ?>
+		<option value="0">（出さない）</option>
+		<option value="<?php echo (int) YMKRF_WRITER_PR; ?>">広報</option>
+		<optgroup label="お店から">
+			<?php foreach ( ymkrf_column_shop_options() as $val => $lab ) : ?>
+				<option value="<?php echo esc_attr( $val ); ?>"><?php echo esc_html( $lab ); ?></option>
+			<?php endforeach; ?>
+		</optgroup>
+		<?php foreach ( $groups as $shop => $members ) : ?>
+			<optgroup label="<?php echo esc_attr( $shop ); ?>">
+				<?php foreach ( $members as $st ) :
+					$role = trim( (string) get_post_meta( $st->ID, '_ymkrf_staff_role', true ) ); ?>
+					<option value="<?php echo (int) $st->ID; ?>"><?php
+						echo esc_html( get_the_title( $st ) . ( $role !== '' ? '（' . $role . '）' : '' ) );
+					?></option>
+				<?php endforeach; ?>
+			</optgroup>
+		<?php endforeach; ?>
+	</select>
+	<?php
+}
+
+add_action( 'quick_edit_custom_box', function ( $col, $type ) {
+	if ( $type !== 'ymkrf_column' || $col !== 'ymkrf_writer' ) return;
+	?>
+	<fieldset class="inline-edit-col-right">
+	  <div class="inline-edit-col">
+	    <label class="inline-edit-group">
+	      <span class="title">執筆者</span>
+	      <?php ymkrf_column_writer_inline_select( '_ymkrf_staff', false ); ?>
+	    </label>
+	  </div>
+	</fieldset>
+	<?php
+}, 10, 2 );
+
+add_action( 'bulk_edit_custom_box', function ( $col, $type ) {
+	if ( $type !== 'ymkrf_column' || $col !== 'ymkrf_writer' ) return;
+	?>
+	<fieldset class="inline-edit-col-right">
+	  <div class="inline-edit-col">
+	    <label class="inline-edit-group">
+	      <span class="title">執筆者</span>
+	      <?php ymkrf_column_writer_inline_select( '_ymkrf_staff', true ); ?>
+	    </label>
+	  </div>
+	</fieldset>
+	<?php
+}, 10, 2 );
+
+/* いまの執筆者を、クイック編集の欄にうつします */
+add_action( 'admin_footer-edit.php', function () {
+	$s = get_current_screen();
+	if ( ! $s || $s->post_type !== 'ymkrf_column' ) return;
+	?>
+	<script>
+	jQuery(function($){
+	  var orig = ( typeof inlineEditPost !== 'undefined' ) ? inlineEditPost.edit : null;
+	  if ( ! orig ) return;
+	  inlineEditPost.edit = function ( id ) {
+	    orig.apply( this, arguments );
+	    var pid = ( typeof id === 'object' ) ? this.getId( id ) : id;
+	    if ( ! pid ) return;
+	    var now = $('#post-' + pid).find('.ymkrf-wnow').text();
+	    $('#edit-' + pid).find('select[name="_ymkrf_staff"]').val( now || '0' );
+	  };
+	});
+	</script>
+	<?php
+} );
+
+/* クイック編集・一括編集からの保存 */
+add_action( 'save_post_ymkrf_column', function ( $post_id ) {
+
+	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
+	if ( ! current_user_can( 'edit_post', $post_id ) ) return;
+	if ( ! isset( $_POST['_ymkrf_staff'] ) ) return;
+
+	$act = isset( $_POST['action'] ) ? sanitize_key( $_POST['action'] ) : '';
+
+	/* クイック編集 */
+	if ( $act === 'inline-save' ) {
+		if ( ! check_ajax_referer( 'inlineeditnonce', '_inline_edit', false ) ) return;
+		update_post_meta( $post_id, '_ymkrf_staff',
+			ymkrf_column_writer_clean( wp_unslash( $_POST['_ymkrf_staff'] ) ) );
+		return;
+	}
+
+	/* 一括編集（「— 変更しない —」のときは、さわりません） */
+	if ( isset( $_GET['bulk_edit'] ) || isset( $_POST['bulk_edit'] ) ) {
+		if ( $_POST['_ymkrf_staff'] === '' ) return;
+		update_post_meta( $post_id, '_ymkrf_staff',
+			ymkrf_column_writer_clean( wp_unslash( $_POST['_ymkrf_staff'] ) ) );
+	}
+}, 20 );
+
+/* ============================================================
+   アイキャッチ画像が無いときは、本文の1枚目の写真を使う
+
+   （2026/09/10 ユーザー指示
+     「アイキャッチを設定していない場合、一番最初の写真もしくは
+       イラストをアイキャッチにして」）
+
+   ・記事を保存したときに、自動で入ります。
+   ・すでにある記事にも、一度だけまとめて入れます。
+   ・手でアイキャッチを設定してあるものは、さわりません。
+   ============================================================ */
+
+/** 本文の1枚目の写真の、メディアの番号を返します（見つからなければ 0） */
+function ymkrf_column_first_image_id( $post_id ) {
+
+	$p = get_post( $post_id );
+	if ( ! $p ) return 0;
+
+	$html = (string) $p->post_content;
+	if ( $html === '' ) return 0;
+
+	if ( ! preg_match_all( '#<img[^>]+src=["\']([^"\']+)["\']#i', $html, $m ) ) return 0;
+
+	$first_any = 0;   /* 帯しか無かったときの、ひかえ */
+
+	foreach ( $m[1] as $src ) {
+
+		/* wp-image-123 のような印が付いていれば、それがいちばん確かです */
+		$id = attachment_url_to_postid( $src );
+
+		/* 大・中などに縮めた画像は、もとの画像として引きなおします
+		   （例 …-1024x768.jpg → ….jpg） */
+		if ( ! $id ) {
+			$base = preg_replace( '#-\d+x\d+(\.[A-Za-z0-9]+)$#', '$1', $src );
+			if ( $base !== $src ) $id = attachment_url_to_postid( $base );
+		}
+
+		if ( ! $id ) continue;
+
+		if ( ! $first_any ) $first_any = (int) $id;
+
+		/* 横に長い画像（キャンペーンの帯など）は、アイキャッチにすると
+		   カードで上下が切れてしまうので飛ばします。
+		   （2026/09/10 ユーザー指示「帯のものは変更して」） */
+		if ( ymkrf_column_is_banner( $id ) ) continue;
+
+		return (int) $id;
+	}
+
+	/* 帯しか無かったときは、その帯を使います */
+	if ( $first_any ) return $first_any;
+
+	/* src では見つからないとき、class の wp-image-123 を見ます */
+	if ( preg_match( '#wp-image-(\d+)#', $html, $mm ) ) return (int) $mm[1];
+
+	return 0;
+}
+
+/**
+ * 「帯」かどうか。よこ長すぎる画像を帯とみなします。
+ * よこ ÷ たて が 1.9 以上のものが対象です
+ * （キャンペーンの帯は 1000×468 ＝ 2.1 ぐらいです）。
+ */
+function ymkrf_column_is_banner( $att_id ) {
+	$meta = wp_get_attachment_metadata( $att_id );
+	if ( empty( $meta['width'] ) || empty( $meta['height'] ) ) return false;
+	return ( $meta['width'] / $meta['height'] ) >= 1.9;
+}
+
+/** アイキャッチが空なら、本文の1枚目を入れます */
+function ymkrf_column_fill_thumb( $post_id ) {
+
+	if ( get_post_thumbnail_id( $post_id ) ) return false;
+
+	$id = ymkrf_column_first_image_id( $post_id );
+	if ( ! $id ) return false;
+
+	$att = get_post( $id );
+	if ( ! $att || $att->post_type !== 'attachment' ) return false;
+
+	set_post_thumbnail( $post_id, $id );
+
+	/* あとから「これは自動で入れたもの」と分かるようにしておきます */
+	update_post_meta( $post_id, '_ymkrf_thumb_auto', '1' );
+	return true;
+}
+
+add_action( 'save_post_ymkrf_column', function ( $post_id ) {
+	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
+	if ( wp_is_post_revision( $post_id ) ) return;
+	ymkrf_column_fill_thumb( $post_id );
+}, 50 );
+
+/* 自動で入れたアイキャッチが「帯」だったものを、写真に入れなおします
+   （2026/09/10 ユーザー指示。手で設定したものは、さわりません） */
+add_action( 'admin_init', function () {
+
+	if ( get_option( 'ymkrf_column_rebanner' ) === '1' ) return;
+	if ( ! current_user_can( 'edit_posts' ) ) return;
+
+	$ids = get_posts( array(
+		'post_type'      => 'ymkrf_column',
+		'post_status'    => 'any',
+		'posts_per_page' => -1,
+		'fields'         => 'ids',
+		'meta_query'     => array( array( 'key' => '_ymkrf_thumb_auto', 'value' => '1' ) ),
+	) );
+
+	foreach ( $ids as $id ) {
+		$now = (int) get_post_thumbnail_id( $id );
+		if ( ! $now || ! ymkrf_column_is_banner( $now ) ) continue;
+
+		delete_post_thumbnail( $id );
+		$new = ymkrf_column_first_image_id( $id );
+		if ( $new && $new !== $now ) {
+			set_post_thumbnail( $id, $new );
+		} else {
+			set_post_thumbnail( $id, $now );   /* ほかに写真が無いので、そのまま */
+		}
+	}
+
+	update_option( 'ymkrf_column_rebanner', '1', false );
+}, 21 );
+
+/* すでにある記事にも、一度だけまとめて入れます */
+add_action( 'admin_init', function () {
+
+	if ( get_option( 'ymkrf_column_thumbfill' ) === '2' ) return;
+	if ( ! current_user_can( 'edit_posts' ) ) return;
+
+	$ids = get_posts( array(
+		'post_type'      => 'ymkrf_column',
+		'post_status'    => 'any',
+		'posts_per_page' => 40,          /* 1回に40本ずつ。数回の画面ひらきで終わります */
+		'fields'         => 'ids',
+		'meta_query'     => array(
+			'relation' => 'AND',
+			array( 'key' => '_thumbnail_id', 'compare' => 'NOT EXISTS' ),
+			array( 'key' => '_ymkrf_thumb_try', 'compare' => 'NOT EXISTS' ),
+		),
+	) );
+
+	if ( ! $ids ) { update_option( 'ymkrf_column_thumbfill', '2', false ); return; }
+
+	foreach ( $ids as $id ) {
+		update_post_meta( $id, '_ymkrf_thumb_try', '1' );   /* 一度みた印 */
+		ymkrf_column_fill_thumb( $id );
+	}
+}, 20 );

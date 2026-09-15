@@ -2242,25 +2242,58 @@ if ( ! function_exists( 'ymkrf_product_cta' ) ) :
 function ymkrf_product_cta( $place = 'product', $with_tel = false ) {
 	$rsv  = esc_url( home_url( '/inquiry/webrsv/' ) );
 	$inq  = esc_url( home_url( '/inquiry/' ) );
-	$line = 'https://lin.ee/UJZuSTrz';
+	$line = 'https://line.me/R/ti/p/@233okcdx';
 	?>
 	<div class="p-pagecta__btns" style="margin-top:26px">
-	  <a class="c-btn c-btn--block" href="<?php echo $rsv; ?>" data-cta="<?php echo esc_attr( $place ); ?>">
-	    <span class="c-btn__label">来店して現物を見る<span class="c-btn__sub">初回特典500円ヤマキシお買物券<br>※展示のない店舗もあります</span></span>
+
+	  <a class="c-cta c-cta--rsv" href="<?php echo $rsv; ?>" data-cta="<?php echo esc_attr( $place ); ?>">
+	    <span class="c-cta__ico" aria-hidden="true">
+	      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+	           stroke-linecap="round" stroke-linejoin="round">
+	        <path d="M3 9.5 4.6 4.6A1 1 0 0 1 5.6 4h12.8a1 1 0 0 1 1 .6L21 9.5"/>
+	        <path d="M3 9.5a2.2 2.2 0 0 0 4.5 0 2.2 2.2 0 0 0 4.5 0 2.2 2.2 0 0 0 4.5 0 2.2 2.2 0 0 0 4.5 0"/>
+	        <path d="M4.6 12.2V20h14.8v-7.8"/><path d="M9.4 20v-5h5.2v5"/>
+	      </svg>
+	    </span>
+	    <span class="c-cta__name">来店して現物を見る</span>
 	  </a>
-	  <a class="c-btn c-btn--line c-btn--block" href="<?php echo esc_url( $line ); ?>" rel="noopener" data-cta="<?php echo esc_attr( $place ); ?>">
-	    <span class="c-btn__label">LINEで相談する<span class="c-btn__sub">写真を送るだけでもOK・24時間受付</span></span>
+
+	  <a class="c-cta c-cta--line" href="<?php echo esc_url( $line ); ?>" rel="noopener" data-cta="<?php echo esc_attr( $place ); ?>">
+	    <span class="c-cta__ico" aria-hidden="true">
+	      <svg viewBox="0 0 24 24" fill="currentColor">
+	        <path d="M12 2C6.5 2 2 5.6 2 10.1c0 4 3.6 7.4 8.4 8 .3.1.6.2.7.4.1.2.1.6 0 .8l-.1.8c0 .2-.2.8.7.4.9-.4 4.8-2.8 6.5-4.8C21.4 13.5 22 11.9 22 10.1 22 5.6 17.5 2 12 2z"/>
+	      </svg>
+	    </span>
+	    <span class="c-cta__name">LINEで相談する</span>
+	    <span class="c-cta__sub">24時間受付</span>
 	  </a>
+
 	  <?php /* LINEをお使いでない方・夜のうちに送っておきたい方の受け口です。
 	           /inquiry/ のフォームへ送ります。 */ ?>
-	  <a class="c-btn c-btn--ghost c-btn--block" href="<?php echo $inq; ?>" data-cta="<?php echo esc_attr( $place ); ?>">
-	    <span class="c-btn__label">無料の現地調査・お見積り<span class="c-btn__sub">メールでのご相談はこちら・24時間受付</span></span>
+	  <a class="c-cta c-cta--mail" href="<?php echo $inq; ?>" data-cta="<?php echo esc_attr( $place ); ?>">
+	    <span class="c-cta__ico" aria-hidden="true">
+	      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+	           stroke-linecap="round" stroke-linejoin="round">
+	        <rect x="2.8" y="4.8" width="18.4" height="14.4" rx="2.4"/>
+	        <path d="m3.6 6.6 8.4 6 8.4-6"/>
+	      </svg>
+	    </span>
+	    <span class="c-cta__name">無料の現地調査・お見積り</span>
 	  </a>
+
 	  <?php if ( $with_tel ) : ?>
-	  <a class="c-btn c-btn--ghost c-btn--block" href="tel:0800-777-3331" data-cta="<?php echo esc_attr( $place ); ?>">
-	    <span class="c-btn__label">0800-777-3331<span class="c-btn__sub">通話無料・受付 9:00〜17:00</span></span>
+	  <a class="c-cta c-cta--tel" href="tel:0800-777-3331" data-cta="<?php echo esc_attr( $place ); ?>">
+	    <span class="c-cta__ico" aria-hidden="true">
+	      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+	           stroke-linecap="round" stroke-linejoin="round">
+	        <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/>
+	      </svg>
+	    </span>
+	    <span class="c-cta__name">0800-777-3331</span>
+	    <span class="c-cta__sub">通話無料<br>受付 9:00〜17:00</span>
 	  </a>
 	  <?php endif; ?>
+
 	</div>
 	<?php
 }

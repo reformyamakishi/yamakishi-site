@@ -212,7 +212,7 @@ get_header();
         「保証はどうなるの？」というご質問だけでも歓迎です。
       </p>
       <div class="p-lpcta__btns">
-        <a class="c-btn c-btn--line c-btn--block" href="https://lin.ee/UJZuSTrz" rel="noopener" data-cta="warranty-cta">
+        <a class="c-btn c-btn--line c-btn--block" href="https://line.me/R/ti/p/@233okcdx" rel="noopener" data-cta="warranty-cta">
           <span class="c-btn__label">LINEで相談する<span class="c-btn__sub">写真を送るだけでもOK・24時間受付</span></span>
         </a>
         <a class="c-btn c-btn--block" href="<?php echo esc_url( home_url( '/inquiry/webrsv/' ) ); ?>" data-cta="warranty-cta">

@@ -31,7 +31,7 @@
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 $asset = get_stylesheet_directory_uri();
-$line  = 'https://lin.ee/UJZuSTrz';
+$line  = 'https://line.me/R/ti/p/@233okcdx';
 $tel   = '0800-777-3331';
 
 $shops = function_exists( 'ymkrf_shops' ) ? ymkrf_shops() : array();

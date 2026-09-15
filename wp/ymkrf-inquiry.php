@@ -28,7 +28,7 @@
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 $dir  = get_stylesheet_directory_uri();
-$line = 'https://lin.ee/UJZuSTrz';
+$line = 'https://line.me/R/ti/p/@233okcdx';
 $tel  = '0800-777-3331';
 
 /* ------------------------------------------------------------
@@ -95,30 +95,6 @@ get_header();
 </div>
 
 <!-- =========== ご相談の流れ =========== -->
-<section class="l-section">
-  <div class="l-wrap">
-    <div class="c-head">
-      <span class="c-head__en">FLOW</span>
-      <h2 class="c-head__title">送信したあとの<span class="marker">流れ</span></h2>
-    </div>
-
-    <ol class="p-inq__steps">
-      <?php foreach ( $steps as $i => $s ) : ?>
-        <li class="p-inq__step">
-          <span class="p-inq__stepno"><?php echo (int) ( $i + 1 ); ?></span>
-          <h3 class="p-inq__stepttl"><?php echo esc_html( $s['ttl'] ); ?></h3>
-          <p class="p-inq__steptxt"><?php echo esc_html( $s['txt'] ); ?></p>
-        </li>
-      <?php endforeach; ?>
-    </ol>
-
-    <p class="p-inq__note">
-      ※お見積りのあとで、追加の工事が必要になったときは、着工前にかならずお見積りをお出しします。<br>
-      ※いただいた個人情報は、ご相談への対応以外には使いません。<a href="<?php echo esc_url( home_url( '/privacy/' ) ); ?>">プライバシーポリシー</a>
-    </p>
-  </div>
-</section>
-
 <!-- =========== フォーム =========== -->
 <section class="l-section l-section--soft" id="form">
   <div class="l-wrap">
@@ -172,12 +148,36 @@ get_header();
   </div>
 </section>
 
+<section class="l-section">
+  <div class="l-wrap">
+    <div class="c-head">
+      <span class="c-head__en">FLOW</span>
+      <h2 class="c-head__title">送信したあとの<span class="marker">流れ</span></h2>
+    </div>
+
+    <ol class="p-inq__steps">
+      <?php foreach ( $steps as $i => $s ) : ?>
+        <li class="p-inq__step">
+          <span class="p-inq__stepno"><?php echo (int) ( $i + 1 ); ?></span>
+          <h3 class="p-inq__stepttl"><?php echo esc_html( $s['ttl'] ); ?></h3>
+          <p class="p-inq__steptxt"><?php echo esc_html( $s['txt'] ); ?></p>
+        </li>
+      <?php endforeach; ?>
+    </ol>
+
+    <p class="p-inq__note">
+      ※お見積りのあとで、追加の工事が必要になったときは、着工前にかならずお見積りをお出しします。<br>
+      ※いただいた個人情報は、ご相談への対応以外には使いません。<a href="<?php echo esc_url( home_url( '/privacy/' ) ); ?>">プライバシーポリシー</a>
+    </p>
+  </div>
+</section>
+
 <!-- =========== お電話でのご相談 ===========
      ★ユーザー指示（2026/09/03）でフォームの下に置いています。
        フリーダイヤルの下に、全店の直通番号を並べます。
        店舗の情報は inc/functions-shops.php から読んでいるので、
        ここを直す必要はありません。 -->
-<section class="l-section" id="tel">
+<section class="l-section l-section--soft" id="tel">
   <div class="l-wrap">
     <div class="c-head">
       <span class="c-head__en">TEL</span>

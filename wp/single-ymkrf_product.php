@@ -146,7 +146,9 @@ $maker = ! empty( $d['makers'] ) ? $d['makers'][0] : null;
       <p class="p-prd__caution"><?php echo esc_html( $d['caution'] ); ?></p>
     <?php endif; ?>
 
-    <?php ymkrf_product_cta( 'product' ); ?>
+    <?php /* 上のボタン3つは、ページの下にも同じものが出るので消しました（2026/09/10 ユーザー指示）。
+             もどすときは、下の行の // を外してください。
+             // ymkrf_product_cta( 'product' ); */ ?>
   </div>
 </section>
 

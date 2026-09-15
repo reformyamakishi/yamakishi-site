@@ -54,24 +54,22 @@ $home  = home_url( '/' );
         </ul>
       </div>
 
-      <div class="p-footer__col">
+      <div class="p-footer__col p-footer__col--contact">
         <h3>お問い合わせ</h3>
         <address class="p-footer__company">
           株式会社山岸（リフォームヤマキシ）<br>
           <a class="p-footer__tel" href="tel:0800-777-3331" data-cta="footer">0800-777-3331</a><br>
-          石川県・福井県に11店舗
+          <a href="<?php echo esc_url( $home . 'shops/' ); ?>">石川県・福井県に11店舗</a>
         </address>
-        <ul style="margin-top:12px">
+        <ul class="p-footer__links">
           <li><a href="<?php echo esc_url( $home . 'inquiry/webrsv/' ); ?>">ネット来店予約</a></li>
           <li><a href="<?php echo esc_url( $home . 'inquiry/' ); ?>">お見積り・お問い合わせ</a></li>
-          <li><a href="https://lin.ee/UJZuSTrz" rel="noopener">LINE公式アカウント</a></li>
-          <li><a href="https://www.facebook.com/yamakishi.reform/" rel="noopener">Facebook</a></li>
         </ul>
-        <ul style="margin-top:12px">
-          <li><a href="https://yamakishi-paint.jp/" rel="noopener">外壁・屋根の専門サイト</a></li>
-          <li><a href="http://www.yamakishi-solar.biz/" rel="noopener">太陽光発電サポート</a></li>
-          <li><a href="https://www.yamakishi-f.com/" rel="noopener">不動産情報</a></li>
-        </ul>
+
+        <?php /* ヤマキシのほかのサイト。いまは文字のリンクです。
+                 ロゴにするときは、下の false を true に変えてください
+                 （ロゴ画像は assets/img/group/ にあります）。 */ ?>
+        <?php if ( function_exists( 'ymkrf_group_sites' ) ) ymkrf_group_sites( '関連の専用サイト', false ); ?>
       </div>
 
     </div>
@@ -81,7 +79,7 @@ $home  = home_url( '/' );
 
 <!-- 追従CTA（スマホ） -->
 <nav class="p-fixcta" aria-label="お問い合わせ">
-  <a class="p-fixcta__btn p-fixcta__btn--line" href="https://lin.ee/UJZuSTrz" rel="noopener" data-cta="fixed">
+  <a class="p-fixcta__btn p-fixcta__btn--line" href="https://line.me/R/ti/p/@233okcdx" rel="noopener" data-cta="fixed">
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.5 2 2 5.6 2 10.1c0 4 3.6 7.4 8.4 8 .3.1.8.2.9.5.1.3.1.7 0 1l-.1.9c0 .3-.2 1 .9.6 1.1-.5 6-3.5 8.2-6C21.7 13.5 22 11.9 22 10.1 22 5.6 17.5 2 12 2z"/></svg>
     LINEで相談
   </a>

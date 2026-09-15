@@ -191,16 +191,27 @@ foreach ( $shops as $s ) :
       <?php
 		/* お知らせは、外観写真の上に「吹き出し」でふわふわ浮かせます。
 		   こうすると、お知らせのあるお店とないお店で、カードの高さがそろいます。 */
-		$bubble = ! empty( $s['soon'] ) ? $s['soon'] : ( ! empty( $s['topic'] ) ? $s['topic'] : '' );
+		/* 'soon'（まだ開いていないお店）と 'open'（オープンの予定）は「OPEN」、
+		   そのほかのお知らせは「NEWS」の吹き出しにします。 */
+		$bubble = '';
+		$isopen = false;
+		if ( ! empty( $s['soon'] ) )       { $bubble = $s['soon'];  $isopen = true; }
+		elseif ( ! empty( $s['open'] ) )   { $bubble = $s['open'];  $isopen = true; }
+		elseif ( ! empty( $s['topic'] ) )  { $bubble = $s['topic']; }
 		?>
       <?php if ( $bubble !== '' ) : ?>
-        <p class="p-shop__bubble<?php echo ! empty( $s['soon'] ) ? ' is-soon' : ''; ?>">
-          <i><?php echo ! empty( $s['soon'] ) ? 'OPEN' : 'NEWS'; ?></i><span><?php echo esc_html( $bubble ); ?></span>
+        <p class="p-shop__bubble<?php echo $isopen ? ' is-soon' : ''; ?>">
+          <i><?php echo $isopen ? 'OPEN' : 'NEWS'; ?></i><span><?php echo esc_html( $bubble ); ?></span>
         </p>
       <?php endif; ?>
       </div>
 
       <div class="p-shop__info">
+
+      <?php /* このお店ならではのこと。管理画面（スタッフ ＞ 店舗の内容）で直せます */ ?>
+      <?php if ( ! empty( $s['feature'] ) ) : ?>
+        <p class="p-shop__feature"><?php echo esc_html( $s['feature'] ); ?></p>
+      <?php endif; ?>
 
       <table class="p-shop__table">
         <tbody>
@@ -377,7 +388,7 @@ foreach ( $shops as $s ) :
         どのお店が担当か分からないときも、そのままご連絡ください。
       </p>
       <div class="p-lpcta__btns">
-        <a class="c-btn c-btn--line c-btn--block" href="https://lin.ee/UJZuSTrz" rel="noopener" data-cta="shops-cta">
+        <a class="c-btn c-btn--line c-btn--block" href="https://line.me/R/ti/p/@233okcdx" rel="noopener" data-cta="shops-cta">
           <span class="c-btn__label">LINEで相談する<span class="c-btn__sub">写真を送るだけでもOK・24時間受付</span></span>
         </a>
         <a class="c-btn c-btn--block" href="<?php echo esc_url( home_url( '/inquiry/webrsv/' ) ); ?>" data-cta="shops-cta">

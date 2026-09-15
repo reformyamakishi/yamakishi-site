@@ -648,7 +648,9 @@ $hero = ( $c && ! empty( $c['hero'] ) ) ? $dir . '/' . $c['hero'] : '';
       <?php endforeach; ?>
     </div>
 
-    <?php ymkrf_product_cta( 'category-top' ); ?>
+    <?php /* 上のボタン3つは、ページの下にも同じものが出るので消しました（2026/09/10 ユーザー指示）。
+             もどすときは、下の行の // を外してください。
+             // ymkrf_product_cta( 'category-top' ); */ ?>
 
   </div>
 </section>

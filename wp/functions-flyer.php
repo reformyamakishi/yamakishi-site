@@ -905,7 +905,7 @@ function ymkrf_flyer_shops_page() {
 	   押すと、そのお店のチラシ一覧が開きます。 */
 	$card = function ( $name, $slug, $c, $note = '' ) use ( $list_url ) {
 		?>
-		<a class="ymkrf-fs__card<?php echo $slug ? '' : ' ymkrf-fs__card--common'; ?>"
+		<a class="ymkrf-fs__card<?php echo $slug ? ' ymkrf-fs__card--shop' : ' ymkrf-fs__card--common'; ?>"
 		   href="<?php echo esc_url( $list_url( $slug ) ); ?>">
 		  <span class="ymkrf-fs__name"><?php echo esc_html( $name ); ?></span>
 		  <?php if ( $note ) : ?><span class="ymkrf-fs__note"><?php echo esc_html( $note ); ?></span><?php endif; ?>
@@ -932,12 +932,6 @@ function ymkrf_flyer_shops_page() {
 	    <a class="page-title-action" href="<?php echo esc_url( admin_url( 'edit.php?post_type=ymkrf_flyer' ) ); ?>">すべてのチラシを見る</a>
 	  </h1>
 
-	  <p class="ymkrf-fs__lead">
-	    お店を押すと、そのお店のチラシだけが出ます。<br>
-	    1つのお店に<b>何種類あってもかまいません</b>（月に1〜3種類ある、といった使い方ができます）。
-	    チラシは<b>表面・裏面の2枚</b>で1件です。
-	  </p>
-
 	  <h2 class="ymkrf-fs__h2">全店共通</h2>
 	  <div class="ymkrf-fs__grid">
 	    <?php $card( '全店共通のチラシ', '', $common, 'どのお店でも出ます。全店で同じチラシのときに使います。' ); ?>
@@ -957,12 +951,12 @@ function ymkrf_flyer_shops_page() {
 	  <?php endforeach; ?>
 
 	  <?php
-	  /* 自動でかたづけた記録。ほんとうに動いているかを目で見て確かめられます。 */
+	  /* 操作履歴。自動でかたづけたチラシが、ここに残ります。 */
 	  $clog = (array) get_option( 'ymkrf_flyer_cleanup_log', array() );
 	  $next = wp_next_scheduled( 'ymkrf_flyer_cleanup' );
 	  ?>
 	  <div class="ymkrf-fs__log">
-	    <p><b>自動でかたづけた記録</b>
+	    <p><b>操作履歴</b>
 	      <?php if ( $next ) : ?>
 	        <span class="ymkrf-fs__logsub">次の見まわり：<?php
 	          echo esc_html( wp_date( 'n月j日 G:i', $next ) ); ?>ごろ</span>
@@ -1006,14 +1000,18 @@ function ymkrf_flyer_shops_page() {
 	</div>
 
 	<style>
-	  .ymkrf-fs__lead{max-width:820px;font-size:13.5px;line-height:1.9}
 	  .ymkrf-fs__h2{margin:26px 0 10px;padding-left:9px;font-size:15px;
 	    border-left:4px solid #fe3301;line-height:1.5}
 	  .ymkrf-fs__grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:12px}
 	  .ymkrf-fs__card{display:block;padding:13px 16px;background:#fff;border:1px solid #dcdcde;
 	    border-radius:6px;text-decoration:none;color:inherit;transition:border-color .15s,box-shadow .15s}
-	  .ymkrf-fs__card:hover{border-color:#fe3301;box-shadow:0 1px 6px rgba(0,0,0,.08)}
+	  .ymkrf-fs__card:hover{box-shadow:0 1px 6px rgba(0,0,0,.08)}
+	  /* 全店共通はオレンジ、各店はグリーンで囲みます。
+	     同じ色にすると「全店共通」が目立たなくなるため、色を分けています。 */
 	  .ymkrf-fs__card--common{border-color:#fe3301;background:#fff8f5}
+	  .ymkrf-fs__card--common:hover{border-color:#fe3301}
+	  .ymkrf-fs__card--shop{border-color:#00782a;background:#eff8f2}
+	  .ymkrf-fs__card--shop:hover{border-color:#005a1f;background:#e4f3ea}
 	  .ymkrf-fs__name{display:block;font-size:15px;font-weight:700;line-height:1.4}
 	  .ymkrf-fs__note{display:block;margin-top:3px;font-size:11.5px;color:#787878;line-height:1.5}
 	  .ymkrf-fs__cnt{display:block;margin-top:7px;font-size:12.5px;line-height:1.6}
@@ -1344,6 +1342,7 @@ function ymkrf_flyer_map( $shops, $sel, $map ) {
 	?>
 	<div class="p-fmap">
 	  <svg class="p-fmap__svg" viewBox="328 30 970 700"
+	       xmlns:xlink="http://www.w3.org/1999/xlink"
 	       role="img" aria-label="石川県・福井県のお店の地図">
 
 	    <image href="<?php echo esc_url( $dir . '/assets/img/shops/area-map.png' ); ?>"
@@ -1366,9 +1365,14 @@ function ymkrf_flyer_map( $shops, $sel, $map ) {
 	      $by  = $p['ly'] - 25;
 	      /* 引き出し線は、ふだのピン側のはしから */
 	      $ex  = ( $p['side'] === 'r' ) ? $bx : $bx + $bw;
+	      /* リンク先。SVGの中のリンクなので、古いブラウザ用に
+	         xlink:href もいっしょに付けています。 */
+	      $pin_url = add_query_arg( 'shop', $slug, home_url( '/flyer/' ) ) . '#flyer';
 	    ?>
 	      <a class="p-flyer__pick p-fmap__pin<?php echo $on ? ' is-on' : ''; ?><?php echo $soon ? ' is-soon' : ''; ?>"
-	         href="<?php echo esc_url( add_query_arg( 'shop', $slug, home_url( '/flyer/' ) ) ); ?>#flyer"
+	         href="<?php echo esc_url( $pin_url ); ?>"
+	         xlink:href="<?php echo esc_url( $pin_url ); ?>"
+	         aria-label="<?php echo esc_attr( $sp['name'] . 'のチラシを見る' ); ?>"
 	         data-shop="<?php echo esc_attr( $slug ); ?>">
 	        <line class="p-fmap__lead" x1="<?php echo esc_attr( $p['x'] ); ?>" y1="<?php echo esc_attr( $p['y'] ); ?>"
 	              x2="<?php echo esc_attr( $ex ); ?>" y2="<?php echo esc_attr( $p['ly'] ); ?>"></line>

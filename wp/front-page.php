@@ -40,7 +40,7 @@ get_header();
       </p>
 
       <div class="p-hero__cta">
-        <a class="c-btn c-btn--line c-btn--block" href="https://lin.ee/UJZuSTrz" rel="noopener" data-cta="hero">
+        <a class="c-btn c-btn--line c-btn--block" href="https://line.me/R/ti/p/@233okcdx" rel="noopener" data-cta="hero">
           <svg class="c-btn__icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.5 2 2 5.6 2 10.1c0 4 3.6 7.4 8.4 8 .3.1.8.2.9.5.1.3.1.7 0 1l-.1.9c0 .3-.2 1 .9.6 1.1-.5 6-3.5 8.2-6C21.7 13.5 22 11.9 22 10.1 22 5.6 17.5 2 12 2z"/></svg>
           <span class="c-btn__label">LINEで相談する<span class="c-btn__sub">写真を送るだけでもOK・24時間受付</span></span>
         </a>
@@ -141,7 +141,7 @@ get_header();
     </ul>
 
     <div class="p-route">
-      <a class="p-route__item p-route__item--line" href="https://lin.ee/UJZuSTrz" rel="noopener" data-cta="route" data-reveal>
+      <a class="p-route__item p-route__item--line" href="https://line.me/R/ti/p/@233okcdx" rel="noopener" data-cta="route" data-reveal>
         <span class="p-route__icon">
           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.5 2 2 5.6 2 10.1c0 4 3.6 7.4 8.4 8 .3.1.8.2.9.5.1.3.1.7 0 1l-.1.9c0 .3-.2 1 .9.6 1.1-.5 6-3.5 8.2-6C21.7 13.5 22 11.9 22 10.1 22 5.6 17.5 2 12 2z"/></svg>
         </span>
@@ -250,7 +250,7 @@ get_header();
             ※お住まいの状態やご希望の設備によって変わります。<br>
             正確な金額は、無料の現地調査でお出しします。
           </p>
-          <a class="c-btn c-btn--line c-btn--block" href="https://lin.ee/UJZuSTrz" rel="noopener" data-sim-line data-cta="simulator">
+          <a class="c-btn c-btn--line c-btn--block" href="https://line.me/R/ti/p/@233okcdx" rel="noopener" data-sim-line data-cta="simulator">
             <svg class="c-btn__icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.5 2 2 5.6 2 10.1c0 4 3.6 7.4 8.4 8 .3.1.8.2.9.5.1.3.1.7 0 1l-.1.9c0 .3-.2 1 .9.6 1.1-.5 6-3.5 8.2-6C21.7 13.5 22 11.9 22 10.1 22 5.6 17.5 2 12 2z"/></svg>
             <span class="c-btn__label">この内容でLINE相談する<span class="c-btn__sub" data-sim-memo>写真を送ると、より正確にお答えできます</span></span>
           </a>
@@ -274,7 +274,7 @@ get_header();
           対象になるかの確認から申請書類の準備まで、当社がまとめて代行します。
           「うちは使えるの？」というご質問だけでも、お気軽にどうぞ。
         </p>
-        <a class="c-btn c-btn--ghost" href="https://lin.ee/UJZuSTrz" rel="noopener" data-cta="subsidy">補助金が使えるか聞いてみる</a>
+        <a class="c-btn c-btn--ghost" href="https://line.me/R/ti/p/@233okcdx" rel="noopener" data-cta="subsidy">補助金が使えるか聞いてみる</a>
       </div>
 
       <div>
@@ -876,6 +876,37 @@ get_header();
 </section>
 
 <!-- ==========================================================
+     コラム（お役立ち情報） ★WordPressのループで出力する部分
+
+     ダッシュボードの「コラム」に入れた記事から、新しい3本を出します。
+     記事が1本も無いときは、この区画ごと出ません。
+     ========================================================== -->
+<?php
+$ymkrf_cols = function_exists( 'ymkrf_column_query' ) ? ymkrf_column_query( '', 3 ) : null;
+if ( $ymkrf_cols && $ymkrf_cols->have_posts() ) :
+?>
+<section class="l-section l-section--soft" id="column">
+  <div class="l-wrap">
+    <div class="c-head" data-reveal>
+      <span class="c-head__en">COLUMN</span>
+      <h2 class="c-head__title">リフォームお役立ち情報</h2>
+    </div>
+    <p class="p-col__lead" data-reveal>
+      迷いやすいところを、ヤマキシのスタッフがかみくだいてご説明します。
+    </p>
+
+    <div class="p-col__cards" data-reveal>
+      <?php while ( $ymkrf_cols->have_posts() ) : $ymkrf_cols->the_post(); ?>
+        <?php ymkrf_column_card(); ?>
+      <?php endwhile; wp_reset_postdata(); ?>
+    </div>
+
+    <a class="c-more" href="<?php echo esc_url( home_url( '/column/' ) ); ?>">お役立ち情報をもっと見る</a>
+  </div>
+</section>
+<?php endif; ?>
+
+<!-- ==========================================================
      今月のチラシ
      掲載中のチラシがあるときだけ出ます（inc/functions-flyer.php）。
      ========================================================== -->
@@ -932,7 +963,7 @@ get_header();
         <strong>0800-777-3331</strong>
         <em>受付時間は店舗により異なります</em>
       </a>
-      <a class="c-btn c-btn--line c-btn--block" href="https://lin.ee/UJZuSTrz" rel="noopener" data-cta="footer_cta">
+      <a class="c-btn c-btn--line c-btn--block" href="https://line.me/R/ti/p/@233okcdx" rel="noopener" data-cta="footer_cta">
         <svg class="c-btn__icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.5 2 2 5.6 2 10.1c0 4 3.6 7.4 8.4 8 .3.1.8.2.9.5.1.3.1.7 0 1l-.1.9c0 .3-.2 1 .9.6 1.1-.5 6-3.5 8.2-6C21.7 13.5 22 11.9 22 10.1 22 5.6 17.5 2 12 2z"/></svg>
         <span class="c-btn__label">LINEで相談する<span class="c-btn__sub">写真を送るだけでもOK・24時間受付</span></span>
       </a>
@@ -940,6 +971,8 @@ get_header();
         <span class="c-btn__label">来店予約する<span class="c-btn__sub">ネット予約で500円分の特典</span></span>
       </a>
     </div>
+
+    <?php if ( function_exists( 'ymkrf_sns_icons' ) ) ymkrf_sns_icons( 'dark' ); ?>
   </div>
 </section>
 

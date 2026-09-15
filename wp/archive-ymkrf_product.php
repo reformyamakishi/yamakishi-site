@@ -26,7 +26,9 @@ $cards = array(
 	'bathroom'   => array( 'ttl' => 'お風呂（ユニットバス）', 'photo' => 'price-bath',      'desc' => '断熱浴槽で冬もあたたか。工期は3〜5日が目安です。' ),
 	'toilet'     => array( 'ttl' => 'トイレ',              'photo' => 'price-toilet',     'desc' => '最短半日で交換完了。お掃除がラクな最新モデルにも対応します。' ),
 	'lavatory'   => array( 'ttl' => '洗面化粧台',           'photo' => 'price-washstand',  'desc' => '朝の身支度がしやすく。収納が増えて、掃除もラクになります。' ),
-	'boiler'     => array( 'ttl' => '給湯器',              'photo' => 'price-boiler',     'desc' => 'お湯が出ない、というときもすぐお伺いします。在庫のある機種なら工期は半日。' ),
+	/* 給湯器は、背景をぬいた画像（PNG）を使います。'cut' => true が目じるしです */
+	'boiler'     => array( 'ttl' => '給湯器',              'photo' => 'price-boiler-cut', 'cut' => true,
+	                       'desc' => 'お湯が出ない、というときもすぐお伺いします。在庫のある機種なら工期は半日。' ),
 	'ecocute'    => array( 'ttl' => 'エコキュート',         'photo' => 'price-ecocute',    'desc' => '電気でお湯をつくるので、光熱費をおさえられます。補助金の対象です。' ),
 	/* 外壁・屋根だけは商品を登録しません。専用のページがあるので、
 	   商品が0件でも「準備中」に落とさず、そのままご案内します。 */
@@ -134,12 +136,14 @@ get_header();
         <?php foreach ( $ready as $i => $c ) : ?>
           <div class="p-price__card" data-reveal<?php echo $i % 3 ? ' data-reveal-delay="' . ( ( $i % 3 ) * 80 ) . '"' : ''; ?>>
 
-            <div class="p-price__photo">
+            <?php $cut = ! empty( $c['cut'] ); ?>
+            <div class="p-price__photo<?php echo $cut ? ' p-price__photo--cut' : ''; ?>">
               <?php if ( $c['photo'] ) : ?>
                 <picture>
                   <source srcset="<?php echo esc_url( $asset . '/assets/img/top/' . $c['photo'] . '.webp' ); ?>" type="image/webp">
-                  <img src="<?php echo esc_url( $asset . '/assets/img/top/' . $c['photo'] . '.jpg' ); ?>"
-                       width="1200" height="900"
+                  <img class="<?php echo $cut ? 'p-price__img--cut' : ''; ?>"
+                       src="<?php echo esc_url( $asset . '/assets/img/top/' . $c['photo'] . ( $cut ? '.png' : '.jpg' ) ); ?>"
+                       <?php if ( ! $cut ) : ?>width="1200" height="900"<?php endif; ?>
                        alt="<?php echo esc_attr( $c['ttl'] ); ?>のリフォーム" loading="lazy" decoding="async">
                 </picture>
               <?php else : ?>
