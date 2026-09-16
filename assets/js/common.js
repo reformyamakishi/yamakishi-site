@@ -378,9 +378,10 @@
     /* 写真そのものの大きさをこえて引きのばすと、にじんでしまいます。
        そこで、読み込めた時点で「これ以上は大きくしない」上限を入れます。
        （2026/09/16 ユーザー「解像度が荒いわよ」） */
+    var OVER = 1.25;   /* 写真そのものの大きさの何倍まで許すか */
     img.addEventListener('load', function () {
-      if (img.naturalWidth)  img.style.maxWidth  = img.naturalWidth  + 'px';
-      if (img.naturalHeight) img.style.maxHeight = img.naturalHeight + 'px';
+      if (img.naturalWidth)  img.style.maxWidth  = Math.round(img.naturalWidth  * OVER) + 'px';
+      if (img.naturalHeight) img.style.maxHeight = Math.round(img.naturalHeight * OVER) + 'px';
     });
 
     function open(href, caption, from) {
