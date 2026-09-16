@@ -12,6 +12,7 @@
  *   inc/functions-works.php   … 施工事例（Before/After・権限）
  *   inc/functions-works-import.php … いまのサイトから施工事例を取り込む
  *   inc/functions-media.php   … メディアを使い道べつに分けて見る
+ *   inc/functions-voice-mail.php … アンケート登録を担当店へメールでお知らせ
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
@@ -39,6 +40,9 @@ require_once get_stylesheet_directory() . '/inc/functions-staff.php';
 require_once get_stylesheet_directory() . '/inc/functions-flyer.php';
 require_once get_stylesheet_directory() . '/inc/functions-media.php';
 require_once get_stylesheet_directory() . '/inc/functions-voice-check.php';
+require_once get_stylesheet_directory() . '/inc/functions-voice-mail.php';
+/* ↓ アンケート画像の入れ直し。終わったらこの行とファイルを消してください */
+require_once get_stylesheet_directory() . '/inc/functions-voice-swap.php';
 /* ↓ 写真の名前をそろえる下見の画面。終わったらこの行とファイルを消してください */
 require_once get_stylesheet_directory() . '/inc/functions-media-rename.php';
 

@@ -14,6 +14,7 @@
  *             _ymkrf_staff_kana よみがな／_ymkrf_staff_role 役職
  *             _ymkrf_staff_charge 担当／_ymkrf_staff_lic 資格／_ymkrf_staff_hobby 趣味
  *             _ymkrf_staff_word ひとこと
+ *             _ymkrf_staff_mail メールアドレス（社内用。ページには出しません）
  * 顔写真 …… アイキャッチ画像
  * URL ……… /staff/（一覧）／/staff/yamagishi/（1人）
  * ─────────────────────────────────────────
@@ -200,6 +201,18 @@ function ymkrf_staff_metabox( $post ) {
 	  </tr>
 
 	  <tr>
+	    <th>メールアドレス（社内）</th>
+	    <td>
+	      <input type="email" name="_ymkrf_staff_mail" value="<?php echo esc_attr( $get( '_ymkrf_staff_mail' ) ); ?>"
+	             class="regular-text" placeholder="例：t-yamagishi@yamakishi.co.jp">
+	      <p class="description">
+	        <b style="color:#b32d00">ホームページには出ません。</b>社内へのお知らせメールにだけ使います。<br>
+	        お客様アンケートが登録されたとき、この人あてにお知らせメールがとどきます。
+	      </p>
+	    </td>
+	  </tr>
+
+	  <tr>
 	    <th>URLの文字（英字）</th>
 	    <td>
 	      <?php $sslug = $post->post_name; ?>
@@ -239,6 +252,10 @@ add_action( 'save_post_ymkrf_staff', function ( $post_id ) {
 	                 '_ymkrf_staff_hobby', '_ymkrf_staff_charge' ) as $k ) {
 		update_post_meta( $post_id, $k, isset( $_POST[ $k ] ) ? sanitize_text_field( $_POST[ $k ] ) : '' );
 	}
+	/* メールアドレス（社内用。ホームページには出しません） */
+	update_post_meta( $post_id, '_ymkrf_staff_mail',
+		isset( $_POST['_ymkrf_staff_mail'] )
+			? sanitize_email( wp_unslash( $_POST['_ymkrf_staff_mail'] ) ) : '' );
 	update_post_meta( $post_id, '_ymkrf_staff_word',
 		isset( $_POST['_ymkrf_staff_word'] )
 			? sanitize_textarea_field( wp_unslash( $_POST['_ymkrf_staff_word'] ) ) : '' );

@@ -77,6 +77,14 @@ function ymkrf_vchk_reasons( $post_id ) {
 		$out[] = '案件番号が入っていません';
 	}
 
+	/* ---- ⑨ クレームのアンケート ----
+	   （2026/09/16 ユーザー指示「クレームと書いてあるものは、
+	     赤字で要確認にして下書きなどにしておいてください」）
+	   もとのファイル名に「クレーム」と入っていたものに、印が付いています。 */
+	if ( $g( '_ymkrf_claim' ) === '1' ) {
+		$out[] = 'クレームのアンケートです。出してよいか確認してください';
+	}
+
 	return $out;
 }
 endif;
@@ -362,3 +370,123 @@ function ymkrf_vchk_page() {
 	<?php
 }
 endif;
+
+
+/* ============================================================
+   アンケート画像の解像度が低いものに、印をつけます
+   （2026/09/16 ユーザー指示
+     「解像度の低いアンケートは、私が時間あるときに手動で入れ直し
+       しますので。写真と赤字で書いておいてもらえますか？」）
+
+   ★公開は止めません。1,590件が下書きになってしまうためです。
+     一覧に写真と赤字を出して、目で分かるようにするだけです。
+
+   いまの画像の幅
+     旧サイトから取り込んだぶん … 1600px（これが上限）
+     新しい画面で読み取ったぶん … 2400px（原本が2560pxあるため）
+   ============================================================ */
+
+if ( ! defined( 'YMKRF_VCHK_MINW' ) ) define( 'YMKRF_VCHK_MINW', 2000 );
+
+/** アンケート画像の幅。足りていれば 0 を返します */
+if ( ! function_exists( 'ymkrf_vchk_lowres' ) ) :
+function ymkrf_vchk_lowres( $post_id ) {
+
+	$att = (int) get_post_meta( $post_id, '_ymkrf_survey_pub_id', true );
+	if ( ! $att ) $att = (int) get_post_meta( $post_id, '_ymkrf_survey_id', true );
+	if ( ! $att ) return 0;
+
+	$m = wp_get_attachment_metadata( $att );
+	$w = ! empty( $m['width'] ) ? (int) $m['width'] : 0;
+	if ( ! $w ) return 0;
+
+	return ( $w < YMKRF_VCHK_MINW ) ? $w : 0;
+}
+endif;
+
+/* 一覧に「アンケート」の列を足します（写真と赤字） */
+add_filter( 'manage_ymkrf_voice_posts_columns', function ( $cols ) {
+	$out = array();
+	foreach ( $cols as $k => $v ) {
+		$out[ $k ] = $v;
+		if ( $k === 'title' ) $out['ymkrf_sheet'] = 'アンケート';
+	}
+	if ( ! isset( $out['ymkrf_sheet'] ) ) $out['ymkrf_sheet'] = 'アンケート';
+	return $out;
+}, 30 );
+
+add_action( 'manage_ymkrf_voice_posts_custom_column', function ( $col, $post_id ) {
+
+	if ( $col !== 'ymkrf_sheet' ) return;
+
+	$att = (int) get_post_meta( $post_id, '_ymkrf_survey_pub_id', true );
+	if ( ! $att ) $att = (int) get_post_meta( $post_id, '_ymkrf_survey_id', true );
+
+	if ( ! $att ) {
+		echo '<span style="color:#b32d2e;font-weight:700">画像なし</span>';
+		return;
+	}
+
+	$url = wp_get_attachment_image_url( $att, 'thumbnail' );
+	$m   = wp_get_attachment_metadata( $att );
+	$w   = ! empty( $m['width'] ) ? (int) $m['width'] : 0;
+	$low = ymkrf_vchk_lowres( $post_id );
+
+	echo '<div style="display:flex;gap:8px;align-items:flex-start">';
+	if ( $url ) {
+		printf(
+			'<a href="%s" target="_blank" rel="noopener"><img src="%s" width="60" height="42" '
+			. 'style="width:60px;height:auto;border:1px solid #dcdcde;border-radius:3px" alt=""></a>',
+			esc_url( wp_get_attachment_url( $att ) ), esc_url( $url )
+		);
+	}
+	echo '<span style="font-size:12px;line-height:1.6">';
+	if ( $low ) {
+		echo '<b style="color:#b32d2e">解像度が低い</b><br>'
+		   . '<span style="color:#b32d2e">' . (int) $low . 'px<br>スキャンし直し</span>';
+	} else {
+		echo '<span style="color:#6b625c">' . (int) $w . 'px</span>';
+	}
+	echo '</span></div>';
+}, 10, 2 );
+
+/* 編集画面にも、写真と赤字で出します */
+add_action( 'admin_notices', function () {
+
+	$s = get_current_screen();
+	if ( ! $s || $s->post_type !== 'ymkrf_voice' || $s->base !== 'post' ) return;
+	if ( empty( $GLOBALS['post'] ) ) return;
+
+	$id  = (int) $GLOBALS['post']->ID;
+	$low = ymkrf_vchk_lowres( $id );
+	if ( ! $low ) return;
+
+	$att = (int) get_post_meta( $id, '_ymkrf_survey_pub_id', true );
+	if ( ! $att ) $att = (int) get_post_meta( $id, '_ymkrf_survey_id', true );
+	$url = $att ? wp_get_attachment_image_url( $att, 'medium' ) : '';
+	?>
+	<div class="notice notice-warning" style="margin-top:14px;border-left-color:#b32d2e;border-left-width:6px">
+	  <div style="display:flex;gap:14px;align-items:flex-start;padding:6px 0 10px">
+	    <?php if ( $url ) : ?>
+	      <a href="<?php echo esc_url( wp_get_attachment_url( $att ) ); ?>" target="_blank" rel="noopener">
+	        <img src="<?php echo esc_url( $url ); ?>" style="width:160px;height:auto;
+	             border:1px solid #dcdcde;border-radius:4px" alt="">
+	      </a>
+	    <?php endif; ?>
+	    <div>
+	      <p style="font-size:15px;font-weight:700;color:#b32d2e;margin:0 0 6px">
+	        アンケート画像の解像度が低いです（幅 <?php echo (int) $low; ?>px）
+	      </p>
+	      <p style="font-size:13.5px;margin:0;line-height:1.9">
+	        大きく拡大すると文字がにじみます。お手すきのときに、
+	        <b>紙のアンケートをスキャンし直して入れ直してください。</b><br>
+	        入れ直すと <?php echo (int) YMKRF_VCHK_MINW; ?>px 以上になり、この赤い表示は消えます。<br>
+	        <span style="color:#50575e;font-size:12.5px">
+	          ※ 公開は止めていません。このままでも表示はできます。
+	        </span>
+	      </p>
+	    </div>
+	  </div>
+	</div>
+	<?php
+} );
