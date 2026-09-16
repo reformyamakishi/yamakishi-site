@@ -10,6 +10,8 @@
  *  5. 編集画面の「担当店へのお知らせ」欄
  *  6. 送信のきっかけ（保存したとき／「いま送る」ボタン）
  *  7. 送信の記録
+ *  8. 一覧の「担当店へ連絡」（済／未 ＋ クレーム）
+ *  9. ★1回だけ★ いままでのぶんを「済」にそろえる
  *
  * ── 名前について ──────────────────────────────
  * 設定の保存さき … ymkrf_vmail（ひとつの箱にまとめています）
@@ -97,7 +99,9 @@ function ymkrf_vmail_settings_page() {
 			ymkrf_vmail_headers() );
 		$msg = $ok
 			? $to . ' に、おためしのメールを出しました。'
-			: '送れませんでした。サーバーのメール設定（SMTP）をご確認ください。';
+			: 'このサーバーからはメールを出せませんでした。'
+			  . 'パソコンのXAMPPにはメールの仕組みが入っていないので、制作中はこれでふつうです。'
+			  . '下の「メールが送れないとき」をお読みください。';
 	}
 
 	$o   = ymkrf_vmail_opt();
@@ -197,6 +201,29 @@ function ymkrf_vmail_settings_page() {
 	    </p>
 	  </form>
 
+	  <details style="max-width:900px;margin:18px 0;padding:12px 16px;background:#fff;
+	                  border:1px solid #dcdcde;border-radius:6px">
+	    <summary style="cursor:pointer;font-weight:700;font-size:14px">メールが送れないとき</summary>
+
+	    <p style="font-size:13.5px;line-height:1.9">
+	      <b>いま作っているパソコン（XAMPP）では、メールは送れません。</b>
+	      メールを出す仕組みが入っていないためです。こわれているわけではありません。<br>
+	      本番のサーバーにうつせば、お問い合わせフォームと同じように送れるようになります。
+	    </p>
+
+	    <p style="font-size:13.5px;line-height:1.9">
+	      送れなかったときは、<b>文面をファイルに残します</b>ので、そちらで中身を確かめられます。<br>
+	      置き場所：<code><?php echo esc_html( dirname( wp_upload_dir()['basedir'] ) ); ?>\ymkrf-mail\</code><br>
+	      メモ帳で開けます。文面や宛名のご確認は、これでできます。
+	    </p>
+
+	    <p style="font-size:13.5px;line-height:1.9">
+	      どうしてもこのパソコンから実際に送ってみたいときは、
+	      <b>WP Mail SMTP</b> というプラグインを入れて、会社のメールサーバーの設定を入れる方法があります。
+	      そのときの<b>パスワードは、中川さんご自身で入力してください</b>（こちらでは入力できません）。
+	    </p>
+	  </details>
+
 	  <hr>
 
 	  <h2>いま、だれにとどくか</h2>
@@ -213,10 +240,26 @@ function ymkrf_vmail_settings_page() {
 
 	  <?php
 	  $noaddr = ymkrf_vmail_staff_without_mail();
-	  if ( $noaddr ) : ?>
-	    <div class="notice notice-warning" style="margin:12px 0">
-	      <p><b>メールアドレスがまだ入っていない人（<?php echo count( $noaddr ); ?>人）</b></p>
-	      <p style="max-height:9em;overflow:auto"><?php echo esc_html( implode( '、', $noaddr ) ); ?></p>
+	  $has    = ymkrf_vmail_staff_with_mail_count();
+	  ?>
+	  <p style="font-size:13.5px">
+	    メールアドレスが入っている人：<b style="color:#00782a"><?php echo (int) $has; ?></b> 人
+	  </p>
+
+	  <?php if ( $noaddr ) : ?>
+	    <div class="notice notice-info" style="margin:12px 0">
+	      <p style="font-size:13.5px;line-height:1.9">
+	        <b>メールアドレスを入れていない人（<?php echo count( $noaddr ); ?>人）には、
+	        お知らせメールを送りません。</b><br>
+	        <span style="color:#50575e">
+	          入れていないこと自体は、まちがいではありません。
+	          送らなくてよい人は、空のままにしておいてください。
+	          送りたくなったら、その人のスタッフ登録にアドレスを入れるだけです。
+	        </span>
+	      </p>
+	      <p style="max-height:9em;overflow:auto;color:#50575e;font-size:12.5px">
+	        <?php echo esc_html( implode( '、', $noaddr ) ); ?>
+	      </p>
 	    </div>
 	  <?php endif; ?>
 
@@ -264,7 +307,9 @@ function ymkrf_vmail_headers() {
 	return $h;
 }
 
-/** ある店舗（英字）に所属するスタッフのメールアドレス */
+/** ある店舗（英字）に所属するスタッフのメールアドレス
+ *  アドレスを入れていない人は、はじめから外れます
+ *  （2026/09/16 ユーザー「メールアドレスない人にはアンケート送らなくて良いです」） */
 function ymkrf_vmail_shop_mails( $shop_slug ) {
 	$out = array();
 	if ( $shop_slug === '' ) return $out;
@@ -296,7 +341,24 @@ function ymkrf_vmail_hq_list() {
 	return array_values( array_unique( $out ) );
 }
 
-/** メールアドレスがまだ入っていないスタッフの名前 */
+/** メールアドレスが入っているスタッフの人数 */
+function ymkrf_vmail_staff_with_mail_count() {
+	$q = new WP_Query( array(
+		'post_type'      => 'ymkrf_staff',
+		'post_status'    => array( 'publish', 'draft', 'private' ),
+		'posts_per_page' => -1,
+		'fields'         => 'ids',
+		'no_found_rows'  => true,
+	) );
+	$n = 0;
+	foreach ( $q->posts as $sid ) {
+		$m = trim( (string) get_post_meta( $sid, '_ymkrf_staff_mail', true ) );
+		if ( $m !== '' && is_email( $m ) ) $n++;
+	}
+	return $n;
+}
+
+/** メールアドレスを入れていないスタッフの名前（この人たちには送りません） */
 function ymkrf_vmail_staff_without_mail() {
 	$q = new WP_Query( array(
 		'post_type'      => 'ymkrf_staff',
@@ -377,7 +439,9 @@ function ymkrf_vmail_body( $post_id ) {
 	$b .= "\n";
 	$b .= "▼アンケートはこちらです\n" . $url . "\n";
 
-	if ( get_post_status( $post_id ) !== 'publish' ) {
+	if ( get_post_status( $post_id ) === 'private' ) {
+		$b .= "（このアンケートは「非公開」です。社内のログインが必要です）\n";
+	} elseif ( get_post_status( $post_id ) !== 'publish' ) {
 		$b .= "（このアンケートは、まだ公開していません）\n";
 	}
 
@@ -431,17 +495,52 @@ function ymkrf_vmail_send( $post_id, $force = false ) {
 		return array( 'ok' => false, 'to' => '', 'why' => '送りさきのメールアドレスが1つもありません' );
 	}
 
-	$ok = wp_mail( $to, YMKRF_VMAIL_SUBJECT, ymkrf_vmail_body( $post_id ), ymkrf_vmail_headers() );
+	$body = ymkrf_vmail_body( $post_id );
+	$ok   = wp_mail( $to, YMKRF_VMAIL_SUBJECT, $body, ymkrf_vmail_headers() );
 
 	if ( $ok ) update_post_meta( $post_id, '_ymkrf_mail_sent', current_time( 'mysql' ) );
 
 	ymkrf_vmail_log( $post_id, implode( ', ', $to ), $ok );
 
+	if ( $ok ) {
+		return array( 'ok' => true, 'to' => implode( '、', $to ), 'why' => '' );
+	}
+
+	/* 送れなかったときは、文面をファイルに残します。
+	   パソコンのXAMPPにはメールを送る仕組みが入っていないので、
+	   制作中はこのファイルで中身を確かめられるようにするためです。 */
+	$saved = ymkrf_vmail_save_file( $post_id, $to, $body );
+
 	return array(
-		'ok'  => $ok,
+		'ok'  => false,
 		'to'  => implode( '、', $to ),
-		'why' => $ok ? '' : 'サーバーがメールを受けつけませんでした（SMTPの設定をご確認ください）',
+		'why' => 'このサーバーからはメールを出せませんでした。'
+		       . ( $saved ? '文面はファイルに保存しました（' . $saved . '）。' : '' )
+		       . 'パソコンのXAMPPにはメールの仕組みが入っていないので、制作中はこれでふつうです。',
 	);
+}
+
+/** 送れなかったメールの文面を、ファイルに残します */
+function ymkrf_vmail_save_file( $post_id, $to, $body ) {
+
+	$up  = wp_upload_dir();
+	$dir = dirname( $up['basedir'] ) . '/ymkrf-mail';
+	if ( ! wp_mkdir_p( $dir ) ) return '';
+
+	/* 中身がウェブから見えないようにしておきます */
+	if ( ! file_exists( $dir . '/index.html' ) ) @file_put_contents( $dir . '/index.html', '' );
+	if ( ! file_exists( $dir . '/.htaccess' ) )  @file_put_contents( $dir . '/.htaccess', "Deny from all\n" );
+
+	$no   = trim( (string) get_post_meta( $post_id, '_ymkrf_case_no', true ) );
+	if ( $no === '' ) $no = 'id' . (int) $post_id;
+	$name = current_time( 'Ymd-His' ) . '_' . preg_replace( '/[^0-9A-Za-z-]/', '', $no ) . '.txt';
+
+	$txt  = "To: " . implode( ', ', (array) $to ) . "\n";
+	$txt .= "Subject: " . YMKRF_VMAIL_SUBJECT . "\n";
+	$txt .= str_repeat( '-', 50 ) . "\n";
+	$txt .= $body;
+
+	return ( @file_put_contents( $dir . '/' . $name, $txt ) !== false ) ? 'wp-content/ymkrf-mail/' . $name : '';
 }
 
 
@@ -492,7 +591,7 @@ function ymkrf_vmail_metabox( $post ) {
 	</p>
 	<p class="description" style="margin-top:-6px">
 	  「有」にすると、メールに対応のお願いの文がつきます。<br>
-	  「有」のアンケートは<b style="color:#b32d00">下書き</b>のままにしておきます。
+	  「有」のアンケートは<b style="color:#b32d00">非公開</b>にします（ログインした人だけが見られます）。
 	</p>
 
 	<hr>
@@ -505,10 +604,15 @@ function ymkrf_vmail_metabox( $post ) {
 	<?php endif; ?>
 
 	<p style="margin:0 0 6px">
+	  担当店へ連絡：
 	  <?php if ( $sent !== '' ) : ?>
-	    <span style="color:#00782a">送信ずみ</span>（<?php echo esc_html( $sent ); ?>）
+	    <b style="color:#118a3d;font-size:15px">済</b>
+	    <span style="color:#666">（<?php echo esc_html( $sent ); ?>）</span>
 	  <?php else : ?>
-	    <span style="color:#666">まだ送っていません</span>
+	    <b style="color:#50575e;font-size:15px">未</b>
+	  <?php endif; ?>
+	  <?php if ( $claim ) : ?>
+	    <b style="color:#d63638"> クレーム</b>
 	  <?php endif; ?>
 	</p>
 
@@ -521,6 +625,18 @@ function ymkrf_vmail_metabox( $post ) {
 	  <?php echo $sent !== '' ? 'もう一度いま送る' : 'いま送る'; ?>
 	</a>
 	<p class="description">先に「更新」を押して、内容を保存してからお使いください。</p>
+
+	<details style="margin-top:10px">
+	  <summary style="cursor:pointer">送る文面を見る</summary>
+	  <p class="description" style="margin:6px 0">送りさき：
+	    <?php $to = ymkrf_vmail_to( $post->ID );
+	          echo $to ? esc_html( implode( '、', $to ) )
+	                   : '<span style="color:#b32d00">まだ1つもありません</span>'; ?>
+	  </p>
+	  <pre style="white-space:pre-wrap;font-size:12px;line-height:1.8;background:#f6f7f7;
+	              border:1px solid #dcdcde;padding:8px;max-height:24em;overflow:auto"><?php
+	    echo esc_html( ymkrf_vmail_body( $post->ID ) ); ?></pre>
+	</details>
 	<?php
 }
 
@@ -629,7 +745,7 @@ add_filter( 'manage_ymkrf_voice_posts_columns', function ( $cols ) {
 	$new = array();
 	foreach ( $cols as $k => $v ) {
 		$new[ $k ] = $v;
-		if ( $k === 'title' ) $new['ymkrf_vmail'] = '担当店へ連絡';
+		if ( $k === 'title' ) $new['ymkrf_vmail'] = '担当店へ連絡';   /* 済／未 ＋ クレーム */
 	}
 	return $new;
 }, 30 );
@@ -640,11 +756,67 @@ add_action( 'manage_ymkrf_voice_posts_custom_column', function ( $col, $post_id 
 	$sent  = (string) get_post_meta( $post_id, '_ymkrf_mail_sent', true );
 	$claim = ( get_post_meta( $post_id, '_ymkrf_claim', true ) === '1' );
 
-	if ( $claim ) {
-		echo '<span style="color:#d63638;font-weight:bold">クレーム</span><br>';
+	/* 済／未のあとに、クレームなら赤字をならべます
+	   （2026/09/16 ユーザー指示「担当者へ連絡した場合は済、まだの場合は未。
+	     クレームの場合は 未・済 のあとにクレームと赤字にして」） */
+	if ( $sent !== '' ) {
+		echo '<span style="color:#118a3d;font-weight:700;font-size:15px">済</span>';
+	} else {
+		echo '<span style="color:#50575e;font-weight:700;font-size:15px">未</span>';
 	}
-	echo $sent !== ''
-		? '<span style="color:#00782a">連絡ずみ</span><br><span style="color:#888;font-size:11px">'
-		  . esc_html( mb_substr( $sent, 0, 10 ) ) . '</span>'
-		: '<span style="color:#aaa">—</span>';
+
+	if ( $claim ) {
+		echo ' <span style="color:#d63638;font-weight:700">クレーム</span>';
+	}
+
+	if ( $sent !== '' ) {
+		echo '<br><span style="color:#888;font-size:11px">'
+		   . esc_html( mb_substr( $sent, 0, 10 ) ) . '</span>';
+	}
 }, 10, 2 );
+
+
+/* ============================================================
+   9. ★1回だけ★ いままでのアンケートを、ぜんぶ「済」にします
+   ------------------------------------------------------------
+   （2026/09/16 ユーザー指示「既存のものは全て済にして」）
+   この仕組みを作る前に登録したものは、すでに担当店へお伝えずみなので、
+   これから改めてメールが飛ばないように「済」にしておきます。
+   一度動いたら、もう動きません。
+   ============================================================ */
+add_action( 'admin_init', function () {
+
+	if ( get_option( 'ymkrf_vmail_backfill_done' ) ) return;
+	if ( ! is_admin() || ! current_user_can( 'manage_options' ) ) return;
+
+	global $wpdb;
+
+	/* 件数がおおいので、SQLでまとめて入れます（1,000件以上あります） */
+	$n = $wpdb->query(
+		"INSERT INTO {$wpdb->postmeta} ( post_id, meta_key, meta_value )
+		 SELECT p.ID, '_ymkrf_mail_sent', p.post_date
+		   FROM {$wpdb->posts} p
+		  WHERE p.post_type = 'ymkrf_voice'
+		    AND p.post_status <> 'trash'
+		    AND NOT EXISTS (
+		          SELECT 1 FROM {$wpdb->postmeta} m
+		           WHERE m.post_id = p.ID AND m.meta_key = '_ymkrf_mail_sent'
+		        )"
+	);
+
+	update_option( 'ymkrf_vmail_backfill_done', (int) $n, false );
+
+	set_transient( 'ymkrf_vmail_backfill_note', (int) $n, 120 );
+}, 6 );
+
+/** 1回だけの「済」そろえが終わったことを、お知らせします */
+add_action( 'admin_notices', function () {
+	$n = get_transient( 'ymkrf_vmail_backfill_note' );
+	if ( $n === false ) return;
+	delete_transient( 'ymkrf_vmail_backfill_note' );
+
+	echo '<div class="notice notice-success is-dismissible"><p>'
+	   . 'いままでのお客様の声 <b>' . (int) $n . '</b> 件を、担当店へ連絡「<b>済</b>」にしました。'
+	   . 'これから登録するものが「未」になります。'
+	   . '</p></div>';
+} );

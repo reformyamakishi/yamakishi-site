@@ -21,9 +21,12 @@
  *   ・ブラウザの中でA3の「仕事の通信簿」の枠を読み取り、
  *     枠が合ったものだけ入れ替えます。
  *     ハガキサイズなど様式のちがうものは、自動で飛ばします。
- *   ・入れ替えるのは「ご紹介（　様）」を白く塗った公開用だけです。
- *     塗りつぶす前の原本は、サーバーに置きません
- *     （パソコンのフォルダが原本の控えになります）。
+ *   ・入れ替えるのは、かたむきを直したフォルダの画像そのままです。
+ *     こちらで消したり塗ったりはしません
+ *     （2026/09/16 ユーザー「勝手に内容削除はしないで」
+ *       「基本はこちらで名前など入っていたら塗りつぶして入れています」）。
+ *   ・入れ替える前の古い画像は、メディアから消します
+ *     （2026/09/16 ユーザー「前のは削除してください」）。
  *   ・画像は幅2400pxで作ります。
  *
  * ■ 終わったら
@@ -37,6 +40,11 @@ if ( ! defined( 'YMKRF_VSWAP_DIR' ) ) define( 'YMKRF_VSWAP_DIR', 'ymkrf-survey-i
 
 /** 枠がいくつ合えば「仕事の通信簿」とみなすか */
 if ( ! defined( 'YMKRF_VSWAP_VOTES' ) ) define( 'YMKRF_VSWAP_VOTES', 6 );
+
+/** 入れ直しが終わった印（お客様の声に入ります）
+ *  これが付いたものは、一覧から消えて、次からも出てきません。
+ *  （2026/09/16 ユーザー指示「入替完了したアンケートは、アンケートの入れ直しから削除して」） */
+if ( ! defined( 'YMKRF_VSWAP_DONE' ) ) define( 'YMKRF_VSWAP_DONE', '_ymkrf_vswap_done' );
 
 
 /**
@@ -146,6 +154,84 @@ add_action( 'admin_init', function () {
 	exit;
 } );
 
+/**
+ * もう一度やり直したい案件番号の一覧。
+ * ここに入っているものは、入れ直しずみでも、画像がきれいでも、かならず一覧に出します。
+ * （2026/09/16 ユーザー「原本はちゃんと映っているのに、一部映っていない」への対応）
+ */
+if ( ! function_exists( 'ymkrf_vswap_force_nos' ) ) :
+function ymkrf_vswap_force_nos() {
+	$v = get_option( 'ymkrf_vswap_force', array() );
+	return is_array( $v ) ? $v : array();
+}
+endif;
+
+/** 「この案件番号だけ、もう一度」を押したとき */
+add_action( 'admin_init', function () {
+
+	if ( empty( $_POST['ymkrf_vswap_redo'] ) ) return;
+	if ( ! current_user_can( 'manage_options' ) ) return;
+	check_admin_referer( 'ymkrf_vswap_redo' );
+
+	$no = preg_replace( '/[^0-9-]/', '', (string) $_POST['ymkrf_vswap_redo'] );
+	if ( $no !== '' ) {
+		$now = ymkrf_vswap_force_nos();
+		if ( ! in_array( $no, $now, true ) ) {
+			$now[] = $no;
+			update_option( 'ymkrf_vswap_force', $now, false );
+		}
+		$vid = ymkrf_vswap_voice_by_case( $no );
+		if ( $vid ) delete_post_meta( $vid, YMKRF_VSWAP_DONE );
+	}
+
+	wp_safe_redirect( admin_url( 'edit.php?post_type=ymkrf_voice&page=ymkrf-voice-swap' ) );
+	exit;
+} );
+
+/**
+ * 「このままでよい」を押したとき。
+ * その案件は一覧から消えて、次からも出てきません。
+ * お客様の声の赤い「解像度が低い」も出なくなります
+ * （functions-voice-check.php と同じ印を使います）。
+ * （2026/09/16 ユーザー指示「対処したらここからは消して」）
+ */
+add_action( 'admin_init', function () {
+
+	if ( empty( $_GET['ymkrf_vswap_ok'] ) ) return;
+	if ( ! current_user_can( 'manage_options' ) ) return;
+	check_admin_referer( 'ymkrf_vswap_skip' );
+
+	$no  = preg_replace( '/[^0-9-]/', '', (string) $_GET['ymkrf_vswap_ok'] );
+	$vid = $no !== '' ? ymkrf_vswap_voice_by_case( $no ) : 0;
+
+	if ( $vid ) {
+		update_post_meta( $vid,
+			defined( 'YMKRF_VCHK_LOWOK' ) ? YMKRF_VCHK_LOWOK : '_ymkrf_lowres_ok', '1' );
+
+		/* 「もう一度」の指定が残っていたら、外します */
+		$force = ymkrf_vswap_force_nos();
+		if ( in_array( $no, $force, true ) ) {
+			update_option( 'ymkrf_vswap_force', array_values( array_diff( $force, array( $no ) ) ), false );
+		}
+	}
+
+	wp_safe_redirect( admin_url( 'edit.php?post_type=ymkrf_voice&page=ymkrf-voice-swap' ) );
+	exit;
+} );
+
+/** 「入れ直しずみ」の印をぜんぶ外す（もう一度やり直したいとき用） */
+add_action( 'admin_init', function () {
+	if ( empty( $_GET['ymkrf_vswap_done_clear'] ) ) return;
+	if ( ! current_user_can( 'manage_options' ) ) return;
+	check_admin_referer( 'ymkrf_vswap_skip' );
+
+	global $wpdb;
+	$wpdb->delete( $wpdb->postmeta, array( 'meta_key' => YMKRF_VSWAP_DONE ) );
+
+	wp_safe_redirect( admin_url( 'edit.php?post_type=ymkrf_voice&page=ymkrf-voice-swap' ) );
+	exit;
+} );
+
 /** ファイル名をUTF-8にそろえます（フォルダがシフトJISのとき用） */
 if ( ! function_exists( 'ymkrf_vswap_utf8' ) ) :
 function ymkrf_vswap_utf8( $s ) {
@@ -162,7 +248,7 @@ endif;
  *   赤字で要確認にして下書きなどにしておいてください」）
  *
  * 印がつくと、お客様の声の一覧に赤い「要確認」が出て、
- * 公開中のものは下書きにもどります。
+ * 公開中のものは「非公開」にもどります。
  */
 if ( ! function_exists( 'ymkrf_vswap_mark_claims' ) ) :
 function ymkrf_vswap_mark_claims() {
@@ -196,8 +282,10 @@ function ymkrf_vswap_mark_claims() {
 			if ( $r ) update_post_meta( $vid, YMKRF_VCHK_META, $r );
 		}
 
+		/* クレームのアンケートは「非公開」にします
+		   （2026/09/16 ユーザー指示「クレームのアンケートは、下書きではなく、非公開にして」） */
 		if ( get_post_status( $vid ) === 'publish' ) {
-			wp_update_post( array( 'ID' => $vid, 'post_status' => 'draft' ) );
+			wp_update_post( array( 'ID' => $vid, 'post_status' => 'private' ) );
 			$drafted++;
 		}
 	}
@@ -320,12 +408,34 @@ function ymkrf_vswap_page() {
 		     . '&f=' . rawurlencode( $file );
 	};
 
-	$rows = array();
+	$rows  = array();
+	$done  = 0;
+	$force = ymkrf_vswap_force_nos();
 	foreach ( $files as $no => $list ) {
 		$vid = ymkrf_vswap_voice_by_case( $no );
 		if ( ! $vid ) continue;                       /* 登録されていないものは、ここでは扱いません */
+
 		$now = ymkrf_vswap_now_width( $vid );
-		if ( $now >= 2000 ) continue;                 /* すでにきれいなものは飛ばします */
+
+		/* 「この案件番号だけ、もう一度」で指定したものは、かならず出します */
+		if ( ! in_array( (string) $no, $force, true ) ) {
+
+			/* 入れ直しずみのものは、もう出しません
+			   （2026/09/16 ユーザー指示「入替完了したアンケートは、アンケートの入れ直しから削除して」） */
+			if ( get_post_meta( $vid, YMKRF_VSWAP_DONE, true ) !== '' ) { $done++; continue; }
+
+			/* 手をつけおわったものも、もう出しません。
+			   ・もう十分きれいなもの（2000px以上）
+			   ・「このままでよい」「確認しました」を押したもの
+			   （2026/09/16 ユーザー指示「対処したらここからは消して。
+			     何件残っているか分かりにくい」） */
+			if ( function_exists( 'ymkrf_vchk_lowres' ) ) {
+				if ( ymkrf_vchk_lowres( $vid ) === 0 ) { $done++; continue; }
+			} elseif ( $now >= 2000 ) {
+				$done++; continue;
+			}
+		}
+
 		$rows[] = array( 'no' => $no, 'file' => $list[0], 'voice' => $vid, 'now' => $now );
 	}
 	?>
@@ -351,18 +461,18 @@ function ymkrf_vswap_page() {
 	    フォルダの画像と、登録ずみのお客様の声を<b>案件番号</b>で結びつけます。<br>
 	    ブラウザの中でA3の「仕事の通信簿」の枠を読み取り、<b>枠が合ったものだけ</b>入れ替えます。
 	    ハガキサイズなど様式のちがうものは、自動で飛ばします。<br>
-	    入れるのは「ご紹介（　様）」を白く塗った<b>公開用だけ</b>（幅2400px）です。
-	    塗る前の原本はサーバーに置きません。
+	    入れるのは、<b>かたむきを直したフォルダの画像そのまま</b>（幅2400px）です。
+	    こちらで消したり塗ったりは、いっさいしません（2026/09/16 ご指示）。
 	  </p>
 
 	  <div class="notice notice-warning" style="max-width:900px">
 	    <p style="font-size:13.5px;line-height:1.9">
-	      <b>できあがった画像は、その場で右の欄に出します。</b>
-	      白い塗りつぶしが「ご紹介（　様）」の欄に当たっているか、目で確かめてください。<br>
-	      枠の読み取りをまちがえると、塗る場所がずれます。ずれているものを見つけたら、
-	      その案件番号を教えてください。もとにもどします。<br>
+	      <b>画像の中身は、いっさい消しません。</b>フォルダの画像をそのまま入れます。<br>
+	      フォルダの画像は、中川さんがすでにお名前を塗って用意されたものです。
+	      「小松市S様」のようなイニシャルは、そのまま公開してかまいません。<br>
 	      <span style="color:#50575e">
-	        ※ 入れ替えるのは画像だけです。点数やご感想などの入力内容には、いっさい触れません。
+	        ※ 入れ替えるのは画像だけです。点数やご感想などの入力内容には、いっさい触れません。<br>
+	        ※ 入れ替える前の古い画像は、メディアから消します。
 	      </span>
 	    </p>
 	  </div>
@@ -374,6 +484,7 @@ function ymkrf_vswap_page() {
 	  <div class="ymkrf-vswap__sum">
 	    <span>フォルダの画像　<b><?php echo count( $files ); ?></b> 件</span>
 	    <span>入れ直せるもの　<b><?php echo count( $rows ); ?></b> 件</span>
+	    <span>手をつけおわったもの　<b style="color:#118a3d"><?php echo (int) $done; ?></b> 件</span>
 	    <span>クレームの印　<b style="color:#b32d2e"><?php echo (int) $cl['found']; ?></b> 件</span>
 	  </div>
 
@@ -382,15 +493,41 @@ function ymkrf_vswap_page() {
 	      「クレーム」と書かれたアンケートに、<b style="color:#b32d2e">要確認</b>の印を付けました
 	      （<?php echo (int) $cl['marked']; ?>件）。
 	      <?php if ( $cl['drafted'] ) : ?>
-	        うち <b><?php echo (int) $cl['drafted']; ?></b> 件は公開中だったので、下書きにもどしました。
+	        うち <b><?php echo (int) $cl['drafted']; ?></b> 件は公開中だったので、<b>非公開</b>にしました。
 	      <?php endif; ?>
 	    </p></div>
 	  <?php endif; ?>
 
+	  <?php if ( $done ) : ?>
+	    <p style="font-size:12.5px;color:#50575e;max-width:900px">
+	      手をつけおわった <b><?php echo (int) $done; ?></b> 件は、この一覧から消えています。次からも出てきません。<br>
+	      （入れ直したもの／すでにきれいなもの／「このままでよい」を押したもの）
+	      　<a href="<?php echo esc_url( wp_nonce_url(
+	          add_query_arg( 'ymkrf_vswap_done_clear', '1',
+	            admin_url( 'edit.php?post_type=ymkrf_voice&page=ymkrf-voice-swap' ) ),
+	          'ymkrf_vswap_skip' ) ); ?>"
+	         onclick="return confirm('入れ直しずみの印をぜんぶ外して、もう一度一覧に出しますか？\n（画像はそのままです）');"
+	         >もう一度やり直す</a>
+	    </p>
+	  <?php endif; ?>
+
+	  <form method="post" style="margin:10px 0;font-size:12.5px;color:#50575e">
+	    <?php wp_nonce_field( 'ymkrf_vswap_redo' ); ?>
+	    うまくいかなかったものがあれば、その案件番号だけ、もう一度出せます：
+	    <input type="text" name="ymkrf_vswap_redo" placeholder="2405-0447" style="width:120px">
+	    <button class="button button-small">もう一度出す</button>
+	    <?php $forced = ymkrf_vswap_force_nos();
+	          if ( $forced ) : ?>
+	      <br>いま出しなおしているもの：<b><?php echo esc_html( implode( '、', $forced ) ); ?></b>
+	    <?php endif; ?>
+	  </form>
+
 	  <?php $skips = ymkrf_vswap_skip_nos(); ?>
 	  <p style="font-size:12.5px;color:#50575e;max-width:900px">
 	    アンケートでないものが混じっていたら、その行の「<b>アンケートでない</b>」を押してください。
-	    一覧から消えて、次からも出てきません。
+	    一覧から消えて、次からも出てきません。<br>
+	    入れ直さなくてよいと決めたものは「<b>このままでよい</b>」を押してください。
+	    こちらも一覧から消えて、お客様の声の赤い「解像度が低い」も出なくなります。
 	    <?php if ( $skips ) : ?>
 	      <br>いま外しているもの（<?php echo count( $skips ); ?>件）：
 	      <?php echo esc_html( implode( '、', $skips ) ); ?>
@@ -414,6 +551,16 @@ function ymkrf_vswap_page() {
 	      </button>
 	      <span id="ymkrf-vswap-st" style="margin-left:14px;font-weight:700"></span>
 	    </p>
+
+	    <!-- 入れ替えが終わったものは、上の表から消して、ここに出します（確認用） -->
+	    <div id="ymkrf-vswap-done-wrap" style="display:none;margin:16px 0 22px">
+	      <h2 style="margin-bottom:6px">入れ替えました（一覧からは消しました）</h2>
+	      <p class="description" style="margin-top:0">
+	        白い塗りつぶしが「ご紹介（　様）」の欄に当たっているか、ここで目で確かめてください。<br>
+	        ずれているものがあれば、その案件番号を教えてください。もとにもどします。
+	      </p>
+	      <div id="ymkrf-vswap-done" style="display:flex;flex-wrap:wrap;gap:14px"></div>
+	    </div>
 
 	    <table class="widefat striped" id="ymkrf-vswap-tbl">
 	      <thead><tr>
@@ -440,7 +587,12 @@ function ymkrf_vswap_page() {
 	                 href="<?php echo esc_url( wp_nonce_url(
 	                   add_query_arg( 'ymkrf_vswap_skip', $r['no'],
 	                     admin_url( 'edit.php?post_type=ymkrf_voice&page=ymkrf-voice-swap' ) ),
-	                   'ymkrf_vswap_skip' ) ); ?>">アンケートでない</a></td>
+	                   'ymkrf_vswap_skip' ) ); ?>">アンケートでない</a>
+	              <a class="button button-small" style="margin-top:4px"
+	                 href="<?php echo esc_url( wp_nonce_url(
+	                   add_query_arg( 'ymkrf_vswap_ok', $r['no'],
+	                     admin_url( 'edit.php?post_type=ymkrf_voice&page=ymkrf-voice-swap' ) ),
+	                   'ymkrf_vswap_skip' ) ); ?>">このままでよい</a></td>
 	            <td><img src="<?php echo esc_url( $imgurl( $r['file'] ) ); ?>"
 	                     style="width:140px;height:auto;border:1px solid #dcdcde" alt=""></td>
 	            <td><?php if ( $nowurl ) : ?>
@@ -486,7 +638,8 @@ function ymkrf_vswap_page() {
 
 	    function next() {
 	      if (i >= rows.length) {
-	        $st.text('終わりました。入れ替え ' + ok + ' 件／様式ちがい ' + skip + ' 件／できなかった ' + ng + ' 件');
+	        $st.text('終わりました。入れ替え ' + ok + ' 件／様式ちがい ' + skip + ' 件／できなかった ' + ng + ' 件'
+                 + (ok ? '（入れ替えた ' + ok + ' 件は一覧から消しました）' : ''));
 	        $go.prop('disabled', false);
 	        return;
 	      }
@@ -522,13 +675,22 @@ function ymkrf_vswap_page() {
 	          data:   pub.toDataURL('image/jpeg', 0.9)
         }).done(function (res) {
 	          if (res && res.success) {
-	            /* できあがった画像を、その場で小さく出します。
-	               白い塗りつぶしが「ご紹介（　様）」の欄に当たっているか、
-	               目で確かめられるようにするためです。（2026/09/16） */
-	            $res.attr('class', 'ymkrf-vswap__res is-ok')
-	                .html('入れ替えました（' + res.data.w + 'px）<br>'
-	                    + '<img src="' + pub.toDataURL('image/jpeg', 0.6) + '" '
-	                    + 'style="width:260px;height:auto;border:1px solid #dcdcde;margin-top:4px">');
+	            /* 終わったものは、上の表から消して、下の「入れ替えました」に移します。
+	               （2026/09/16 ユーザー指示
+	                 「入替完了したアンケートは、アンケートの入れ直しから削除して」）
+	               できあがった画像も出して、白い塗りつぶしが
+	               「ご紹介（　様）」の欄に当たっているか目で確かめられるようにします。 */
+	            $('#ymkrf-vswap-done-wrap').show();
+	            $('#ymkrf-vswap-done').append(
+	              '<figure style="margin:0;width:260px">'
+	              + '<img src="' + pub.toDataURL('image/jpeg', 0.6) + '" '
+	              + 'style="width:260px;height:auto;border:1px solid #dcdcde">'
+	              + '<figcaption style="font-size:12.5px;margin-top:4px">'
+	              + '<b>' + $tr.data('no') + '</b> '
+	              + '<span class="is-ok">入れ替えました（' + res.data.w + 'px）</span>'
+	              + '</figcaption></figure>'
+	            );
+	            $tr.remove();
 	            ok++;
 	          } else {
 	            $res.attr('class', 'ymkrf-vswap__res is-ng')
@@ -602,11 +764,26 @@ add_action( 'wp_ajax_ymkrf_vswap_save', function () {
 	wp_update_attachment_metadata( $att, wp_generate_attachment_metadata( $att, $path ) );
 	update_post_meta( $att, '_ymkrf_is_survey_public', '1' );
 
+
 	/* 原本も公開用も、この1枚にします（同じURL） */
 	update_post_meta( $vid, '_ymkrf_survey_id', $att );
 	update_post_meta( $vid, '_ymkrf_survey_pub_id', $att );
 
-	/* 前の画像を片づけます */
+	/* 入れ直しが終わった印。次からは一覧に出しません
+	   （2026/09/16 ユーザー指示「入替完了したアンケートは、アンケートの入れ直しから削除して」） */
+	update_post_meta( $vid, YMKRF_VSWAP_DONE, current_time( 'mysql' ) );
+
+	/* 「もう一度」の指定が残っていたら、外します */
+	$force = ymkrf_vswap_force_nos();
+	if ( in_array( $no, $force, true ) ) {
+		update_option( 'ymkrf_vswap_force', array_values( array_diff( $force, array( $no ) ) ), false );
+	}
+
+	/* 前の画像を片づけます
+	   （2026/09/16 ユーザー指示「前のは削除してください」）
+	   入れ替えたあと、古いほうはメディアから消します。
+	   ※「勝手に内容削除はしないで」は画像の中身を白く塗ることについてのご指示で、
+	     こちらの入れ替え前の画像は消してよい、とのことです。 */
 	foreach ( array_unique( array_filter( $old ) ) as $o ) {
 		if ( (int) $o !== (int) $att ) wp_delete_attachment( (int) $o, true );
 	}

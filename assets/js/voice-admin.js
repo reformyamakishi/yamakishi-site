@@ -131,14 +131,26 @@ function findSkew(img) {
 function rotateGray(img, maxW, angle) {
   var w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
   var s = Math.min(1, maxW / w);
-  var W = Math.round(w * s), H = Math.round(h * s);
+  var w2 = Math.round(w * s), h2 = Math.round(h * s);
+
+  /* かたむきを直すと、用紙の四すみが外にはみ出します。
+     もとと同じ大きさの紙に描くと、はみ出した角が切れてしまい、
+     「原本にはちゃんと写っているのに、一部が写っていない」ことになります。
+     （2026/09/16 ユーザー「原本は2405-0447、ちゃんと映っているのになぜか一部映っていない」）
+     そこで、はみ出す分だけ大きい紙を用意してから描きます。
+     かたむきが0度のときは、これまでとまったく同じ大きさになります。 */
+  var rad = Math.abs(angle) * Math.PI / 180;
+  var ca  = Math.cos(rad), sa = Math.sin(rad);
+  var W   = Math.ceil(w2 * ca + h2 * sa);
+  var H   = Math.ceil(w2 * sa + h2 * ca);
+
   var cv = document.createElement('canvas'); cv.width = W; cv.height = H;
   var cx = cv.getContext('2d', { willReadFrequently: true });
   cx.fillStyle = '#fff'; cx.fillRect(0, 0, W, H);
   cx.translate(W / 2, H / 2);
   cx.rotate(-angle * Math.PI / 180);
-  cx.translate(-W / 2, -H / 2);
-  cx.drawImage(img, 0, 0, W, H);
+  cx.drawImage(img, -w2 / 2, -h2 / 2, w2, h2);
+  cx.setTransform(1, 0, 0, 1, 0, 0);
   var d = cx.getImageData(0, 0, W, H).data;
   var g = new Uint8ClampedArray(W * H);
   for (var i = 0, j = 0; i < d.length; i += 4, j++)
@@ -418,7 +430,17 @@ function cropArea(R, key, maxW) {
   return cv;
 }
 
-/* 公開用の画像を作ります（ご紹介欄を塗りつぶして、横1600pxに） */
+/* 登録用の画像を作ります（かたむきを直して、決めた横幅にそろえます）
+ *
+ * ★白い塗りつぶしは、しません★
+ *   （2026/09/16 ユーザー指示「勝手に内容削除はしないで。
+ *     こちらで一応手直ししてから入れます」）
+ *   以前は「ご紹介（　様）」の欄を白く塗っていましたが、
+ *   枠の読み取りをまちがえると、関係のないところまで消えてしまいました。
+ *   アンケートの用紙は、中川さんがお名前を塗ってから取り込まれたものを使います。
+ *   「小松市S様」のようなイニシャルは、そのまま公開してかまいません。
+ *   （2026/09/16 ユーザー「基本はこちらで名前など入っていたら塗りつぶして入れています」）
+ */
 function makePublicImage(R, width) {
   width = width || 1600;
   var s = Math.min(1, width / R.gr.W);
@@ -427,10 +449,6 @@ function makePublicImage(R, width) {
   var cx = cv.getContext('2d');
   cx.fillStyle = '#fff'; cx.fillRect(0, 0, cv.width, cv.height);
   cx.drawImage(R.gr.canvas, 0, 0, cv.width, cv.height);
-  /* ご紹介（　様）の欄を白く塗ります */
-  var A = AREAS.shokai, p0 = R.map(A[0], A[1]), p1 = R.map(A[2], A[3]);
-  cx.fillStyle = '#fff';
-  cx.fillRect(p0[0] * s, p0[1] * s, (p1[0] - p0[0]) * s, (p1[1] - p0[1]) * s);
   return cv;
 }
 

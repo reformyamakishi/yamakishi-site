@@ -11,7 +11,8 @@
  * 見つけたら
  *   ・一覧のタイトルの横に、赤い「要確認」が出ます
  *   ・編集画面の上に、理由が赤い枠で出ます
- *   ・公開中のものは、下書きにもどします
+ *   ・公開中のものは、公開をやめます
+ *     （クレームのアンケートは非公開、そのほかは下書き）
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
@@ -65,11 +66,15 @@ function ymkrf_vchk_reasons( $post_id ) {
 		$out[] = '文章の中に、お名前（〇〇様）らしいものがあります';
 	}
 
-	/* ---- ⑦ 公開用の画像が無い ---- */
+	/* ---- ⑦ アンケートの画像が無い ----
+	   （2026/09/16 ユーザー指示「勝手に内容削除はしないで」により、
+	     こちらで白く塗るのはやめました。アンケートの用紙は、
+	     中川さんがお名前を塗ってから取り込まれたものを使います。
+	     「小松市S様」のようなイニシャルは、そのまま公開してかまいません。） */
 	$sid = (int) $g( '_ymkrf_survey_id' );
 	$pid = (int) $g( '_ymkrf_survey_pub_id' );
 	if ( $sid && ! $pid ) {
-		$out[] = '塗りつぶした公開用の画像がありません（原本しかありません）';
+		$out[] = '公開用の画像がありません（原本しかありません）';
 	}
 
 	/* ---- ⑧ 案件番号が無い ---- */
@@ -148,7 +153,12 @@ add_action( 'admin_notices', function () {
 	    </p>
 	    <p style="font-size:13.5px;margin-top:0">
 	      <?php if ( $drafted ) : ?>
-	        念のため、<b>公開をやめて下書きにもどしました。</b>
+	        <?php if ( $drafted === 'private' ) : ?>
+	          クレームのアンケートなので、<b>公開をやめて「非公開」にしました。</b>
+	          ログインした人だけが見られます。
+	        <?php else : ?>
+	          念のため、<b>公開をやめて下書きにもどしました。</b>
+	        <?php endif; ?>
 	        下のところを直してから、あらためて公開してください。
 	      <?php else : ?>
 	        このまま公開すると、下の内容がページに出るおそれがあります。
@@ -195,8 +205,51 @@ add_action( 'admin_init', function () {
 	exit;
 } );
 
-/* 保存したら調べ直し、見つかったら下書きにもどします
-   （2026/09/16 ユーザー指示「不備や要確認事項があれば、下書きや未公開にして」） */
+/**
+ * ★1回だけ★ すでに下書きにしてあるクレームのアンケートを、非公開にそろえます。
+ * （2026/09/16 ユーザー指示「クレームのアンケートは、下書きではなく、非公開にして」）
+ * 一度動いたら、もう動きません。
+ */
+add_action( 'admin_init', function () {
+
+	if ( get_option( 'ymkrf_vchk_claim_private_done' ) ) return;
+	if ( ! is_admin() || ! current_user_can( 'manage_options' ) ) return;
+
+	$ids = get_posts( array(
+		'post_type'      => 'ymkrf_voice',
+		'post_status'    => 'draft',
+		'posts_per_page' => -1,
+		'fields'         => 'ids',
+		'no_found_rows'  => true,
+		'meta_query'     => array( array( 'key' => '_ymkrf_claim', 'value' => '1' ) ),
+	) );
+
+	foreach ( (array) $ids as $id ) {
+		wp_update_post( array( 'ID' => $id, 'post_status' => 'private' ) );
+	}
+
+	update_option( 'ymkrf_vchk_claim_private_done', count( (array) $ids ), false );
+}, 5 );
+
+
+/**
+ * 公開をやめるとき、どの状態にするかを決めます。
+ *
+ * ・クレームのアンケート … 非公開（private）
+ *     （2026/09/16 ユーザー指示「クレームのアンケートは、下書きではなく、非公開にして」）
+ * ・そのほかの要確認    … 下書き（draft）
+ *
+ * 「非公開」は、ログインした人だけが見られる状態です。
+ * 下書きとちがって、あとから公開日が変わらないので、
+ * 記録として残しておきたいものに向いています。
+ */
+function ymkrf_vchk_hold_status( $post_id ) {
+	return ( get_post_meta( $post_id, '_ymkrf_claim', true ) === '1' ) ? 'private' : 'draft';
+}
+
+/* 保存したら調べ直し、見つかったら下書き（クレームは非公開）にもどします
+   （2026/09/16 ユーザー指示「不備や要確認事項があれば、下書きや未公開にして」
+     「クレームのアンケートは、下書きではなく、非公開にして」） */
 add_action( 'save_post_ymkrf_voice', function ( $post_id ) {
 
 	static $busy = false;
@@ -218,12 +271,14 @@ add_action( 'save_post_ymkrf_voice', function ( $post_id ) {
 
 	update_post_meta( $post_id, YMKRF_VCHK_META, $r );
 
-	/* 公開中なら、いったん下書きにもどします */
+	/* 公開中なら、いったん公開をやめます。
+	   クレームは非公開、そのほかは下書きです。 */
 	if ( get_post_status( $post_id ) === 'publish' ) {
+		$st = ymkrf_vchk_hold_status( $post_id );
 		$busy = true;
-		wp_update_post( array( 'ID' => $post_id, 'post_status' => 'draft' ) );
+		wp_update_post( array( 'ID' => $post_id, 'post_status' => $st ) );
 		$busy = false;
-		set_transient( 'ymkrf_vchk_drafted_' . $post_id, 1, 60 );
+		set_transient( 'ymkrf_vchk_drafted_' . $post_id, $st, 60 );
 	}
 }, 60 );
 
@@ -247,7 +302,7 @@ function ymkrf_vchk_page() {
 	@set_time_limit( 300 );
 
 	$run  = ( isset( $_POST['ymkrf_vchk_run'] ) && check_admin_referer( 'ymkrf_vchk' ) );
-	$done = array( 'marked' => 0, 'drafted' => 0, 'cleared' => 0 );
+	$done = array( 'marked' => 0, 'drafted' => 0, 'private' => 0, 'cleared' => 0 );
 
 	$ids = get_posts( array(
 		'post_type'      => 'ymkrf_voice',
@@ -272,8 +327,10 @@ function ymkrf_vchk_page() {
 				update_post_meta( $id, YMKRF_VCHK_META, $r );
 				$done['marked']++;
 				if ( get_post_status( $id ) === 'publish' ) {
-					wp_update_post( array( 'ID' => $id, 'post_status' => 'draft' ) );
-					$done['drafted']++;
+					$st = ymkrf_vchk_hold_status( $id );
+					wp_update_post( array( 'ID' => $id, 'post_status' => $st ) );
+					if ( $st === 'private' ) $done['private']++;
+					else                     $done['drafted']++;
 				}
 			}
 		} elseif ( $run && get_post_meta( $id, YMKRF_VCHK_META, true ) ) {
@@ -297,13 +354,15 @@ function ymkrf_vchk_page() {
 	    お客様の声を1件ずつ調べて、<b>お客様の情報が出てしまうもの</b>や、
 	    入力が足りないものをさがします。<br>
 	    ボタンを押すと、見つかったものに<b class="ymkrf-vchk__red">要確認</b>の印を付け、
-	    <b>公開中のものは下書きにもどします</b>。
+	    <b>公開中のものは公開をやめます</b>。<br>
+	    クレームのアンケートは<b>非公開</b>に、そのほかは<b>下書き</b>にもどします。
 	  </p>
 
 	  <?php if ( $run ) : ?>
 	    <div class="notice notice-success"><p>
 	      要確認にした <b><?php echo (int) $done['marked']; ?></b> 件／
 	      下書きにもどした <b><?php echo (int) $done['drafted']; ?></b> 件／
+	      非公開にした（クレーム） <b><?php echo (int) $done['private']; ?></b> 件／
 	      印を外した <b><?php echo (int) $done['cleared']; ?></b> 件
 	    </p></div>
 	  <?php endif; ?>
@@ -328,7 +387,7 @@ function ymkrf_vchk_page() {
 	    <form method="post" class="ymkrf-vchk__go">
 	      <?php wp_nonce_field( 'ymkrf_vchk' ); ?>
 	      <button class="button button-primary button-hero" name="ymkrf_vchk_run" value="1">
-	        <?php echo count( $found ); ?> 件に「要確認」を付けて、下書きにもどす
+	        <?php echo count( $found ); ?> 件に「要確認」を付けて、公開をやめる
 	      </button>
 	    </form>
 
@@ -343,7 +402,10 @@ function ymkrf_vchk_page() {
 	          <tr>
 	            <td><a href="<?php echo esc_url( get_edit_post_link( $id ) ); ?>"><?php
 	              echo esc_html( get_the_title( $id ) ?: '（名前なし）' ); ?></a></td>
-	            <td><?php echo esc_html( get_post_status( $id ) === 'publish' ? '公開中' : '下書きなど' ); ?></td>
+	            <td><?php
+	              $st0 = get_post_status( $id );
+	              echo esc_html( $st0 === 'publish' ? '公開中'
+	                           : ( $st0 === 'private' ? '非公開' : '下書きなど' ) ); ?></td>
 	            <td><?php echo esc_html( implode( '／', $r ) ); ?></td>
 	          </tr>
 	        <?php endforeach; ?>
@@ -388,9 +450,23 @@ endif;
 
 if ( ! defined( 'YMKRF_VCHK_MINW' ) ) define( 'YMKRF_VCHK_MINW', 2000 );
 
-/** アンケート画像の幅。足りていれば 0 を返します */
+/** 「この解像度のままでよい」と確認したときの印 */
+if ( ! defined( 'YMKRF_VCHK_LOWOK' ) ) define( 'YMKRF_VCHK_LOWOK', '_ymkrf_lowres_ok' );
+
+/**
+ * アンケート画像の幅。足りていれば 0 を返します。
+ *
+ * 「確認しました（このままでよい）」または「この解像度でよい」を押したものは、
+ * 幅がたりなくても 0 を返します＝赤字を出しません。
+ * （2026/09/16 ユーザー「解像度確認してOKにしたはずだけど、
+ *   まだ解像度が低いって赤字で表示されている」）
+ */
 if ( ! function_exists( 'ymkrf_vchk_lowres' ) ) :
 function ymkrf_vchk_lowres( $post_id ) {
+
+	/* 確認ずみのものは、もう出しません */
+	if ( get_post_meta( $post_id, YMKRF_VCHK_LOWOK, true ) === '1' ) return 0;
+	if ( get_post_meta( $post_id, YMKRF_VCHK_OK, true ) === '1' )    return 0;
 
 	$att = (int) get_post_meta( $post_id, '_ymkrf_survey_pub_id', true );
 	if ( ! $att ) $att = (int) get_post_meta( $post_id, '_ymkrf_survey_id', true );
@@ -403,6 +479,20 @@ function ymkrf_vchk_lowres( $post_id ) {
 	return ( $w < YMKRF_VCHK_MINW ) ? $w : 0;
 }
 endif;
+
+/** 「この解像度でよい」を押したとき */
+add_action( 'admin_init', function () {
+
+	if ( empty( $_GET['ymkrf_vchk_lowok'] ) || empty( $_GET['post'] ) ) return;
+	$pid = (int) $_GET['post'];
+	if ( ! wp_verify_nonce( $_GET['_wpnonce'] ?? '', 'ymkrf_vchk_lowok_' . $pid ) ) return;
+	if ( ! current_user_can( 'edit_post', $pid ) ) return;
+
+	update_post_meta( $pid, YMKRF_VCHK_LOWOK, '1' );
+
+	wp_safe_redirect( admin_url( 'post.php?post=' . $pid . '&action=edit' ) );
+	exit;
+} );
 
 /* 一覧に「アンケート」の列を足します（写真と赤字） */
 add_filter( 'manage_ymkrf_voice_posts_columns', function ( $cols ) {
@@ -446,6 +536,10 @@ add_action( 'manage_ymkrf_voice_posts_custom_column', function ( $col, $post_id 
 		   . '<span style="color:#b32d2e">' . (int) $low . 'px<br>スキャンし直し</span>';
 	} else {
 		echo '<span style="color:#6b625c">' . (int) $w . 'px</span>';
+		/* 幅は足りていないけれど、確認ずみのもの */
+		if ( $w && $w < YMKRF_VCHK_MINW ) {
+			echo '<br><span style="color:#8a8a8a">確認ずみ</span>';
+		}
 	}
 	echo '</span></div>';
 }, 10, 2 );
@@ -484,6 +578,12 @@ add_action( 'admin_notices', function () {
 	        <span style="color:#50575e;font-size:12.5px">
 	          ※ 公開は止めていません。このままでも表示はできます。
 	        </span>
+	      </p>
+	      <p style="margin:10px 0 0">
+	        <a class="button" href="<?php echo esc_url( wp_nonce_url(
+	             add_query_arg( array( 'ymkrf_vchk_lowok' => '1', 'post' => $id ),
+	               admin_url( 'post.php' ) ),
+	             'ymkrf_vchk_lowok_' . $id ) ); ?>">この解像度でよい（もう出さない）</a>
 	      </p>
 	    </div>
 	  </div>
