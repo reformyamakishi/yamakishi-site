@@ -17,6 +17,7 @@
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 define( 'YMKRF_VCHK_META', '_ymkrf_needs_check' );
+define( 'YMKRF_VCHK_OK',   '_ymkrf_check_ok' );   /* 見て、このままでよいと決めたもの */
 
 
 /** そのお客様の声に、直したほうがよいところがあるか調べます */
@@ -102,27 +103,120 @@ add_action( 'admin_notices', function () {
 	if ( ! $s || $s->post_type !== 'ymkrf_voice' || $s->base !== 'post' ) return;
 	if ( empty( $GLOBALS['post'] ) ) return;
 
-	$r = get_post_meta( $GLOBALS['post']->ID, YMKRF_VCHK_META, true );
+	$id = (int) $GLOBALS['post']->ID;
+	$r  = get_post_meta( $id, YMKRF_VCHK_META, true );
+
+	/* 「確認しました」にしたものは、灰色の小さな案内だけにします */
+	if ( get_post_meta( $id, YMKRF_VCHK_OK, true ) === '1' ) {
+		$back = wp_nonce_url(
+			add_query_arg( array( 'ymkrf_vchk_ok' => '0', 'post' => $id ), admin_url( 'post.php' ) ),
+			'ymkrf_vchk_ok_' . $id );
+		?>
+		<div class="notice notice-info" style="margin-top:14px">
+		  <p style="font-size:13.5px">このお客様の声は「<b>確認ずみ</b>」にしてあります。
+		    <a href="<?php echo esc_url( $back ); ?>">もう一度調べる</a></p>
+		</div>
+		<?php
+		return;
+	}
+
 	if ( ! is_array( $r ) || ! $r ) return;
+
+	$ok = wp_nonce_url(
+		add_query_arg( array( 'ymkrf_vchk_ok' => '1', 'post' => $id ), admin_url( 'post.php' ) ),
+		'ymkrf_vchk_ok_' . $id );
+	/* 保存した直後だけ、文言を強くします
+	   （2026/09/16 ユーザー指示「登録完了の際に警告を出して」） */
+	$just = isset( $_GET['message'] );
 	?>
-	<div class="notice notice-error" style="margin-top:14px">
-	  <p style="font-size:14px"><b style="color:#b32d2e">要確認</b>
-	    　下のところを直してから、公開してください。</p>
+	<div class="notice notice-error" style="margin-top:14px;border-left-width:6px">
+	  <?php
+	  $drafted = get_transient( 'ymkrf_vchk_drafted_' . $id );
+	  if ( $drafted ) delete_transient( 'ymkrf_vchk_drafted_' . $id );
+	  ?>
+	  <?php if ( $just ) : ?>
+	    <p style="font-size:15px;font-weight:700;color:#b32d2e;margin-bottom:4px">
+	      登録しましたが、お客様の情報らしいものが見つかりました
+	    </p>
+	    <p style="font-size:13.5px;margin-top:0">
+	      <?php if ( $drafted ) : ?>
+	        念のため、<b>公開をやめて下書きにもどしました。</b>
+	        下のところを直してから、あらためて公開してください。
+	      <?php else : ?>
+	        このまま公開すると、下の内容がページに出るおそれがあります。
+	      <?php endif; ?>
+	    </p>
+	  <?php else : ?>
+	    <p style="font-size:14px"><b style="color:#b32d2e">要確認</b>
+	      　下のところを直してから、公開してください。</p>
+	  <?php endif; ?>
 	  <ul style="margin:0 0 10px 22px;list-style:disc;font-size:13.5px;line-height:1.9">
 	    <?php foreach ( $r as $one ) : ?>
 	      <li><?php echo esc_html( $one ); ?></li>
 	    <?php endforeach; ?>
 	  </ul>
+	  <p style="margin:0 0 12px">
+	    <a class="button" href="<?php echo esc_url( $ok ); ?>">確認しました（このままでよい）</a>
+	    <span style="margin-left:10px;color:#50575e;font-size:12.5px">
+	      直せないもの（古くて案件番号が分からない、など）は、これで赤い表示を消せます。
+	    </span>
+	  </p>
 	</div>
 	<?php
 } );
 
-/* 直して保存したら、印を付けなおします */
+/* 「確認しました」「もう一度調べる」を押したとき */
+add_action( 'admin_init', function () {
+
+	if ( ! isset( $_GET['ymkrf_vchk_ok'], $_GET['post'] ) ) return;
+
+	$id = (int) $_GET['post'];
+	if ( ! $id || ! current_user_can( 'edit_post', $id ) ) return;
+	check_admin_referer( 'ymkrf_vchk_ok_' . $id );
+
+	if ( $_GET['ymkrf_vchk_ok'] === '1' ) {
+		update_post_meta( $id, YMKRF_VCHK_OK, '1' );
+		delete_post_meta( $id, YMKRF_VCHK_META );
+	} else {
+		delete_post_meta( $id, YMKRF_VCHK_OK );
+		$r = ymkrf_vchk_reasons( $id );
+		if ( $r ) update_post_meta( $id, YMKRF_VCHK_META, $r );
+	}
+
+	wp_safe_redirect( admin_url( 'post.php?post=' . $id . '&action=edit' ) );
+	exit;
+} );
+
+/* 保存したら調べ直し、見つかったら下書きにもどします
+   （2026/09/16 ユーザー指示「不備や要確認事項があれば、下書きや未公開にして」） */
 add_action( 'save_post_ymkrf_voice', function ( $post_id ) {
+
+	static $busy = false;
+	if ( $busy ) return;
 	if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) return;
+
+	/* 「確認しました」にしたものは、そっとしておきます */
+	if ( get_post_meta( $post_id, YMKRF_VCHK_OK, true ) === '1' ) {
+		delete_post_meta( $post_id, YMKRF_VCHK_META );
+		return;
+	}
+
 	$r = ymkrf_vchk_reasons( $post_id );
-	if ( $r ) update_post_meta( $post_id, YMKRF_VCHK_META, $r );
-	else      delete_post_meta( $post_id, YMKRF_VCHK_META );
+
+	if ( ! $r ) {
+		delete_post_meta( $post_id, YMKRF_VCHK_META );
+		return;
+	}
+
+	update_post_meta( $post_id, YMKRF_VCHK_META, $r );
+
+	/* 公開中なら、いったん下書きにもどします */
+	if ( get_post_status( $post_id ) === 'publish' ) {
+		$busy = true;
+		wp_update_post( array( 'ID' => $post_id, 'post_status' => 'draft' ) );
+		$busy = false;
+		set_transient( 'ymkrf_vchk_drafted_' . $post_id, 1, 60 );
+	}
 }, 60 );
 
 
@@ -158,6 +252,9 @@ function ymkrf_vchk_page() {
 	$found = array();
 
 	foreach ( (array) $ids as $id ) {
+
+		/* 「確認しました」にしたものは、もう出しません */
+		if ( get_post_meta( $id, YMKRF_VCHK_OK, true ) === '1' ) continue;
 
 		$r = ymkrf_vchk_reasons( $id );
 

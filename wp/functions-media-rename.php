@@ -184,8 +184,14 @@ function ymkrf_mrn_plan_voice() {
 	$n = 0;
 	foreach ( $nums as $i => $d ) {
 		$n++;
-		$plan[ $i ]['seq'] = $n;
-		$plan[ $i ]['to']  = 'voice/' . sprintf( '%03d', $n ) . $plan[ $i ]['ext'];
+
+		/* お客様の声のほうに通し番号が振ってあれば、それに合わせます
+		   （URL /voice/toilet/001/ と 写真 voice/001.jpg をそろえるため） */
+		$seq = trim( (string) get_post_meta( $plan[ $i ]['voice'], '_ymkrf_noseq', true ) );
+		if ( $seq === '' ) $seq = sprintf( '%03d', $n );
+
+		$plan[ $i ]['seq'] = $seq;
+		$plan[ $i ]['to']  = 'voice/' . $seq . $plan[ $i ]['ext'];
 	}
 
 	foreach ( $plan as $i => $p ) {

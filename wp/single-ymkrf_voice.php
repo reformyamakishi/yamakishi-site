@@ -148,11 +148,57 @@ while ( have_posts() ) : the_post();
 
     <?php if ( $works ) : ?>
       <h2 class="p-voice__h2">この工事の施工事例</h2>
-      <ul class="p-voice__works">
-        <?php foreach ( $works as $w ) : ?>
-          <li><a href="<?php echo esc_url( get_permalink( $w ) ); ?>"><?php echo esc_html( get_the_title( $w ) ); ?></a></li>
+      <?php /* 写真つきのカードにします（2026/09/16 ユーザー指示
+               「この工事の施工事例のリンクもしょぼいな。画像付きのリンクに」） */ ?>
+      <div class="p-voice__works">
+        <?php foreach ( $works as $w ) :
+
+          $wid  = is_object( $w ) ? (int) $w->ID : (int) $w;
+
+          /* 工事あとの写真を1枚。無ければ工事まえの写真を使います */
+          $af  = get_post_meta( $wid, '_ymkrf_after_imgs', true );
+          $bf  = get_post_meta( $wid, '_ymkrf_before_imgs', true );
+          $one = 0;
+          foreach ( array( $af, $bf ) as $list ) {
+            if ( $one ) break;
+            foreach ( (array) $list as $v ) { if ( (int) $v ) { $one = (int) $v; break; } }
+          }
+          if ( ! $one ) $one = (int) get_post_meta( $wid, '_ymkrf_before_img', true );
+          if ( ! $one ) $one = (int) get_post_thumbnail_id( $wid );
+
+          $wcat = function_exists( 'ymkrf_works_term_names' )
+                ? ymkrf_works_term_names( $wid, 'ymkrf_works_cat' ) : array();
+          $ware = function_exists( 'ymkrf_works_term_names' )
+                ? ymkrf_works_term_names( $wid, 'ymkrf_works_area' ) : array();
+          $wpri = trim( (string) get_post_meta( $wid, '_ymkrf_price', true ) );
+        ?>
+          <a class="p-voice__workcard" href="<?php echo esc_url( get_permalink( $wid ) ); ?>">
+            <span class="p-voice__workph">
+              <?php if ( $one ) : ?>
+                <?php echo wp_get_attachment_image( $one, 'medium_large', false, array(
+                  'alt' => '', 'loading' => 'lazy', 'decoding' => 'async' ) ); ?>
+              <?php else : ?>
+                <span class="p-voice__worknoph">写真なし</span>
+              <?php endif; ?>
+            </span>
+            <span class="p-voice__worktxt">
+              <?php if ( $wcat || $ware ) : ?>
+                <span class="p-voice__workmeta">
+                  <?php foreach ( array_slice( $wcat, 0, 2 ) as $t ) : ?><span><?php
+                    echo esc_html( $t ); ?></span><?php endforeach; ?>
+                  <?php foreach ( array_slice( $ware, 0, 1 ) as $t ) : ?><span><?php
+                    echo esc_html( $t ); ?></span><?php endforeach; ?>
+                </span>
+              <?php endif; ?>
+              <span class="p-voice__workttl"><?php echo esc_html( get_the_title( $wid ) ); ?></span>
+              <?php if ( $wpri !== '' ) : ?>
+                <span class="p-voice__workpri">工事費 <b><?php echo esc_html( $wpri ); ?></b></span>
+              <?php endif; ?>
+              <span class="p-voice__workgo">施工事例を見る</span>
+            </span>
+          </a>
         <?php endforeach; ?>
-      </ul>
+      </div>
     <?php endif; ?>
 
 

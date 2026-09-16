@@ -59,7 +59,10 @@ function ymkrf_voice_parts_list() {
  */
 function ymkrf_voice_parts_alias() {
 	return array(
-		'浴室'       => 'お風呂',
+		'浴室'         => 'お風呂',
+		'ユニットバス' => 'お風呂',
+		'バスルーム'   => 'お風呂',
+		'お風呂・浴室' => 'お風呂',
 		'洗面室'     => '洗面化粧台',
 		'改装・内装' => '内装・改装',
 		'窓・サッシ' => '窓・断熱',
@@ -233,7 +236,9 @@ function ymkrf_voice_metabox( $post ) {
 		$v = get_post_meta( $post->ID, $k, true );
 		return ( $v === '' || $v === null ) ? $d : $v;
 	};
-	$parts   = array_filter( array_map( 'trim', explode( ',', (string) $get( '_ymkrf_parts' ) ) ) );
+	/* むかしの言い方（浴室・洗面室など）でも、いまのチェックに入るようにします
+	   （2026/09/16 ユーザー指摘「浴室に✓ついているのに other になる」） */
+	$parts   = ymkrf_voice_meta_array( $post->ID, '_ymkrf_parts' );
 	$reasons = array_filter( array_map( 'trim', explode( ',', (string) $get( '_ymkrf_reasons' ) ) ) );
 	$sid     = (int) $get( '_ymkrf_survey_id', 0 );
 	$pid     = (int) $get( '_ymkrf_survey_pub_id', 0 );
@@ -1184,6 +1189,44 @@ add_filter( 'posts_clauses', function ( $c, $q ) {
 
 
 /* ------------------------------------------------------------
+   すでに登録してあるお客様の声の「工事箇所」を、
+   いまの言い方に1回だけそろえ直します（2026/09/16 ユーザー指示）。
+
+     浴室・ユニットバス → お風呂
+     洗面室 → 洗面化粧台
+     外壁・屋根 → 外壁・屋根　…など
+
+   そろうと、編集画面のチェックも、ページのURLも正しくなります。
+   管理画面を開くたびに200件ずつ進み、終わったら止まります。
+   ------------------------------------------------------------ */
+add_action( 'admin_init', function () {
+
+	if ( get_option( 'ymkrf_voice_parts_ver' ) === '2' ) return;
+
+	$ids = get_posts( array(
+		'post_type'      => 'ymkrf_voice',
+		'post_status'    => 'any',
+		'posts_per_page' => 200,
+		'fields'         => 'ids',
+		'no_found_rows'  => true,
+		'meta_query'     => array( array( 'key' => '_ymkrf_parts_ver', 'compare' => 'NOT EXISTS' ) ),
+	) );
+
+	if ( ! $ids ) { update_option( 'ymkrf_voice_parts_ver', '2', false ); return; }
+
+	foreach ( $ids as $id ) {
+
+		$raw = (string) get_post_meta( $id, '_ymkrf_parts', true );
+		$now = array_values( array_filter( array_map( 'trim', explode( ',', $raw ) ) ) );
+		$fix = ymkrf_voice_parts_fix( $now );
+
+		if ( $fix !== $now ) update_post_meta( $id, '_ymkrf_parts', implode( ',', $fix ) );
+		update_post_meta( $id, '_ymkrf_parts_ver', '2' );
+	}
+}, 31 );
+
+
+/* ------------------------------------------------------------
    スキャン日（アンケート画像に入っている日時）を、
    お客様の声じたいに持たせておきます。
    一覧の並べ替えに使うので、そのつど画像を見にいかずにすみます。
@@ -1377,22 +1420,57 @@ function ymkrf_voice_city_roman() {
 	);
 }
 
-/** 工事箇所 → ローマ字 */
+/**
+ * 工事箇所 → ローマ字
+ *
+ * ★施工事例の部位の表（ymkrf_works_parts_master）から借りてきます。
+ *   （2026/09/16 不具合を修正）
+ *   9/8に名前を「浴室 → お風呂」などとそろえたとき、
+ *   ここだけ古い名前のままだったので、URLが other になっていました。
+ *   片方だけ直してずれる、ということがもう起きないようにします。
+ */
 function ymkrf_voice_part_roman() {
-	return array(
-		'キッチン'=>'kitchen','浴室'=>'bath','トイレ'=>'toilet','洗面室'=>'washstand',
-		'エコキュート'=>'ecocute','給湯器'=>'boiler','オイルタンク'=>'oiltank',
-		'エクステリア'=>'exterior','カーポート'=>'carport','外壁'=>'wall','屋根'=>'roof',
-		'窓・サッシ'=>'window','レンジフード'=>'rangehood','ドア'=>'door',
-		'蓄電池'=>'battery','太陽光発電'=>'solar','修理・小工事'=>'repair',
-		'改装・内装'=>'interior','その他'=>'other',
-	);
+
+	$out = array();
+
+	if ( function_exists( 'ymkrf_works_parts_master' ) ) {
+		foreach ( ymkrf_works_parts_master() as $slug => $v ) {
+			if ( ! empty( $v[0] ) ) $out[ $v[0] ] = $slug;
+		}
+	}
+
+	/* 念のための控え（ふだんは使いません） */
+	if ( ! $out ) {
+		$out = array(
+			'キッチン'=>'kitchen','お風呂'=>'bathroom','トイレ'=>'toilet',
+			'洗面化粧台'=>'lavatory','給湯器'=>'boiler','オイルタンク'=>'oiltank',
+			'エコキュート'=>'ecocute','その他'=>'other',
+		);
+	}
+
+	/* むかしの言い方でも引けるようにしておきます
+	   （取り込んだ古いデータには「浴室」などが入っているため） */
+	if ( function_exists( 'ymkrf_voice_parts_alias' ) ) {
+		foreach ( ymkrf_voice_parts_alias() as $old => $now ) {
+			if ( isset( $out[ $now ] ) && ! isset( $out[ $old ] ) ) $out[ $old ] = $out[ $now ];
+		}
+	}
+
+	return $out;
 }
 
-/** ローマ字 → 工事箇所（上の表の逆引き。例：oiltank → オイルタンク） */
+/** ローマ字 → 工事箇所（例：bathroom → お風呂） */
 function ymkrf_voice_part_from_roman( $roman ) {
-	$map = array_flip( ymkrf_voice_part_roman() );
+
 	$roman = strtolower( (string) $roman );
+
+	/* いまの名前だけを返します（むかしの言い方は返しません） */
+	if ( function_exists( 'ymkrf_works_parts_master' ) ) {
+		$m = ymkrf_works_parts_master();
+		return isset( $m[ $roman ][0] ) ? $m[ $roman ][0] : '';
+	}
+
+	$map = array_flip( ymkrf_voice_part_roman() );
 	return isset( $map[ $roman ] ) ? $map[ $roman ] : '';
 }
 
@@ -1417,9 +1495,95 @@ add_filter( 'post_type_link', function ( $link, $post ) {
 
 /** この投稿にふさわしいURLの後半（＝案件番号） */
 function ymkrf_voice_make_slug( $post_id ) {
-	return strtolower( preg_replace( '/[^0-9A-Za-z-]/', '',
+
+	$no = strtolower( preg_replace( '/[^0-9A-Za-z-]/', '',
 		(string) get_post_meta( $post_id, '_ymkrf_case_no', true ) ) );
+	if ( $no !== '' ) return $no;
+
+	/* 案件番号が無いものは、通し番号（001、002 …）を使います。
+	   そのままにすると、URLが日本語のままになってしまうためです。
+	   （2026/09/16 ユーザー指摘
+	     「/voice/toilet/トイレリフォームのお客様の声-7/ とかあるけど」） */
+	$seq = (string) get_post_meta( $post_id, '_ymkrf_noseq', true );
+	return ( $seq !== '' ) ? $seq : '';
 }
+
+/**
+ * 案件番号が無いお客様の声に、通し番号（001、002 …）を振ります。
+ * 写真のファイル名（voice/001.jpg）と同じ番号になるよう、
+ * スキャン日の古い順に付けます。
+ */
+if ( ! function_exists( 'ymkrf_voice_next_noseq' ) ) :
+function ymkrf_voice_next_noseq() {
+	global $wpdb;
+	$max = (int) $wpdb->get_var(
+		"SELECT MAX( CAST( meta_value AS UNSIGNED ) )
+		   FROM {$wpdb->postmeta} WHERE meta_key = '_ymkrf_noseq'"
+	);
+	return sprintf( '%03d', $max + 1 );
+}
+endif;
+
+/* あたらしく登録したときにも、番号が無ければ振ります */
+add_action( 'save_post_ymkrf_voice', function ( $post_id ) {
+	if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) return;
+
+	$case = trim( (string) get_post_meta( $post_id, '_ymkrf_case_no', true ) );
+	$seq  = trim( (string) get_post_meta( $post_id, '_ymkrf_noseq', true ) );
+
+	if ( $case !== '' ) {
+		/* あとから案件番号を入れたら、通し番号は外します */
+		if ( $seq !== '' ) delete_post_meta( $post_id, '_ymkrf_noseq' );
+		return;
+	}
+	if ( $seq === '' ) update_post_meta( $post_id, '_ymkrf_noseq', ymkrf_voice_next_noseq() );
+}, 28 );
+
+/* すでにあるぶんに、スキャン日の古い順で1回だけ振ります
+   （スキャン日をそろえ終わってから走ります） */
+add_action( 'admin_init', function () {
+
+	if ( get_option( 'ymkrf_voice_noseq_done' ) === '1' ) return;
+	if ( get_option( 'ymkrf_voice_scandate_done' ) !== '1' ) return;   /* 先にスキャン日 */
+
+	global $wpdb;
+
+	$rows = $wpdb->get_results(
+		"SELECT p.ID AS id, COALESCE( sd.meta_value, '99999999' ) AS d
+		   FROM {$wpdb->posts} p
+		   LEFT JOIN {$wpdb->postmeta} cn
+		          ON cn.post_id = p.ID AND cn.meta_key = '_ymkrf_case_no'
+		   LEFT JOIN {$wpdb->postmeta} sd
+		          ON sd.post_id = p.ID AND sd.meta_key = '_ymkrf_scan_date'
+		   LEFT JOIN {$wpdb->postmeta} ns
+		          ON ns.post_id = p.ID AND ns.meta_key = '_ymkrf_noseq'
+		  WHERE p.post_type = 'ymkrf_voice'
+		    AND p.post_status <> 'trash'
+		    AND COALESCE( cn.meta_value, '' ) = ''
+		    AND ns.meta_id IS NULL
+		  ORDER BY d ASC, p.ID ASC"
+	);
+
+	if ( ! $rows ) { update_option( 'ymkrf_voice_noseq_done', '1', false ); return; }
+
+	$n = 0;
+	foreach ( $rows as $r ) {
+		$n++;
+		update_post_meta( (int) $r->id, '_ymkrf_noseq', sprintf( '%03d', $n ) );
+
+		/* URLも、その場でそろえておきます */
+		$p = get_post( (int) $r->id );
+		if ( $p ) {
+			wp_update_post( array(
+				'ID'        => (int) $r->id,
+				'post_name' => wp_unique_post_slug( sprintf( '%03d', $n ), (int) $r->id,
+				                                    $p->post_status, $p->post_type, 0 ),
+			) );
+		}
+	}
+
+	update_option( 'ymkrf_voice_noseq_done', '1', false );
+}, 32 );
 
 /**
  * 保存のたびにURLの後半を、案件番号にそろえます。
