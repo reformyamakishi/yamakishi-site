@@ -1131,6 +1131,112 @@ add_action( 'pre_get_posts', function ( $q ) {
 	}
 } );
 
+/* ------------------------------------------------------------
+   はじめから「案件番号の大きい順」でならべます
+   （2026/09/16 ユーザー指示）
+
+   案件番号は 2502-0029 の形です。
+     はじめの4桁 … 西暦の下2桁 ＋ 受け付けた月（25年2月）
+     あとの4桁 …… 受け付けた順番
+   どちらも桁がそろっているので、数字の大きい順＝新しい順になります。
+
+   ★ meta_key を使うと、案件番号が入っていないものが一覧から
+     消えてしまうので、LEFT JOIN でつなぎ、番号なしはうしろにまわします。
+   ------------------------------------------------------------ */
+add_filter( 'posts_clauses', function ( $c, $q ) {
+
+	if ( ! is_admin() || ! $q->is_main_query() ) return $c;
+	if ( $q->get( 'post_type' ) !== 'ymkrf_voice' ) return $c;
+
+	/* 見出しを押して並べ替えたときは、そちらを優先します */
+	if ( ! empty( $_GET['orderby'] ) ) return $c;
+
+	global $wpdb;
+
+	if ( strpos( $c['join'], 'ymkcase' ) === false ) {
+		$c['join'] .= " LEFT JOIN {$wpdb->postmeta} ymkcase
+		                       ON ymkcase.post_id = {$wpdb->posts}.ID
+		                      AND ymkcase.meta_key = '_ymkrf_case_no' ";
+	}
+	if ( strpos( $c['join'], 'ymkscan' ) === false ) {
+		$c['join'] .= " LEFT JOIN {$wpdb->postmeta} ymkscan
+		                       ON ymkscan.post_id = {$wpdb->posts}.ID
+		                      AND ymkscan.meta_key = '_ymkrf_scan_date' ";
+	}
+
+	/* 3つの段に分けます。
+	     1段目 … 2502-0029 の形（8桁）　→ 大きい順
+	     2段目 … 0029 のような4桁だけ　　→ 大きい順
+	     3段目 … 案件番号なし　　　　　　→ スキャン日の新しい順 */
+	$tier = "CASE
+	           WHEN ymkcase.meta_value REGEXP '^[0-9]{4}-[0-9]{4}$' THEN 0
+	           WHEN COALESCE( ymkcase.meta_value, '' ) <> ''        THEN 1
+	           ELSE 2
+	         END";
+
+	$c['orderby'] = "{$tier} ASC,
+	                 ymkcase.meta_value DESC,
+	                 ymkscan.meta_value DESC,
+	                 {$wpdb->posts}.post_date DESC";
+
+	return $c;
+}, 20, 2 );
+
+
+/* ------------------------------------------------------------
+   スキャン日（アンケート画像に入っている日時）を、
+   お客様の声じたいに持たせておきます。
+   一覧の並べ替えに使うので、そのつど画像を見にいかずにすみます。
+   ------------------------------------------------------------ */
+if ( ! function_exists( 'ymkrf_voice_scan_date' ) ) :
+function ymkrf_voice_scan_date( $post_id ) {
+
+	$att = (int) get_post_meta( $post_id, '_ymkrf_survey_pub_id', true );
+	if ( ! $att ) $att = (int) get_post_meta( $post_id, '_ymkrf_survey_id', true );
+	if ( ! $att ) return '';
+
+	$m = wp_get_attachment_metadata( $att );
+	if ( ! empty( $m['image_meta']['created_timestamp'] ) ) {
+		$t = (int) $m['image_meta']['created_timestamp'];
+		if ( $t > 0 ) return wp_date( 'Ymd', $t );
+	}
+
+	/* 画像に日時が無いときは、メディアに入れた日を使います */
+	$d = get_post_field( 'post_date', $att );
+	return $d ? gmdate( 'Ymd', strtotime( $d ) ) : '';
+}
+endif;
+
+add_action( 'save_post_ymkrf_voice', function ( $post_id ) {
+	if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) return;
+	$d = ymkrf_voice_scan_date( $post_id );
+	if ( $d !== '' ) update_post_meta( $post_id, '_ymkrf_scan_date', $d );
+	else             delete_post_meta( $post_id, '_ymkrf_scan_date' );
+}, 55 );
+
+/* すでにあるぶんにも、1回だけ入れておきます（200件ずつ進みます） */
+add_action( 'admin_init', function () {
+
+	if ( get_option( 'ymkrf_voice_scandate_done' ) === '1' ) return;
+
+	$ids = get_posts( array(
+		'post_type'      => 'ymkrf_voice',
+		'post_status'    => 'any',
+		'posts_per_page' => 200,
+		'fields'         => 'ids',
+		'no_found_rows'  => true,
+		'meta_query'     => array( array( 'key' => '_ymkrf_scan_date', 'compare' => 'NOT EXISTS' ) ),
+	) );
+
+	if ( ! $ids ) { update_option( 'ymkrf_voice_scandate_done', '1', false ); return; }
+
+	foreach ( $ids as $id ) {
+		$d = ymkrf_voice_scan_date( $id );
+		update_post_meta( $id, '_ymkrf_scan_date', $d !== '' ? $d : '0' );
+	}
+}, 30 );
+
+
 /**
  * 「施工事例（済／未）」での並べ替え。
  * 同じ案件番号のものが相手側にあるかどうかを、その場で数えて並べます。
