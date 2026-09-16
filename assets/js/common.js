@@ -364,30 +364,31 @@
     box.setAttribute('aria-modal', 'true');
     box.innerHTML =
       '<button type="button" class="c-lightbox__close" aria-label="閉じる">×</button>' +
-      '<button type="button" class="c-lightbox__zoom">もっと大きく</button>' +
       '<img class="c-lightbox__img" alt="">' +
       '<p class="c-lightbox__cap"></p>';
     document.body.appendChild(box);
 
     var img  = box.querySelector('.c-lightbox__img');
     var cap  = box.querySelector('.c-lightbox__cap');
-    var zoom = box.querySelector('.c-lightbox__zoom');
     var last = null;
 
-    /* 画面に収める見せかたと、原寸（文字が読める大きさ）を切りかえます。
-       アンケート用紙は文字が細かいので、原寸で見られるようにしています。
-       （2026/09/16 ユーザー「小さいし文字は読めません」） */
-    function setBig(on) {
-      box.classList.toggle('is-big', !!on);
-      zoom.textContent = on ? '画面に合わせる' : 'もっと大きく';
-      if (on) { box.scrollTop = 0; box.scrollLeft = 0; }
-    }
+    /* 押したら、画面いっぱい近くまで大きく出します
+       （2026/09/16 ユーザー指示「クリックしたら画面の80%ほどの大きさで」）。
+       大きさの決めかたは common.css の .c-lightbox__img にあります。 */
+    /* 写真そのものの大きさをこえて引きのばすと、にじんでしまいます。
+       そこで、読み込めた時点で「これ以上は大きくしない」上限を入れます。
+       （2026/09/16 ユーザー「解像度が荒いわよ」） */
+    img.addEventListener('load', function () {
+      if (img.naturalWidth)  img.style.maxWidth  = img.naturalWidth  + 'px';
+      if (img.naturalHeight) img.style.maxHeight = img.naturalHeight + 'px';
+    });
 
     function open(href, caption, from) {
+      img.style.maxWidth  = '';
+      img.style.maxHeight = '';
       img.src = href;
       img.alt = caption || '';
       cap.textContent = caption || '';
-      setBig(false);
       box.classList.add('is-open');
       document.body.style.overflow = 'hidden';
       last = from;
@@ -395,21 +396,10 @@
     }
     function close() {
       box.classList.remove('is-open');
-      setBig(false);
       document.body.style.overflow = '';
       img.src = '';
       if (last) last.focus();
     }
-
-    zoom.addEventListener('click', function (e) {
-      e.stopPropagation();
-      setBig(!box.classList.contains('is-big'));
-    });
-    /* 写真そのものを押しても、大きさが切りかわります */
-    img.addEventListener('click', function (e) {
-      e.stopPropagation();
-      setBig(!box.classList.contains('is-big'));
-    });
 
     Array.prototype.forEach.call(links, function (a) {
       a.addEventListener('click', function (e) {
