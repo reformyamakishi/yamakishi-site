@@ -1611,8 +1611,12 @@ add_action( 'save_post_ymkrf_works', function ( $post_id ) {
 
 	if ( $hand || $now === $auto ) return;
 
-	remove_action( 'save_post_ymkrf_works', __FUNCTION__, 25 );
+	/* ★無名の関数なので __FUNCTION__ が使えません（2026/09/16 不具合を修正） */
+	static $busy = false;
+	if ( $busy ) return;
+	$busy = true;
 	wp_update_post( array( 'ID' => $post_id, 'post_title' => $auto ) );
+	$busy = false;
 }, 25 );
 
 /* すでにある施工事例の題名を、新しい書き方に1回だけそろえます
@@ -1659,11 +1663,15 @@ add_action( 'save_post_ymkrf_works', function ( $post_id ) {
 	$now  = rawurldecode( (string) $p->post_name );
 	if ( preg_match( '/^' . preg_quote( $want, '/' ) . '(-[0-9]+)?$/', $now ) ) return;
 
-	remove_action( 'save_post_ymkrf_works', __FUNCTION__, 30 );
+	/* ★無名の関数なので __FUNCTION__ が使えません（2026/09/16 不具合を修正） */
+	static $busy = false;
+	if ( $busy ) return;
+	$busy = true;
 	wp_update_post( array(
 		'ID'        => $post_id,
 		'post_name' => wp_unique_post_slug( $want, $post_id, $p->post_status, $p->post_type, 0 ),
 	) );
+	$busy = false;
 }, 30 );
 
 /* 一覧に出す件数（3列ならびに合わせて12件ずつ） */
@@ -2063,9 +2071,12 @@ add_action( 'save_post_ymkrf_works', function ( $post_id ) {
 	$x = trim( ymkrf_works_excerpt( $post_id, 90 ) );
 	if ( $x === '' || $x === '…' ) return;
 
-	remove_action( 'save_post_ymkrf_works', __FUNCTION__, 40 );
+	/* ★無名の関数なので __FUNCTION__ が使えません（2026/09/16 不具合を修正） */
+	static $busy = false;
+	if ( $busy ) return;
+	$busy = true;
 	wp_update_post( array( 'ID' => $post_id, 'post_excerpt' => $x ) );
-	add_action( 'save_post_ymkrf_works', __FUNCTION__, 40 );
+	$busy = false;
 }, 40 );
 
 

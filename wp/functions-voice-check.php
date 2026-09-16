@@ -1,0 +1,267 @@
+<?php
+/**
+ * functions-voice-check.php ─ お客様の声の「要確認」をさがします
+ *
+ * 置き場所： wp-content/themes/ymkrf/inc/functions-voice-check.php
+ *
+ * （2026/09/16 ユーザー指示
+ *   「お客様の声のデータで不備（お客様情報が掲載されているなど）があれば、
+ *     要確認という赤文字をのこして未公開にしておいて」）
+ *
+ * 見つけたら
+ *   ・一覧のタイトルの横に、赤い「要確認」が出ます
+ *   ・編集画面の上に、理由が赤い枠で出ます
+ *   ・公開中のものは、下書きにもどします
+ */
+
+if ( ! defined( 'ABSPATH' ) ) exit;
+
+define( 'YMKRF_VCHK_META', '_ymkrf_needs_check' );
+
+
+/** そのお客様の声に、直したほうがよいところがあるか調べます */
+if ( ! function_exists( 'ymkrf_vchk_reasons' ) ) :
+function ymkrf_vchk_reasons( $post_id ) {
+
+	$post_id = (int) $post_id;
+	$out     = array();
+	$g       = function ( $k ) use ( $post_id ) {
+		return trim( (string) get_post_meta( $post_id, $k, true ) );
+	};
+
+	/* ---- ① お客様のお名前が、そのまま出てしまう形 ----
+	   表示名は「金沢市　K様」の形ですが、市町もイニシャルも空のときは
+	   お客様のお名前をそのまま出す作りになっています。 */
+	$city = $g( '_ymkrf_city' );
+	$ini  = $g( '_ymkrf_initial' );
+	$cust = $g( '_ymkrf_customer' );
+	if ( $city === '' && $ini === '' && $cust !== '' ) {
+		$out[] = 'お客様のお名前がページに出てしまいます（市町とイニシャルが空です）';
+	}
+
+	/* ---- ② イニシャルの欄に、お名前が入っている ---- */
+	if ( $ini !== '' && preg_match( '/[一-龥ぁ-んァ-ヶ]{2,}/u', $ini ) ) {
+		$out[] = 'イニシャルの欄に、お名前が入っているかもしれません（' . $ini . '）';
+	}
+
+	/* ---- ③〜⑥ 文章の中に、個人情報らしいものがないか ---- */
+	$texts = array( get_the_title( $post_id ), (string) get_post_field( 'post_content', $post_id ) );
+	foreach ( array( '_ymkrf_trouble', '_ymkrf_after', '_ymkrf_comment', '_ymkrf_recommend' ) as $k ) {
+		$texts[] = $g( $k );
+	}
+	$all = implode( "\n", $texts );
+
+	if ( preg_match( '/0\d{1,3}[-‐ー－(]?\d{2,4}[-‐ー－)]?\d{3,4}/u', $all ) ) {
+		$out[] = '文章の中に、電話番号らしい数字があります';
+	}
+	if ( preg_match( '/[\w.+-]+@[\w-]+\.[\w.-]+/u', $all ) ) {
+		$out[] = '文章の中に、メールアドレスらしいものがあります';
+	}
+	if ( preg_match( '/[0-9０-９]+\s*(丁目|番地|番\s*[0-9０-９]*\s*号)/u', $all ) ) {
+		$out[] = '文章の中に、住所（番地）らしいものがあります';
+	}
+	if ( preg_match( '/[一-龥]{2,4}\s*(様|さん)/u', $all ) ) {
+		$out[] = '文章の中に、お名前（〇〇様）らしいものがあります';
+	}
+
+	/* ---- ⑦ 公開用の画像が無い ---- */
+	$sid = (int) $g( '_ymkrf_survey_id' );
+	$pid = (int) $g( '_ymkrf_survey_pub_id' );
+	if ( $sid && ! $pid ) {
+		$out[] = '塗りつぶした公開用の画像がありません（原本しかありません）';
+	}
+
+	/* ---- ⑧ 案件番号が無い ---- */
+	if ( $g( '_ymkrf_case_no' ) === '' ) {
+		$out[] = '案件番号が入っていません';
+	}
+
+	return $out;
+}
+endif;
+
+
+/* ------------------------------------------------------------
+   一覧のタイトルの横に、赤い「要確認」を出します
+   ------------------------------------------------------------ */
+add_filter( 'display_post_states', function ( $states, $post ) {
+	if ( ! $post || $post->post_type !== 'ymkrf_voice' ) return $states;
+	$r = get_post_meta( $post->ID, YMKRF_VCHK_META, true );
+	if ( ! $r ) return $states;
+	$states['ymkrf_check'] =
+		'<span style="color:#b32d2e;font-weight:700">要確認</span>';
+	return $states;
+}, 10, 2 );
+
+/* ------------------------------------------------------------
+   編集画面の上に、理由を赤い枠で出します
+   ------------------------------------------------------------ */
+add_action( 'admin_notices', function () {
+
+	$s = get_current_screen();
+	if ( ! $s || $s->post_type !== 'ymkrf_voice' || $s->base !== 'post' ) return;
+	if ( empty( $GLOBALS['post'] ) ) return;
+
+	$r = get_post_meta( $GLOBALS['post']->ID, YMKRF_VCHK_META, true );
+	if ( ! is_array( $r ) || ! $r ) return;
+	?>
+	<div class="notice notice-error" style="margin-top:14px">
+	  <p style="font-size:14px"><b style="color:#b32d2e">要確認</b>
+	    　下のところを直してから、公開してください。</p>
+	  <ul style="margin:0 0 10px 22px;list-style:disc;font-size:13.5px;line-height:1.9">
+	    <?php foreach ( $r as $one ) : ?>
+	      <li><?php echo esc_html( $one ); ?></li>
+	    <?php endforeach; ?>
+	  </ul>
+	</div>
+	<?php
+} );
+
+/* 直して保存したら、印を付けなおします */
+add_action( 'save_post_ymkrf_voice', function ( $post_id ) {
+	if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) return;
+	$r = ymkrf_vchk_reasons( $post_id );
+	if ( $r ) update_post_meta( $post_id, YMKRF_VCHK_META, $r );
+	else      delete_post_meta( $post_id, YMKRF_VCHK_META );
+}, 60 );
+
+
+/* ------------------------------------------------------------
+   さがす画面（お客様の声 ＞ 要確認をさがす）
+   ------------------------------------------------------------ */
+add_action( 'admin_menu', function () {
+	add_submenu_page(
+		'edit.php?post_type=ymkrf_voice',
+		'要確認をさがす', '要確認をさがす',
+		'manage_options', 'ymkrf-voice-check', 'ymkrf_vchk_page'
+	);
+}, 30 );
+
+if ( ! function_exists( 'ymkrf_vchk_page' ) ) :
+function ymkrf_vchk_page() {
+
+	if ( ! current_user_can( 'manage_options' ) ) return;
+
+	@set_time_limit( 300 );
+
+	$run  = ( isset( $_POST['ymkrf_vchk_run'] ) && check_admin_referer( 'ymkrf_vchk' ) );
+	$done = array( 'marked' => 0, 'drafted' => 0, 'cleared' => 0 );
+
+	$ids = get_posts( array(
+		'post_type'      => 'ymkrf_voice',
+		'post_status'    => 'any',
+		'posts_per_page' => -1,
+		'fields'         => 'ids',
+		'no_found_rows'  => true,
+	) );
+
+	$found = array();
+
+	foreach ( (array) $ids as $id ) {
+
+		$r = ymkrf_vchk_reasons( $id );
+
+		if ( $r ) {
+			$found[ $id ] = $r;
+			if ( $run ) {
+				update_post_meta( $id, YMKRF_VCHK_META, $r );
+				$done['marked']++;
+				if ( get_post_status( $id ) === 'publish' ) {
+					wp_update_post( array( 'ID' => $id, 'post_status' => 'draft' ) );
+					$done['drafted']++;
+				}
+			}
+		} elseif ( $run && get_post_meta( $id, YMKRF_VCHK_META, true ) ) {
+			delete_post_meta( $id, YMKRF_VCHK_META );
+			$done['cleared']++;
+		}
+	}
+
+	/* 理由ごとの件数 */
+	$tally = array();
+	foreach ( $found as $r ) foreach ( $r as $one ) {
+		if ( ! isset( $tally[ $one ] ) ) $tally[ $one ] = 0;
+		$tally[ $one ]++;
+	}
+	arsort( $tally );
+	?>
+	<div class="wrap ymkrf-vchk">
+	  <h1>要確認をさがす</h1>
+
+	  <p class="ymkrf-vchk__lead">
+	    お客様の声を1件ずつ調べて、<b>お客様の情報が出てしまうもの</b>や、
+	    入力が足りないものをさがします。<br>
+	    ボタンを押すと、見つかったものに<b class="ymkrf-vchk__red">要確認</b>の印を付け、
+	    <b>公開中のものは下書きにもどします</b>。
+	  </p>
+
+	  <?php if ( $run ) : ?>
+	    <div class="notice notice-success"><p>
+	      要確認にした <b><?php echo (int) $done['marked']; ?></b> 件／
+	      下書きにもどした <b><?php echo (int) $done['drafted']; ?></b> 件／
+	      印を外した <b><?php echo (int) $done['cleared']; ?></b> 件
+	    </p></div>
+	  <?php endif; ?>
+
+	  <div class="ymkrf-vchk__sum">
+	    <span>調べた件数　<b><?php echo count( $ids ); ?></b> 件</span>
+	    <span>見つかった件数　<b class="ymkrf-vchk__red"><?php echo count( $found ); ?></b> 件</span>
+	  </div>
+
+	  <?php if ( $tally ) : ?>
+	    <table class="widefat striped" style="max-width:860px;margin-bottom:18px">
+	      <thead><tr><th>理由</th><th style="width:90px">件数</th></tr></thead>
+	      <tbody>
+	        <?php foreach ( $tally as $k => $n ) : ?>
+	          <tr><td><?php echo esc_html( $k ); ?></td><td><?php echo (int) $n; ?></td></tr>
+	        <?php endforeach; ?>
+	      </tbody>
+	    </table>
+	  <?php endif; ?>
+
+	  <?php if ( $found ) : ?>
+	    <form method="post" class="ymkrf-vchk__go">
+	      <?php wp_nonce_field( 'ymkrf_vchk' ); ?>
+	      <button class="button button-primary button-hero" name="ymkrf_vchk_run" value="1">
+	        <?php echo count( $found ); ?> 件に「要確認」を付けて、下書きにもどす
+	      </button>
+	    </form>
+
+	    <table class="widefat striped">
+	      <thead><tr>
+	        <th style="width:260px">お客様の声</th>
+	        <th style="width:90px">いまの状態</th>
+	        <th>直すところ</th>
+	      </tr></thead>
+	      <tbody>
+	        <?php foreach ( array_slice( $found, 0, 300, true ) as $id => $r ) : ?>
+	          <tr>
+	            <td><a href="<?php echo esc_url( get_edit_post_link( $id ) ); ?>"><?php
+	              echo esc_html( get_the_title( $id ) ?: '（名前なし）' ); ?></a></td>
+	            <td><?php echo esc_html( get_post_status( $id ) === 'publish' ? '公開中' : '下書きなど' ); ?></td>
+	            <td><?php echo esc_html( implode( '／', $r ) ); ?></td>
+	          </tr>
+	        <?php endforeach; ?>
+	      </tbody>
+	    </table>
+	    <?php if ( count( $found ) > 300 ) : ?>
+	      <p class="ymkrf-vchk__note">※ 先頭300件だけ出しています。</p>
+	    <?php endif; ?>
+	  <?php else : ?>
+	    <p>直すところは見つかりませんでした。</p>
+	  <?php endif; ?>
+	</div>
+
+	<style>
+	  .ymkrf-vchk__lead{max-width:860px;font-size:13.5px;line-height:1.9}
+	  .ymkrf-vchk__red{color:#b32d2e}
+	  .ymkrf-vchk__sum{display:flex;gap:18px;margin:14px 0 18px;padding:12px 16px;
+	    background:#fff;border:1px solid #dcdcde;border-radius:6px;max-width:860px;font-size:13.5px}
+	  .ymkrf-vchk__sum b{font-size:16px}
+	  .ymkrf-vchk__go{margin:0 0 18px;padding:14px 16px;background:#fff8f5;
+	    border:1px solid #fe3301;border-radius:6px;max-width:860px}
+	  .ymkrf-vchk__note{color:#787878;font-size:12px}
+	</style>
+	<?php
+}
+endif;

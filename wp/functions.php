@@ -38,6 +38,9 @@ require_once get_stylesheet_directory() . '/inc/functions-shops.php';
 require_once get_stylesheet_directory() . '/inc/functions-staff.php';
 require_once get_stylesheet_directory() . '/inc/functions-flyer.php';
 require_once get_stylesheet_directory() . '/inc/functions-media.php';
+require_once get_stylesheet_directory() . '/inc/functions-voice-check.php';
+/* ↓ 写真の名前をそろえる下見の画面。終わったらこの行とファイルを消してください */
+require_once get_stylesheet_directory() . '/inc/functions-media-rename.php';
 
 /* アイキャッチ画像を使えるようにする */
 add_action( 'after_setup_theme', function () {

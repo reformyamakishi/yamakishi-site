@@ -590,15 +590,19 @@ add_action( 'save_post_ymkrf_voice', function ( $post_id ) {
 		update_post_meta( $post_id, '_ymkrf_staff', (int) $_POST['_ymkrf_staff'] );
 	}
 
-	/* 題名が空なら、内容から自動でつけます */
+	/* 題名が空なら、内容から自動でつけます
+	   ★ここは無名の関数なので __FUNCTION__ が使えません（2026/09/16 不具合を修正）。
+	     かわりに $busy で、自分がもう一度呼ばれるのを止めます。 */
+	static $busy_title = false;
 	$p = get_post( $post_id );
-	if ( $p && trim( $p->post_title ) === '' ) {
+	if ( ! $busy_title && $p && trim( $p->post_title ) === '' ) {
 		$parts = ymkrf_voice_meta_array( $post_id, '_ymkrf_parts' );
 		$cust  = get_post_meta( $post_id, '_ymkrf_customer', true );
 		$t = ( $parts ? implode( '・', array_slice( $parts, 0, 2 ) ) . 'のリフォーム' : 'お客様の声' );
 		if ( $cust ) $t = $cust . '　' . $t;
-		remove_action( 'save_post_ymkrf_voice', __FUNCTION__ );
+		$busy_title = true;
 		wp_update_post( array( 'ID' => $post_id, 'post_title' => $t ) );
+		$busy_title = false;
 	}
 } );
 
@@ -821,9 +825,12 @@ add_action( 'save_post_ymkrf_voice', function ( $post_id ) {
 	$x = trim( ymkrf_voice_excerpt( $post_id, 90 ) );
 	if ( $x === '' ) return;
 
-	remove_action( 'save_post_ymkrf_voice', __FUNCTION__, 40 );
+	/* ★無名の関数なので __FUNCTION__ が使えません（2026/09/16 不具合を修正） */
+	static $busy = false;
+	if ( $busy ) return;
+	$busy = true;
 	wp_update_post( array( 'ID' => $post_id, 'post_excerpt' => $x ) );
-	add_action( 'save_post_ymkrf_voice', __FUNCTION__, 40 );
+	$busy = false;
 }, 40 );
 
 
@@ -1327,11 +1334,15 @@ add_action( 'save_post_ymkrf_voice', function ( $post_id ) {
 	   （2607-0389 や、重なったときの 2607-0389-2 を含みます） */
 	if ( preg_match( '/^' . preg_quote( $want, '/' ) . '(-[0-9]+)?$/', $now ) ) return;
 
-	remove_action( 'save_post_ymkrf_voice', __FUNCTION__ );
+	/* ★無名の関数なので __FUNCTION__ が使えません（2026/09/16 不具合を修正） */
+	static $busy = false;
+	if ( $busy ) return;
+	$busy = true;
 	wp_update_post( array(
 		'ID'        => $post_id,
 		'post_name' => wp_unique_post_slug( $want, $post_id, $p->post_status, $p->post_type, 0 ),
 	) );
+	$busy = false;
 }, 30 );
 
 
@@ -1396,8 +1407,12 @@ add_action( 'save_post_ymkrf_voice', function ( $post_id ) {
 	$want = ( $city !== '' ? $city . '｜' : '' ) . $body;
 	if ( $want === $now ) return;
 
-	remove_action( 'save_post_ymkrf_voice', __FUNCTION__, 25 );
+	/* ★無名の関数なので __FUNCTION__ が使えません（2026/09/16 不具合を修正） */
+	static $busy = false;
+	if ( $busy ) return;
+	$busy = true;
 	wp_update_post( array( 'ID' => $post_id, 'post_title' => $want ) );
+	$busy = false;
 }, 25 );
 
 

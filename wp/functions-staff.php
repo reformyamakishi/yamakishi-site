@@ -270,11 +270,15 @@ add_action( 'save_post_ymkrf_staff', function ( $post_id ) {
 	}
 	if ( $want === $now ) return;
 
-	remove_action( 'save_post_ymkrf_staff', __FUNCTION__, 20 );
+	/* ★無名の関数なので __FUNCTION__ が使えません（2026/09/16 不具合を修正） */
+	static $busy = false;
+	if ( $busy ) return;
+	$busy = true;
 	wp_update_post( array(
 		'ID'        => $post_id,
 		'post_name' => wp_unique_post_slug( $want, $post_id, $p->post_status, $p->post_type, 0 ),
 	) );
+	$busy = false;
 }, 20 );
 
 
