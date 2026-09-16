@@ -1,90 +1,371 @@
 <?php
 /**
- * functions-media.php ─ メディア（写真）を、使い道べつに分けて見られるようにします
+ * functions-media.php ─ メディア（写真）を、使い道べつのフォルダに分けて見られるようにします
  *
  * 置き場所： wp-content/themes/ymkrf/inc/functions-media.php
  *
- * （2026/09/16 ユーザー相談「メディアを、使っているページ別に
- *   左側でフォルダ分けできないか」）
+ * （2026/09/16 ユーザー指示
+ *   「イベント・チラシみたいに右にフォルダ分けして、左のプルダウンは不要」
+ *   「どこからの流入ではなく、どのカテゴリで使われているかで分けてください」）
  *
  * WordPress のメディアには、もともとフォルダがありません。
- * そのかわり、写真はかならず「どの記事といっしょに上げたか」を持っています
- * （post_parent といいます）。それを見て、自動でふりわけています。
+ * そこで、写真1枚ずつについて「どこで使われているか」を調べて、
+ * フォルダに分けたように見せています。写真そのものは動かしません。
  *
- * ★手でふりわける仕組みは、まだ作っていません。
- *   実際の枚数を見てから決める、というお話でした（2026/09/16）。
+ * 使われている場所は、次の順番で調べます。
+ *   ① 商品の写真の欄（商品はメディアからえらぶ作りなので、ここが要ります）
+ *   ② 施工事例のビフォー・アフター、チラシの表・裏の欄
+ *   ③ アイキャッチ画像
+ *   ④ その写真を上げたときの記事（post_parent）
+ *   ⑤ ファイル名と写真の名前
+ *      （rakuera-… のように商品の名前で始まれば 商品、
+ *        「アンケート」なら お客様の声、など）
+ * どれにも当てはまらないものが「どこにも使っていない」に入ります。
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
+/* 分けかたを直したら、この数字をひとつ増やしてください。
+   おぼえていた古い表が自動で捨てられ、すぐ新しい分けかたになります。 */
+if ( ! defined( 'YMKRF_MEDIA_MAP_VER' ) ) define( 'YMKRF_MEDIA_MAP_VER', 7 );
 
-/** フォルダの一覧（左メニューに出る順番です） */
+
+/** フォルダの一覧（出る順番です） */
 if ( ! function_exists( 'ymkrf_media_kinds' ) ) :
 function ymkrf_media_kinds() {
 	return array(
-		'product' => array( 'name' => '商品',          'types' => array( 'ymkrf_product' ) ),
-		'works'   => array( 'name' => '施工事例',      'types' => array( 'ymkrf_works' ) ),
-		'voice'   => array( 'name' => 'お客様の声',    'types' => array( 'ymkrf_voice' ) ),
-		'column'  => array( 'name' => 'コラム',        'types' => array( 'ymkrf_column' ) ),
-		'news'    => array( 'name' => 'お知らせ',      'types' => array( 'ymkrf_news' ) ),
+		'product' => array( 'name' => '商品',             'types' => array( 'ymkrf_product' ) ),
+		'works'   => array( 'name' => '施工事例',         'types' => array( 'ymkrf_works' ) ),
+		'voice'   => array( 'name' => 'お客様の声',       'types' => array( 'ymkrf_voice' ) ),
+		'column'  => array( 'name' => 'コラム',           'types' => array( 'ymkrf_column' ) ),
+		'news'    => array( 'name' => 'お知らせ',         'types' => array( 'ymkrf_news' ) ),
 		'flyer'   => array( 'name' => 'イベント・チラシ', 'types' => array( 'ymkrf_flyer' ) ),
-		'staff'   => array( 'name' => 'スタッフ',      'types' => array( 'ymkrf_staff' ) ),
-		'page'    => array( 'name' => 'ページ・その他', 'types' => array( 'page', 'post' ) ),
-		'none'    => array( 'name' => 'どこにも付いていない', 'types' => array() ),
+		'staff'   => array( 'name' => 'スタッフ',         'types' => array( 'ymkrf_staff' ) ),
+		'page'    => array( 'name' => 'ページ・その他',   'types' => array( 'page', 'post' ) ),
+		'none'    => array( 'name' => 'どこにも使っていない', 'types' => array() ),
 	);
+}
+endif;
+
+/** 記事の種類（post_type）から、フォルダの名前を引きます */
+if ( ! function_exists( 'ymkrf_media_key_of_type' ) ) :
+function ymkrf_media_key_of_type( $type ) {
+	static $map = null;
+	if ( $map === null ) {
+		$map = array();
+		foreach ( ymkrf_media_kinds() as $key => $k ) {
+			foreach ( $k['types'] as $t ) $map[ $t ] = $key;
+		}
+	}
+	return isset( $map[ $type ] ) ? $map[ $type ] : '';
+}
+endif;
+
+/** 入れ子になった値の中から、写真のID（数字）だけを拾います */
+if ( ! function_exists( 'ymkrf_media_pick_ids' ) ) :
+function ymkrf_media_pick_ids( $v, &$out ) {
+	if ( is_array( $v ) ) {
+		foreach ( $v as $x ) ymkrf_media_pick_ids( $x, $out );
+		return;
+	}
+	if ( is_numeric( $v ) ) {
+		$n = (int) $v;
+		if ( $n > 0 ) $out[] = $n;
+	}
+}
+endif;
+
+
+/**
+ * 商品の名前（英字）の一覧。
+ * 写真のファイル名が商品の名前で始まっていたら、商品の写真とみなします。
+ *   例： rakuera-main.jpg → ラクエラ（キッチン）の写真
+ * WordPressに登録した商品と、テーマの assets/img/products/ の
+ * フォルダ名の、両方から集めます。
+ */
+if ( ! function_exists( 'ymkrf_media_product_slugs' ) ) :
+function ymkrf_media_product_slugs() {
+
+	static $slugs = null;
+	if ( $slugs !== null ) return $slugs;
+
+	global $wpdb;
+	$out = array();
+
+	$rows = $wpdb->get_col(
+		"SELECT post_name FROM {$wpdb->posts}
+		  WHERE post_type = 'ymkrf_product' AND post_name <> ''"
+	);
+	foreach ( (array) $rows as $n ) $out[] = strtolower( $n );
+
+	$dir = get_stylesheet_directory() . '/assets/img/products';
+	if ( is_dir( $dir ) ) {
+		foreach ( (array) scandir( $dir ) as $n ) {
+			if ( $n === '.' || $n === '..' ) continue;
+			if ( $n[0] === '_' ) continue;               /* _pack4 などは除きます */
+			if ( is_dir( $dir . '/' . $n ) ) $out[] = strtolower( $n );
+		}
+	}
+
+	/* みじかすぎる名前は、ほかの写真に当たってしまうので外します */
+	$out = array_values( array_unique( array_filter( $out, function ( $v ) {
+		return strlen( $v ) >= 4;
+	} ) ) );
+
+	/* ながい名前から先に見ます（rakuera を raku より先に当てるため） */
+	usort( $out, function ( $a, $b ) { return strlen( $b ) - strlen( $a ); } );
+
+	$slugs = $out;
+	return $slugs;
 }
 endif;
 
 /**
- * フォルダごとの枚数。
- * 1回のSQLで数えて、5分だけ覚えておきます
- * （写真が数千枚あるので、毎回数えると管理画面が重くなります）。
+ * 商品の日本語の名前の一覧（「クラッソ」「ラクエラ」など）。
+ * 写真の名前にこれが入っていたら、商品の写真とみなします。
  */
-if ( ! function_exists( 'ymkrf_media_counts' ) ) :
-function ymkrf_media_counts() {
+if ( ! function_exists( 'ymkrf_media_product_names' ) ) :
+function ymkrf_media_product_names() {
 
-	$hit = get_transient( 'ymkrf_media_counts' );
-	if ( is_array( $hit ) ) return $hit;
+	static $names = null;
+	if ( $names !== null ) return $names;
 
 	global $wpdb;
-	$rows = $wpdb->get_results(
-		"SELECT COALESCE( par.post_type, '' ) AS pt, COUNT(*) AS n
-		   FROM {$wpdb->posts} att
-		   LEFT JOIN {$wpdb->posts} par ON par.ID = att.post_parent
-		  WHERE att.post_type = 'attachment'
-		  GROUP BY pt"
+	$out  = array();
+	$rows = $wpdb->get_col(
+		"SELECT post_title FROM {$wpdb->posts}
+		  WHERE post_type = 'ymkrf_product' AND post_title <> ''"
 	);
-
-	/* 記事の種類ごとの枚数を、フォルダごとにまとめ直します */
-	$bytype = array();
-	foreach ( (array) $rows as $r ) $bytype[ (string) $r->pt ] = (int) $r->n;
-
-	$out = array();
-	foreach ( ymkrf_media_kinds() as $key => $k ) {
-		if ( $key === 'none' ) {
-			$out[ $key ] = isset( $bytype[''] ) ? $bytype[''] : 0;
-			continue;
-		}
-		$n = 0;
-		foreach ( $k['types'] as $t ) if ( isset( $bytype[ $t ] ) ) $n += $bytype[ $t ];
-		$out[ $key ] = $n;
+	foreach ( (array) $rows as $t ) {
+		$t = trim( (string) $t );
+		/* みじかい名前は、ほかの写真に当たってしまうので外します */
+		if ( mb_strlen( $t, 'UTF-8' ) >= 3 ) $out[] = mb_strtolower( $t, 'UTF-8' );
 	}
 
-	set_transient( 'ymkrf_media_counts', $out, 5 * MINUTE_IN_SECONDS );
+	$out = array_values( array_unique( $out ) );
+	usort( $out, function ( $a, $b ) {
+		return mb_strlen( $b, 'UTF-8' ) - mb_strlen( $a, 'UTF-8' );
+	} );
+
+	$names = $out;
+	return $names;
+}
+endif;
+
+/** 写真のファイル名や名前が、商品のものか */
+if ( ! function_exists( 'ymkrf_media_is_product_file' ) ) :
+function ymkrf_media_is_product_file( $file, $title = '' ) {
+
+	/* 日本語の商品名（クラッソ など）が、写真の名前に入っていないか */
+	$hay = mb_strtolower( trim( $title . ' ' . $file ), 'UTF-8' );
+	if ( strpos( $hay, '%' ) !== false ) $hay .= ' ' . mb_strtolower( rawurldecode( $hay ), 'UTF-8' );
+	if ( $hay !== '' ) {
+		foreach ( ymkrf_media_product_names() as $n ) {
+			if ( mb_strpos( $hay, $n ) !== false ) return true;
+		}
+	}
+
+	$base = strtolower( basename( (string) $file ) );
+	if ( $base === '' ) return false;
+
+	$base = preg_replace( '/\.[a-z0-9]+$/', '', $base );      /* 拡張子を外します */
+	$base = preg_replace( '/-\d+x\d+$/', '', $base );        /* -800x600 を外します */
+
+	foreach ( ymkrf_media_product_slugs() as $slug ) {
+		if ( $base === $slug ) return true;
+		if ( strpos( $base, $slug ) === 0 ) {
+			$next = substr( $base, strlen( $slug ), 1 );
+			if ( $next === '-' || $next === '_' || ctype_digit( (string) $next ) ) return true;
+		}
+	}
+	return false;
+}
+endif;
+
+/** ファイル名から、フォルダの見当をつけます（どこにも結びつかなかったとき用） */
+if ( ! function_exists( 'ymkrf_media_key_of_file' ) ) :
+function ymkrf_media_key_of_file( $file ) {
+
+	/* ファイル名が %e3%81%82… の形（日本語をURLの形にしたもの）でも
+	   読めるように、もどしてから見ます。 */
+	$f = (string) $file;
+	if ( strpos( $f, '%' ) !== false ) $f .= ' ' . rawurldecode( $f );
+	$f = mb_strtolower( $f, 'UTF-8' );
+	if ( trim( $f ) === '' ) return '';
+
+	/* 上から順に見て、はじめに当たったものにします */
+	$rules = array(
+		'voice'   => array( 'voice', 'アンケート', 'お客様の声' ),
+		'works'   => array( 'works', 'before', 'after', '施工事例', 'ビフォー', 'アフター' ),
+		'flyer'   => array( 'flyer', 'チラシ' ),
+		'staff'   => array( 'staff', 'スタッフ' ),
+		'product' => array( 'product', '商品' ),
+		'column'  => array( 'column', 'コラム' ),
+		'news'    => array( 'news', 'お知らせ' ),
+	);
+
+	foreach ( $rules as $key => $words ) {
+		foreach ( $words as $w ) {
+			if ( mb_strpos( $f, $w ) !== false ) return $key;
+		}
+	}
+	return '';
+}
+endif;
+
+
+/* ============================================================
+   写真1枚ずつが、どのフォルダに入るかの表を作ります
+   （数がおおいので、1時間おぼえておきます）
+   ============================================================ */
+if ( ! function_exists( 'ymkrf_media_map' ) ) :
+function ymkrf_media_map( $force = false ) {
+
+	if ( ! $force ) {
+		$hit = get_transient( 'ymkrf_media_map_' . YMKRF_MEDIA_MAP_VER );
+		if ( is_array( $hit ) ) return $hit;
+	}
+
+	global $wpdb;
+
+	/* 使われている場所（写真のID => フォルダ）。
+	   先に入れたものを残します（上のほうの調べかたを優先します）。 */
+	$use = array();
+	$put = function ( $id, $key ) use ( &$use ) {
+		$id = (int) $id;
+		if ( $id > 0 && $key !== '' && ! isset( $use[ $id ] ) ) $use[ $id ] = $key;
+	};
+
+	/* ---- ⓪ 手でフォルダを決めたもの（写真の編集画面でえらべます） ---- */
+	$rows = $wpdb->get_results(
+		"SELECT post_id, meta_value FROM {$wpdb->postmeta}
+		  WHERE meta_key = '_ymkrf_media_use' AND meta_value <> ''"
+	);
+	$kinds_all = ymkrf_media_kinds();
+	foreach ( (array) $rows as $r ) {
+		$k = (string) $r->meta_value;
+		if ( isset( $kinds_all[ $k ] ) ) $put( $r->post_id, $k );
+	}
+
+	/* ---- ① 商品の写真の欄 ----
+	   商品は、写真をメディアからえらぶ作りです。
+	   「どの記事といっしょに上げたか」では商品に結びつかないので、
+	   入力欄の中身を見にいきます。 */
+	if ( function_exists( 'ymkrf_product_repeaters' ) ) {
+
+		$reps = array();
+		foreach ( ymkrf_product_repeaters() as $key => $def ) {
+			$cols = array();
+			foreach ( (array) $def['cols'] as $col => $c ) {
+				if ( isset( $c[1] ) && $c[1] === 'image' ) $cols[] = $col;
+			}
+			if ( $cols ) $reps[ $key ] = $cols;
+		}
+
+		if ( $reps ) {
+			$in   = "'" . implode( "','", array_map( 'esc_sql', array_keys( $reps ) ) ) . "'";
+			$rows = $wpdb->get_results(
+				"SELECT pm.meta_key AS mk, pm.meta_value AS mv
+				   FROM {$wpdb->postmeta} pm
+				   JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+				  WHERE pm.meta_key IN ( {$in} )
+				    AND p.post_type = 'ymkrf_product'"
+			);
+			foreach ( (array) $rows as $r ) {
+				$v = maybe_unserialize( $r->mv );
+				if ( ! is_array( $v ) ) continue;
+				$cols = isset( $reps[ $r->mk ] ) ? $reps[ $r->mk ] : array();
+				foreach ( $v as $row ) {
+					if ( ! is_array( $row ) ) continue;
+					foreach ( $cols as $col ) {
+						if ( isset( $row[ $col ] ) ) $put( $row[ $col ], 'product' );
+					}
+				}
+			}
+		}
+	}
+
+	/* ---- ② 施工事例・チラシの、決まった写真の欄 ---- */
+	$fixed = array(
+		'_ymkrf_before_img'   => 'works',
+		'_ymkrf_before_imgs'  => 'works',
+		'_ymkrf_after_imgs'   => 'works',
+		'_ymkrf_during_imgs'  => 'works',
+		'_ymkrf_flyer_front'  => 'flyer',
+		'_ymkrf_flyer_back'   => 'flyer',
+		/* お客様アンケートの読み取り画像（そのままのものと、出してよいもの） */
+		'_ymkrf_survey_id'     => 'voice',
+		'_ymkrf_survey_pub_id' => 'voice',
+	);
+	$in   = "'" . implode( "','", array_map( 'esc_sql', array_keys( $fixed ) ) ) . "'";
+	$rows = $wpdb->get_results(
+		"SELECT meta_key AS mk, meta_value AS mv
+		   FROM {$wpdb->postmeta}
+		  WHERE meta_key IN ( {$in} )"
+	);
+	foreach ( (array) $rows as $r ) {
+		$ids = array();
+		ymkrf_media_pick_ids( maybe_unserialize( $r->mv ), $ids );
+		foreach ( $ids as $id ) $put( $id, $fixed[ $r->mk ] );
+	}
+
+	/* ---- ③ アイキャッチ画像 ---- */
+	$rows = $wpdb->get_results(
+		"SELECT pm.meta_value AS att, p.post_type AS pt
+		   FROM {$wpdb->postmeta} pm
+		   JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+		  WHERE pm.meta_key = '_thumbnail_id'"
+	);
+	foreach ( (array) $rows as $r ) $put( $r->att, ymkrf_media_key_of_type( $r->pt ) );
+
+	/* ---- ④ 写真を上げたときの記事 ---- */
+	$rows = $wpdb->get_results(
+		"SELECT att.ID AS id, COALESCE( par.post_type, '' ) AS pt,
+		        att.post_title AS ttl,
+		        COALESCE( fm.meta_value, '' ) AS f
+		   FROM {$wpdb->posts} att
+		   LEFT JOIN {$wpdb->posts} par ON par.ID = att.post_parent
+		   LEFT JOIN {$wpdb->postmeta} fm
+		          ON fm.post_id = att.ID AND fm.meta_key = '_wp_attached_file'
+		  WHERE att.post_type = 'attachment'"
+	);
+
+	$out = array( 'ids' => array(), 'count' => array() );
+	foreach ( ymkrf_media_kinds() as $key => $k ) {
+		$out['ids'][ $key ]   = array();
+		$out['count'][ $key ] = 0;
+	}
+
+	foreach ( (array) $rows as $r ) {
+		$id  = (int) $r->id;
+		$key = isset( $use[ $id ] ) ? $use[ $id ] : ymkrf_media_key_of_type( $r->pt );
+		/* ---- ⑤ それでも分からないときは、ファイル名で見当をつけます ---- */
+		/* ---- ⑤ ファイル名で見当をつけます ---- */
+		if ( $key === '' && ymkrf_media_is_product_file( $r->f, $r->ttl ) ) $key = 'product';
+		if ( $key === '' ) $key = ymkrf_media_key_of_file( $r->ttl . ' ' . $r->f );
+		if ( $key === '' ) $key = 'none';
+		$out['ids'][ $key ][] = $id;
+		$out['count'][ $key ]++;
+	}
+
+	set_transient( 'ymkrf_media_map_' . YMKRF_MEDIA_MAP_VER, $out, HOUR_IN_SECONDS );
 	return $out;
 }
 endif;
 
-/* 写真を足したり消したりしたら、覚えていた枚数を捨てます */
-add_action( 'add_attachment',    function () { delete_transient( 'ymkrf_media_counts' ); } );
-add_action( 'delete_attachment', function () { delete_transient( 'ymkrf_media_counts' ); } );
-add_action( 'edit_attachment',   function () { delete_transient( 'ymkrf_media_counts' ); } );
+/* 写真や記事を直したら、おぼえていた表を捨てます */
+if ( ! function_exists( 'ymkrf_media_forget' ) ) :
+function ymkrf_media_forget() { delete_transient( 'ymkrf_media_map_' . YMKRF_MEDIA_MAP_VER ); }
+endif;
+add_action( 'add_attachment',    'ymkrf_media_forget' );
+add_action( 'delete_attachment', 'ymkrf_media_forget' );
+add_action( 'edit_attachment',   'ymkrf_media_forget' );
+add_action( 'save_post',         'ymkrf_media_forget' );
+add_action( 'deleted_post',      'ymkrf_media_forget' );
 
 
 /* ------------------------------------------------------------
    「メディア」を押したときの、フォルダをえらぶ画面
-   （2026/09/16 ユーザー指示「イベント・チラシみたいに右にフォルダ分けして、
-     左のプルダウンは不要」）
 
    ★リンクに mode=list を付けています。
      写真がタイル状にならぶ「グリッド表示」は、あとから中身を
@@ -93,8 +374,10 @@ add_action( 'edit_attachment',   function () { delete_transient( 'ymkrf_media_co
 if ( ! function_exists( 'ymkrf_media_folders_page' ) ) :
 function ymkrf_media_folders_page() {
 
-	$counts = ymkrf_media_counts();
-	$all    = array_sum( $counts );
+	$force = ( ! empty( $_GET['ymkrf_recount'] ) && check_admin_referer( 'ymkrf_media_recount' ) );
+	$map   = ymkrf_media_map( $force );
+	$count = $map['count'];
+	$all   = array_sum( $count );
 
 	$card = function ( $name, $key, $n, $note = '' ) {
 		$url = $key
@@ -115,21 +398,36 @@ function ymkrf_media_folders_page() {
 		</a>
 		<?php
 	};
+
+	$notes = array(
+		'product' => '商品のページに出している写真です。',
+		'works'   => '施工事例のビフォー・アフターの写真です。',
+		'voice'   => 'お客様の声で使っている写真です。',
+		'column'  => 'コラムで使っている写真です。',
+		'news'    => 'お知らせで使っている写真です。',
+		'flyer'   => 'チラシの表・裏の写真です。',
+		'staff'   => 'スタッフ紹介の顔写真です。',
+		'page'    => '固定ページなどで使っている写真です。',
+		'none'    => 'どのページでも使われていない写真です。',
+	);
 	?>
 	<div class="wrap ymkrf-mf">
 	  <h1>メディア
 	    <a class="page-title-action" href="<?php echo esc_url( admin_url( 'media-new.php' ) ); ?>">新規追加</a>
+	    <a class="page-title-action" href="<?php echo esc_url( wp_nonce_url(
+	        admin_url( 'upload.php?page=ymkrf-media-folders&ymkrf_recount=1' ),
+	        'ymkrf_media_recount' ) ); ?>">数えなおす</a>
 	  </h1>
+	  <?php if ( $force ) : ?>
+	    <div class="notice notice-success"><p>数えなおしました。</p></div>
+	  <?php endif; ?>
 
 	  <h2 class="ymkrf-mf__h2">フォルダからえらぶ</h2>
 	  <div class="ymkrf-mf__grid">
 	    <?php foreach ( ymkrf_media_kinds() as $key => $k ) {
-	      $n = isset( $counts[ $key ] ) ? (int) $counts[ $key ] : 0;
+	      $n = isset( $count[ $key ] ) ? (int) $count[ $key ] : 0;
 	      if ( $n === 0 && $key !== 'none' ) continue;   /* 0枚のものは出しません */
-	      $note = ( $key === 'none' )
-	            ? 'メディア画面から直接いれた写真です。'
-	            : $k['name'] . 'といっしょに入れた写真です。';
-	      $card( $k['name'], $key, $n, $note );
+	      $card( $k['name'], $key, $n, isset( $notes[ $key ] ) ? $notes[ $key ] : '' );
 	    } ?>
 	  </div>
 
@@ -138,9 +436,41 @@ function ymkrf_media_folders_page() {
 	    <?php $card( 'すべての写真', '', $all, 'フォルダを分けずに、ぜんぶ見ます。' ); ?>
 	  </div>
 
+	  <?php
+	  /* 「どこにも使っていない」の中身を、そのまま見られるようにします。
+	     どういう写真が入っているかを確かめる（そして私に伝える）ためのものです。 */
+	  $none = isset( $map['ids']['none'] ) ? $map['ids']['none'] : array();
+	  if ( $none ) :
+	    global $wpdb;
+	    $look = array_slice( array_map( 'intval', $none ), 0, 50 );
+	    $rows = $wpdb->get_results(
+	      "SELECT p.ID AS id, p.post_title AS ttl, COALESCE( fm.meta_value, '' ) AS f
+	         FROM {$wpdb->posts} p
+	         LEFT JOIN {$wpdb->postmeta} fm
+	                ON fm.post_id = p.ID AND fm.meta_key = '_wp_attached_file'
+	        WHERE p.ID IN ( " . implode( ',', $look ) . " )
+	        ORDER BY p.ID DESC"
+	    );
+	    $txt = '';
+	    foreach ( (array) $rows as $r ) {
+	      $txt .= $r->id . "\t" . $r->ttl . "\t" . $r->f . "\n";
+	    }
+	  ?>
+	  <details class="ymkrf-mf__peek">
+	    <summary>「どこにも使っていない」の中身を見る（先頭50件）</summary>
+	    <p>下の枠の中をぜんぶ選んでコピーすると、そのまま貼り付けて相談できます。</p>
+	    <textarea readonly rows="12" onclick="this.select()"><?php echo esc_textarea( $txt ); ?></textarea>
+	  </details>
+	  <?php endif; ?>
+
 	  <p class="ymkrf-mf__foot">
-	    写真は、どの記事といっしょに入れたかで自動でふりわけています。
-	    写真そのものを動かしたりコピーしたりはしていません。
+	    写真が<b>どのページで使われているか</b>で分けています。
+	    写真そのものを動かしたりコピーしたりはしていません。<br>
+	    枚数は1時間おぼえておきます。すぐに数えなおすときは
+	    <a href="<?php echo esc_url( wp_nonce_url(
+	        admin_url( 'upload.php?page=ymkrf-media-folders&ymkrf_recount=1' ),
+	        'ymkrf_media_recount' ) ); ?>">数えなおす</a>
+	    を押してください。
 	  </p>
 	</div>
 
@@ -161,7 +491,12 @@ function ymkrf_media_folders_page() {
 	  .ymkrf-mf__cnt{display:block;margin-top:7px;font-size:12.5px;line-height:1.6}
 	  .ymkrf-mf__n{color:#00782a;font-weight:700}
 	  .ymkrf-mf__zero{color:#a7aaad}
-	  .ymkrf-mf__foot{margin-top:22px;font-size:13px;color:#50575e}
+	  .ymkrf-mf__foot{margin-top:22px;font-size:13px;color:#50575e;line-height:1.9}
+	  .ymkrf-mf__peek{margin-top:24px;padding:12px 16px;background:#fff;border:1px solid #dcdcde;
+	    border-radius:6px;max-width:900px;font-size:13px}
+	  .ymkrf-mf__peek summary{cursor:pointer;font-weight:700}
+	  .ymkrf-mf__peek p{margin:8px 0;color:#50575e}
+	  .ymkrf-mf__peek textarea{width:100%;font-family:monospace;font-size:12px;white-space:pre}
 	</style>
 	<?php
 }
@@ -222,20 +557,16 @@ add_filter( 'posts_clauses', function ( $clauses, $q ) {
 
 	global $wpdb;
 
-	/* どこにも付いていない写真 */
-	if ( $use === 'none' ) {
-		$clauses['where'] .= " AND {$wpdb->posts}.post_parent = 0 ";
+	$map = ymkrf_media_map();
+	$ids = isset( $map['ids'][ $use ] ) ? $map['ids'][ $use ] : array();
+
+	if ( ! $ids ) {
+		$clauses['where'] .= ' AND 1=0 ';   /* 1枚もありません */
 		return $clauses;
 	}
 
-	$types = $kinds[ $use ]['types'];
-	if ( ! $types ) return $clauses;
-
-	$in = array();
-	foreach ( $types as $t ) $in[] = $wpdb->prepare( '%s', $t );
-
-	$clauses['join']  .= " INNER JOIN {$wpdb->posts} ymkpar ON ymkpar.ID = {$wpdb->posts}.post_parent ";
-	$clauses['where'] .= ' AND ymkpar.post_type IN ( ' . implode( ',', $in ) . ' ) ';
+	$ids = array_map( 'intval', $ids );
+	$clauses['where'] .= " AND {$wpdb->posts}.ID IN ( " . implode( ',', $ids ) . ' ) ';
 
 	return $clauses;
 }, 10, 2 );
@@ -252,15 +583,278 @@ add_action( 'admin_notices', function () {
 
 	$name = $kinds[ $use ]['name'];
 	$msg  = ( $use === 'none' )
-		? 'どの記事にも付いていない写真だけを出しています。メディア画面から直接アップロードした写真は、ここに入ります。'
-		: $name . 'といっしょにアップロードした写真だけを出しています。';
+		? 'どのページでも使われていない写真です。'
+		: $name . 'で使っている写真だけを出しています。';
 	?>
 	<div class="notice notice-info" style="margin-top:14px">
-		<p style="font-size:13.5px"><b><?php echo esc_html( $name ); ?>の写真</b>　<?php
-			echo esc_html( $msg ); ?>
+		<p style="font-size:13.5px"><b><?php echo esc_html( $name ); ?></b>　<?php echo esc_html( $msg ); ?>
 			<a href="<?php echo esc_url( admin_url( 'upload.php?page=ymkrf-media-folders' ) ); ?>">フォルダ一覧にもどる</a>
 
 			<a href="<?php echo esc_url( admin_url( 'upload.php?mode=list' ) ); ?>">すべての写真を見る</a></p>
 	</div>
 	<?php
+} );
+
+
+/* ------------------------------------------------------------
+   写真の編集画面に「フォルダ」の欄を出します
+   （自動でうまく分けられなかったものを、手で直すためのものです）
+   ------------------------------------------------------------ */
+add_filter( 'attachment_fields_to_edit', function ( $fields, $post ) {
+
+	$now  = (string) get_post_meta( $post->ID, '_ymkrf_media_use', true );
+	$html = '<select name="attachments[' . (int) $post->ID . '][ymkrf_media_use]">';
+	$html .= '<option value="">自動でふりわける</option>';
+	foreach ( ymkrf_media_kinds() as $key => $k ) {
+		$html .= '<option value="' . esc_attr( $key ) . '"' . selected( $now, $key, false ) . '>'
+		       . esc_html( $k['name'] ) . '</option>';
+	}
+	$html .= '</select>';
+
+	$fields['ymkrf_media_use'] = array(
+		'label' => 'フォルダ',
+		'input' => 'html',
+		'html'  => $html,
+		'helps' => 'メディアの画面で、どのフォルダに入れるかです。ふだんは「自動でふりわける」のままで大丈夫です。',
+	);
+	return $fields;
+}, 10, 2 );
+
+add_filter( 'attachment_fields_to_save', function ( $post, $attachment ) {
+
+	if ( ! isset( $attachment['ymkrf_media_use'] ) ) return $post;
+
+	$v     = sanitize_key( $attachment['ymkrf_media_use'] );
+	$kinds = ymkrf_media_kinds();
+
+	if ( $v !== '' && isset( $kinds[ $v ] ) ) {
+		update_post_meta( $post['ID'], '_ymkrf_media_use', $v );
+	} else {
+		delete_post_meta( $post['ID'], '_ymkrf_media_use' );
+	}
+	ymkrf_media_forget();
+
+	return $post;
+}, 10, 2 );
+
+
+/* ============================================================
+   写真のファイル名を、自動で英字にそろえます
+   （2026/09/16 ユーザー指示「これから上げる写真のファイル名を整える」）
+
+   日本語のファイル名は、ブラウザの中で
+     クラッソimage.jpg → %e3%82%af%e3%83%a9%e3%83%83%e3%82%bdimage.jpg
+   のような形になり、人にも検索エンジンにも読めません。
+   そこで、アップロードするときに英字へ直します。
+
+   直しかたは、上から順に：
+     ① 登録してある商品の名前（クラッソ → classo）
+     ② よく使う言葉の表（キッチン → kitchen、アンケート → survey）
+     ③ カタカナ・ひらがな → ローマ字
+     ④ 漢字など、どうにもならないものは外す
+   ぜんぶ外れて空になったときは photo-日付 にします。
+
+   ★もともと英字のファイル名は、そのままにします。
+   ============================================================ */
+
+/** ①登録してある商品の「日本語の名前 => 英字の名前」 */
+if ( ! function_exists( 'ymkrf_media_name_dict_products' ) ) :
+function ymkrf_media_name_dict_products() {
+
+	static $d = null;
+	if ( $d !== null ) return $d;
+
+	global $wpdb;
+	$d    = array();
+	$rows = $wpdb->get_results(
+		"SELECT post_title AS ttl, post_name AS slug FROM {$wpdb->posts}
+		  WHERE post_type = 'ymkrf_product' AND post_title <> '' AND post_name <> ''"
+	);
+	foreach ( (array) $rows as $r ) {
+		$t = trim( (string) $r->ttl );
+		if ( mb_strlen( $t, 'UTF-8' ) >= 2 ) $d[ $t ] = rawurldecode( (string) $r->slug );
+	}
+
+	/* ながい名前から先に置きかえます */
+	uksort( $d, function ( $a, $b ) {
+		return mb_strlen( $b, 'UTF-8' ) - mb_strlen( $a, 'UTF-8' );
+	} );
+
+	return $d;
+}
+endif;
+
+/** ②よく使う言葉の表 */
+if ( ! function_exists( 'ymkrf_media_name_dict' ) ) :
+function ymkrf_media_name_dict() {
+
+	$d = array(
+		'お客様の声'   => 'voice',
+		'アンケート'   => 'survey',
+		'施工事例'     => 'works',
+		'ビフォー'     => 'before',
+		'アフター'     => 'after',
+		'施工前'       => 'before',
+		'施工後'       => 'after',
+		'チラシ'       => 'flyer',
+		'スタッフ'     => 'staff',
+		'商品'         => 'product',
+		'キッチン'     => 'kitchen',
+		'お風呂'       => 'bath',
+		'浴室'         => 'bath',
+		'トイレ'       => 'toilet',
+		'洗面化粧台'   => 'lavatory',
+		'洗面'         => 'lavatory',
+		'給湯器'       => 'boiler',
+		'エコキュート' => 'ecocute',
+		'外壁'         => 'outer-wall',
+		'屋根'         => 'roof',
+		'内装'         => 'interior',
+		'窓'           => 'window',
+		'玄関'         => 'entrance',
+		'カタログ'     => 'catalog',
+		'見本'         => 'sample',
+		'扉'           => 'door',
+		'取手'         => 'handle',
+		'色'           => 'color',
+		'写真'         => 'photo',
+		'画像'         => 'image',
+		'イメージ'     => 'image',
+		'お客様'       => 'customer',
+		'カラー'       => 'color',
+		'ホワイト'     => 'white',
+		'ブラック'     => 'black',
+		'リフォーム'   => 'reform',
+		'メーカー'     => 'maker',
+		'サイズ'       => 'size',
+		'表面'         => 'front',
+		'裏面'         => 'back',
+		'正面'         => 'front',
+		'全体'         => 'full',
+	);
+
+	/* ながい言葉から先に置きかえます
+	   （「お客様の声」を「お客様」より先に当てるため） */
+	uksort( $d, function ( $a, $b ) {
+		return mb_strlen( $b, 'UTF-8' ) - mb_strlen( $a, 'UTF-8' );
+	} );
+
+	return $d;
+}
+endif;
+
+/** ③カタカナ・ひらがなを、ローマ字にします */
+if ( ! function_exists( 'ymkrf_media_kana_romaji' ) ) :
+function ymkrf_media_kana_romaji( $s ) {
+
+	/* ひらがなは、いったんカタカナにそろえます */
+	$s = mb_convert_kana( $s, 'KVC', 'UTF-8' );
+
+	$two = array(
+		'キャ'=>'kya','キュ'=>'kyu','キョ'=>'kyo','シャ'=>'sha','シュ'=>'shu','ショ'=>'sho',
+		'チャ'=>'cha','チュ'=>'chu','チョ'=>'cho','ニャ'=>'nya','ニュ'=>'nyu','ニョ'=>'nyo',
+		'ヒャ'=>'hya','ヒュ'=>'hyu','ヒョ'=>'hyo','ミャ'=>'mya','ミュ'=>'myu','ミョ'=>'myo',
+		'リャ'=>'rya','リュ'=>'ryu','リョ'=>'ryo','ギャ'=>'gya','ギュ'=>'gyu','ギョ'=>'gyo',
+		'ジャ'=>'ja','ジュ'=>'ju','ジョ'=>'jo','ビャ'=>'bya','ビュ'=>'byu','ビョ'=>'byo',
+		'ピャ'=>'pya','ピュ'=>'pyu','ピョ'=>'pyo',
+		'ファ'=>'fa','フィ'=>'fi','フェ'=>'fe','フォ'=>'fo','ヴァ'=>'va','ヴィ'=>'vi',
+		'ヴェ'=>'ve','ヴォ'=>'vo','ウィ'=>'wi','ウェ'=>'we','ウォ'=>'wo',
+		'ティ'=>'ti','ディ'=>'di','トゥ'=>'tu','ドゥ'=>'du','シェ'=>'she','ジェ'=>'je','チェ'=>'che',
+	);
+	$one = array(
+		'ア'=>'a','イ'=>'i','ウ'=>'u','エ'=>'e','オ'=>'o',
+		'カ'=>'ka','キ'=>'ki','ク'=>'ku','ケ'=>'ke','コ'=>'ko',
+		'サ'=>'sa','シ'=>'shi','ス'=>'su','セ'=>'se','ソ'=>'so',
+		'タ'=>'ta','チ'=>'chi','ツ'=>'tsu','テ'=>'te','ト'=>'to',
+		'ナ'=>'na','ニ'=>'ni','ヌ'=>'nu','ネ'=>'ne','ノ'=>'no',
+		'ハ'=>'ha','ヒ'=>'hi','フ'=>'fu','ヘ'=>'he','ホ'=>'ho',
+		'マ'=>'ma','ミ'=>'mi','ム'=>'mu','メ'=>'me','モ'=>'mo',
+		'ヤ'=>'ya','ユ'=>'yu','ヨ'=>'yo',
+		'ラ'=>'ra','リ'=>'ri','ル'=>'ru','レ'=>'re','ロ'=>'ro',
+		'ワ'=>'wa','ヲ'=>'o','ン'=>'n',
+		'ガ'=>'ga','ギ'=>'gi','グ'=>'gu','ゲ'=>'ge','ゴ'=>'go',
+		'ザ'=>'za','ジ'=>'ji','ズ'=>'zu','ゼ'=>'ze','ゾ'=>'zo',
+		'ダ'=>'da','ヂ'=>'ji','ヅ'=>'zu','デ'=>'de','ド'=>'do',
+		'バ'=>'ba','ビ'=>'bi','ブ'=>'bu','ベ'=>'be','ボ'=>'bo',
+		'パ'=>'pa','ピ'=>'pi','プ'=>'pu','ペ'=>'pe','ポ'=>'po',
+		'ヴ'=>'vu','ァ'=>'a','ィ'=>'i','ゥ'=>'u','ェ'=>'e','ォ'=>'o',
+		'ャ'=>'ya','ュ'=>'yu','ョ'=>'yo','ー'=>'',
+	);
+
+	$out = '';
+	$len = mb_strlen( $s, 'UTF-8' );
+	for ( $i = 0; $i < $len; $i++ ) {
+
+		$c  = mb_substr( $s, $i, 1, 'UTF-8' );
+		$c2 = ( $i + 1 < $len ) ? $c . mb_substr( $s, $i + 1, 1, 'UTF-8' ) : '';
+
+		/* 小さい「ッ」は、次の音のはじめの字を2つにします */
+		if ( $c === 'ッ' ) {
+			$nx = '';
+			if ( $c2 !== '' ) {
+				$n2 = mb_substr( $s, $i + 1, 2, 'UTF-8' );
+				if ( isset( $two[ $n2 ] ) )                      $nx = $two[ $n2 ];
+				elseif ( isset( $one[ mb_substr( $s, $i + 1, 1, 'UTF-8' ) ] ) )
+					$nx = $one[ mb_substr( $s, $i + 1, 1, 'UTF-8' ) ];
+			}
+			if ( $nx !== '' ) $out .= substr( $nx, 0, 1 );
+			continue;
+		}
+
+		if ( $c2 !== '' && isset( $two[ $c2 ] ) ) { $out .= $two[ $c2 ]; $i++; continue; }
+		if ( isset( $one[ $c ] ) )                { $out .= $one[ $c ];        continue; }
+
+		$out .= $c;   /* 英数字などは、そのまま */
+	}
+	return $out;
+}
+endif;
+
+/** ファイル名まるごとを、英字に直します */
+if ( ! function_exists( 'ymkrf_media_ascii_name' ) ) :
+function ymkrf_media_ascii_name( $name ) {
+
+	$ext  = '';
+	$base = $name;
+	if ( preg_match( '/^(.*)(\.[A-Za-z0-9]{1,5})$/', $name, $m ) ) {
+		$base = $m[1];
+		$ext  = strtolower( $m[2] );
+	}
+
+	/* もともと英字だけなら、さわりません */
+	if ( preg_match( '/^[A-Za-z0-9._-]+$/', $base ) ) return $name;
+
+	$base = mb_convert_kana( $base, 'as', 'UTF-8' );   /* 全角の英数字と空白を半角に */
+
+	foreach ( ymkrf_media_name_dict_products() as $ja => $en ) {
+		if ( $en !== '' ) $base = str_replace( $ja, '-' . $en . '-', $base );
+	}
+	foreach ( ymkrf_media_name_dict() as $ja => $en ) {
+		$base = str_replace( $ja, '-' . $en . '-', $base );
+	}
+
+	$base = ymkrf_media_kana_romaji( $base );
+
+	/* 残った漢字などは外します */
+	$base = preg_replace( '/[^A-Za-z0-9._-]+/u', '-', $base );
+	$base = strtolower( $base );
+	$base = preg_replace( '/-{2,}/', '-', $base );
+	$base = trim( $base, '-._' );
+
+	if ( $base === '' ) $base = 'photo-' . date_i18n( 'Ymd-His' );
+
+	return $base . $ext;
+}
+endif;
+
+/* アップロードするときに、名前を英字へ直します */
+add_filter( 'wp_handle_upload_prefilter', function ( $file ) {
+	if ( ! empty( $file['name'] ) ) $file['name'] = ymkrf_media_ascii_name( $file['name'] );
+	return $file;
+} );
+
+/* 取り込み（media_handle_sideload）のときも同じようにします */
+add_filter( 'wp_handle_sideload_prefilter', function ( $file ) {
+	if ( ! empty( $file['name'] ) ) $file['name'] = ymkrf_media_ascii_name( $file['name'] );
+	return $file;
 } );
