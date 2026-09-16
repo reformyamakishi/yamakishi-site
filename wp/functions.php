@@ -43,8 +43,12 @@ require_once get_stylesheet_directory() . '/inc/functions-media.php';
 require_once get_stylesheet_directory() . '/inc/functions-voice-status.php';
 require_once get_stylesheet_directory() . '/inc/functions-voice-check.php';
 require_once get_stylesheet_directory() . '/inc/functions-voice-mail.php';
-/* ↓ アンケート画像の入れ直し。終わったらこの行とファイルを消してください */
-require_once get_stylesheet_directory() . '/inc/functions-voice-swap.php';
+/* アンケート画像の入れ直しは、終わりました（2026/09/16）。
+   ダッシュボードから「アンケートの入れ直し」を消すため、読み込みをやめています。
+   inc/functions-voice-swap.php は、もう使いません。消してかまいません。
+   もう一度使いたくなったら、下の行の先頭の // を外してください。
+// require_once get_stylesheet_directory() . '/inc/functions-voice-swap.php';
+*/
 /* ↓ 写真の名前をそろえる下見の画面。終わったらこの行とファイルを消してください */
 require_once get_stylesheet_directory() . '/inc/functions-media-rename.php';
 

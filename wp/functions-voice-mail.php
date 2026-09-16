@@ -18,6 +18,7 @@
  * 送信の記録 …… ymkrf_vmail_log（新しい順に50件まで）
  * 入力欄 …… _ymkrf_mail_send  担当店へ連絡する（1なら送る）
  *             _ymkrf_claim      クレーム（1なら有）
+ *             _ymkrf_mail_name  件名（○○邸○○リフォーム）。メールの中だけで使います
  *             _ymkrf_mail_sent  送った日時（送れていたら入ります）
  *             _ymkrf_staff_mail スタッフのメールアドレス（functions-staff.php）
  * ─────────────────────────────────────────
@@ -37,6 +38,27 @@ const YMKRF_VMAIL_SUBJECT = 'お客様よりアンケートが届きましたの
 
 /** 差出人の名前 */
 const YMKRF_VMAIL_FROM_NAME = 'リフォームヤマキシ マーケティング室';
+
+
+/* ------------------------------------------------------------
+   この仕組みで使う入力欄は、ぜんぶ社内用です。
+   ホームページ（フロント）には、いっさい出しません。
+   （2026/09/16 ユーザー「もちろんその内容はフロントでは非公開にしてね」）
+
+   ・名前が _ ではじまるので、WordPress が「守られた欄」としてあつかいます
+   ・ページのテンプレート（single-ymkrf_voice.php など）でも呼んでいません
+   ・念のため、下で「守られた欄」だとはっきり指定しておきます
+   ------------------------------------------------------------ */
+add_filter( 'is_protected_meta', function ( $protected, $key ) {
+	$mine = array(
+		'_ymkrf_mail_name',   /* 件名（○○邸○○リフォーム） */
+		'_ymkrf_mail_send',
+		'_ymkrf_mail_sent',
+		'_ymkrf_claim',
+		'_ymkrf_staff_mail',
+	);
+	return in_array( $key, $mine, true ) ? true : $protected;
+}, 10, 2 );
 
 
 /* ============================================================
@@ -431,8 +453,11 @@ function ymkrf_vmail_body( $post_id ) {
 	$date  = date_i18n( 'n月j日', get_post_time( 'U', false, $post_id ) );
 	$url   = ymkrf_vmail_url( $post_id );
 
+	$name = trim( (string) get_post_meta( $post_id, '_ymkrf_mail_name', true ) );
+
 	$b  = YMKRF_VMAIL_SUBJECT . "\n\n";
 	$b .= $date . "\n";
+	if ( $name !== '' ) $b .= '件名：' . $name . "\n";
 	$b .= '営業店：' . ( $shop !== '' ? $shop : '（未設定）' ) . "\n";
 	$b .= '営業担当者：' . ( $staff !== '' ? $staff : '（未設定）' ) . "\n";
 	$b .= 'クレーム：' . ( $claim ? '有 ☑　／　無 □' : '有 □　／　無 ☑' ) . "\n";
@@ -564,8 +589,23 @@ function ymkrf_vmail_metabox( $post ) {
 		$send = ( $post->post_status === 'auto-draft' ) ? '1' : '0';
 	}
 
+	$mname = (string) get_post_meta( $post->ID, '_ymkrf_mail_name', true );
+
 	wp_nonce_field( 'ymkrf_vmail_save', 'ymkrf_vmail_nonce' );
 	?>
+	<p style="margin-top:0;margin-bottom:4px"><b>件名（○○邸○○リフォーム）</b></p>
+	<p style="margin-top:0">
+	  <input type="text" name="_ymkrf_mail_name" style="width:100%"
+	         value="<?php echo esc_attr( $mname ); ?>"
+	         placeholder="例：吉田邸キッチンリフォーム">
+	</p>
+	<p class="description" style="margin-top:-6px">
+	  お知らせメールの中に、そのまま入ります。<br>
+	  <b style="color:#b32d00">ホームページには出ません。</b>社内へのメールだけに使います。
+	</p>
+
+	<hr>
+
 	<p style="margin-top:0">
 	  <label style="font-size:14px">
 	    <input type="checkbox" name="_ymkrf_mail_send" value="1" <?php checked( $send, '1' ); ?>>
@@ -659,6 +699,11 @@ add_action( 'save_post_ymkrf_voice', function ( $post_id ) {
 	$send = empty( $_POST['_ymkrf_mail_send'] ) ? '' : '1';
 	update_post_meta( $post_id, '_ymkrf_mail_send', $send ? '1' : '0' );
 	update_post_meta( $post_id, '_ymkrf_claim', empty( $_POST['_ymkrf_claim'] ) ? '' : '1' );
+
+	/* 件名（○○邸○○リフォーム）。メールの中だけで使います */
+	update_post_meta( $post_id, '_ymkrf_mail_name',
+		isset( $_POST['_ymkrf_mail_name'] )
+			? sanitize_text_field( wp_unslash( $_POST['_ymkrf_mail_name'] ) ) : '' );
 }, 40 );
 
 /**
