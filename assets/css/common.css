@@ -722,11 +722,14 @@ address{ font-style:normal; }
   align-items:center; justify-content:center;
 }
 .c-lightbox.is-open{ display:flex; }
-/* アンケート用紙は、文字が読めることが大事なので、画面いっぱいまで大きく出します
-   （2026/09/16 ユーザー「小さいな。もっとおおきくならない？」） */
+/* 押したら、画面いっぱい近くまで大きく出します。
+   アンケート用紙は文字が細かいので、もとの写真より引きのばしてでも
+   大きく見せます。（2026/09/16 ユーザー指示
+   「クリックしたら、画面の80%ほどの大きさで出てくれば良い」） */
 .c-lightbox__img{
-  max-width:100%; max-height:calc(100vh - 56px);
-  width:auto; height:auto; border-radius:6px; background:#fff;
+  width:auto; height:86vh; max-width:94vw;
+  object-fit:contain;
+  border-radius:6px; background:#fff;
   box-shadow:0 20px 60px rgba(0,0,0,.5);
 }
 .c-lightbox__cap{
@@ -734,42 +737,11 @@ address{ font-style:normal; }
   color:#fff; font-size:12.5px; padding:0 20px;
   text-shadow:0 1px 3px rgba(0,0,0,.6);
 }
-/* パソコンでは、もう少し余白をとって落ち着かせます */
 @media (min-width:900px){
-  .c-lightbox{ padding:18px; }
-  .c-lightbox__img{ max-height:calc(100vh - 64px); }
+  .c-lightbox{ padding:16px; }
+  .c-lightbox__img{ height:88vh; max-width:95vw; }
 }
 
-/* 「もっと大きく」を押したとき。
-   画面に収めるのをやめ、原寸（写真そのものの大きさ）で出します。
-   はみ出したぶんは、そのままスクロールして読めます。 */
-.c-lightbox.is-big{
-  align-items:flex-start; justify-content:flex-start;
-  overflow:auto; padding:8px;
-  cursor:zoom-out;
-}
-.c-lightbox.is-big .c-lightbox__img{
-  /* 原寸より大きく引きのばして、文字を読みやすくします。
-     もとの写真より大きくするので少しにじみますが、
-     画面に収めるより読めます。（2026/09/16） */
-  max-width:none; max-height:none; width:1800px; height:auto;
-  margin:0 auto;
-  image-rendering:auto;
-}
-@media (min-width:1600px){
-  .c-lightbox.is-big .c-lightbox__img{ width:2200px; }
-}
-.c-lightbox.is-big .c-lightbox__cap{ display:none; }
-
-/* 大きさを切りかえるボタン */
-.c-lightbox__zoom{
-  position:fixed; top:16px; left:16px; z-index:2;
-  padding:9px 16px; border:0; border-radius:999px;
-  background:rgba(255,255,255,.92); color:#2b211c;
-  font-size:13.5px; font-weight:700; cursor:pointer;
-}
-.c-lightbox__zoom:hover{ background:#fff; }
-.c-lightbox__img{ cursor:zoom-in; }
 .c-lightbox__close{
   position:absolute; top:14px; right:16px; width:46px; height:46px;
   border:0; border-radius:50%; background:rgba(255,255,255,.16); color:#fff;
