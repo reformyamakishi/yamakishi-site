@@ -255,8 +255,64 @@
 .p-voice__case{ font-size:11.5px; color:var(--ink-light); letter-spacing:.06em; }
 
 /* 案件番号でつながった施工事例 */
-.p-voice__works{ display:grid; gap:8px; margin-top:4px; }
-.p-voice__works a{ font-size:15px; font-weight:900; color:var(--brand-dark); }
+/* この工事の施工事例。写真つきのカードにします
+   （2026/09/16 ユーザー指示「画像付きのリンクにしてほしい」） */
+.p-voice__works{ display:grid; gap:12px; margin-top:8px; }
+
+.p-voice__workcard{
+  display:grid; grid-template-columns:110px 1fr; gap:12px; align-items:center;
+  padding:10px; background:#fff; border:2px solid var(--border);
+  border-radius:var(--radius-lg); text-decoration:none; color:inherit;
+  transition:border-color .15s, box-shadow .15s, transform .15s;
+}
+.p-voice__workcard:hover{
+  border-color:var(--brand); box-shadow:0 6px 18px rgba(0,0,0,.08);
+  transform:translateY(-2px);
+}
+.p-voice__workph{
+  display:block; overflow:hidden; border-radius:10px; background:#f3f1ef;
+  aspect-ratio:4/3;
+}
+.p-voice__workph img{ width:100%; height:100%; object-fit:cover; display:block; }
+.p-voice__worknoph{
+  display:flex; align-items:center; justify-content:center; width:100%; height:100%;
+  color:#a7aaad; font-size:12px;
+}
+.p-voice__worktxt{ display:block; min-width:0; }
+.p-voice__workmeta{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:4px; }
+.p-voice__workmeta span{
+  display:inline-block; padding:2px 8px; border-radius:999px;
+  background:#f3f1ef; color:#6b625c; font-size:11.5px; line-height:1.6;
+}
+.p-voice__workttl{
+  display:block; font-size:15px; font-weight:900; line-height:1.5;
+  color:var(--brand-dark);
+}
+.p-voice__workpri{ display:block; margin-top:3px; font-size:12.5px; color:#6b625c; }
+.p-voice__workpri b{ color:var(--brand); font-size:14px; }
+.p-voice__workgo{
+  display:inline-block; margin-top:6px; font-size:12.5px; font-weight:700;
+  color:var(--brand);
+}
+.p-voice__workgo::after{ content:'　▶'; font-size:10px; }
+
+/* パソコンでは、写真も文字も大きくします
+   （2026/09/16 ユーザー「PCで見ても見えないわ。文字もっと大きくして」） */
+@media (min-width:768px){
+  .p-voice__workcard{ grid-template-columns:240px 1fr; gap:20px; padding:14px; }
+  .p-voice__workmeta span{ font-size:13px; padding:3px 11px; }
+  .p-voice__workttl{ font-size:20px; line-height:1.55; }
+  .p-voice__workpri{ font-size:15px; margin-top:6px; }
+  .p-voice__workpri b{ font-size:18px; }
+  .p-voice__workgo{ margin-top:10px; font-size:15px; }
+}
+@media (min-width:1100px){
+  .p-voice__workcard{ grid-template-columns:320px 1fr; gap:24px; padding:16px; }
+  .p-voice__workttl{ font-size:22px; }
+  .p-voice__workpri{ font-size:16px; }
+  .p-voice__workpri b{ font-size:20px; }
+  .p-voice__workgo{ font-size:16px; }
+}
 
 /* --------------------------------------------------------------------------
    ほかのお客様の声（ページごとに違う顔ぶれが出ます）

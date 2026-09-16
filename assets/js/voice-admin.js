@@ -576,7 +576,10 @@ window.YmkrfSurvey = {
 
       /* 公開用の画像（ご紹介欄を白く塗ったもの）を作って保存します */
       try {
-        var pub = window.YmkrfSurvey.publicImage(R, 1600);
+        /* 文字が読める大きさにするため、幅2400pxで作ります
+           （2026/09/16 ユーザー「小さいし文字は読めません」）
+           もとのスキャンがこれより小さいときは、そのままの大きさです。 */
+        var pub = window.YmkrfSurvey.publicImage(R, 2400);
         $.post(YMKRF_VOICE.ajax, {
           action: 'ymkrf_voice_pub_image', nonce: YMKRF_VOICE.nonce,
           data: pub.toDataURL('image/jpeg', 0.86)
