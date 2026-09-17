@@ -479,6 +479,11 @@ function ymkrf_voice_metabox( $post ) {
 	            画像（png / jpg / webp）を置くと、ここに一覧が出ます。</p>
 	        <?php else : ?>
 	          <div class="ymkrf-voice__ills">
+	            <?php /* ランダム（2026/09/17 ユーザー指示「なしの前にランダムを」） */ ?>
+	            <label class="ymkrf-voice__ill <?php echo $cur_ill === 'random' ? 'is-on' : ''; ?>">
+	              <input type="radio" name="_ymkrf_illust" value="random" <?php checked( $cur_ill, 'random' ); ?>>
+	              <span class="ymkrf-voice__illnone">ランダム</span>
+	            </label>
 	            <label class="ymkrf-voice__ill <?php echo $cur_ill === '' ? 'is-on' : ''; ?>">
 	              <input type="radio" name="_ymkrf_illust" value="" <?php checked( $cur_ill, '' ); ?>>
 	              <span class="ymkrf-voice__illnone">なし</span>
@@ -490,7 +495,18 @@ function ymkrf_voice_metabox( $post ) {
 	              </label>
 	            <?php endforeach; ?>
 	          </div>
-	          <p class="description">工事の内容やお客様の雰囲気に合うものをえらんでください（<?php echo count( $ills ); ?>点）。</p>
+	          <p class="description">
+	            工事の内容やお客様の雰囲気に合うものをえらんでください（<?php echo count( $ills ); ?>点）。<br>
+	            <b>ランダム</b>…いちばん使われていないイラストを自動でえらびます。
+	            一覧ページで同じ絵がとなり合わないように、自動でずらします。
+	            <?php $pk = (string) $get( '_ymkrf_illust_pick' );
+	                  if ( $cur_ill === 'random' && $pk !== '' ) : ?>
+	              <br>いまえらばれているのは
+	              <img src="<?php echo esc_url( ymkrf_voice_illust_url() . '/' . $pk ); ?>"
+	                   style="width:28px;height:28px;object-fit:contain;vertical-align:-9px" alt="">
+	              <code><?php echo esc_html( $pk ); ?></code> です。
+	            <?php endif; ?>
+	          </p>
 	        <?php endif; ?>
 	      </td>
 	    </tr>
@@ -586,6 +602,19 @@ add_action( 'save_post_ymkrf_voice', function ( $post_id ) {
 	                 '_ymkrf_city', '_ymkrf_initial', '_ymkrf_shop', '_ymkrf_illust' ) as $k ) {
 		update_post_meta( $post_id, $k, isset( $_POST[ $k ] ) ? sanitize_text_field( $_POST[ $k ] ) : '' );
 	}
+
+	/* イラストの「ランダム」（2026/09/17 ユーザー指示）
+	   ランダムにしたときは1枚えらんで覚えておき、
+	   ランダムをやめたときは、覚えていたものを消します。 */
+	if ( get_post_meta( $post_id, '_ymkrf_illust', true ) === 'random' ) {
+		if ( trim( (string) get_post_meta( $post_id, '_ymkrf_illust_pick', true ) ) === '' ) {
+			$pick = ymkrf_voice_illust_choose( $post_id );
+			if ( $pick !== '' ) update_post_meta( $post_id, '_ymkrf_illust_pick', $pick );
+		}
+	} else {
+		delete_post_meta( $post_id, '_ymkrf_illust_pick' );
+	}
+
 	foreach ( array( '_ymkrf_survey_id', '_ymkrf_survey_pub_id' ) as $k ) {
 		update_post_meta( $post_id, $k, isset( $_POST[ $k ] ) ? (int) $_POST[ $k ] : 0 );
 	}
@@ -775,11 +804,97 @@ function ymkrf_voice_survey_figure( $post_id ) {
 	return $h;
 }
 
-/* お客様イメージのイラスト（無ければ空） */
-function ymkrf_voice_illust_img( $post_id, $size = 96 ) {
+/**
+ * 「ランダム」をえらんだときに、どのイラストにするかを決めます。
+ * （2026/09/17 ユーザー指示）
+ *
+ * いちばん使われていないイラストからえらぶので、40点が自然にばらけます。
+ * 同じ点数のものが並んだときは、投稿の番号で決めます。
+ * こうすると、何度ひらいても同じ絵になります（ページによって変わりません）。
+ */
+function ymkrf_voice_illust_choose( $post_id ) {
+
+	global $wpdb;
+
+	$all = ymkrf_voice_illusts();
+	if ( ! $all ) return '';
+
+	$used = $wpdb->get_col(
+		"SELECT meta_value FROM {$wpdb->postmeta} WHERE meta_key = '_ymkrf_illust_pick'" );
+
+	$cnt = array_fill_keys( $all, 0 );
+	foreach ( (array) $used as $u ) {
+		if ( isset( $cnt[ $u ] ) ) $cnt[ $u ]++;
+	}
+
+	$least = array_keys( $cnt, min( $cnt ) );
+	sort( $least );
+
+	return $least[ (int) $post_id % count( $least ) ];
+}
+
+/** このお客様の声に出すイラストのファイル名（なければ空） */
+function ymkrf_voice_illust_file( $post_id ) {
+
 	$f = trim( (string) get_post_meta( $post_id, '_ymkrf_illust', true ) );
 	if ( $f === '' ) return '';
+
+	if ( $f !== 'random' ) {
+		return file_exists( ymkrf_voice_illust_dir() . '/' . $f ) ? $f : '';
+	}
+
+	/* ランダムのときは、いちど決めたものを覚えておきます */
+	$pick = trim( (string) get_post_meta( $post_id, '_ymkrf_illust_pick', true ) );
+	if ( $pick === '' || ! file_exists( ymkrf_voice_illust_dir() . '/' . $pick ) ) {
+		$pick = ymkrf_voice_illust_choose( $post_id );
+		if ( $pick !== '' ) update_post_meta( $post_id, '_ymkrf_illust_pick', $pick );
+	}
+	return $pick;
+}
+
+/**
+ * 同じページの中で、同じイラストが2回出ないようにずらします。
+ * 手でえらんだものは、そのままにします（ランダムのものだけ動かします）。
+ */
+function ymkrf_voice_illust_unique( $file ) {
+
+	static $used = array();
+
+	$all = ymkrf_voice_illusts();
+	if ( ! $all || $file === '' ) return $file;
+
+	if ( ! in_array( $file, $used, true ) ) {
+		$used[] = $file;
+		return $file;
+	}
+
+	$i = array_search( $file, $all, true );
+	if ( $i === false ) $i = 0;
+	$n = count( $all );
+
+	for ( $k = 1; $k <= $n; $k++ ) {
+		$cand = $all[ ( $i + $k ) % $n ];
+		if ( ! in_array( $cand, $used, true ) ) {
+			$used[] = $cand;
+			return $cand;
+		}
+	}
+	return $file;                                   /* ぜんぶ使いきったときは、そのまま */
+}
+
+/* お客様イメージのイラスト（無ければ空） */
+function ymkrf_voice_illust_img( $post_id, $size = 96 ) {
+
+	$f = ymkrf_voice_illust_file( $post_id );
+	if ( $f === '' ) return '';
+
+	/* ランダムのものだけ、同じページで重ならないようにずらします */
+	if ( get_post_meta( $post_id, '_ymkrf_illust', true ) === 'random' ) {
+		$f = ymkrf_voice_illust_unique( $f );
+	}
+
 	if ( ! file_exists( ymkrf_voice_illust_dir() . '/' . $f ) ) return '';
+
 	return '<img class="p-voice__illust" src="' . esc_url( ymkrf_voice_illust_url() . '/' . $f ) . '"'
 	     . ' width="' . (int) $size . '" height="' . (int) $size . '"'
 	     . ' alt="" loading="lazy" decoding="async">';
@@ -1079,7 +1194,7 @@ add_action( 'manage_ymkrf_voice_posts_custom_column', function ( $col, $post_id 
 			break;
 		case 'ymkrf_cust':
 			$v = ymkrf_voice_customer_label( $post_id );
-			$ill = trim( (string) get_post_meta( $post_id, '_ymkrf_illust', true ) );
+			$ill = ymkrf_voice_illust_file( $post_id );
 			if ( $ill && file_exists( ymkrf_voice_illust_dir() . '/' . $ill ) ) {
 				echo '<img src="' . esc_url( ymkrf_voice_illust_url() . '/' . $ill ) . '"'
 				   . ' style="width:30px;height:30px;object-fit:contain;vertical-align:-9px;margin-right:6px" alt="">';

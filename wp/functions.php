@@ -42,6 +42,8 @@ require_once get_stylesheet_directory() . '/inc/functions-staff.php';
 require_once get_stylesheet_directory() . '/inc/functions-flyer.php';
 require_once get_stylesheet_directory() . '/inc/functions-media.php';
 require_once get_stylesheet_directory() . '/inc/functions-voice-status.php';
+/* ↓ 一時的な調べもの用。原因がわかったら、この行とファイルを消してください */
+require_once get_stylesheet_directory() . '/inc/functions-voice-debug.php';
 require_once get_stylesheet_directory() . '/inc/functions-voice-alt.php';
 require_once get_stylesheet_directory() . '/inc/functions-voice-check.php';
 require_once get_stylesheet_directory() . '/inc/functions-voice-mail.php';

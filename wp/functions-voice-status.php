@@ -18,7 +18,10 @@
  * ■ 気をつけたこと
  *   画面の見た目を変えるだけではなく、保存するときにも
  *   ここでえらんだ状態になるようにしています（wp_insert_post_data）。
- *   「下書きとして保存」のボタンを押したときは、そのまま下書きになります。
+ *   状態は、この「状態」でえらんだものだけで決まります。
+ *   （2026/09/17 …以前は $_POST['save'] を見て手を引いていましたが、
+ *     非公開の記事では「更新」ボタンにも save という名前が付くため、
+ *     えらんだ状態がむしされていました）
  *
  * ■ 名前について
  *   入力欄 … ymkrf_vstatus（この画面だけで使う、えらんだ状態）
@@ -29,9 +32,9 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 /** えらべる状態 */
 function ymkrf_vstatus_list() {
 	return array(
-		'publish' => '公開（サイトに出ます）',
-		'draft'   => '下書き（まだ出しません）',
-		'private' => '非公開（ログインした人だけ）',
+		'publish' => '公開',
+		'draft'   => '下書き',
+		'private' => '非公開',
 	);
 }
 
@@ -97,8 +100,12 @@ add_filter( 'wp_insert_post_data', function ( $data, $postarr ) {
 	if ( ! isset( $_POST['ymkrf_vstatus_nonce'] ) ||
 	     ! wp_verify_nonce( $_POST['ymkrf_vstatus_nonce'], 'ymkrf_vstatus_save' ) ) return $data;
 
-	/* 「下書きとして保存」を押したときは、そのまま下書きにします */
-	if ( isset( $_POST['save'] ) ) return $data;
+	/* ★ここで $_POST['save'] を見てはいけません★
+	   （2026/09/17）
+	   非公開の記事では、WordPressは「更新」ボタンにも save という名前を使います。
+	   以前ここで「save があれば何もしない」としていたため、
+	   えらんだ「公開」が毎回むしされていました。
+	   状態は、下の「状態」でえらんだものだけで決めます。 */
 
 	$want = isset( $_POST['ymkrf_vstatus'] ) ? (string) $_POST['ymkrf_vstatus'] : '';
 	$list = ymkrf_vstatus_list();
@@ -114,6 +121,42 @@ add_filter( 'wp_insert_post_data', function ( $data, $postarr ) {
 
 	return $data;
 }, 20, 2 );
+
+
+/* ------------------------------------------------------------
+   ★念のための止め★
+   保存のいちばん最後に、もういちど「えらんだ状態」にそろえます。
+
+   （2026/09/17 ユーザー「やっぱり非公開に自動でなります」）
+   ほかの仕組みがあとから状態を書きかえても、ここで戻します。
+   データベースに直接書くので、また別の処理が動くこともありません。
+   ------------------------------------------------------------ */
+add_action( 'save_post_ymkrf_voice', function ( $post_id ) {
+
+	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
+	if ( wp_is_post_revision( $post_id ) ) return;
+
+	if ( ! isset( $_POST['ymkrf_vstatus_nonce'] ) ||
+	     ! wp_verify_nonce( $_POST['ymkrf_vstatus_nonce'], 'ymkrf_vstatus_save' ) ) return;
+	if ( ! current_user_can( 'edit_post', $post_id ) ) return;
+
+	/* ここでも $_POST['save'] は見ません（上と同じ理由です） */
+
+	$want = isset( $_POST['ymkrf_vstatus'] ) ? (string) $_POST['ymkrf_vstatus'] : '';
+	$list = ymkrf_vstatus_list();
+	if ( ! isset( $list[ $want ] ) ) return;
+
+	$now = get_post_status( $post_id );
+	if ( $now === $want ) return;
+	if ( in_array( $now, array( 'trash', 'auto-draft', 'inherit' ), true ) ) return;
+
+	global $wpdb;
+	$wpdb->update( $wpdb->posts,
+		array( 'post_status' => $want, 'post_password' => '' ),
+		array( 'ID' => $post_id ) );
+
+	clean_post_cache( $post_id );
+}, 999 );
 
 
 /* ------------------------------------------------------------
