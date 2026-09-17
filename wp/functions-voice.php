@@ -497,8 +497,11 @@ function ymkrf_voice_metabox( $post ) {
 	          </div>
 	          <p class="description">
 	            工事の内容やお客様の雰囲気に合うものをえらんでください（<?php echo count( $ills ); ?>点）。<br>
-	            <b>ランダム</b>…いちばん使われていないイラストを自動でえらびます。
-	            一覧ページで同じ絵がとなり合わないように、自動でずらします。
+	            <b>ランダム</b>…アンケートの<b>中身を読んで</b>、合いそうなイラストをえらびます。<br>
+	            　ご主人・奥さまの話が出てくればご夫婦、お子さんやお孫さんの話があれば親子、
+	            　手すりや介護の話があればご年配の絵、というふうに選びます。<br>
+	            　手がかりがないときは、いちばん使われていないものをえらびます。
+	            　一覧ページで同じ絵がとなり合わないように、自動でずらします。
 	            <?php $pk = (string) $get( '_ymkrf_illust_pick' );
 	                  if ( $cur_ill === 'random' && $pk !== '' ) : ?>
 	              <br>いまえらばれているのは
@@ -805,12 +808,108 @@ function ymkrf_voice_survey_figure( $post_id ) {
 }
 
 /**
+ * イラスト60点を、どんな人物かで分けた表です。
+ * （2026/09/17 ユーザー指示「字とか内容重視して選んでね」）
+ *
+ * 1点ずつ絵を見て分けました。絵を足したときは、ここにも足してください。
+ * ここに書いていないものは「そのほか」あつかいで、どのアンケートにも使われます。
+ */
+function ymkrf_voice_illust_groups() {
+	return array(
+		/* 女性 */
+		'f_young' => array( 10, 21, 23, 59 ),                       /* 若い女性 */
+		'f_mid'   => array( 1, 6, 15, 18, 20, 22, 24, 25, 26, 29,
+		                    30, 31, 33, 51, 54, 55, 56 ),            /* 中年の女性 */
+		'f_old'   => array( 3, 4, 8, 12, 19, 28, 32, 34, 35, 45 ),   /* 年配の女性 */
+		/* 男性 */
+		'm_young' => array( 27, 41, 42, 44, 52 ),                    /* 若い男性 */
+		'm_mid'   => array( 2, 11, 17, 46, 48, 50, 53 ),             /* 中年の男性 */
+		'm_old'   => array( 5, 7, 9, 13, 14, 43, 47, 49, 57, 58, 60 ),/* 年配の男性 */
+		/* ふたり以上 */
+		'couple'     => array( 36, 37 ),                             /* ご夫婦 */
+		'couple_old' => array( 38, 40 ),                             /* 年配のご夫婦 */
+		'family'     => array( 16, 39 ),                             /* 親子・お孫さん */
+	);
+}
+
+/** グループの名前から、ファイル名の一覧を作ります */
+function ymkrf_voice_illust_group_files( $key ) {
+	$g = ymkrf_voice_illust_groups();
+	if ( empty( $g[ $key ] ) ) return array();
+
+	$all = ymkrf_voice_illusts();
+	$out = array();
+	foreach ( $g[ $key ] as $n ) {
+		$f = sprintf( 'voice-%02d.png', (int) $n );
+		if ( in_array( $f, $all, true ) ) $out[] = $f;
+	}
+	return $out;
+}
+
+/**
+ * アンケートの中身を読んで、どのグループから選ぶかを決めます。
+ * 近いものから順に、いくつか返します。
+ *
+ * ※ 手書きの文字づかいから年代や性別を読み取ることは、こちらではできません。
+ *   ご感想の文章に出てくる言葉（ご主人・お孫さん など）から判断しています。
+ */
+function ymkrf_voice_illust_want( $post_id ) {
+
+	$t = array( (string) get_the_title( $post_id ),
+	            (string) get_post_field( 'post_content', $post_id ) );
+	foreach ( array( '_ymkrf_trouble', '_ymkrf_after', '_ymkrf_comment', '_ymkrf_recommend' ) as $k ) {
+		$t[] = (string) get_post_meta( $post_id, $k, true );
+	}
+	$txt = implode( "\n", $t );
+
+	$has = function ( $words ) use ( $txt ) {
+		foreach ( (array) $words as $w ) {
+			if ( $w !== '' && mb_strpos( $txt, $w ) !== false ) return true;
+		}
+		return false;
+	};
+
+	/* お子さん・お孫さんの話が出てくる */
+	$kids = $has( array( '子ども', '子供', 'こども', '息子', '娘', '孫', 'まご',
+	                     '赤ちゃん', '育児', '子育て' ) );
+
+	/* ご年配らしい言葉 */
+	$old  = $has( array( '孫', '介護', '手すり', 'バリアフリー', '高齢', '年寄',
+	                     '母が', '父が', '義母', '義父', '足腰', '転倒' ) );
+
+	/* 書いた方の手がかり */
+	$wife_writes = $has( array( '主人', '夫が', '夫と', 'だんな', '旦那' ) );  /* 女性が書いた */
+	$husb_writes = $has( array( '妻が', '妻と', '家内', 'かみさん' ) );        /* 男性が書いた */
+	$couple      = $wife_writes || $husb_writes
+	             || $has( array( '夫婦', 'ふたり暮らし', '二人暮らし' ) );
+
+	$want = array();
+
+	if ( $kids )                 $want[] = 'family';
+	if ( $couple && $old )       $want[] = 'couple_old';
+	if ( $couple )               $want[] = 'couple';
+
+	if ( $wife_writes ) {
+		$want[] = $old ? 'f_old' : 'f_mid';
+	} elseif ( $husb_writes ) {
+		$want[] = $old ? 'm_old' : 'm_mid';
+	} elseif ( $old ) {
+		$want[] = 'f_old';
+		$want[] = 'm_old';
+	}
+
+	return array_values( array_unique( $want ) );
+}
+
+/**
  * 「ランダム」をえらんだときに、どのイラストにするかを決めます。
  * （2026/09/17 ユーザー指示）
  *
- * いちばん使われていないイラストからえらぶので、40点が自然にばらけます。
- * 同じ点数のものが並んだときは、投稿の番号で決めます。
- * こうすると、何度ひらいても同じ絵になります（ページによって変わりません）。
+ *  ① アンケートの中身から、ふさわしいグループをさがします
+ *  ② そのグループの中で、いちばん使われていないものをえらびます
+ *  ③ 手がかりがなければ、60点すべての中から、いちばん使われていないものを
+ *
+ * いちど決めたら覚えておくので、ひらくたびに絵が変わることはありません。
  */
 function ymkrf_voice_illust_choose( $post_id ) {
 
@@ -819,15 +918,26 @@ function ymkrf_voice_illust_choose( $post_id ) {
 	$all = ymkrf_voice_illusts();
 	if ( ! $all ) return '';
 
-	$used = $wpdb->get_col(
+	/* いま何回使われているか */
+	$rows = $wpdb->get_col(
 		"SELECT meta_value FROM {$wpdb->postmeta} WHERE meta_key = '_ymkrf_illust_pick'" );
-
 	$cnt = array_fill_keys( $all, 0 );
-	foreach ( (array) $used as $u ) {
+	foreach ( (array) $rows as $u ) {
 		if ( isset( $cnt[ $u ] ) ) $cnt[ $u ]++;
 	}
 
-	$least = array_keys( $cnt, min( $cnt ) );
+	/* 中身に合うグループから順に見ていきます */
+	$pool = array();
+	foreach ( ymkrf_voice_illust_want( $post_id ) as $key ) {
+		$files = ymkrf_voice_illust_group_files( $key );
+		if ( $files ) { $pool = $files; break; }
+	}
+	if ( ! $pool ) $pool = $all;                    /* 手がかりなし＝ぜんぶから */
+
+	$sub = array_intersect_key( $cnt, array_flip( $pool ) );
+	if ( ! $sub ) $sub = $cnt;
+
+	$least = array_keys( $sub, min( $sub ) );
 	sort( $least );
 
 	return $least[ (int) $post_id % count( $least ) ];
