@@ -1,6 +1,7 @@
 <?php
 /**
- * functions-voice-status.php ─ お客様の声の「状態」を1つにまとめます
+ * functions-voice-status.php ─ 「状態」を1つにまとめます
+ *   ★お客様の声と商品の、両方であつかいます（ymkrf_vstatus_types）
  * 置き場所： wp-content/themes/ymkrf/inc/functions-voice-status.php
  *
  * （2026/09/16 ユーザー指示
@@ -29,12 +30,27 @@
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 
-/** えらべる状態 */
+/**
+ * この仕組みを使う投稿タイプ。
+ * ここに足せば、その画面も「状態」ひとつにまとまります。
+ * （2026/09/17 ユーザー指示「次に商品のところです。ステータスの箇所、
+ *   公開、非公開、下書き　にして」→ 商品を追加）
+ */
+function ymkrf_vstatus_types() {
+	return array( 'ymkrf_voice', 'ymkrf_product' );
+}
+
+/** この画面で使うかどうか */
+function ymkrf_vstatus_on( $type ) {
+	return in_array( (string) $type, ymkrf_vstatus_types(), true );
+}
+
+/** えらべる状態（2026/09/17 ユーザー指示の並び） */
 function ymkrf_vstatus_list() {
 	return array(
 		'publish' => '公開',
-		'draft'   => '下書き',
 		'private' => '非公開',
+		'draft'   => '下書き',
 	);
 }
 
@@ -43,9 +59,9 @@ function ymkrf_vstatus_now( $post ) {
 	$s = $post ? $post->post_status : 'draft';
 
 	/* あたらしく作っているときは「公開」をはじめから選んでおきます
-	   （2026/09/17 ユーザー指示「デフォルトで状態は公開にして」）
-	   お客様の情報などが見つかったときは、保存のあとで
-	   functions-voice-check.php が下書き（クレームは非公開）にもどします。 */
+	   （2026/09/17 ユーザー指示「デフォルトで状態は公開にして」
+	     「下書きのボタン上にあるし、公開にして」）
+	   途中で保存したいときは、上の「下書きとして保存」を押してください。 */
 	if ( $s === 'auto-draft' ) return 'publish';
 
 	if ( $s === 'publish' || $s === 'private' ) return $s;
@@ -59,7 +75,7 @@ function ymkrf_vstatus_now( $post ) {
    ------------------------------------------------------------ */
 add_action( 'post_submitbox_misc_actions', function ( $post ) {
 
-	if ( ! $post || $post->post_type !== 'ymkrf_voice' ) return;
+	if ( ! $post || ! ymkrf_vstatus_on( $post->post_type ) ) return;
 
 	$now = ymkrf_vstatus_now( $post );
 	wp_nonce_field( 'ymkrf_vstatus_save', 'ymkrf_vstatus_nonce' );
@@ -94,7 +110,7 @@ add_action( 'post_submitbox_misc_actions', function ( $post ) {
    ------------------------------------------------------------ */
 add_filter( 'wp_insert_post_data', function ( $data, $postarr ) {
 
-	if ( empty( $data['post_type'] ) || $data['post_type'] !== 'ymkrf_voice' ) return $data;
+	if ( empty( $data['post_type'] ) || ! ymkrf_vstatus_on( $data['post_type'] ) ) return $data;
 	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return $data;
 
 	if ( ! isset( $_POST['ymkrf_vstatus_nonce'] ) ||
@@ -131,10 +147,11 @@ add_filter( 'wp_insert_post_data', function ( $data, $postarr ) {
    ほかの仕組みがあとから状態を書きかえても、ここで戻します。
    データベースに直接書くので、また別の処理が動くこともありません。
    ------------------------------------------------------------ */
-add_action( 'save_post_ymkrf_voice', function ( $post_id ) {
+add_action( 'save_post', function ( $post_id ) {
 
 	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
 	if ( wp_is_post_revision( $post_id ) ) return;
+	if ( ! ymkrf_vstatus_on( get_post_type( $post_id ) ) ) return;
 
 	if ( ! isset( $_POST['ymkrf_vstatus_nonce'] ) ||
 	     ! wp_verify_nonce( $_POST['ymkrf_vstatus_nonce'], 'ymkrf_vstatus_save' ) ) return;
@@ -165,7 +182,7 @@ add_action( 'save_post_ymkrf_voice', function ( $post_id ) {
 add_action( 'admin_head-edit.php', function () {
 
 	$s = get_current_screen();
-	if ( ! $s || $s->post_type !== 'ymkrf_voice' ) return;
+	if ( ! $s || ! ymkrf_vstatus_on( $s->post_type ) ) return;
 	?>
 	<style>
 	  /* パスワード保護は使いません（2026/09/16 ユーザー指示） */

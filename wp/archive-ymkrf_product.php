@@ -30,12 +30,17 @@ $cards = array(
 	'boiler'     => array( 'ttl' => '給湯器',              'photo' => 'price-boiler-cut', 'cut' => true,
 	                       'desc' => 'お湯が出ない、というときもすぐお伺いします。在庫のある機種なら工期は半日。' ),
 	'ecocute'    => array( 'ttl' => 'エコキュート',         'photo' => 'price-ecocute',    'desc' => '電気でお湯をつくるので、光熱費をおさえられます。補助金の対象です。' ),
-	/* 外壁・屋根だけは商品を登録しません。専用のページがあるので、
-	   商品が0件でも「準備中」に落とさず、そのままご案内します。 */
-	'outer-wall' => array( 'ttl' => '外壁・屋根',           'photo' => 'price-paint',      'desc' => '北陸の雪と雨に耐える塗料選びから。外壁・屋根の専門サイトもご用意しています。',
-	                       'always' => true, 'link' => '外壁・屋根のページを見る', 'min' => 498000, 'nopack' => true ),
+	/* 外壁・屋根は、商品からは外しました
+	   （2026/09/17 ユーザー指示「商品に、外壁・屋根は削除」）
+	   外壁は専門サイトでご案内しているためです。 */
 	'window'     => array( 'ttl' => '窓・玄関ドア',          'photo' => '',                 'desc' => '内窓をつけるだけでも、寒さと結露がぐんと減ります。補助金の対象です。' ),
-	'interior'   => array( 'ttl' => '内装・改装',           'photo' => '',                 'desc' => 'クロス・床の張り替えから、間取りの変更まで承ります。' ),
+	/* 内装・改装は、商品ではなくパック料金でご案内します
+	   （2026/09/17 ユーザー指示。いただいたチラシの内容）
+	   商品が0件でも「準備中」に落とさず、そのまま一覧に出します。 */
+	'interior'   => array( 'ttl' => '内装・改装',           'photo' => '',
+	                       'desc' => '床の張り替え・和室から洋室へ。6帖・8帖のパック料金でご案内します。',
+	                       'always' => true, 'link' => 'パック料金を見る', 'min' => 158000,
+	                       'fuki' => '材料費も<br>工事費も' ),
 );
 
 /* それぞれの分類に商品が何件あるか、いちばん安いセット価格はいくらか */
@@ -44,7 +49,7 @@ $soon  = array();   // まだ準備中の分類
 
 foreach ( $cards as $slug => $c ) {
 
-	/* 商品を登録しない分類（外壁・屋根）は、数えずにそのまま並べます */
+	/* 商品を登録しない分類（内装・改装など）は、数えずにそのまま並べます */
 	if ( ! empty( $c['always'] ) ) {
 		$c['slug']  = $slug;
 		$c['count'] = 0;
@@ -164,12 +169,15 @@ get_header();
                 $dec  = rtrim( rtrim( number_format( $man - $intp, 2, '.', '' ), '0' ), '.' );
                 $dec  = ( $dec === '0' || $dec === '' ) ? '' : substr( $dec, 1 );  // 「.8」の形
                 ?>
+                <?php
+                /* 吹き出しの文言。カテゴリごとに変えたいときは
+                   上の $cards に 'fuki' => '材料費も<br>工事費も' を足してください。 */
+                $fuki = ! empty( $c['fuki'] ) ? $c['fuki'] : '工事費も<br>処分費も';
+                ?>
                 <p class="p-price__yen">
-                  <?php if ( ! empty( $c['nopack'] ) ) : ?>
-                    <span class="above above--all"><i class="fuki">足場代も<br>洗浄も</i><b>全部コミコミ!!</b></span>
-                  <?php else : ?>
-                    <span class="above above--all"><i class="fuki">工事費も<br>処分費も</i><b>全部コミコミ!!</b></span>
-                  <?php endif; ?>
+                  <span class="above above--all"><i class="fuki"><?php
+                    echo $fuki; /* phpcs:ignore ─ <br> だけ入ります */
+                  ?></i><b>全部コミコミ!!</b></span>
                   <span class="p-price__amount">
                     <span class="num"><?php echo esc_html( $intp ); ?><?php
                       if ( $dec ) echo '<span class="dec">' . esc_html( $dec ) . '</span>'; ?></span>

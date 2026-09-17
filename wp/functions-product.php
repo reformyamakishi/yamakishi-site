@@ -464,6 +464,19 @@ function ymkrf_product_fields_for( $cat = '' ) {
 		$out[ $k ] = $f;
 	}
 
+	/* 内装・改装は、使う欄がとても少ないので、ここでしぼります
+	   （2026/09/17 ユーザー指示
+	     「グレード／商品名／商品名の横の言葉／標準工事費／特徴1〜3」） */
+	if ( $cat === 'interior' ) {
+		$keep = array( '_ymkrf_grade', '_ymkrf_name', '_ymkrf_sub',
+		               '_ymkrf_work', '_ymkrf_pt1', '_ymkrf_pt2', '_ymkrf_pt3' );
+		$only = array();
+		foreach ( $keep as $k ) {
+			if ( isset( $out[ $k ] ) ) $only[ $k ] = $out[ $k ];
+		}
+		return $only;
+	}
+
 	/* 給湯器・エコキュートでは「商品名の横の言葉」は使いません。
 	   塗装鋼板・ステンレスは「外装」の欄に入れます（2026/09/01 ユーザー指示） */
 	if ( in_array( $cat, array( 'boiler', 'ecocute' ), true ) ) {
@@ -605,6 +618,19 @@ function ymkrf_product_repeaters() {
 				'note'  => array( '補足', 'text', '例：※工事費込み' ),
 			),
 		),
+		/* 内装・改装だけで使います（2026/09/17 ユーザー指示
+		   「施工事例みたいに、BeforeとAfterにするので、写真入れる箇所作って」） */
+		'_ymkrf_ba' => array(
+			'label' => 'Before / After の写真',
+			'note'  => '1行につき、施工前と施工後の写真を1枚ずつ入れてください。'
+			         . '何組でも足せます。説明は空でもかまいません。',
+			'only'  => array( 'interior' ),
+			'cols'  => array(
+				'before' => array( 'Before（施工前）', 'image' ),
+				'after'  => array( 'After（施工後）',  'image' ),
+				'text'   => array( '説明', 'text', '例：6帖の和室をフローリングに' ),
+			),
+		),
 		'_ymkrf_works' => array(
 			'label' => 'ヤマキシ標準工事内容',
 			'note'  => '同じカテゴリの商品は、だいたい同じ内容になります。'
@@ -624,6 +650,22 @@ function ymkrf_product_repeaters() {
 add_action( 'add_meta_boxes', function () {
 	add_meta_box( 'ymkrf_product_basic', '商品データ（基本）', 'ymkrf_product_box_basic', 'ymkrf_product', 'normal', 'high' );
 	foreach ( ymkrf_product_repeaters() as $key => $r ) {
+
+		/* 「ヤマキシ標準工事内容」は、商品ごとではなくカテゴリごとに決めます。
+		   （2026/09/17 ユーザー指示「商品登録ぺージには必要ないわ。
+		     ここは登録するだけのぺージにして」）
+		   直す場所は 商品 ＞ 標準工事内容の設定 です。 */
+		if ( $key === '_ymkrf_works' ) continue;
+
+		/* 分類をしぼっている欄（only）は、その分類のときだけ出します */
+		$cat_now = function_exists( 'ymkrf_product_current_cat' )
+			? ymkrf_product_current_cat( get_the_ID() ) : '';
+		if ( ! empty( $r['only'] ) && ! in_array( $cat_now, (array) $r['only'], true ) ) continue;
+
+		/* 内装・改装では、Before/After だけを出します
+		   （2026/09/17 ユーザー指示。標準仕様や扉カラーなどは使いません） */
+		if ( $cat_now === 'interior' && $key !== '_ymkrf_ba' ) continue;
+
 		add_meta_box(
 			'ymkrf_box' . $key, $r['label'],
 			function ( $post ) use ( $key ) { ymkrf_product_box_repeater( $post, $key ); },
@@ -1233,7 +1275,8 @@ add_filter( 'posts_clauses', function ( $clauses, $q ) {
 	/* エコキュートの一覧は「メーカーごと → その中は価格の安い順」にします。
 	   （2026/09/01 ユーザー指示。ダッシュボードの一覧だけです）
 
-	   ・メーカーは、エコキュートのページと同じ 三菱電機 → Panasonic → 日立 → ダイキン の順
+	   ・メーカーは、エコキュートのページと同じ 三菱電機 → Panasonic の順
+	     （2026/09/17 ユーザー指示。日立・ダイキンは載せないことになりました）
 	   ・価格が空の商品（下書き）は、そのメーカーのいちばん下に置きます
 	   ・見出しを押したときは、これまでどおりその見出しの順になります */
 	$eco_list = ( ! $front && ! $q->get( 'orderby' )
@@ -1242,7 +1285,7 @@ add_filter( 'posts_clauses', function ( $clauses, $q ) {
 
 	if ( $eco_list ) {
 
-		$mk_order = array( 'mitsubishi', 'panasonic', 'hitachi', 'daikin' );
+		$mk_order = array( 'mitsubishi', 'panasonic' );
 		$cases    = '';
 		foreach ( $mk_order as $n => $mk ) {
 			$t = get_term_by( 'slug', $mk, 'ymkrf_maker' );
@@ -1311,8 +1354,9 @@ if ( ! function_exists( 'ymkrf_product_cat_sort' ) ) :
 function ymkrf_product_cat_sort( $terms ) {
 	/* 商品一覧ページ（/products/）のカードと同じ順にします。
 	   ここに無い分類は、うしろに付きます。 */
+	/* 外壁・屋根は商品から外しました（2026/09/17 ユーザー指示） */
 	$order = array( 'kitchen', 'bathroom', 'toilet', 'lavatory', 'boiler', 'ecocute',
-	                'outer-wall', 'window', 'interior' );
+	                'window', 'interior' );
 	usort( $terms, function ( $a, $b ) use ( $order ) {
 		$ia = array_search( $a->slug, $order, true );
 		$ib = array_search( $b->slug, $order, true );
@@ -1750,8 +1794,9 @@ add_action( 'admin_bar_menu', function ( $bar ) {
 	if ( is_wp_error( $terms ) || ! $terms ) return;
 
 	/* 並べる順は、左メニューや商品一覧ページと同じにします */
+	/* 外壁・屋根は商品から外しました（2026/09/17 ユーザー指示） */
 	$order = array( 'kitchen', 'bathroom', 'toilet', 'lavatory', 'boiler', 'ecocute',
-	                'outer-wall', 'window', 'interior' );
+	                'window', 'interior' );
 	usort( $terms, function ( $a, $b ) use ( $order ) {
 		$ia = array_search( $a->slug, $order, true );
 		$ib = array_search( $b->slug, $order, true );
@@ -1800,8 +1845,9 @@ add_filter( 'views_edit-ymkrf_product', function ( $views ) {
 	if ( is_wp_error( $terms ) || ! $terms ) return $views;
 
 	/* 並べる順は、商品一覧ページ（/products/）のカードと同じ */
+	/* 外壁・屋根は商品から外しました（2026/09/17 ユーザー指示） */
 	$order = array( 'kitchen', 'bathroom', 'toilet', 'lavatory', 'boiler', 'ecocute',
-	                'outer-wall', 'window', 'interior' );
+	                'window', 'interior' );
 	usort( $terms, function ( $a, $b ) use ( $order ) {
 		$ia = array_search( $a->slug, $order, true );
 		$ib = array_search( $b->slug, $order, true );
@@ -2130,7 +2176,13 @@ function ymkrf_pointnote( $slug ) {
 				),
 		),
 	);
-	return isset( $d[ $slug ] ) ? $d[ $slug ] : array();
+	$out = isset( $d[ $slug ] ) ? $d[ $slug ] : array();
+
+	/* 設定画面（商品 ＞ 標準工事内容の設定）で直したものがあれば、それを使います
+	   （2026/09/17 ユーザー指示「ここ変更する時、その他設定でできないかな？」） */
+	if ( function_exists( 'ymkrf_koji_over' ) ) $out = ymkrf_koji_over( $slug, $out );
+
+	return $out;
 }
 endif;
 
@@ -3005,3 +3057,445 @@ add_action( 'admin_notices', function () {
 	delete_option( 'ymkrf_works_ver_log' );
 	echo '<div class="notice notice-success is-dismissible"><p>ヤマキシ標準工事内容：' . esc_html( $log ) . '</p></div>';
 } );
+
+
+/* ============================================================
+   メーカーの選択肢を、そのカテゴリで使うものだけにします
+   ------------------------------------------------------------
+   （2026/09/17 ユーザー指示
+     「登録画面で出てくるメーカーは、既存の登録してあるメーカーのみに
+       しておいて。たくさんあって選択しにくい。例えばウッドワンなんか、
+       洗面化粧台にしかないはずなのに、キッチンやエコキュートにあるのうざい」）
+
+   いま登録してある商品を見て、「このカテゴリでは、このメーカーが使われている」
+   という表を作ります。商品の登録画面では、えらんだカテゴリに関係のない
+   メーカーを隠します。
+
+   ★消すのではなく、隠すだけです。
+     新しいメーカーを足したいときは「ぜんぶ出す」を押してください。
+   ============================================================ */
+
+/** カテゴリ（term_id）→ そのカテゴリで使われているメーカー（term_id）の表 */
+function ymkrf_maker_map( $force = false ) {
+
+	$hit = get_transient( 'ymkrf_maker_map' );
+	if ( ! $force && is_array( $hit ) ) return $hit;
+
+	$map = array();
+
+	$ids = get_posts( array(
+		'post_type'      => 'ymkrf_product',
+		'post_status'    => 'any',
+		'posts_per_page' => -1,
+		'fields'         => 'ids',
+		'no_found_rows'  => true,
+	) );
+
+	foreach ( (array) $ids as $pid ) {
+
+		$cats = wp_get_object_terms( $pid, 'ymkrf_product_cat', array( 'fields' => 'ids' ) );
+		$mks  = wp_get_object_terms( $pid, 'ymkrf_maker',       array( 'fields' => 'ids' ) );
+		if ( is_wp_error( $cats ) || is_wp_error( $mks ) ) continue;
+		if ( ! $cats || ! $mks ) continue;
+
+		foreach ( $cats as $c ) {
+			if ( ! isset( $map[ $c ] ) ) $map[ $c ] = array();
+			foreach ( $mks as $m ) {
+				if ( ! in_array( $m, $map[ $c ], true ) ) $map[ $c ][] = (int) $m;
+			}
+		}
+	}
+
+	set_transient( 'ymkrf_maker_map', $map, DAY_IN_SECONDS );
+	return $map;
+}
+
+/** 商品を保存したら、表を作りなおします */
+add_action( 'save_post_ymkrf_product', function () {
+	delete_transient( 'ymkrf_maker_map' );
+}, 99 );
+
+/** 商品の登録画面で、関係のないメーカーを隠します */
+add_action( 'admin_footer', function () {
+
+	$s = get_current_screen();
+	if ( ! $s || $s->post_type !== 'ymkrf_product' || $s->base !== 'post' ) return;
+
+	$map = ymkrf_maker_map();
+	if ( ! $map ) return;
+	?>
+	<script>
+	jQuery(function ($) {
+
+	  var MAP = <?php echo wp_json_encode( $map ); ?>;
+	  var $mk = $('#ymkrf_makerchecklist');
+	  if (!$mk.length) return;
+
+	  var all = false;
+
+	  function refresh() {
+
+	    if (all) { $mk.find('li').show(); return; }
+
+	    /* いまチェックされている商品カテゴリ */
+	    var cats = [];
+	    $('#ymkrf_product_catchecklist input:checked').each(function () {
+	      cats.push(String($(this).val()));
+	    });
+
+	    /* そのカテゴリで使われているメーカー */
+	    var ok = {};
+	    cats.forEach(function (c) {
+	      (MAP[c] || []).forEach(function (m) { ok[String(m)] = true; });
+	    });
+
+	    /* カテゴリ未選択なら、ぜんぶ出します */
+	    if (!cats.length) { $mk.find('li').show(); return; }
+
+	    $mk.find('li').each(function () {
+	      var $li = $(this), $in = $li.find('input').first();
+	      if (!$in.length) return;
+	      /* すでにチェックが入っているものは、かならず出します */
+	      $li.toggle( ok[String($in.val())] === true || $in.is(':checked') );
+	    });
+	  }
+
+	  /* 「ぜんぶ出す」の切りかえ */
+	  $mk.closest('.inside').append(
+	    '<p style="margin:8px 0 0"><a href="#" id="ymkrf-mk-all" class="button button-small">'
+	    + 'ぜんぶのメーカーを出す</a>'
+	    + '<span class="description" style="display:block;margin-top:4px">'
+	    + 'いまは、このカテゴリで使っているメーカーだけを出しています。</span></p>'
+	  );
+
+	  $(document).on('click', '#ymkrf-mk-all', function (e) {
+	    e.preventDefault();
+	    all = !all;
+	    $(this).text(all ? 'このカテゴリのメーカーだけにする' : 'ぜんぶのメーカーを出す');
+	    refresh();
+	  });
+
+	  $(document).on('change', '#ymkrf_product_catchecklist input', refresh);
+	  refresh();
+	});
+	</script>
+	<?php
+} );
+
+
+/* 分類の欄の「すべて／よく使うもの」のタブは使わないので消します
+   （2026/09/17 ユーザー指示「よく使うもの　ってテキスト削除して」）
+   タブが無くても「すべて」の一覧がそのまま出ます。 */
+add_action( 'admin_head', function () {
+
+	$s = get_current_screen();
+	if ( ! $s || $s->base !== 'post' ) return;
+	if ( strpos( (string) $s->post_type, 'ymkrf_' ) !== 0 ) return;
+
+	echo '<style>.category-tabs{display:none !important}</style>';
+} );
+
+
+/* ============================================================
+   足りない商品カテゴリを作ります
+   ------------------------------------------------------------
+   （2026/09/17 ユーザー「内装・改装が商品一覧ぺージに無いけど」）
+
+   はじめの取り込みのあとに増やしたカテゴリは、
+   ダッシュボードの「商品」に出てきません。
+   ここで、足りないものだけを作ります。
+   すでにあるカテゴリは、いっさいさわりません。
+   ============================================================ */
+add_action( 'admin_init', function () {
+
+	$ver = '2026-09-17';
+	if ( get_option( 'ymkrf_product_cat_fill' ) === $ver ) return;
+	if ( ! current_user_can( 'manage_options' ) ) return;
+	if ( ! taxonomy_exists( 'ymkrf_product_cat' ) ) return;
+
+	$want = array(
+		'kitchen'    => 'キッチン',
+		'bathroom'   => 'お風呂',
+		'toilet'     => 'トイレ',
+		'lavatory'   => '洗面化粧台',
+		'boiler'     => '給湯器',
+		'ecocute'    => 'エコキュート',
+		'window'     => '窓・玄関ドア',
+		'interior'   => '内装・改装',
+		/* 外壁・屋根は商品から外しましたが、専用ページがあるので消しません */
+		'outer-wall' => '外壁・屋根',
+	);
+
+	$made = array();
+	foreach ( $want as $slug => $name ) {
+		if ( term_exists( $slug, 'ymkrf_product_cat' ) ) continue;
+		$r = wp_insert_term( $name, 'ymkrf_product_cat', array( 'slug' => $slug ) );
+		if ( ! is_wp_error( $r ) ) $made[] = $name;
+	}
+
+	update_option( 'ymkrf_product_cat_fill', $ver, false );
+	if ( $made ) set_transient( 'ymkrf_product_cat_made', $made, 120 );
+}, 8 );
+
+/* 作ったことを1度だけお知らせします */
+add_action( 'admin_notices', function () {
+	$made = get_transient( 'ymkrf_product_cat_made' );
+	if ( ! $made ) return;
+	delete_transient( 'ymkrf_product_cat_made' );
+	echo '<div class="notice notice-success is-dismissible"><p>'
+	   . '足りなかった商品カテゴリを作りました：<b>' . esc_html( implode( '、', (array) $made ) ) . '</b>'
+	   . '</p></div>';
+} );
+
+
+/* ============================================================
+   内装・改装のパック料金を、商品として登録します
+   ------------------------------------------------------------
+   （2026/09/17 ユーザー指示
+     「商品のところにカテゴリ分けして商品ページ作った方が見やすくない?」
+     「どこにぺージがあるかわからないよ、それでは」）
+
+   ページの中に直接書いていると、従業員の方が直す場所を見つけられません。
+   ほかのカテゴリと同じように「商品」として登録して、
+   ダッシュボードから直せるようにします。
+
+   ★1回だけ走ります。すでに同じ名前の商品があれば、作りません。
+     金額や文章を直したあとで、もういちど走って上書きすることはありません。
+   ============================================================ */
+add_action( 'admin_init', function () {
+
+	$ver = '2026-09-17a';
+	if ( get_option( 'ymkrf_interior_packs' ) === $ver ) return;
+	if ( ! current_user_can( 'manage_options' ) ) return;
+
+	$term = get_term_by( 'slug', 'interior', 'ymkrf_product_cat' );
+	if ( ! $term || is_wp_error( $term ) ) return;      /* カテゴリができてから */
+
+	/* name  … 商品名
+	   price … 込み価格（円・税込）
+	   catch … 商品名の上に出る小さな赤い文字
+	   feat  … 特徴（1行ずつ）
+	   order … 並び順（小さいほど上） */
+	$packs = array(
+		array(
+			'name'  => '畳 → フローリング（6帖パック）',
+			'price' => 198000,
+			'catch' => '床リフォーム',
+			'feat'  => array(
+				array( 'ttl' => '工事の中身', 'body' => "重ね張りではなく、新規に下地を作ります。" ),
+			),
+			'order' => 10,
+		),
+		array(
+			'name'  => '畳 → フローリング（8帖パック）',
+			'price' => 238000,
+			'catch' => '床リフォーム',
+			'feat'  => array(
+				array( 'ttl' => '工事の中身', 'body' => "重ね張りではなく、新規に下地を作ります。" ),
+			),
+			'order' => 20,
+		),
+		array(
+			'name'  => 'フローリング → フローリング（6帖パック）',
+			'price' => 158000,
+			'catch' => '床リフォーム',
+			'feat'  => array(
+				array( 'ttl' => '工事の中身', 'body' => "既存のフローリングに重ね貼りします。\n既存の床の点検補強も行います。" ),
+			),
+			'order' => 30,
+		),
+		array(
+			'name'  => 'フローリング → フローリング（8帖パック）',
+			'price' => 188000,
+			'catch' => '床リフォーム',
+			'feat'  => array(
+				array( 'ttl' => '工事の中身', 'body' => "既存のフローリングに重ね貼りします。\n既存の床の点検補強も行います。" ),
+			),
+			'order' => 40,
+		),
+		array(
+			'name'  => '和室 → 洋室リフォーム（6帖）',
+			'price' => 468000,
+			'catch' => '部屋リフォーム',
+			'feat'  => array(
+				array( 'ttl' => '工事の中身', 'body' => "畳 → フローリング\n天井：クロス貼り\n壁：耐火ボード貼り＋クロス貼り" ),
+			),
+			'order' => 50,
+		),
+		array(
+			'name'  => '洋室リフレッシュ（6帖）',
+			'price' => 268000,
+			'catch' => '部屋リフォーム',
+			'feat'  => array(
+				array( 'ttl' => '工事の中身', 'body' => "フローリング重ね貼り\n天井：クロス貼り\n壁：クロス貼り" ),
+			),
+			'order' => 60,
+		),
+	);
+
+	$made = 0;
+	foreach ( $packs as $p ) {
+
+		/* 同じ名前の商品がすでにあれば、作りません */
+		$dup = get_posts( array(
+			'post_type'      => 'ymkrf_product',
+			'post_status'    => 'any',
+			'title'          => $p['name'],
+			'posts_per_page' => 1,
+			'fields'         => 'ids',
+		) );
+		if ( $dup ) continue;
+
+		$id = wp_insert_post( array(
+			'post_type'   => 'ymkrf_product',
+			'post_title'  => $p['name'],
+			'post_status' => 'publish',
+		) );
+		if ( is_wp_error( $id ) || ! $id ) continue;
+
+		wp_set_object_terms( $id, array( (int) $term->term_id ), 'ymkrf_product_cat' );
+
+		/* 込み価格は「商品代」に入れます。標準工事費は空です
+		   （込み価格＝標準工事費＋商品代 で計算される決まりのため） */
+		update_post_meta( $id, '_ymkrf_work',  '' );
+		update_post_meta( $id, '_ymkrf_item',  (int) $p['price'] );
+		update_post_meta( $id, '_ymkrf_total', (int) $p['price'] );
+		update_post_meta( $id, '_ymkrf_catch', $p['catch'] );
+		update_post_meta( $id, '_ymkrf_order', (int) $p['order'] );
+		update_post_meta( $id, '_ymkrf_speclist', $p['feat'] );
+
+		$made++;
+	}
+
+	update_option( 'ymkrf_interior_packs', $ver, false );
+	if ( $made ) set_transient( 'ymkrf_interior_made', $made, 120 );
+}, 9 );
+
+add_action( 'admin_notices', function () {
+	$n = get_transient( 'ymkrf_interior_made' );
+	if ( ! $n ) return;
+	delete_transient( 'ymkrf_interior_made' );
+	echo '<div class="notice notice-success is-dismissible"><p>'
+	   . '内装・改装のパック料金を <b>' . (int) $n . '件</b> 商品として登録しました。'
+	   . '金額や文章は <b>商品 ＞ 内装・改装</b> から直せます。'
+	   . '</p></div>';
+} );
+
+
+/* ============================================================
+   内装・改装の登録画面から、使わない箱を消します
+   ------------------------------------------------------------
+   （2026/09/17 ユーザー指示
+     「並び順は右にあるのでセンターにあるやつは削除
+       展示店舗も削除　メーカーも削除　カテゴリも不要」）
+
+   ★カテゴリの箱を消しても、商品はカテゴリに入ったままです。
+     内装・改装の商品は、はじめから内装・改装に入っているためです。
+     保存のときに外れないよう、下でもういちど付けなおしています。
+   ============================================================ */
+add_action( 'add_meta_boxes', function () {
+
+	if ( ! function_exists( 'ymkrf_product_current_cat' ) ) return;
+	if ( ymkrf_product_current_cat( get_the_ID() ) !== 'interior' ) return;
+
+	remove_meta_box( 'ymkrf_product_catdiv', 'ymkrf_product', 'side' );   /* 商品カテゴリ */
+	remove_meta_box( 'ymkrf_makerdiv',       'ymkrf_product', 'side' );   /* メーカー */
+	remove_meta_box( 'ymkrf_shopdiv',        'ymkrf_product', 'side' );   /* 展示店舗 */
+}, 100 );
+
+/* 内装・改装の商品は、保存のときにカテゴリが外れないようにします */
+add_action( 'save_post_ymkrf_product', function ( $post_id ) {
+
+	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
+	if ( wp_is_post_revision( $post_id ) ) return;
+
+	/* 画面にカテゴリの箱が無かったときだけ、付けなおします */
+	if ( ! isset( $_POST['ymkrf_interior_keep'] ) ) return;
+
+	$term = get_term_by( 'slug', 'interior', 'ymkrf_product_cat' );
+	if ( $term && ! is_wp_error( $term ) ) {
+		wp_set_object_terms( $post_id, array( (int) $term->term_id ), 'ymkrf_product_cat' );
+	}
+}, 5 );
+
+/* カテゴリの箱を消した画面に、目じるしを1つ置いておきます */
+add_action( 'edit_form_after_title', function ( $post ) {
+	if ( ! $post || $post->post_type !== 'ymkrf_product' ) return;
+	if ( ! function_exists( 'ymkrf_product_current_cat' ) ) return;
+	if ( ymkrf_product_current_cat( $post->ID ) !== 'interior' ) return;
+	echo '<input type="hidden" name="ymkrf_interior_keep" value="1">';
+} );
+
+/* 「並び順」は、まん中の入力欄には出しません（右の「公開」の下にあります）。
+   上の ymkrf_product_fields_for() の $keep に入れていないので、自動で出ません。
+   （2026/09/17 ユーザー指示「並び順は右にあるのでセンターにあるやつは削除」） */
+
+
+/* ============================================================
+   Before / After の見くらべスライダー（商品）
+   （2026/09/17 ユーザー指示「施工事例みたいに写真をスライドさせてほしい」）
+
+   施工事例と同じ形（.p-compare）で出します。
+   動かす仕組みは assets/js/common.js の [data-compare] が
+   サイト全体で共通に受けもっているので、ここでは形を作るだけです。
+
+   写真を入れるのは 商品 ＞ 内装・改装 ＞「Before / After の写真」です。
+   ============================================================ */
+
+/** 写真のよこ／たての比（わからないときは 1.33） */
+function ymkrf_product_ba_ar( $att_id ) {
+	$m = wp_get_attachment_metadata( (int) $att_id );
+	if ( is_array( $m ) && ! empty( $m['width'] ) && ! empty( $m['height'] ) ) {
+		return (float) $m['width'] / (float) $m['height'];
+	}
+	return 1.33;
+}
+
+/**
+ * Before / After を、左右に動かして見くらべる形にします。
+ * 片方しか無いときは、ふつうの写真1枚として出します。
+ *
+ * @param int    $before_id 施工前の写真
+ * @param int    $after_id  施工後の写真
+ * @param string $name      商品名（画像の説明に使います）
+ */
+function ymkrf_product_compare( $before_id, $after_id, $name = '' ) {
+
+	$before_id = (int) $before_id;
+	$after_id  = (int) $after_id;
+	if ( ! $before_id && ! $after_id ) return '';
+
+	$alt = function ( $which ) use ( $name ) {
+		$jp = ( $which === 'before' ) ? '施工前' : '施工後';
+		return trim( $name ) !== '' ? $name . 'の' . $jp . 'のようす' : $jp . 'のようす';
+	};
+
+	$img = function ( $id, $which ) use ( $alt ) {
+		$url = wp_get_attachment_image_url( (int) $id, 'large' );
+		if ( ! $url ) return '';
+		return '<img src="' . esc_url( $url ) . '" alt="' . esc_attr( $alt( $which ) ) . '"'
+		     . ' loading="lazy" decoding="async">';
+	};
+
+	/* 片方だけのとき */
+	if ( ! $before_id || ! $after_id ) {
+		$which = $after_id ? 'after' : 'before';
+		$one   = $img( $after_id ? $after_id : $before_id, $which );
+		if ( $one === '' ) return '';
+		return '<div class="p-pack__solo">' . $one . '</div>';
+	}
+
+	/* 枠の形は、2枚の写真の平均に合わせます */
+	$ar = ( ymkrf_product_ba_ar( $before_id ) + ymkrf_product_ba_ar( $after_id ) ) / 2;
+	$ar = max( 0.8, min( 1.9, $ar ) );
+
+	$h  = '<div class="p-compare" data-compare style="--pos:50%;--cmp-ar:' . esc_attr( round( $ar, 3 ) ) . '">';
+	$h .= '<div class="p-compare__layer p-compare__layer--before">' . $img( $before_id, 'before' ) . '</div>';
+	$h .= '<div class="p-compare__layer p-compare__layer--after">'  . $img( $after_id,  'after'  ) . '</div>';
+	$h .= '<span class="p-compare__tag p-compare__tag--before">BEFORE</span>';
+	$h .= '<span class="p-compare__tag p-compare__tag--after">AFTER</span>';
+	$h .= '<span class="p-compare__handle"></span>';
+	$h .= '<span class="p-compare__hint">← 左右に動かして見くらべる →</span>';
+	$h .= '</div>';
+	return $h;
+}

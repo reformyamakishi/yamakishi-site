@@ -499,7 +499,10 @@ if ( $slug === 'ecocute' ) {
 	   ★メーカーの説明は、一覧のいちばん上の「取り扱いメーカー」に出ます。
 	     文章はダッシュボードの「商品 → メーカー」の「説明」欄で直せます。 */
 
-	$maker_order = array( 'mitsubishi', 'panasonic', 'hitachi', 'daikin' );
+	/* エコキュートは、三菱電機とパナソニックだけを載せます
+	   （2026/09/17 ユーザー指示「エコキュートのメーカーは三菱とパナソニックしか
+	     WEBでは掲載しません。他のメーカーは削除」） */
+	$maker_order = array( 'mitsubishi', 'panasonic' );
 
 	/* 小さい順に並べています */
 	$tanks = array(
@@ -519,7 +522,8 @@ if ( $slug === 'ecocute' ) {
 	}
 
 	/* 表にないメーカーは、うしろにまわします */
-	$mkeys = array_merge( $maker_order, array_diff( array_keys( $bin ), $maker_order ) );
+	/* 三菱電機・パナソニック以外は、一覧にも出しません（2026/09/17 ユーザー指示） */
+	$mkeys = $maker_order;
 
 	foreach ( $mkeys as $_mk ) {
 		if ( empty( $bin[ $_mk ] ) ) continue;
@@ -825,12 +829,147 @@ if ( ! empty( $pn['items'] ) ) :
 
 <?php endif; /* $c */ ?>
 
+<?php
+/* 内装・改装のパック料金は、商品として登録する形にしました
+   （2026/09/17 ユーザー「どこにぺージがあるかわからないよ」）
+   ページの中に直接書いていると、直す場所が分からなくなるためです。
+   いまは下の「商品一覧」に、ほかのカテゴリと同じカードで並びます。
+   金額や文章は 商品 ＞ 内装・改装 から直せます。 */
+?>
+
 <!-- =========== 商品一覧 =========== -->
 <section class="l-section" id="products">
   <div class="l-wrap">
     <h2 class="p-prd__bar"><?php echo esc_html( ymkrf_cat_listtitle( $slug, $name ) ); ?></h2>
 
-    <?php if ( $q->have_posts() ) : ?>
+    <?php if ( $slug === 'interior' && $q->have_posts() ) : ?>
+
+      <?php
+      /* =========== 内装・改装は1ページにまとめます ===========
+         （2026/09/17 ユーザー指示「商品一覧に並んだもの、1ぺージにまとめられない？」
+           「フロントで見るとき」）
+
+         カードを押して1つずつ開く形ではなく、この1ページで見くらべられるようにします。
+         中身は「商品」から読んでいるので、金額や文章は
+         商品 ＞ 内装・改装 から直せます。
+
+         「キャッチコピー」欄に入れた言葉（床リフォーム／部屋リフォーム）で
+         まとまりに分けています。 */
+
+      $ymkrf_ig = array();
+      foreach ( $q->posts as $ip ) {
+        $g = trim( (string) get_post_meta( $ip->ID, '_ymkrf_catch', true ) );
+        if ( $g === '' ) $g = 'パック料金';
+        if ( ! isset( $ymkrf_ig[ $g ] ) ) $ymkrf_ig[ $g ] = array();
+        $ymkrf_ig[ $g ][] = $ip;
+      }
+      ?>
+
+      <p class="p-cat__listlead">
+        価格はすべて<strong>材料費・工事費まで込み</strong>の税込表示です。
+      </p>
+
+      <?php foreach ( $ymkrf_ig as $gname => $gposts ) : ?>
+        <div class="p-pack">
+          <h3 class="p-pack__ttl"><?php echo esc_html( $gname ); ?></h3>
+
+          <div class="p-pack__list">
+            <?php foreach ( $gposts as $ip ) :
+
+              $itotal = (int) get_post_meta( $ip->ID, '_ymkrf_total', true );
+              if ( ! $itotal ) {
+                $itotal = (int) get_post_meta( $ip->ID, '_ymkrf_work', true )
+                        + (int) get_post_meta( $ip->ID, '_ymkrf_item', true );
+              }
+              $ispec = get_post_meta( $ip->ID, '_ymkrf_speclist', true );
+              $iman  = $itotal ? rtrim( rtrim( number_format( $itotal / 10000, 1, '.', '' ), '0' ), '.' ) : '';
+
+              /* Before / After の写真
+                 （2026/09/17 ユーザー指示
+                   「施工事例みたいに、BeforeとAfterにするので、写真入れる箇所作って」）
+                 商品の編集ページ「Before / After の写真」に入れた行を読みます。
+                 入っていないときは、これまでどおりアイキャッチを出します。 */
+              $iba     = get_post_meta( $ip->ID, '_ymkrf_ba', true );
+              $ibarows = array();
+              if ( is_array( $iba ) ) {
+                foreach ( $iba as $ibr ) {
+                  if ( ! is_array( $ibr ) ) continue;
+                  $bid = isset( $ibr['before'] ) ? (int) $ibr['before'] : 0;
+                  $aid = isset( $ibr['after'] )  ? (int) $ibr['after']  : 0;
+                  if ( ! $bid && ! $aid ) continue;
+                  $ibarows[] = array(
+                    'before' => $bid,
+                    'after'  => $aid,
+                    'text'   => isset( $ibr['text'] ) ? trim( (string) $ibr['text'] ) : '',
+                  );
+                }
+              }
+            ?>
+              <div class="p-pack__item">
+
+                <?php /* 写真。Before/After が入っていればそれを、無ければアイキャッチを出します */ ?>
+                <?php if ( $ibarows ) : ?>
+                  <div class="p-pack__ba">
+                    <?php foreach ( $ibarows as $ibr ) :
+                      /* 施工事例と同じ、左右に動かして見くらべるスライダーです
+                         （2026/09/17 ユーザー指示「施工事例みたいに写真をスライドさせてほしい」） */
+                      $ibhtml = function_exists( 'ymkrf_product_compare' )
+                        ? ymkrf_product_compare( $ibr['before'], $ibr['after'], get_the_title( $ip->ID ) )
+                        : '';
+                      if ( $ibhtml === '' ) continue;
+                      echo $ibhtml;
+                      ?>
+                      <?php if ( $ibr['text'] !== '' ) : ?>
+                        <p class="p-pack__batext"><?php echo esc_html( $ibr['text'] ); ?></p>
+                      <?php endif; ?>
+                    <?php endforeach; ?>
+                  </div>
+                <?php else : ?>
+                  <div class="p-pack__photo">
+                    <?php if ( has_post_thumbnail( $ip->ID ) ) : ?>
+                      <?php echo get_the_post_thumbnail( $ip->ID, 'medium_large', array(
+                        'alt' => esc_attr( get_the_title( $ip->ID ) ),
+                        'loading' => 'lazy', 'decoding' => 'async',
+                      ) ); ?>
+                    <?php else : ?>
+                      <span class="p-pack__nophoto">［写真］</span>
+                    <?php endif; ?>
+                  </div>
+                <?php endif; ?>
+
+                <div class="p-pack__body">
+                  <h4 class="p-pack__name"><?php echo esc_html( get_the_title( $ip->ID ) ); ?></h4>
+                  <?php if ( is_array( $ispec ) ) : foreach ( $ispec as $sp ) :
+                    $sbody = isset( $sp['body'] ) ? trim( (string) $sp['body'] ) : '';
+                    if ( $sbody === '' ) continue; ?>
+                    <ul class="p-pack__spec">
+                      <?php foreach ( preg_split( '/\r\n|\r|\n/', $sbody ) as $sline ) :
+                        $sline = trim( $sline ); if ( $sline === '' ) continue; ?>
+                        <li><?php echo esc_html( $sline ); ?></li>
+                      <?php endforeach; ?>
+                    </ul>
+                  <?php endforeach; endif; ?>
+                </div>
+
+                <?php if ( $iman !== '' ) : ?>
+                  <p class="p-pack__price">
+                    <span class="p-pack__komi">工事費込</span>
+                    <span class="p-pack__num"><?php echo esc_html( $iman ); ?></span>万円<span class="p-pack__kara">〜</span>
+                    <small class="p-pack__tax">（税込）</small>
+                  </p>
+                <?php endif; ?>
+              </div>
+            <?php endforeach; ?>
+          </div>
+        </div>
+      <?php endforeach; wp_reset_postdata(); ?>
+
+      <p class="p-cat__calcnote2">
+        お部屋の広さや下地の状態によって変わります。
+        追加の工事が必要なときは、着工前にかならずお見積りをお出しします。
+      </p>
+
+    <?php elseif ( $q->have_posts() ) : ?>
 
       <?php /* 給湯器・エコキュートは種類やタンクの大きさで分けて並べていて
                全体の「安い順」ではないので、この案内は出しません。 */
