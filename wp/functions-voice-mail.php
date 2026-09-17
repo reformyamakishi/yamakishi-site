@@ -8,7 +8,7 @@
  *  3. メールの文面を組み立てる
  *  4. 送る
  *  5. 編集画面の「担当店へのお知らせ」欄
- *  6. 送信のきっかけ（保存したとき／「いま送る」ボタン）
+ *  6. 送信のきっかけ（「送信」ボタンを押したときだけ）
  *  7. 送信の記録
  *  8. 一覧の「担当店へ連絡」（済／未 ＋ クレーム）
  *  9. ★1回だけ★ いままでのぶんを「済」にそろえる
@@ -16,8 +16,7 @@
  * ── 名前について ──────────────────────────────
  * 設定の保存さき … ymkrf_vmail（ひとつの箱にまとめています）
  * 送信の記録 …… ymkrf_vmail_log（新しい順に50件まで）
- * 入力欄 …… _ymkrf_mail_send  担当店へ連絡する（1なら送る）
- *             _ymkrf_claim      クレーム（1なら有）
+ * 入力欄 …… _ymkrf_claim      クレーム（1なら有）
  *             _ymkrf_mail_name  件名（○○邸○○リフォーム）。メールの中だけで使います
  *             _ymkrf_mail_sent  送った日時（送れていたら入ります）
  *             _ymkrf_staff_mail スタッフのメールアドレス（functions-staff.php）
@@ -30,14 +29,20 @@
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-/** テスト中の送りさき（はじめの値） */
-const YMKRF_VMAIL_TEST_TO = 'h-nakagawa@yamakishi.co.jp';
+/** テスト中の送りさき（2026/09/17 ユーザー指示
+ *  「テストメールは reform@yamakishi.co.jp にしといて」） */
+const YMKRF_VMAIL_TEST_TO = 'reform@yamakishi.co.jp';
 
 /** メールの件名 */
 const YMKRF_VMAIL_SUBJECT = 'お客様よりアンケートが届きましたのでお知らせいたします。';
 
 /** 差出人の名前 */
 const YMKRF_VMAIL_FROM_NAME = 'リフォームヤマキシ マーケティング室';
+
+/** 差出人のアドレス（2026/09/17 ユーザー指示
+ *  「本番では reform@yamakishi.co.jp からメール送ります」）
+ *  設定画面で入れかえられます。空にすると、これが使われます。 */
+const YMKRF_VMAIL_FROM = 'reform@yamakishi.co.jp';
 
 
 /* ------------------------------------------------------------
@@ -52,7 +57,6 @@ const YMKRF_VMAIL_FROM_NAME = 'リフォームヤマキシ マーケティング
 add_filter( 'is_protected_meta', function ( $protected, $key ) {
 	$mine = array(
 		'_ymkrf_mail_name',   /* 件名（○○邸○○リフォーム） */
-		'_ymkrf_mail_send',
 		'_ymkrf_mail_sent',
 		'_ymkrf_claim',
 		'_ymkrf_staff_mail',
@@ -72,12 +76,28 @@ function ymkrf_vmail_opt() {
 		'test'    => '1',                      // テスト中（1アドレスだけに送る）
 		'test_to' => YMKRF_VMAIL_TEST_TO,      // テスト中の送りさき
 		'hq'      => '',                       // 本部などの追加アドレス（1行に1つ）
-		'from'    => '',                       // 差出人（空ならWordPressの既定）
+		'from'    => YMKRF_VMAIL_FROM,         // 差出人
 	);
 	$o = get_option( 'ymkrf_vmail' );
 	if ( ! is_array( $o ) ) $o = array();
 	return array_merge( $d, $o );
 }
+
+/** ★1回だけ★ 保存ずみのテスト送りさきを、新しいアドレスにそろえます
+ *  （2026/09/17 ユーザー指示。すでに画面で保存されていると、
+ *    上の「はじめの値」だけでは変わらないためです） */
+add_action( 'admin_init', function () {
+
+	if ( get_option( 'ymkrf_vmail_testto_fixed' ) ) return;
+
+	$o = get_option( 'ymkrf_vmail' );
+	if ( is_array( $o ) && ! empty( $o['test_to'] ) && $o['test_to'] !== YMKRF_VMAIL_TEST_TO ) {
+		$o['test_to'] = YMKRF_VMAIL_TEST_TO;
+		update_option( 'ymkrf_vmail', $o );
+	}
+
+	update_option( 'ymkrf_vmail_testto_fixed', 1, false );
+}, 7 );
 
 /** 設定の画面を「お客様の声」の下に出します */
 add_action( 'admin_menu', function () {
@@ -138,9 +158,9 @@ function ymkrf_vmail_settings_page() {
 	  <?php endif; ?>
 
 	  <p>
-	    お客様の声（アンケート）を登録して、編集画面の
-	    <b>「アンケートを担当店へ連絡する」</b>にチェックを入れて保存すると、
-	    担当店のスタッフ全員と本部あてに、お知らせメールがとどきます。
+	    お客様の声（アンケート）の編集画面の右にある
+	    <b>「送信」</b>を押すと、担当店のスタッフ全員と本部あてに、お知らせメールがとどきます。
+	    保存しただけでは出ません。
 	  </p>
 
 	  <?php if ( ! empty( $o['test'] ) ) : ?>
@@ -201,8 +221,12 @@ function ymkrf_vmail_settings_page() {
 	        <th>差出人のアドレス</th>
 	        <td>
 	          <input type="email" name="ymkrf_vmail_from" class="regular-text"
-	                 value="<?php echo esc_attr( $o['from'] ); ?>" placeholder="（空のままでOK）">
-	          <p class="description">空のままなら、WordPressの決めたアドレスで出します。</p>
+	                 value="<?php echo esc_attr( $o['from'] ); ?>"
+	                 placeholder="<?php echo esc_attr( YMKRF_VMAIL_FROM ); ?>">
+	          <p class="description">
+	            このアドレスから送ったことにします。空にすると
+	            <code><?php echo esc_html( YMKRF_VMAIL_FROM ); ?></code> になります。
+	          </p>
 	        </td>
 	      </tr>
 
@@ -321,10 +345,12 @@ function ymkrf_vmail_settings_page() {
 
 /** メールの見出し（差出人） */
 function ymkrf_vmail_headers() {
-	$o = ymkrf_vmail_opt();
+	$o    = ymkrf_vmail_opt();
+	$from = ! empty( $o['from'] ) ? $o['from'] : YMKRF_VMAIL_FROM;
+
 	$h = array( 'Content-Type: text/plain; charset=UTF-8' );
-	if ( ! empty( $o['from'] ) && is_email( $o['from'] ) ) {
-		$h[] = 'From: ' . YMKRF_VMAIL_FROM_NAME . ' <' . $o['from'] . '>';
+	if ( is_email( $from ) ) {
+		$h[] = 'From: ' . YMKRF_VMAIL_FROM_NAME . ' <' . $from . '>';
 	}
 	return $h;
 }
@@ -476,6 +502,12 @@ function ymkrf_vmail_body( $post_id ) {
 
 	$b  = YMKRF_VMAIL_SUBJECT . "\n\n";
 	$b .= '到着日：' . $date . "\n";
+
+	/* 案件番号は、登録してある番号をそのまま入れます
+	   （2026/09/17 ユーザー指示「案件番号は自動でいれて」） */
+	$case = trim( (string) get_post_meta( $post_id, '_ymkrf_case_no', true ) );
+	if ( $case !== '' ) $b .= '案件番号：' . $case . "\n";
+
 	if ( $name !== '' ) $b .= '件名：' . $name . "\n";
 	$b .= '営業店：' . ( $shop !== '' ? $shop : '（未設定）' ) . "\n";
 	$b .= '営業担当者：' . ( $staff !== '' ? $staff : '（未設定）' ) . "\n";
@@ -508,13 +540,11 @@ function ymkrf_vmail_body( $post_id ) {
 		$b .= "対応後は「17追加対応完了（苦情/補修/メンテ）」\n";
 		$b .= "に変更をお願いします。\n";
 		$b .= "\n";
-		$b .= "※くれぐれも「完了」にはしないで下さい。\n";
-		$b .= "　またハガキが1か月ごと6か月後に自動で送られます。\n";
+		$b .= "これを「13完了」にしてしまうとまたハガキが1か月ごと6か月後に"
+		    . "自動で送られますのでご注意ください。\n";
 		$b .= "\n";
-		$b .= "※また、最終状況が「17追加対応完了（苦情/補修/メンテ）」になるまで\n";
-		$b .= "　マーケティング室で追いかけをしています。\n";
-		$b .= "　状態に変化がない場合は営業担当の方に定期的に連絡させていただきますので\n";
-		$b .= "　よろしくお願いします。\n";
+		$b .= "※また、最終状況が「17追加対応完了（苦情/補修/メンテ）」になるまで"
+		    . "マーケティング室で追いかけをしていますのでよろしくお願いします。\n";
 	}
 
 	$b .= "\n";
@@ -608,50 +638,34 @@ function ymkrf_vmail_save_file( $post_id, $to, $body ) {
    ============================================================ */
 
 add_action( 'add_meta_boxes', function () {
+	/* 「公開」ボックスの下に置きます。
+	   上に置くと、入力中にEnterを押したとき「送信」が先に反応してしまうためです。 */
 	add_meta_box( 'ymkrf_vmail_box', '担当店へのお知らせメール',
-		'ymkrf_vmail_metabox', 'ymkrf_voice', 'side', 'high' );
+		'ymkrf_vmail_metabox', 'ymkrf_voice', 'side', 'default' );
 }, 12 );
 
 function ymkrf_vmail_metabox( $post ) {
+
 	$o     = ymkrf_vmail_opt();
 	$sent  = (string) get_post_meta( $post->ID, '_ymkrf_mail_sent', true );
 	$claim = ( get_post_meta( $post->ID, '_ymkrf_claim', true ) === '1' );
-
-	$send = (string) get_post_meta( $post->ID, '_ymkrf_mail_send', true );
-	if ( $send === '' ) {
-		/* あたらしく作っているときだけ、はじめからチェックを入れておきます */
-		$send = ( $post->post_status === 'auto-draft' ) ? '1' : '0';
-	}
-
 	$mname = (string) get_post_meta( $post->ID, '_ymkrf_mail_name', true );
 
 	wp_nonce_field( 'ymkrf_vmail_save', 'ymkrf_vmail_nonce' );
+
 	?>
-	<p style="margin-top:0;margin-bottom:4px"><b>件名（○○邸○○リフォーム）</b></p>
+
+	<?php /* ---- ① 件名 ---- */ ?>
+	<p style="margin-top:0;margin-bottom:4px"><b>件名</b></p>
 	<p style="margin-top:0">
 	  <input type="text" name="_ymkrf_mail_name" style="width:100%"
 	         value="<?php echo esc_attr( $mname ); ?>"
 	         placeholder="例：吉田邸キッチンリフォーム">
 	</p>
-	<p class="description" style="margin-top:-6px">
-	  お知らせメールの中に、そのまま入ります。<br>
-	  <b style="color:#b32d00">ホームページには出ません。</b>社内へのメールだけに使います。
-	</p>
 
 	<hr>
 
-	<p style="margin-top:0">
-	  <label style="font-size:14px">
-	    <input type="checkbox" name="_ymkrf_mail_send" value="1" <?php checked( $send, '1' ); ?>>
-	    <b>アンケートを担当店へ連絡する</b>
-	  </label>
-	</p>
-	<p class="description" style="margin-top:-6px">
-	  チェックを入れて保存すると、担当店のスタッフ全員と本部あてに、このアンケートのURLをお知らせします。
-	</p>
-
-	<hr>
-
+	<?php /* ---- ② クレーム ---- */ ?>
 	<p style="margin-bottom:4px"><b>クレーム</b></p>
 	<p style="margin-top:0">
 	  <label style="margin-right:14px">
@@ -664,12 +678,12 @@ function ymkrf_vmail_metabox( $post ) {
 	  </label>
 	</p>
 	<p class="description" style="margin-top:-6px">
-	  「有」にすると、メールに対応のお願いの文がつきます。<br>
-	  「有」のアンケートは<b style="color:#b32d00">非公開</b>にします（ログインした人だけが見られます）。
+	  有：非公開になります
 	</p>
 
 	<hr>
 
+	<?php /* ---- ③ 送信 ---- */ ?>
 	<?php if ( ! empty( $o['test'] ) ) : ?>
 	  <p style="background:#fff5f5;border-left:3px solid #d63638;padding:6px 8px;margin:0 0 8px">
 	    <b>いまはテスト中です。</b><br>
@@ -678,29 +692,12 @@ function ymkrf_vmail_metabox( $post ) {
 	<?php endif; ?>
 
 	<p style="margin:0 0 6px">
-	  担当店へ連絡：
-	  <?php if ( $sent !== '' ) : ?>
-	    <b style="color:#118a3d;font-size:15px">済</b>
-	    <span style="color:#666">（<?php echo esc_html( $sent ); ?>）</span>
-	  <?php else : ?>
-	    <b style="color:#50575e;font-size:15px">未</b>
-	  <?php endif; ?>
-	  <?php if ( $claim ) : ?>
-	    <b style="color:#d63638"> クレーム</b>
-	  <?php endif; ?>
+	  <button type="submit" name="ymkrf_vmail_now" value="1"
+	          class="button button-primary" style="width:100%">
+	    <?php echo $sent !== '' ? 'もう一度 送信' : '送信'; ?>
+	  </button>
 	</p>
-
-	<?php
-	$url = wp_nonce_url(
-		admin_url( 'post.php?post=' . $post->ID . '&action=edit&ymkrf_vmail_now=1' ),
-		'ymkrf_vmail_now_' . $post->ID, 'ymkrf_vmail_now_nonce' );
-	?>
-	<a href="<?php echo esc_url( $url ); ?>" class="button">
-	  <?php echo $sent !== '' ? 'もう一度いま送る' : 'いま送る'; ?>
-	</a>
-	<p class="description">先に「更新」を押して、内容を保存してからお使いください。</p>
-
-	<details style="margin-top:10px">
+	<details style="margin:8px 0 0">
 	  <summary style="cursor:pointer">送る文面を見る</summary>
 	  <p class="description" style="margin:6px 0">送りさき：
 	    <?php $to = ymkrf_vmail_to( $post->ID );
@@ -711,6 +708,24 @@ function ymkrf_vmail_metabox( $post ) {
 	              border:1px solid #dcdcde;padding:8px;max-height:24em;overflow:auto"><?php
 	    echo esc_html( ymkrf_vmail_body( $post->ID ) ); ?></pre>
 	</details>
+
+	<hr>
+
+	<?php /* ---- ④ すでに連絡 ---- */ ?>
+	<p style="margin:0 0 4px"><b>すでに連絡</b></p>
+	<p style="margin:0 0 6px">
+	  <label style="margin-right:14px">
+	    <input type="radio" name="_ymkrf_mail_done" value="1" <?php checked( $sent !== '', true ); ?>>
+	    <b style="color:#118a3d">済</b>
+	  </label>
+	  <label>
+	    <input type="radio" name="_ymkrf_mail_done" value="" <?php checked( $sent === '', true ); ?>>
+	    <b style="color:#50575e">未</b>
+	  </label>
+	  <?php if ( $sent !== '' ) : ?>
+	    <span style="color:#888;font-size:12px">（<?php echo esc_html( $sent ); ?>）</span>
+	  <?php endif; ?>
+	</p>
 	<?php
 }
 
@@ -730,47 +745,55 @@ add_action( 'save_post_ymkrf_voice', function ( $post_id ) {
 	     ! wp_verify_nonce( $_POST['ymkrf_vmail_nonce'], 'ymkrf_vmail_save' ) ) return;
 	if ( ! current_user_can( 'edit_post', $post_id ) ) return;
 
-	$send = empty( $_POST['_ymkrf_mail_send'] ) ? '' : '1';
-	update_post_meta( $post_id, '_ymkrf_mail_send', $send ? '1' : '0' );
 	update_post_meta( $post_id, '_ymkrf_claim', empty( $_POST['_ymkrf_claim'] ) ? '' : '1' );
 
 	/* 件名（○○邸○○リフォーム）。メールの中だけで使います */
 	update_post_meta( $post_id, '_ymkrf_mail_name',
 		isset( $_POST['_ymkrf_mail_name'] )
 			? sanitize_text_field( wp_unslash( $_POST['_ymkrf_mail_name'] ) ) : '' );
+
+	/* 担当店へ連絡の 済／未。手で切りかえられます
+	   （2026/09/17 ユーザー指示「担当者へ連絡 済も選択できるようにして」） */
+	if ( isset( $_POST['_ymkrf_mail_done'] ) ) {
+		$was  = (string) get_post_meta( $post_id, '_ymkrf_mail_sent', true );
+		$done = ( $_POST['_ymkrf_mail_done'] === '1' );
+
+		if ( $done && $was === '' ) {
+			update_post_meta( $post_id, '_ymkrf_mail_sent', current_time( 'mysql' ) );
+		} elseif ( ! $done && $was !== '' ) {
+			delete_post_meta( $post_id, '_ymkrf_mail_sent' );
+		}
+	}
 }, 40 );
 
+/* ★メールは「送信」ボタンでだけ送ります★
+   （2026/09/17 ユーザー指示「チェックはなくして、送信ボタンだけにする」）
+   保存しただけでは、メールは出ません。 */
+
 /**
- * 送るのは、いちばん最後にします。
- * functions-voice-check.php が「要確認」で下書きにもどすのが 60 なので、
- * そのあと（70）に送れば、メールに書くURLが正しくなります。
+ * 「送信」ボタン。
+ * 保存のいちばん最後（70）に動くので、画面で直した内容が
+ * そのままメールに入りますし、クレームの切りかえも消えません。
+ * （2026/09/17 ユーザー「クレーム無にチェック入れています」への対応）
  */
 add_action( 'save_post_ymkrf_voice', function ( $post_id ) {
+
 	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
+	if ( empty( $_POST['ymkrf_vmail_now'] ) ) return;
 	if ( ! isset( $_POST['ymkrf_vmail_nonce'] ) ||
 	     ! wp_verify_nonce( $_POST['ymkrf_vmail_nonce'], 'ymkrf_vmail_save' ) ) return;
 	if ( ! current_user_can( 'edit_post', $post_id ) ) return;
 
-	if ( get_post_meta( $post_id, '_ymkrf_mail_send', true ) !== '1' ) return;
-	if ( get_post_meta( $post_id, '_ymkrf_mail_sent', true ) !== '' ) return;
+	$r = ymkrf_vmail_send( $post_id, true );
 
-	$r = ymkrf_vmail_send( $post_id );
+	/* 送れなかったときも「済」にします
+	   （2026/09/17 ユーザー指示「未になっていたら済にして下さい」） */
+	if ( get_post_meta( $post_id, '_ymkrf_mail_sent', true ) === '' ) {
+		update_post_meta( $post_id, '_ymkrf_mail_sent', current_time( 'mysql' ) );
+	}
+
 	set_transient( 'ymkrf_vmail_note_' . $post_id, $r, 60 );
 }, 70 );
-
-/** 「いま送る」ボタン */
-add_action( 'admin_init', function () {
-	if ( empty( $_GET['ymkrf_vmail_now'] ) || empty( $_GET['post'] ) ) return;
-	$pid = (int) $_GET['post'];
-	if ( ! wp_verify_nonce( $_GET['ymkrf_vmail_now_nonce'] ?? '', 'ymkrf_vmail_now_' . $pid ) ) return;
-	if ( ! current_user_can( 'edit_post', $pid ) ) return;
-
-	$r = ymkrf_vmail_send( $pid, true );
-	set_transient( 'ymkrf_vmail_note_' . $pid, $r, 60 );
-
-	wp_safe_redirect( admin_url( 'post.php?post=' . $pid . '&action=edit' ) );
-	exit;
-} );
 
 /** 結果のおしらせ */
 add_action( 'admin_notices', function () {

@@ -13,6 +13,8 @@
  *   ・編集画面の上に、理由が赤い枠で出ます
  *   ・公開中のものは、公開をやめます
  *     （クレームのアンケートは非公開、そのほかは下書き）
+ *     ただし、編集画面で「状態」をえらんで保存したときは、そのとおりにします
+ *     （2026/09/17 ユーザー指示）
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
@@ -166,7 +168,10 @@ add_action( 'admin_notices', function () {
 	    </p>
 	  <?php else : ?>
 	    <p style="font-size:14px"><b style="color:#b32d2e">要確認</b>
-	      　下のところを直してから、公開してください。</p>
+	      　下のところを直してから、公開してください。<br>
+	      <span style="font-size:12.5px;color:#50575e">
+	        ※ 状態は、右の「状態」でえらんだとおりになります。この赤い印だけが残ります。
+	      </span></p>
 	  <?php endif; ?>
 	  <ul style="margin:0 0 10px 22px;list-style:disc;font-size:13.5px;line-height:1.9">
 	    <?php foreach ( $r as $one ) : ?>
@@ -271,7 +276,13 @@ add_action( 'save_post_ymkrf_voice', function ( $post_id ) {
 
 	update_post_meta( $post_id, YMKRF_VCHK_META, $r );
 
-	/* 公開中なら、いったん公開をやめます。
+	/* ★編集画面で「状態」をえらんだときは、そのとおりにします★
+	   （2026/09/17 ユーザー「状態を公開に変更したいのに、更新すると非公開になります」）
+	   人が見て決めたことを、こちらで勝手に変えないためです。
+	   赤い「要確認」の印は、そのまま出しつづけます。 */
+	if ( isset( $_POST['ymkrf_vstatus'] ) ) return;
+
+	/* 取り込みなど、人が状態をえらんでいない保存のときだけ、公開をやめます。
 	   クレームは非公開、そのほかは下書きです。 */
 	if ( get_post_status( $post_id ) === 'publish' ) {
 		$st = ymkrf_vchk_hold_status( $post_id );

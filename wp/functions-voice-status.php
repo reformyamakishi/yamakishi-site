@@ -38,9 +38,16 @@ function ymkrf_vstatus_list() {
 /** いまの状態を、上の3つのどれかに寄せます */
 function ymkrf_vstatus_now( $post ) {
 	$s = $post ? $post->post_status : 'draft';
+
+	/* あたらしく作っているときは「公開」をはじめから選んでおきます
+	   （2026/09/17 ユーザー指示「デフォルトで状態は公開にして」）
+	   お客様の情報などが見つかったときは、保存のあとで
+	   functions-voice-check.php が下書き（クレームは非公開）にもどします。 */
+	if ( $s === 'auto-draft' ) return 'publish';
+
 	if ( $s === 'publish' || $s === 'private' ) return $s;
 	if ( $s === 'future' ) return 'publish';
-	return 'draft';                                  /* auto-draft・pending もここ */
+	return 'draft';                                  /* pending もここ */
 }
 
 
