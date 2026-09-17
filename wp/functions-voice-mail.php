@@ -445,6 +445,25 @@ function ymkrf_vmail_url( $post_id ) {
 	return get_edit_post_link( $post_id, 'raw' );
 }
 
+/**
+ * メールに添付する、アンケート画像のファイルの場所を返します。
+ *
+ * （2026/09/17 ユーザー指示
+ *   「クレームのあったアンケートはそもそも非表示なので、URLは見れません。
+ *     なので、クレームの有無に限らずどちらもアンケートの画像を添付してほしい」）
+ */
+function ymkrf_vmail_files( $post_id ) {
+
+	$att = (int) get_post_meta( $post_id, '_ymkrf_survey_pub_id', true );
+	if ( ! $att ) $att = (int) get_post_meta( $post_id, '_ymkrf_survey_id', true );
+	if ( ! $att ) return array();
+
+	$path = get_attached_file( $att );
+	if ( ! $path || ! @is_file( $path ) ) return array();
+
+	return array( $path );
+}
+
 /** メールの本文をつくります */
 function ymkrf_vmail_body( $post_id ) {
 	$claim = ( get_post_meta( $post_id, '_ymkrf_claim', true ) === '1' );
@@ -456,23 +475,34 @@ function ymkrf_vmail_body( $post_id ) {
 	$name = trim( (string) get_post_meta( $post_id, '_ymkrf_mail_name', true ) );
 
 	$b  = YMKRF_VMAIL_SUBJECT . "\n\n";
-	$b .= $date . "\n";
+	$b .= '到着日：' . $date . "\n";
 	if ( $name !== '' ) $b .= '件名：' . $name . "\n";
 	$b .= '営業店：' . ( $shop !== '' ? $shop : '（未設定）' ) . "\n";
 	$b .= '営業担当者：' . ( $staff !== '' ? $staff : '（未設定）' ) . "\n";
 	$b .= 'クレーム：' . ( $claim ? '有 ☑　／　無 □' : '有 □　／　無 ☑' ) . "\n";
 	$b .= "\n";
-	$b .= "▼アンケートはこちらです\n" . $url . "\n";
 
-	if ( get_post_status( $post_id ) === 'private' ) {
-		$b .= "（このアンケートは「非公開」です。社内のログインが必要です）\n";
-	} elseif ( get_post_status( $post_id ) !== 'publish' ) {
-		$b .= "（このアンケートは、まだ公開していません）\n";
+	/* アンケートの画像は、クレームの有無にかかわらず、いつでも添付します */
+	if ( ymkrf_vmail_files( $post_id ) ) {
+		$b .= "アンケートの画像を、このメールに添付しています。\n";
+	} else {
+		$b .= "※アンケートの画像が登録されていないため、添付できませんでした。\n";
+	}
+
+	/* ページのURLは、クレームでないときだけ出します。
+	   クレームのアンケートは非公開なので、URLをお知らせしても開けないためです。
+	   （2026/09/17 ユーザー指示「URLはクレームがなかったときだけでOK」） */
+	if ( ! $claim ) {
+		$b .= "\n";
+		$b .= "▼アンケートのページはこちらです\n" . $url . "\n";
+		if ( get_post_status( $post_id ) !== 'publish' ) {
+			$b .= "（このアンケートは、まだ公開していません）\n";
+		}
 	}
 
 	if ( $claim ) {
 		$b .= "\n";
-		$b .= "内容をご確認いただき、ご対応お願いします。\n";
+		$b .= "※内容をご確認いただき、ご対応お願いします。\n";
 		$b .= "見積システム上では現在「15用追加対応（苦情/補修/メンテ）」となっております。\n";
 		$b .= "対応中は「16追加対応中（苦情/補修/メンテ）」\n";
 		$b .= "対応後は「17追加対応完了（苦情/補修/メンテ）」\n";
@@ -520,8 +550,9 @@ function ymkrf_vmail_send( $post_id, $force = false ) {
 		return array( 'ok' => false, 'to' => '', 'why' => '送りさきのメールアドレスが1つもありません' );
 	}
 
-	$body = ymkrf_vmail_body( $post_id );
-	$ok   = wp_mail( $to, YMKRF_VMAIL_SUBJECT, $body, ymkrf_vmail_headers() );
+	$body  = ymkrf_vmail_body( $post_id );
+	$files = ymkrf_vmail_files( $post_id );
+	$ok    = wp_mail( $to, YMKRF_VMAIL_SUBJECT, $body, ymkrf_vmail_headers(), $files );
 
 	if ( $ok ) update_post_meta( $post_id, '_ymkrf_mail_sent', current_time( 'mysql' ) );
 
@@ -562,6 +593,9 @@ function ymkrf_vmail_save_file( $post_id, $to, $body ) {
 
 	$txt  = "To: " . implode( ', ', (array) $to ) . "\n";
 	$txt .= "Subject: " . YMKRF_VMAIL_SUBJECT . "\n";
+	foreach ( ymkrf_vmail_files( $post_id ) as $f ) {
+		$txt .= "添付: " . basename( $f ) . "\n";
+	}
 	$txt .= str_repeat( '-', 50 ) . "\n";
 	$txt .= $body;
 
