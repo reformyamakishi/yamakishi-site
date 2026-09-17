@@ -25,8 +25,8 @@
  *   ・ページに出すとき … いつでも、そのときの中身から作ります
  *   ・メディアの「代替テキスト」… 登録・保存したときに、自動で書き入れます
  *                                  （市町や写真をあとから入れても、入れなおします）
- *   ・いままでのぶん … 「お客様の声 ＞ 画像の説明をつける」で、まとめて入れられます
- *                      （施工事例のぶんも、この画面でいっしょに入ります）
+ *   ・いままでのぶん … 2026/09/17 に、まとめて入れおわりました。
+ *                      その画面はメニューから外しています（URLを直接ひらけば使えます）
  *
  * ■ 名前について
  *   ALTの置き場所 … _wp_attachment_image_alt（WordPress がもともと使う欄です）
@@ -127,8 +127,10 @@ add_action( 'save_post_ymkrf_voice', function ( $post_id ) {
  * 施工事例の画像の説明（ALT）を作ります。
  *
  * $which … 'before' 施工前／'after' 施工後／'during' 工事中／'' ふつうの写真
+ * $no …… 同じまとまりの中で何枚目か（2枚目からは「（2枚目）」と付けます）
+ *         同じ説明がいくつも並ぶと、読み上げソフトが同じ言葉をくり返すためです。
  */
-function ymkrf_works_alt( $post_id, $which = '' ) {
+function ymkrf_works_alt( $post_id, $which = '', $no = 0 ) {
 
 	$cats = function_exists( 'ymkrf_works_term_names' )
 		? ymkrf_works_term_names( $post_id, 'ymkrf_works_cat' ) : array();
@@ -144,11 +146,13 @@ function ymkrf_works_alt( $post_id, $which = '' ) {
 	elseif ( $city !== '' )             $head = $city . 'のリフォーム';
 	else                                $head = 'リフォーム';
 
-	if ( $which === 'before' ) return $head . 'の施工前のようす';
-	if ( $which === 'after' )  return $head . 'の施工後のようす';
-	if ( $which === 'during' ) return $head . 'の工事中のようす';
+	$tail = ( (int) $no >= 2 ) ? '（' . (int) $no . '枚目）' : '';
 
-	return $head . 'の施工写真';
+	if ( $which === 'before' ) return $head . 'の施工前のようす' . $tail;
+	if ( $which === 'after' )  return $head . 'の施工後のようす' . $tail;
+	if ( $which === 'during' ) return $head . 'の工事中のようす' . $tail;
+
+	return $head . 'の施工写真' . $tail;
 }
 
 /** この施工事例の写真ぜんぶに、ALTを入れます。入れた枚数を返します */
@@ -158,10 +162,12 @@ function ymkrf_walt_apply( $post_id ) {
 
 	$n = 0;
 	foreach ( array( 'before', 'during', 'after' ) as $which ) {
-		$alt = ymkrf_works_alt( $post_id, $which );
+		$i = 0;
 		foreach ( (array) ymkrf_works_photos( $post_id, $which ) as $att ) {
 			$att = (int) $att;
 			if ( ! $att ) continue;
+			$i++;
+			$alt = ymkrf_works_alt( $post_id, $which, $i );
 			if ( (string) get_post_meta( $att, '_wp_attachment_image_alt', true ) === $alt ) continue;
 			update_post_meta( $att, '_wp_attachment_image_alt', $alt );
 			$n++;
@@ -240,6 +246,15 @@ add_action( 'set_object_terms', function ( $post_id, $terms, $tt_ids, $taxonomy 
 /* ============================================================
    5. いままでのぶんを、まとめて入れる画面
    ============================================================ */
+/*
+ * ★この画面は、ふだんは出しません★
+ *   いままでのぶんを入れおわったので、メニューから外しました
+ *   （2026/09/17 ユーザー「押しました。必要なければ、その画面は非表示にして」）。
+ *
+ *   これからのぶんは、登録・保存したときに自動で入ります。
+ *   もういちど使いたくなったときは、このURLで開けます。
+ *     /yam-admin/edit.php?post_type=ymkrf_voice&page=ymkrf-voice-alt
+ */
 add_action( 'admin_menu', function () {
 	add_submenu_page(
 		'edit.php?post_type=ymkrf_voice',
@@ -247,6 +262,11 @@ add_action( 'admin_menu', function () {
 		'manage_options', 'ymkrf-voice-alt', 'ymkrf_valt_page'
 	);
 }, 32 );
+
+/* メニューからだけ消します。URLを直接ひらけば、いつでも使えます */
+add_action( 'admin_menu', function () {
+	remove_submenu_page( 'edit.php?post_type=ymkrf_voice', 'ymkrf-voice-alt' );
+}, 999 );
 
 function ymkrf_valt_page() {
 
@@ -309,8 +329,10 @@ function ymkrf_valt_page() {
 		$need = false;
 		if ( function_exists( 'ymkrf_works_photos' ) ) {
 			foreach ( array( 'before', 'during', 'after' ) as $which ) {
-				$alt = ymkrf_works_alt( $id, $which );
+				$i = 0;
 				foreach ( (array) ymkrf_works_photos( $id, $which ) as $att ) {
+					$i++;
+					$alt = ymkrf_works_alt( $id, $which, $i );
 					if ( (string) get_post_meta( (int) $att, '_wp_attachment_image_alt', true ) !== $alt ) {
 						$need = true; break 2;
 					}

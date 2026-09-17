@@ -1947,17 +1947,18 @@ function ymkrf_works_gallery( $post_id ) {
 	foreach ( $sets as $set ) {
 		list( $which, $cap, $mark, $mod, $skip ) = $set;
 		$ids = array_slice( ymkrf_works_photos( $post_id, $which ), $skip );
-		foreach ( $ids as $id ) $items[] = array( $id, $cap, $mark, $mod, $which );
+		/* 何枚目かも持っておきます（ALTを「（2枚目）」と分けるため） */
+		foreach ( $ids as $k => $id ) $items[] = array( $id, $cap, $mark, $mod, $which, $skip + $k + 1 );
 	}
 	if ( ! $items ) return '';
 
 	$h = '<div class="p-work__thumbs">';
 	foreach ( $items as $it ) {
-		list( $id, $cap, $mark, $mod, $which ) = $it;
+		list( $id, $cap, $mark, $mod, $which, $no ) = $it;
 		$full = wp_get_attachment_image_url( $id, 'full' );
 
 		/* 画像の説明（ALT）は、その施工事例の中身から自動で作ります（2026/09/17） */
-		$galt = function_exists( 'ymkrf_works_alt' ) ? ymkrf_works_alt( $post_id, $which ) : '';
+		$galt = function_exists( 'ymkrf_works_alt' ) ? ymkrf_works_alt( $post_id, $which, $no ) : '';
 
 		$h .= '<a class="p-work__thumb2 js-lightbox" href="' . esc_url( (string) $full ) . '"'
 		    . ' data-caption="' . esc_attr( $galt !== '' ? $galt : $cap . 'の写真' ) . '"'
