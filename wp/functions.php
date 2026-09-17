@@ -14,6 +14,7 @@
  *   inc/functions-media.php   … メディアを使い道べつに分けて見る
  *   inc/functions-voice-mail.php … アンケート登録を担当店へメールでお知らせ
  *   inc/functions-voice-status.php … 公開／下書き／非公開をひとつにまとめる
+ *   inc/functions-voice-alt.php  … 画像の説明（ALT）を中身から自動で作る
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
@@ -41,6 +42,7 @@ require_once get_stylesheet_directory() . '/inc/functions-staff.php';
 require_once get_stylesheet_directory() . '/inc/functions-flyer.php';
 require_once get_stylesheet_directory() . '/inc/functions-media.php';
 require_once get_stylesheet_directory() . '/inc/functions-voice-status.php';
+require_once get_stylesheet_directory() . '/inc/functions-voice-alt.php';
 require_once get_stylesheet_directory() . '/inc/functions-voice-check.php';
 require_once get_stylesheet_directory() . '/inc/functions-voice-mail.php';
 /* アンケート画像の入れ直しは、終わりました（2026/09/16）。

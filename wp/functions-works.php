@@ -1856,10 +1856,18 @@ function ymkrf_works_photo_ar( $att_id ) {
 }
 
 /** 見くらべスライダーに出す1枚 */
-function ymkrf_works_compare_img( $att_id, $which, $load ) {
+function ymkrf_works_compare_img( $att_id, $which, $load, $post_id = 0 ) {
 	$url = ymkrf_works_trim_url( $att_id, 'large' );
 	if ( $url === '' ) return '';
-	$alt = ( $which === 'before' ) ? '施工前' : '施工後';
+
+	/* 画像の説明（ALT）は、その施工事例の中身から自動で作ります
+	   （2026/09/17 ユーザー「お客様の声、施工事例とも自動でつけてください」） */
+	if ( $post_id && function_exists( 'ymkrf_works_alt' ) ) {
+		$alt = ymkrf_works_alt( $post_id, $which );
+	} else {
+		$alt = ( $which === 'before' ) ? '施工前' : '施工後';
+	}
+
 	return '<img src="' . esc_url( $url ) . '" alt="' . esc_attr( $alt ) . '"'
 	     . ' loading="' . esc_attr( $load ) . '" decoding="async">';
 }
@@ -1878,7 +1886,10 @@ function ymkrf_works_compare( $post_id, $eager = false ) {
 	if ( ! $after_id || ! $before_id ) {
 		$id  = $after_id ? $after_id : $before_id;
 		$url = ymkrf_works_trim_url( $id, 'large' );
-		return '<div class="p-work__solo"><img src="' . esc_url( $url ) . '" alt=""'
+		$one = function_exists( 'ymkrf_works_alt' )
+			? ymkrf_works_alt( $post_id, $after_id ? 'after' : 'before' ) : '';
+		return '<div class="p-work__solo"><img src="' . esc_url( $url ) . '"'
+		     . ' alt="' . esc_attr( $one ) . '"'
 		     . ' loading="' . esc_attr( $load ) . '" decoding="async"></div>';
 	}
 
@@ -1889,9 +1900,9 @@ function ymkrf_works_compare( $post_id, $eager = false ) {
 
 	$h  = '<div class="p-compare" data-compare style="--pos:50%;--cmp-ar:' . esc_attr( round( $ar, 3 ) ) . '">';
 	$h .= '<div class="p-compare__layer p-compare__layer--before">'
-	    . ymkrf_works_compare_img( $before_id, 'before', $load ) . '</div>';
+	    . ymkrf_works_compare_img( $before_id, 'before', $load, $post_id ) . '</div>';
 	$h .= '<div class="p-compare__layer p-compare__layer--after">'
-	    . ymkrf_works_compare_img( $after_id, 'after', $load ) . '</div>';
+	    . ymkrf_works_compare_img( $after_id, 'after', $load, $post_id ) . '</div>';
 	$h .= '<span class="p-compare__tag p-compare__tag--before">BEFORE</span>';
 	$h .= '<span class="p-compare__tag p-compare__tag--after">AFTER</span>';
 	$h .= '<span class="p-compare__handle"></span>';
@@ -1936,19 +1947,23 @@ function ymkrf_works_gallery( $post_id ) {
 	foreach ( $sets as $set ) {
 		list( $which, $cap, $mark, $mod, $skip ) = $set;
 		$ids = array_slice( ymkrf_works_photos( $post_id, $which ), $skip );
-		foreach ( $ids as $id ) $items[] = array( $id, $cap, $mark, $mod );
+		foreach ( $ids as $id ) $items[] = array( $id, $cap, $mark, $mod, $which );
 	}
 	if ( ! $items ) return '';
 
 	$h = '<div class="p-work__thumbs">';
 	foreach ( $items as $it ) {
-		list( $id, $cap, $mark, $mod ) = $it;
+		list( $id, $cap, $mark, $mod, $which ) = $it;
 		$full = wp_get_attachment_image_url( $id, 'full' );
+
+		/* 画像の説明（ALT）は、その施工事例の中身から自動で作ります（2026/09/17） */
+		$galt = function_exists( 'ymkrf_works_alt' ) ? ymkrf_works_alt( $post_id, $which ) : '';
+
 		$h .= '<a class="p-work__thumb2 js-lightbox" href="' . esc_url( (string) $full ) . '"'
-		    . ' data-caption="' . esc_attr( $cap . 'の写真' ) . '"'
+		    . ' data-caption="' . esc_attr( $galt !== '' ? $galt : $cap . 'の写真' ) . '"'
 		    . ' aria-label="' . esc_attr( $cap . 'の写真を大きく見る' ) . '">'
 		    . wp_get_attachment_image( $id, 'thumbnail', false, array(
-		        'loading' => 'lazy', 'decoding' => 'async', 'alt' => '' ) )
+		        'loading' => 'lazy', 'decoding' => 'async', 'alt' => $galt ) )
 		    . '<span class="p-work__tmark p-work__tmark--' . esc_attr( $mod ) . '">' . esc_html( $mark ) . '</span>'
 		    . '</a>';
 	}

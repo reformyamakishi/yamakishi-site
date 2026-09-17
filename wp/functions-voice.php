@@ -756,7 +756,11 @@ function ymkrf_voice_survey_figure( $post_id ) {
 	$w    = ! empty( $meta['width'] )  ? (int) $meta['width']  : 1600;
 	$hgt  = ! empty( $meta['height'] ) ? (int) $meta['height'] : 1132;
 
-	$alt  = 'お客様アンケート「仕事の通信簿」の実物';
+	/* 画像の説明（ALT）は、そのお客様の声の中身から自動で作ります
+	   （2026/09/17 ユーザー「画像と内容からALTを自動で作ってもらえない？」） */
+	$alt  = function_exists( 'ymkrf_voice_alt' )
+		? ymkrf_voice_alt( $post_id, 'sheet' )
+		: 'お客様アンケート「仕事の通信簿」の実物';
 	$case = trim( (string) get_post_meta( $post_id, '_ymkrf_case_no', true ) );
 
 	$h  = '<figure class="p-voice__sheet">';

@@ -175,8 +175,13 @@ while ( have_posts() ) : the_post();
           <a class="p-voice__workcard" href="<?php echo esc_url( get_permalink( $wid ) ); ?>">
             <span class="p-voice__workph">
               <?php if ( $one ) : ?>
-                <?php echo wp_get_attachment_image( $one, 'medium_large', false, array(
-                  'alt' => '', 'loading' => 'lazy', 'decoding' => 'async' ) ); ?>
+                <?php
+                  /* 施工事例の写真にも、説明を入れます（2026/09/17 ユーザー指示） */
+                  $walt = function_exists( 'ymkrf_voice_alt' )
+                        ? ymkrf_voice_alt( get_the_ID(), 'work' ) : '';
+                  echo wp_get_attachment_image( $one, 'medium_large', false, array(
+                    'alt' => $walt, 'loading' => 'lazy', 'decoding' => 'async' ) );
+                ?>
               <?php else : ?>
                 <span class="p-voice__worknoph">写真なし</span>
               <?php endif; ?>
