@@ -23,7 +23,8 @@
  *
  * ■ いつ入るか
  *   ・ページに出すとき … いつでも、そのときの中身から作ります
- *   ・メディアの「代替テキスト」… 保存したときに、自動で書き入れます
+ *   ・メディアの「代替テキスト」… 登録・保存したときに、自動で書き入れます
+ *                                  （市町や写真をあとから入れても、入れなおします）
  *   ・いままでのぶん … 「お客様の声 ＞ 画像の説明をつける」で、まとめて入れられます
  *                      （施工事例のぶんも、この画面でいっしょに入ります）
  *
@@ -188,7 +189,56 @@ add_action( 'save_post_ymkrf_works', function ( $post_id ) {
 
 
 /* ============================================================
-   4. いままでのぶんを、まとめて入れる画面
+   4. 登録したそのときに、かならず入るようにします
+   ------------------------------------------------------------
+   （2026/09/17 ユーザー「今後は、アンケートと施工事例を登録した際に、
+     それに使用されている写真に自動でaltを付けてほしい」）
+
+   保存のときだけを見ていると、取り込みの画面のように
+   「先に記事を作って、あとから市町や写真を入れる」つくりのときに、
+   まだ中身が入っていない状態でALTを作ってしまいます。
+
+   そこで、ALTのもとになるものが変わったら、そのたびに入れなおします。
+     ・お客様の声 … 市町／工事箇所／店舗／アンケート画像
+     ・施工事例 … 部位・エリアの分類／Before・施工中・Afterの写真／アイキャッチ
+   ============================================================ */
+
+/** ALTのもとになる入力欄が変わったら、入れなおします */
+function ymkrf_alt_meta_touch( $mid, $post_id, $key ) {
+
+	static $busy = false;
+	if ( $busy ) return;
+
+	$voice = array( '_ymkrf_city', '_ymkrf_parts', '_ymkrf_shop',
+	                '_ymkrf_survey_id', '_ymkrf_survey_pub_id' );
+	$works = array( '_ymkrf_before_imgs', '_ymkrf_during_imgs', '_ymkrf_after_imgs',
+	                '_ymkrf_before_img', '_thumbnail_id' );
+
+	$type = get_post_type( $post_id );
+
+	$busy = true;
+	if ( $type === 'ymkrf_voice' && in_array( $key, $voice, true ) ) {
+		ymkrf_valt_apply( $post_id );
+	} elseif ( $type === 'ymkrf_works' && in_array( $key, $works, true ) ) {
+		ymkrf_walt_apply( $post_id );
+	}
+	$busy = false;
+}
+add_action( 'added_post_meta',   'ymkrf_alt_meta_touch', 20, 3 );
+add_action( 'updated_post_meta', 'ymkrf_alt_meta_touch', 20, 3 );
+
+/** 施工事例の「部位」「エリア」を付けかえたときも、入れなおします */
+add_action( 'set_object_terms', function ( $post_id, $terms, $tt_ids, $taxonomy ) {
+
+	if ( ! in_array( $taxonomy, array( 'ymkrf_works_cat', 'ymkrf_works_area' ), true ) ) return;
+	if ( get_post_type( $post_id ) !== 'ymkrf_works' ) return;
+
+	ymkrf_walt_apply( $post_id );
+}, 20, 4 );
+
+
+/* ============================================================
+   5. いままでのぶんを、まとめて入れる画面
    ============================================================ */
 add_action( 'admin_menu', function () {
 	add_submenu_page(
