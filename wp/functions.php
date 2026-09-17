@@ -6,6 +6,7 @@
  *   inc/functions-snippet.php … CSS/JSの読み込み、施工事例・お客様の声
  *   inc/functions-product.php … 商品（キッチン・お風呂ほか）
  *   inc/functions-product-koji.php … 標準工事内容の設定（カテゴリごと）
+ *   inc/functions-outerwall.php … 外壁・屋根ページの中身（商品 ＞ 外壁・屋根ページ）
  *   inc/functions-column.php  … コラム（お役立ち情報）
  *   inc/functions-news.php    … お知らせ
  *   inc/functions-flyer.php   … イベント・チラシ
@@ -22,6 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 require_once get_stylesheet_directory() . '/inc/functions-snippet.php';
 require_once get_stylesheet_directory() . '/inc/functions-product.php';
 require_once get_stylesheet_directory() . '/inc/functions-product-koji.php';
+require_once get_stylesheet_directory() . '/inc/functions-outerwall.php';
 require_once get_stylesheet_directory() . '/inc/functions-column.php';
 /* ↓ 旧ブログ（コラム）の取り込み。終わったらこの行とファイルを消してください */
 require_once get_stylesheet_directory() . '/inc/functions-column-import.php';
