@@ -779,6 +779,9 @@ function ymkrf_product_repeaters() {
 			'note'  => '標準の仕様に足せるものを、1つずつ書きます。金額は、そのオプションぶんの追加額です。',
 			'cols'  => array(
 				'img'   => array( '写真', 'image' ),
+				/* 写真の説明（2026/09/18 ユーザー指示
+				   「オススメオプションにもalt欄つけて」） */
+				'alt'   => array( 'ALT', 'text' ),
 				'name'  => array( '品名', 'text', '例：W450mmプルオープン 食器洗い乾燥機' ),
 				'text'  => array( '説明', 'textarea', '' ),
 				'price' => array( '追加金額（円）', 'number', '例：176000' ),
@@ -1429,12 +1432,23 @@ function ymkrf_product_row_option( $key, $n, $row ) {
 
 		<div class="ymkrf-point__body">
 			<div class="ymkrf-point__pics ymkrf-opt__pics">
-				<span class="ymkrf-img">
+				<span class="ymkrf-img ymkrf-pic">
 					<span class="ymkrf-img__prev ymkrf-img__pick" title="押すと写真をえらべます"><?php
 						if ( $img_src ) echo '<img src="' . esc_url( $img_src ) . '" alt="">';
 					?></span>
 					<input type="hidden" name="<?php echo esc_attr( $name( 'img' ) ); ?>"
 					       value="<?php echo esc_attr( $img_val ); ?>">
+					<?php
+					/* いまメディアに入っているALTを、うすい字で見せます
+					   （2026/09/18 ユーザー指示「自動でメディアに入っているものを表示しといて」） */
+					$now = $img_val ? (string) get_post_meta( (int) $img_val, '_wp_attachment_image_alt', true ) : '';
+					$aph = trim( $now ) !== '' ? $now : 'alt';
+					?>
+					<textarea class="ymkrf-pic__alt" rows="1"
+					          name="<?php echo esc_attr( $name( 'alt' ) ); ?>"
+					          placeholder="<?php echo esc_attr( $aph ); ?>"
+					          title="ページには出ません。目の見えない方の読み上げと、検索エンジンのための説明です。空のままなら、うすい字の言葉が使われます"><?php
+						echo esc_textarea( $v( 'alt' ) ); ?></textarea>
 				</span>
 			</div>
 
@@ -1581,13 +1595,20 @@ function ymkrf_product_point_html( $key, $n, $row, $no = 1, $is_first = false ) 
 
 	$pic = function ( $id, $alt, $cap ) use ( $name ) {
 		$src = $id ? wp_get_attachment_image_url( (int) $id, 'medium' ) : '';
+
+		/* いまメディアに入っているALTを、うすい字で見せます
+		   （2026/09/18 ユーザー指示「自動で入っているalt、ダッシュボードにも表示して」）。
+		   ここに書けば、その言葉が優先されます。 */
+		$now = $id ? (string) get_post_meta( (int) $id, '_wp_attachment_image_alt', true ) : '';
+		$aph = trim( $now ) !== '' ? $now : 'alt';
+
 		return sprintf(
 			'<span class="ymkrf-img ymkrf-pic">
 			   <span class="ymkrf-img__prev ymkrf-img__pick" title="押すと写真をえらべます">%s</span>
 			   <input type="hidden" name="%s[]" value="%s">
 			   <button type="button" class="ymkrf-pic__del" title="この写真を消す">×</button>
 			   <textarea class="ymkrf-pic__alt" name="%s[]" rows="1"
-			          placeholder="alt"
+			          placeholder="%s"
 			          title="ページには出ません。目の見えない方の読み上げと、検索エンジンのための説明です。空のままなら、ポイントの見出しから自動で作ります。右下をつまむと広げられます">%s</textarea>
 			   <textarea class="ymkrf-pic__cap" name="%s[]" rows="1"
 			          placeholder="キャプション"
@@ -1595,7 +1616,7 @@ function ymkrf_product_point_html( $key, $n, $row, $no = 1, $is_first = false ) 
 			 </span>',
 			$src ? '<img src="' . esc_url( $src ) . '" alt="">' : '',
 			esc_attr( $name( 'imgs' ) ), esc_attr( $id ),
-			esc_attr( $name( 'alts' ) ), esc_textarea( $alt ),
+			esc_attr( $name( 'alts' ) ), esc_attr( $aph ), esc_textarea( $alt ),
 			esc_attr( $name( 'caps' ) ), esc_textarea( $cap )
 		);
 	};
@@ -1886,10 +1907,16 @@ function ymkrf_alt_fill_product( $post_id ) {
 			if ( ! is_array( $row ) ) continue;
 
 			$words = array();
-			if ( $lbl !== '' ) $words[] = $lbl;
-			foreach ( $use as $ck ) {
-				if ( isset( $row[ $ck ] ) && ! is_array( $row[ $ck ] ) && $row[ $ck ] !== '' ) {
-					$words[] = (string) $row[ $ck ];
+			$own   = isset( $row['alt'] ) && ! is_array( $row['alt'] ) ? trim( (string) $row['alt'] ) : '';
+			if ( $own !== '' ) {
+				/* 自分で書いたALTがあれば、それを使います */
+				$words[] = $own;
+			} else {
+				if ( $lbl !== '' ) $words[] = $lbl;
+				foreach ( $use as $ck ) {
+					if ( isset( $row[ $ck ] ) && ! is_array( $row[ $ck ] ) && $row[ $ck ] !== '' ) {
+						$words[] = (string) $row[ $ck ];
+					}
 				}
 			}
 			$one = trim( $base . ' ' . implode( ' ', $words ) );
@@ -3807,6 +3834,9 @@ jQuery(function($){
       var url = (a.sizes && a.sizes.thumbnail) ? a.sizes.thumbnail.url : a.url;
       $box.find('input[type=hidden]').val(a.id);
       $box.find('.ymkrf-img__prev').html('<img src="' + url + '" alt="">');
+      /* メディアに入っているALTを、うすい字で見せます
+         （2026/09/18 ユーザー指示「自動で入っているalt、ダッシュボードにも表示して」） */
+      $box.find('.ymkrf-pic__alt').attr('placeholder', (a.alt && a.alt !== '') ? a.alt : 'alt');
     });
     frame.open();
   });

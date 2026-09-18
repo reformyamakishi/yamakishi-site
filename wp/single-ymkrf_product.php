@@ -401,7 +401,7 @@ if ( $d['specs'] || $d['speclist'] || $basic ) : ?>
       <?php foreach ( $d['options'] as $r ) : ?>
         <article class="p-prd__opt">
           <div class="ph"><?php echo ymkrf_img( $r['img'], 'medium',
-            ymkrf_alt( $altb, $r['name'] ) ); ?></div>
+            ymkrf_alt( $altb, ( ! empty( $r['alt'] ) ? $r['alt'] : $r['name'] ) ) ); ?></div>
           <div>
             <h3><?php echo esc_html( $r['name'] ); ?></h3>
             <?php if ( $r['text'] ) : ?><p><?php echo nl2br( esc_html( $r['text'] ) ); ?></p><?php endif; ?>
