@@ -25,11 +25,47 @@ function ymkrf_img( $id, $size = 'large', $alt = '', $attr = array() ) {
 }
 endif;
 
+/**
+ * 画像の説明（ALT）の頭に付ける言葉。
+ * （2026/09/18 ユーザー指示
+ *   「ALTは、メーカー名・アイテム名（キッチンなど）・商品名、
+ *     アイテム名（ハンドル取っ手）・型番 に自動でできる？」）
+ *
+ * 例： パナソニック キッチン V-style（Vスタイル）
+ * このうしろに、その写真そのものの名前（色の名前・品名・型番）を足します。
+ */
+if ( ! function_exists( 'ymkrf_alt_base' ) ) :
+function ymkrf_alt_base( $d ) {
+
+	$out = array();
+
+	if ( ! empty( $d['makers'] ) && ! is_wp_error( $d['makers'] ) ) {
+		$out[] = $d['makers'][0]->name;          /* メーカー名 */
+	}
+	if ( ! empty( $d['cats'] ) && ! is_wp_error( $d['cats'] ) ) {
+		$out[] = $d['cats'][0]->name;            /* キッチン・お風呂など */
+	}
+	if ( ! empty( $d['name'] ) ) {
+		$out[] = $d['name'];                     /* 商品名 */
+	}
+	return implode( ' ', array_filter( $out ) );
+}
+endif;
+
+/** 上の言葉に、その写真の名前をつなげます */
+if ( ! function_exists( 'ymkrf_alt' ) ) :
+function ymkrf_alt( $base, $one ) {
+	$one = trim( (string) $one );
+	return trim( $base . ( $one !== '' ? ' ' . $one : '' ) );
+}
+endif;
+
 get_header();
 
 while ( have_posts() ) : the_post();
 
 $d     = ymkrf_product_data();
+$altb  = ymkrf_alt_base( $d );   /* 画像の説明の頭に付ける言葉 */
 $sib   = ymkrf_product_siblings();
 /* 施工事例は、この商品詳細ページには出しません。
    商品一覧ページ（/products/<分類>/）とトップページに出しています。 */
@@ -154,28 +190,16 @@ $maker = ! empty( $d['makers'] ) ? $d['makers'][0] : null;
 
 <?php
 $csets = function_exists( 'ymkrf_colorsets' ) ? ymkrf_colorsets( $d ) : array();
-if ( ! empty( $d['images'] ) || $csets || ! empty( $d['handles'] ) ) :
+/* 「組み合わせイメージ写真」は使わないことになりました（2026/09/18 ユーザー指示）。
+   カラーバリエーションは、色見本と取っ手だけを出します。 */
+if ( $csets || ! empty( $d['handles'] ) ) :
 ?>
 <!-- =========== カラーバリエーション =========== -->
 <section class="l-section l-section--soft">
   <div class="l-wrap">
     <h2 class="p-prd__bar">カラーバリエーション</h2>
 
-    <?php if ( $d['images'] ) : ?>
-      <figure class="p-prd__hero">
-        <div class="p-prd__hero__grid">
-          <?php foreach ( $d['images'] as $r ) echo ymkrf_img( $r['img'], 'medium_large', $r['alt'] ); ?>
-        </div>
-        <figcaption>
-          <strong><?php
-            /* 取っ手が1種類しかない商品では「組み合わせ」と書くと事実に合わないので、文を変えます */
-            echo ( count( $d['handles'] ) > 1 )
-              ? '扉の色と取っ手の組み合わせで、キッチンの雰囲気はぐっと変わります。'
-              : '色えらびで、お部屋の雰囲気はぐっと変わります。';
-          ?></strong><small>※画像はイメージです</small>
-        </figcaption>
-      </figure>
-    <?php endif; ?>
+
 
     <?php foreach ( $csets as $i => $cs ) : ?>
       <p class="p-prd__sub"<?php if ( $i ) echo ' style="margin-top:26px"'; ?>>
@@ -185,7 +209,8 @@ if ( ! empty( $d['images'] ) || $csets || ! empty( $d['handles'] ) ) :
       <div class="p-prd__colors">
         <?php foreach ( $cs['rows'] as $r ) : ?>
           <figure>
-            <div class="p-prd__swatch"><?php echo ymkrf_img( $r['img'], 'medium', $cs['label'] . ' ' . $r['name'] ); ?></div>
+            <div class="p-prd__swatch"><?php echo ymkrf_img( $r['img'], 'medium',
+              ymkrf_alt( $altb, $cs['label'] . ' ' . $r['name'] ) ); ?></div>
             <figcaption><?php echo esc_html( $r['name'] ); ?></figcaption>
           </figure>
         <?php endforeach; ?>
@@ -197,7 +222,8 @@ if ( ! empty( $d['images'] ) || $csets || ! empty( $d['handles'] ) ) :
       <div class="p-prd__handles">
         <?php foreach ( $d['handles'] as $r ) : ?>
           <figure>
-            <div class="ph"><?php echo ymkrf_img( $r['img'], 'medium', trim( $r['name'] . ' ' . $r['code'] ) ); ?></div>
+            <div class="ph"><?php echo ymkrf_img( $r['img'], 'medium',
+              ymkrf_alt( $altb, $r['name'] . ' ' . $r['code'] ) ); ?></div>
             <figcaption><?php echo esc_html( $r['name'] ); ?><?php
               if ( $r['code'] ) echo '<span class="p-prd__code">' . esc_html( $r['code'] ) . '</span>';
             ?></figcaption>
@@ -239,7 +265,8 @@ if ( $d['specs'] || $d['speclist'] || $basic ) : ?>
       <div class="p-prd__specs">
         <?php foreach ( $d['specs'] as $r ) : ?>
           <figure class="p-prd__spec">
-            <div class="ph"><?php echo ymkrf_img( $r['img'], 'medium', $r['name'] ); ?></div>
+            <div class="ph"><?php echo ymkrf_img( $r['img'], 'medium',
+              ymkrf_alt( $altb, $r['name'] ) ); ?></div>
             <figcaption><?php echo esc_html( $r['name'] );
               if ( $r['model'] ) echo '<small>' . esc_html( $r['model'] ) . '</small>';
             ?></figcaption>
@@ -311,17 +338,50 @@ if ( $d['specs'] || $d['speclist'] || $basic ) : ?>
         <span class="p-prd__pno">Point <?php echo (int) $no; ?></span><h3 class="p-prd__ptitle"><?php echo esc_html( $r['ttl'] ); ?></h3>
         <?php if ( $r['text'] ) : ?><p class="p-prd__ptext"><?php echo nl2br( esc_html( $r['text'] ) ); ?></p><?php endif; ?>
         <?php if ( $r['note'] ) : ?><p class="p-prd__pnote"><?php echo esc_html( $r['note'] ); ?></p><?php endif; ?>
-        <?php if ( $r['img'] || $r['img2'] ) : ?>
+        <?php
+        /* 写真は何枚でも入れられます（2026/09/18 ユーザー指示）。
+           前に「写真1・写真2」で入れたものも、そのまま出します。 */
+        $pics = ( isset( $r['imgs'] ) && is_array( $r['imgs'] ) ) ? array_filter( array_map( 'intval', $r['imgs'] ) ) : array();
+        if ( ! $pics ) {
+          foreach ( array( 'img', 'img2' ) as $pk ) {
+            if ( ! empty( $r[ $pk ] ) ) $pics[] = (int) $r[ $pk ];
+          }
+        }
+        $pics = array_values( $pics );
+        ?>
+        <?php if ( $pics ) : ?>
           <?php
-          $stack = ( $r['img'] && $r['img2'] ) ? ' p-prd__pfig--stack' : '';
-          /* 「白い枠をつける」に 1 と入れた図版だけ、白い下じきと細い枠を付けます。
+          $stack = ( count( $pics ) > 1 ) ? ' p-prd__pfig--stack' : '';
+          /* 「白い枠をつける」にチェックを入れた図版だけ、白い下じきと細い枠を付けます。
              グラフや説明図（もともと白地）のときに使ってください。
              ふつうの写真は、枠なしのほうがきれいに見えます。 */
           $frame = ( isset( $r['frame'] ) && $r['frame'] !== '' ) ? ' p-prd__pfig--frame' : '';
           ?>
           <div class="p-prd__pfig p-prd__pfig--img<?php echo $stack . $frame; ?>">
-            <?php echo ymkrf_img( $r['img'], 'large', $r['ttl'] ); ?>
-            <?php echo ymkrf_img( $r['img2'], 'large', $r['ttl'] ); ?>
+            <?php
+            /* 画像の説明（ALT）
+               ① 登録画面で写真ごとに書いた説明があれば、それを使います
+               ② 空のときは、そのポイントの見出しから作ります
+                  （2枚以上あるときは「（2枚目）」を付けて、同じ文にしません） */
+            $palts = ( isset( $r['alts'] ) && is_array( $r['alts'] ) ) ? array_values( $r['alts'] ) : array();
+            $pcaps = ( isset( $r['caps'] ) && is_array( $r['caps'] ) ) ? array_values( $r['caps'] ) : array();
+            foreach ( $pics as $pi => $pid ) :
+              $palt = isset( $palts[ $pi ] ) ? trim( (string) $palts[ $pi ] ) : '';
+              if ( $palt === '' ) {
+                $palt = $r['ttl'];
+                if ( $palt !== '' && count( $pics ) > 1 ) $palt .= '（' . ( $pi + 1 ) . '枚目）';
+                $palt = ymkrf_alt( $altb, $palt );
+              }
+              $pcap = isset( $pcaps[ $pi ] ) ? trim( (string) $pcaps[ $pi ] ) : '';
+
+              /* キャプションを入れた写真だけ、下に小さな文字を付けます */
+              if ( $pcap !== '' ) {
+                echo '<figure class="p-prd__pcap">' . ymkrf_img( $pid, 'large', $palt )
+                   . '<figcaption>' . esc_html( $pcap ) . '</figcaption></figure>';
+              } else {
+                echo ymkrf_img( $pid, 'large', $palt );
+              }
+            endforeach; ?>
           </div>
         <?php endif; ?>
       </div>
@@ -340,7 +400,8 @@ if ( $d['specs'] || $d['speclist'] || $basic ) : ?>
     <div class="p-prd__opts">
       <?php foreach ( $d['options'] as $r ) : ?>
         <article class="p-prd__opt">
-          <div class="ph"><?php echo ymkrf_img( $r['img'], 'medium', $r['name'] ); ?></div>
+          <div class="ph"><?php echo ymkrf_img( $r['img'], 'medium',
+            ymkrf_alt( $altb, $r['name'] ) ); ?></div>
           <div>
             <h3><?php echo esc_html( $r['name'] ); ?></h3>
             <?php if ( $r['text'] ) : ?><p><?php echo nl2br( esc_html( $r['text'] ) ); ?></p><?php endif; ?>
