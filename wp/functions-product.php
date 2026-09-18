@@ -727,11 +727,14 @@ function ymkrf_product_repeaters() {
 		),
 		'_ymkrf_speclist' => array(
 			'label' => '標準仕様（文字だけの一覧）',
-			/* キッチンでは使いません。上の「標準仕様」に写真で入れます
-			   （2026/09/18 ユーザー指示「とりあえずキッチンは
-			     標準仕様（文字だけの一覧）は削除」） */
-			'not'   => array( 'kitchen' ),
-			'note'  => 'トイレのように、写真ではなく機能名を並べる商品で使います。'
+			/* キッチン・お風呂・トイレ・洗面化粧台は、上の「標準仕様」に
+			   写真つきで入れます（2026/09/18 ユーザー指示
+			   「キッチン、お風呂、トイレ、化粧台も同じ様式にして。
+			     トイレも文字だけじゃなく、同じ形式にします」）。
+			   すでに文字で入れてある商品では、消えないように引きつづき出します
+			   （下の add_meta_boxes のところで見ています）。 */
+			'not'   => array( 'kitchen', 'bathroom', 'toilet', 'lavatory' ),
+			'note'  => '給湯器・エコキュートのように、写真ではなく機能名を並べる商品で使います。'
 			         . '「分類」に 快適機能 などを入れ、「機能」に1行ずつ書いてください。'
 			         . '上の「標準仕様」に写真を入れている商品は、こちらは空のままでOKです。',
 			'cols'  => array(
@@ -836,8 +839,12 @@ add_action( 'add_meta_boxes', function () {
 			? ymkrf_product_current_cat( get_the_ID() ) : '';
 		if ( ! empty( $r['only'] ) && ! in_array( $cat_now, (array) $r['only'], true ) ) continue;
 
-		/* 反対に、この分類では出さない（not） */
-		if ( ! empty( $r['not'] ) && in_array( $cat_now, (array) $r['not'], true ) ) continue;
+		/* 反対に、この分類では出さない（not）。
+		   ただし、もう中身が入っている商品では、消えないように出します */
+		if ( ! empty( $r['not'] ) && in_array( $cat_now, (array) $r['not'], true ) ) {
+			$ymkrf_have = get_post_meta( get_the_ID(), $key, true );
+			if ( ! ( is_array( $ymkrf_have ) && $ymkrf_have ) ) continue;
+		}
 
 		/* 内装・改装では、Before/After だけを出します
 		   （2026/09/17 ユーザー指示。標準仕様や扉カラーなどは使いません） */
@@ -1800,6 +1807,146 @@ add_action( 'save_post_ymkrf_product', function ( $post_id ) {
 	update_post_meta( $post_id, '_ymkrf_total',
 		(int) get_post_meta( $post_id, '_ymkrf_work', true ) + (int) get_post_meta( $post_id, '_ymkrf_item', true ) );
 } );
+
+
+/* ============================================================
+   4-b. メディアの「代替テキスト（ALT）」を自動で入れる
+        （2026/09/18 ユーザー指示
+          「メディアについているaltは自動で入れておいてほしい。
+            なんか違うなと思ったら自分で変更します」）
+
+        商品を保存したときに、その商品で使っている写真のうち
+        ALTが空のものだけに、自動で言葉を入れます。
+        すでに入っているALTは、さわりません。
+
+        入る言葉： メーカー名 ＋ 分類 ＋ 商品名 ＋ その写真の名前
+        例： パナソニック キッチン V-style（Vスタイル） 扉カラー ホワイト
+   ============================================================ */
+
+/** 頭に付ける言葉（メーカー名 ＋ 分類 ＋ 商品名） */
+function ymkrf_alt_base_of( $post_id ) {
+
+	$out = array();
+
+	$mk = get_the_terms( $post_id, 'ymkrf_maker' );
+	if ( $mk && ! is_wp_error( $mk ) ) $out[] = $mk[0]->name;
+
+	$ct = get_the_terms( $post_id, 'ymkrf_product_cat' );
+	if ( $ct && ! is_wp_error( $ct ) ) $out[] = $ct[0]->name;
+
+	$nm = (string) get_post_meta( $post_id, '_ymkrf_name', true );
+	if ( $nm === '' ) $nm = get_the_title( $post_id );
+	if ( $nm !== '' ) $out[] = $nm;
+
+	return trim( implode( ' ', array_filter( $out ) ) );
+}
+
+/** 空のALTにだけ入れます */
+function ymkrf_alt_put( $att_id, $text ) {
+
+	$att_id = (int) $att_id;
+	$text   = trim( preg_replace( '/\s+/u', ' ', (string) $text ) );
+	if ( ! $att_id || $text === '' ) return;
+	if ( get_post_type( $att_id ) !== 'attachment' ) return;
+
+	$now = get_post_meta( $att_id, '_wp_attachment_image_alt', true );
+	if ( trim( (string) $now ) !== '' ) return;   /* 入っているものは、さわりません */
+
+	update_post_meta( $att_id, '_wp_attachment_image_alt', $text );
+}
+
+/** その商品で使っている写真の、空のALTをうめます */
+function ymkrf_alt_fill_product( $post_id ) {
+
+	if ( get_post_type( $post_id ) !== 'ymkrf_product' ) return;
+
+	$base = ymkrf_alt_base_of( $post_id );
+	if ( $base === '' ) return;
+
+	/* アイキャッチ */
+	ymkrf_alt_put( get_post_thumbnail_id( $post_id ), $base );
+
+	/* 写真の名前に使う欄 */
+	$use = array( 'name', 'code', 'model', 'ttl' );
+
+	foreach ( ymkrf_product_repeaters() as $key => $def ) {
+
+		$rows = get_post_meta( $post_id, $key, true );
+		if ( ! is_array( $rows ) || ! $rows ) continue;
+
+		/* 色見本・取っ手は、枠の名前も入れます（例：扉カラー ホワイト） */
+		$lbl = '';
+		if ( ! empty( $def['color'] ) ) {
+			$lbl = (string) get_post_meta( $post_id, '_ymkrf_lbl_' . substr( $key, 7 ), true );
+			if ( $lbl === '' ) $lbl = $def['label'];
+		}
+
+		foreach ( $rows as $row ) {
+
+			if ( ! is_array( $row ) ) continue;
+
+			$words = array();
+			if ( $lbl !== '' ) $words[] = $lbl;
+			foreach ( $use as $ck ) {
+				if ( isset( $row[ $ck ] ) && ! is_array( $row[ $ck ] ) && $row[ $ck ] !== '' ) {
+					$words[] = (string) $row[ $ck ];
+				}
+			}
+			$one = trim( $base . ' ' . implode( ' ', $words ) );
+
+			foreach ( $def['cols'] as $ck => $c ) {
+
+				if ( $c[1] === 'image' ) {
+					ymkrf_alt_put( isset( $row[ $ck ] ) ? $row[ $ck ] : 0, $one );
+
+				} elseif ( $c[1] === 'imagelist' ) {
+					$ids  = isset( $row[ $ck ] ) && is_array( $row[ $ck ] ) ? $row[ $ck ] : array();
+					$alts = isset( $row['alts'] ) && is_array( $row['alts'] ) ? array_values( $row['alts'] ) : array();
+					foreach ( array_values( $ids ) as $i => $id ) {
+						$own = isset( $alts[ $i ] ) ? trim( (string) $alts[ $i ] ) : '';
+						ymkrf_alt_put( $id, $own !== '' ? trim( $base . ' ' . $own ) : $one );
+					}
+				}
+			}
+		}
+	}
+}
+
+add_action( 'save_post_ymkrf_product', function ( $post_id ) {
+	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
+	if ( wp_is_post_revision( $post_id ) ) return;
+	ymkrf_alt_fill_product( $post_id );
+}, 30 );
+
+
+/* 前に登録した商品の写真にも、ALTを入れておきます。
+   管理画面を開くたびに、少しずつ（1回100件）すすめます。
+   ぜんぶ終わったら、なにもしません。 */
+add_action( 'admin_init', function () {
+
+	if ( ! current_user_can( 'edit_posts' ) ) return;
+	if ( get_option( 'ymkrf_alt_fill_done' ) === 'yes' ) return;
+
+	$done = (array) get_option( 'ymkrf_alt_fill_ids', array() );
+
+	$ids = get_posts( array(
+		'post_type'      => 'ymkrf_product',
+		'post_status'    => 'any',
+		'posts_per_page' => 100,
+		'fields'         => 'ids',
+		'exclude'        => $done,
+		'orderby'        => 'ID',
+		'order'          => 'ASC',
+	) );
+
+	if ( ! $ids ) { update_option( 'ymkrf_alt_fill_done', 'yes' ); return; }
+
+	foreach ( $ids as $id ) {
+		ymkrf_alt_fill_product( $id );
+		$done[] = (int) $id;
+	}
+	update_option( 'ymkrf_alt_fill_ids', array_slice( $done, -5000 ) );
+}, 99 );
 
 
 /* ============================================================
