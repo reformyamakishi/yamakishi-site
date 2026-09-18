@@ -271,20 +271,39 @@ function ymkrf_product_fields() {
 	return array(
 		//  キー           => array( 見出し, 種類, 入力例, 補足説明 )
 		'_ymkrf_catch'   => array( 'キャッチコピー',   'text',   '例：キレイと快適が毎日つづく快適キッチン！', '商品名の上に、小さな赤い文字で出ます' ),
-		'_ymkrf_grade'   => array( 'グレード',         'text',   '例：Fグレード', '空欄でもかまいません' ),
+		'_ymkrf_grade'   => array( 'グレード',         'short',  '例：F',
+			'「グレード」の文字は自動で付きます。「F」「SS」のように、記号だけ入れてください。'
+			. '「プレミアム」など、そのまま出したい言葉はそのまま入れてください。空欄でもかまいません' ),
 		'_ymkrf_order'   => array( '並び順',           'number', '例：85',
 			'空欄のままで大丈夫です。グレードから自動で決まります（J=10／I=20／H=30／G=40／F=50／E=60／D=70／C=80／B=90／A=100／S=110／SS=120／SSS=125／プレミアム=130）。順番を変えたいときだけ、入れたい位置の数字を書いてください。数字が小さいほど先に出ます。' ),
+		/* メーカーは、右の箱ではなくここでえらびます
+		   （2026/09/18 ユーザー指示「グレードの下に、メーカー選択。
+		     右の商品カテゴリ、メーカーは不要です」） */
+		'_ymkrf_makerpick' => array( 'メーカー', 'maker', '', '' ),
 		'_ymkrf_name'    => array( '商品名',           'text',   '例：V-style（Vスタイル）', '空欄なら上のタイトルを使います' ),
 		'_ymkrf_size'    => array( '型（サイズ）',     'text',   '例：I型2550サイズ', 'メーカーロゴのとなりに出ます' ),
 		'_ymkrf_sub'     => array( '商品名の横の言葉', 'text',   '例：ハイパーキラミック', '商品名のすぐ横に、小さく出ます（トイレの陶器の種類など）' ),
-		'_ymkrf_work'    => array( '標準工事費（円・税込）', 'number', '例：240000', '★税込の金額を入れてください。数字だけ。カンマや「円」は不要です' ),
-		'_ymkrf_item'    => array( '商品代（円・税込）',     'number', '例：358000', '★税込の金額を入れてください。数字だけ。カンマや「円」は不要です' ),
-		'_ymkrf_days'    => array( '工期（日数）',     'number', '例：3', '数字だけ。「日」は自動で付きます' ),
-		'_ymkrf_daystext'=> array( '工期の書き方',     'text',   '例：半日', '「半日」など、日数で書けないときだけ入れてください。入れると上の日数より優先されます' ),
+		'_ymkrf_work'    => array( '標準工事費', 'yen', '例：240,000', '★税込の金額を入れてください。カンマは自動で付きます' ),
+		'_ymkrf_item'    => array( '商品代',     'yen', '例：358,000', '★税込の金額を入れてください。カンマは自動で付きます' ),
+		/* 数字でも「半日」でも、この欄ひとつで入れられます
+		   （2026/09/18 ユーザー指示「半日も入れられるようにしておいて。
+		     その下の工期の書き方は不要」） */
+		'_ymkrf_days'    => array( '工期', 'days', '例：4／半日',
+			'数字だけ入れると「4日」のように「日」が自動で付きます。'
+			. '「半日」など、日数で書けないときは、その言葉をそのまま入れてください' ),
+		'_ymkrf_daystext'=> array( '', 'hidden' ),
+		/* 特徴は3つを横にならべて、ひとつの欄として見せます
+		   （2026/09/18 ユーザー指示「特徴1〜3ってつけず、特徴だけにして、
+		     横に3つの入力欄並ばせて」）
+		   保存さきは、これまでどおり _ymkrf_pt1 / _ymkrf_pt2 / _ymkrf_pt3 です */
+		'_ymkrf_pts'     => array( '特徴', 'pt3', '', '商品名の下に、丸い札で3つまで出ます' ),
 		'_ymkrf_pt1'     => array( '特徴 1',           'text',   '例：お手頃価格', '' ),
 		'_ymkrf_pt2'     => array( '特徴 2',           'text',   '例：収納抜群', '' ),
 		'_ymkrf_pt3'     => array( '特徴 3',           'text',   '例：おそうじ楽々', '' ),
-		'_ymkrf_caution' => array( '写真の注意書き',   'text',   '例：※写真はイメージです。', '商品写真の下に小さく出ます' ),
+		/* 長くなることもあるので、たてに広げられる欄にしています
+		   （2026/09/18 ユーザー指示「文字数多くなることも予想して、広げられる欄にしておいて」） */
+		'_ymkrf_caution' => array( '写真の注意書き',   'area',   '例：※写真はイメージです。',
+			'商品写真の下に小さく出ます。右下をドラッグすると、欄をたてに広げられます' ),
 
 		/* ---- ここから下は給湯器・エコキュートだけで使う欄です（2026/09/01 追加） ----
 		   5つめの欄は「えらぶ言葉」、6つめは「この分類だけに出す」という意味です。 */
@@ -456,6 +475,38 @@ function ymkrf_product_fields_for( $cat = '' ) {
 
 	$all = ymkrf_product_fields();
 
+	/* メーカー。ここでえらんだものだけにします */
+	if ( isset( $_POST['ymkrf_makerpick'] ) ) {
+		$mk = (int) $_POST['ymkrf_makerpick'];
+		wp_set_object_terms( $post_id, $mk ? array( $mk ) : array(), 'ymkrf_maker' );
+	}
+
+	/* 工期。数字なら「日数」、そうでなければ「言葉」として保存します */
+	if ( isset( $_POST['_ymkrf_days'] ) ) {
+		$dv = trim( sanitize_text_field( wp_unslash( $_POST['_ymkrf_days'] ) ) );
+		if ( $dv === '' ) {
+			update_post_meta( $post_id, '_ymkrf_days', '' );
+			update_post_meta( $post_id, '_ymkrf_daystext', '' );
+		} elseif ( preg_match( '/^[0-9]+$/', $dv ) ) {
+			update_post_meta( $post_id, '_ymkrf_days', (int) $dv );
+			update_post_meta( $post_id, '_ymkrf_daystext', '' );
+		} else {
+			update_post_meta( $post_id, '_ymkrf_days', '' );
+			update_post_meta( $post_id, '_ymkrf_daystext', $dv );
+		}
+	}
+
+	/* 並び順は、画面右の「ページ属性 ＞ 順序」を使います。
+	   まん中の欄には出しません（2026/09/18 ユーザー指示
+	   「並び順は右にあるから商品データ（基本）からは削除」） */
+	unset( $all['_ymkrf_order'] );
+
+	/* 「工期の書き方」は、上の「工期」の欄にまとめました（2026/09/18 ユーザー指示） */
+	unset( $all['_ymkrf_daystext'] );
+
+	/* 特徴1〜3は、ひとつの「特徴」の欄にまとめて出します（2026/09/18 ユーザー指示） */
+	unset( $all['_ymkrf_pt1'], $all['_ymkrf_pt2'], $all['_ymkrf_pt3'] );
+
 	/* その分類で使わない欄を外します */
 	$out = array();
 	foreach ( $all as $k => $f ) {
@@ -468,8 +519,8 @@ function ymkrf_product_fields_for( $cat = '' ) {
 	   （2026/09/17 ユーザー指示
 	     「グレード／商品名／商品名の横の言葉／標準工事費／特徴1〜3」） */
 	if ( $cat === 'interior' ) {
-		$keep = array( '_ymkrf_grade', '_ymkrf_name', '_ymkrf_sub',
-		               '_ymkrf_work', '_ymkrf_pt1', '_ymkrf_pt2', '_ymkrf_pt3' );
+		$keep = array( '_ymkrf_grade', '_ymkrf_name', '_ymkrf_catch', '_ymkrf_sub',
+		               '_ymkrf_pts', '_ymkrf_work' );
 		$only = array();
 		foreach ( $keep as $k ) {
 			if ( isset( $out[ $k ] ) ) $only[ $k ] = $out[ $k ];
@@ -491,6 +542,13 @@ function ymkrf_product_fields_for( $cat = '' ) {
 		}
 	}
 
+	/* 金額の欄は、いちばん下（「総額」のすぐ上）に置きます
+	   （2026/09/18 ユーザー指示「標準工事費と商品代は総額の上に移動して」） */
+	$money = array();
+	foreach ( array( '_ymkrf_work', '_ymkrf_item' ) as $k ) {
+		if ( isset( $out[ $k ] ) ) { $money[ $k ] = $out[ $k ]; unset( $out[ $k ] ); }
+	}
+
 	/* 並び順 */
 	$or = ymkrf_product_field_order();
 	if ( isset( $or[ $cat ] ) ) {
@@ -500,6 +558,19 @@ function ymkrf_product_fields_for( $cat = '' ) {
 		}
 		$out = array_merge( $sorted, $out );
 	}
+
+	/* 上のほうは、この順にそろえます
+	   （2026/09/18 ユーザー指示「キャッチコピーは商品名の下に、その下に特徴1〜3を」）
+	     グレード → 商品名 → キャッチコピー → 特徴1・2・3 → （のこり） */
+	$head = array();
+	foreach ( array( '_ymkrf_grade', '_ymkrf_makerpick', '_ymkrf_name',
+	                 '_ymkrf_catch', '_ymkrf_pts' ) as $k ) {
+		if ( isset( $out[ $k ] ) ) { $head[ $k ] = $out[ $k ]; unset( $out[ $k ] ); }
+	}
+	if ( $head ) $out = array_merge( $head, $out );
+
+	/* 金額の欄を、いちばん下にもどします */
+	if ( $money ) $out = array_merge( $out, $money );
 
 	return $out;
 }
@@ -830,6 +901,23 @@ function ymkrf_product_box_basic( $post ) {
 
 	$cat = ymkrf_product_current_cat( $post->ID );
 
+	/* 右の「商品カテゴリ」の箱は出しません
+	   （2026/09/18 ユーザー指示「キッチンの商品カテゴリから入って登録しているので、
+	     キッチンって分かっていると思います。だから右の商品カテゴリは不要です」）
+
+	   ★消すのは見た目だけです。中身はそのまま残してあるので、
+	     保存したときの分類は、これまでどおり付きます。 */
+	$catname = '';
+	if ( $cat !== '' ) {
+		$t = get_term_by( 'slug', $cat, 'ymkrf_product_cat' );
+		if ( $t && ! is_wp_error( $t ) ) $catname = $t->name;
+	}
+	echo '<style>#ymkrf_product_catdiv,#ymkrf_makerdiv{display:none !important}</style>';
+	if ( $catname !== '' ) {
+		echo '<p style="margin:0 0 12px;font-size:14px;font-weight:700">分類：'
+		   . esc_html( $catname ) . '</p>';
+	}
+
 	echo '<table class="ymkrf-tbl">';
 	foreach ( ymkrf_product_fields_for( $cat ) as $key => $f ) {
 
@@ -877,6 +965,102 @@ function ymkrf_product_box_basic( $post ) {
 			}
 			echo '</select>';
 
+		} elseif ( $f[1] === 'short' ) {
+
+			/* 数文字しか入れない欄。長い枠だと、かえって分かりにくくなります */
+			printf(
+				'<input type="text" id="%1$s" name="%1$s" value="%2$s" placeholder="%3$s" style="width:140px">',
+				esc_attr( $key ), esc_attr( $val ), esc_attr( $f[2] )
+			);
+
+		} elseif ( $f[1] === 'area' ) {
+
+			printf(
+				'<textarea id="%1$s" name="%1$s" rows="3" placeholder="%3$s"'
+				. ' style="width:100%%;max-width:760px;resize:vertical">%2$s</textarea>',
+				esc_attr( $key ), esc_textarea( $val ), esc_attr( $f[2] )
+			);
+
+		} elseif ( $f[1] === 'pt3' ) {
+
+			/* 特徴を3つ、横にならべます */
+			echo '<span style="display:flex;gap:8px;flex-wrap:wrap;max-width:760px">';
+			foreach ( array( '_ymkrf_pt1', '_ymkrf_pt2', '_ymkrf_pt3' ) as $n => $pk ) {
+				printf(
+					'<input type="text" id="%1$s" name="%1$s" value="%2$s" placeholder="%3$s"'
+					. ' style="flex:1 1 180px;min-width:0;width:auto">',
+					esc_attr( $pk ),
+					esc_attr( (string) get_post_meta( $post->ID, $pk, true ) ),
+					esc_attr( array( '例：お手頃価格', '例：収納抜群', '例：おそうじ楽々' )[ $n ] )
+				);
+			}
+			echo '</span>';
+
+		} elseif ( $f[1] === 'maker' ) {
+
+			/* メーカーをえらぶ欄。右の「メーカー」の箱は出しません */
+			$now_mk = 0;
+			$mks = wp_get_object_terms( $post->ID, 'ymkrf_maker', array( 'fields' => 'ids' ) );
+			if ( $mks && ! is_wp_error( $mks ) ) $now_mk = (int) $mks[0];
+
+			$all_mk = get_terms( array( 'taxonomy' => 'ymkrf_maker', 'hide_empty' => false ) );
+			if ( is_wp_error( $all_mk ) ) $all_mk = array();
+
+			/* その分類でよく使うメーカーを、上にまとめます */
+			/* どのメーカーを出すかは「商品 ＞ メーカーの設定」で決めます。
+			   決めていないときは、その分類の商品から自動で調べます。 */
+			$used = function_exists( 'ymkrf_maker_choices' ) ? ymkrf_maker_choices( $cat ) : array();
+
+			/* その分類で使われているメーカーだけを出します
+			   （2026/09/18 ユーザー指示「メーカー選択はキッチンであるもののみを表示」）
+			   まだ1件も商品が無い分類のときは、どれを使うか分からないので、ぜんぶ出します。
+			   いま選ばれているメーカーは、一覧から外れないようにしています。 */
+			$show = $all_mk;
+			if ( $used ) {
+				$used = array_map( 'intval', $used );
+				if ( $now_mk && ! in_array( $now_mk, $used, true ) ) $used[] = $now_mk;
+				$show = array();
+				foreach ( $all_mk as $t ) {
+					if ( in_array( (int) $t->term_id, $used, true ) ) $show[] = $t;
+				}
+			}
+
+			echo '<select id="ymkrf_makerpick" name="ymkrf_makerpick" style="max-width:420px">';
+			echo '<option value="">（えらんでください）</option>';
+			foreach ( $show as $t ) {
+				printf( '<option value="%d"%s>%s</option>',
+					(int) $t->term_id, selected( $now_mk, $t->term_id, false ), esc_html( $t->name ) );
+			}
+			echo '</select>';
+			if ( function_exists( 'ymkrf_maker_admin_url' ) ) {
+				echo ' <a href="' . esc_url( ymkrf_maker_admin_url( $cat ) ) . '" target="_blank" rel="noopener"'
+				   . ' style="margin-left:8px;font-size:12px">メーカーを追加する</a>';
+			}
+
+		} elseif ( $f[1] === 'days' ) {
+
+			/* 数字でも「半日」でも受けます。
+			   保存するときに、数字なら _ymkrf_days、言葉なら _ymkrf_daystext に振り分けます */
+			$dtext = (string) get_post_meta( $post->ID, '_ymkrf_daystext', true );
+			printf(
+				'<input type="text" id="%1$s" name="%1$s" value="%2$s" placeholder="%3$s" style="width:140px">',
+				esc_attr( $key ),
+				esc_attr( $dtext !== '' ? $dtext : $val ),
+				esc_attr( $f[2] )
+			);
+
+		} elseif ( $f[1] === 'yen' ) {
+
+			/* 金額。打ちながら3けたごとに「,」が入ります
+			   （2026/09/18 ユーザー指示「価格はカンマが自動でつくようにして」） */
+			printf(
+				'<input type="text" inputmode="numeric" class="ymkrf-yen" id="%1$s" name="%1$s"'
+				. ' value="%2$s" placeholder="%3$s" style="max-width:220px"> <span>円（税込）</span>',
+				esc_attr( $key ),
+				esc_attr( $val !== '' ? number_format( (int) $val ) : '' ),
+				esc_attr( $f[2] )
+			);
+
 		} else {
 
 			printf(
@@ -891,23 +1075,35 @@ function ymkrf_product_box_basic( $post ) {
 
 	$total = (int) get_post_meta( $post->ID, '_ymkrf_work', true ) + (int) get_post_meta( $post->ID, '_ymkrf_item', true );
 	printf(
-		'<p class="ymkrf-total">込み価格（自動計算）　<b id="ymkrf-total">%s</b> 円（税込）
+		'<p class="ymkrf-total">総額　<b id="ymkrf-total">%s</b> 円（税込）
 		 <span class="ymkrf-note">標準工事費 ＋ 商品代 の合計です。入力の必要はありません。</span></p>',
 		number_format( $total )
 	);
 	?>
 	<script>
 	(function(){
+	  function num(el){ return el ? (parseInt(String(el.value).replace(/[^0-9]/g,''),10) || 0) : 0; }
+	  function comma(n){ return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+
+	  /* 金額の欄は、打ちながら3けたごとに「,」を入れます */
+	  var yens = document.querySelectorAll('.ymkrf-yen');
+	  for (var k = 0; k < yens.length; k++) {
+	    yens[k].addEventListener('input', function(){
+	      var n = String(this.value).replace(/[^0-9]/g,'');
+	      this.value = n ? comma(n) : '';
+	      calc();
+	    });
+	  }
+
 	  var w = document.getElementById('_ymkrf_work'),
 	      i = document.getElementById('_ymkrf_item'),
 	      t = document.getElementById('ymkrf-total');
-	  if (!w || !i || !t) return;
-	  function calc(){ t.textContent = ((+w.value||0) + (+i.value||0)).toLocaleString(); }
-	  w.addEventListener('input', calc); i.addEventListener('input', calc);
+	  function calc(){ if (t) t.textContent = comma(num(w) + num(i)); }
+	  calc();
 	})();
 	</script>
 	<p class="ymkrf-note" style="margin-top:14px">
-	  ※ メーカー・商品カテゴリ・展示店舗は、画面右側の欄からチェックを入れてください。<br>
+	  ※ 展示店舗は、画面右側の欄からチェックを入れてください。<br>
 	  ※ 商品写真（いちばん大きく出るもの）は、右側の「アイキャッチ画像」に設定してください。<br>
 	  ※ 「グレードUP／グレードを戻す」と「施工事例」は自動で出ます。入力は不要です。
 	</p>
@@ -986,9 +1182,25 @@ add_action( 'save_post_ymkrf_product', function ( $post_id ) {
 	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
 	if ( ! current_user_can( 'edit_post', $post_id ) ) return;
 
-	foreach ( array_keys( ymkrf_product_fields() ) as $key ) {
+	$defs = ymkrf_product_fields();
+	foreach ( $defs as $key => $f ) {
 		if ( ! isset( $_POST[ $key ] ) ) continue;
-		update_post_meta( $post_id, $key, sanitize_text_field( wp_unslash( $_POST[ $key ] ) ) );
+		$v = wp_unslash( $_POST[ $key ] );
+		/* 金額は「,」を外して、数字だけで保存します */
+		if ( isset( $f[1] ) && $f[1] === 'yen' ) $v = preg_replace( '/[^0-9]/', '', (string) $v );
+		/* 何行かに分けて書ける欄は、改行を残して保存します */
+		if ( isset( $f[1] ) && $f[1] === 'area' ) {
+			update_post_meta( $post_id, $key, sanitize_textarea_field( $v ) );
+			continue;
+		}
+		update_post_meta( $post_id, $key, sanitize_text_field( $v ) );
+	}
+
+	/* 並び順は、画面右の「ページ属性 ＞ 順序」を使います。
+	   並べかえに使っている _ymkrf_order に、その数字を写します */
+	if ( isset( $_POST['menu_order'] ) ) {
+		$mo = (int) $_POST['menu_order'];
+		update_post_meta( $post_id, '_ymkrf_order', $mo ? $mo : '' );
 	}
 
 	foreach ( ymkrf_product_repeaters() as $key => $def ) {
@@ -1185,7 +1397,10 @@ function ymkrf_grade_rank( $text ) {
 	$t = trim( (string) $text );
 	if ( $t === '' ) return 999;
 	if ( preg_match( '/premium|プレミアム/iu', $t ) ) return 130;
-	if ( preg_match( '/(SSS|SS|S|A|B|C|D|E|F|G|H|I|J)\s*グレード/u', $t, $m ) ) {
+	/* 「Fグレード」でも「F」だけでも読み取れるようにしています */
+	if ( preg_match( '/^(SSS|SS|S|A|B|C|D|E|F|G|H|I|J)\s*(グレード)?$/iu', $t, $m )
+	     || preg_match( '/(SSS|SS|S|A|B|C|D|E|F|G|H|I|J)\s*グレード/u', $t, $m ) ) {
+		$m[1] = strtoupper( $m[1] );
 		$map = array( 'J' => 10, 'I' => 20, 'H' => 30, 'G' => 40, 'F' => 50, 'E' => 60,
 		              'D' => 70, 'C' => 80, 'B' => 90, 'A' => 100,
 		              'S' => 110, 'SS' => 120, 'SSS' => 125 );
@@ -2506,7 +2721,10 @@ function ymkrf_product_admin_assets() {
 .ymkrf-tbl th{width:180px;text-align:left;padding:12px 10px;vertical-align:top;font-weight:700}
 .ymkrf-tbl td{padding:10px}
 .ymkrf-tbl tr+tr{border-top:1px solid #eee}
-.ymkrf-tbl input{width:100%;max-width:420px}
+/* 文字の欄は長めに。「写真の注意書き」などが途中で切れて見えないようにします
+   （2026/09/18 ユーザー「写真の注意書き　入力欄を長くして、文章が見切れておる」）
+   金額・工期の欄は、それぞれの欄で短く決めています */
+.ymkrf-tbl input{width:100%;max-width:760px}
 .ymkrf-note{display:block;margin-top:4px;color:#777;font-size:12px;line-height:1.7}
 .ymkrf-total{background:#fff4f0;border:2px solid #fe3301;border-radius:8px;padding:14px 16px;margin-top:16px;font-weight:700}
 .ymkrf-total b{font-size:24px;color:#fe3301}
@@ -2830,6 +3048,12 @@ function ymkrf_grade_label( $g, $cat = '' ) {
 	if ( $cat === 'ecocute' ) return $g;
 
 	if ( $g === 'オート' || $g === 'フルオート' ) return $g . 'タイプ';
+
+	/* 「F」「SS」のように記号だけ入っているときは、「グレード」を付けて出します
+	   （2026/09/18 ユーザー指示「グレードという文字は自動でつけて」） */
+	if ( preg_match( '/^(SSS|SS|S|A|B|C|D|E|F|G|H|I|J)$/i', $g ) ) {
+		return strtoupper( $g ) . 'グレード';
+	}
 	return $g;
 }
 endif;
@@ -3499,3 +3723,72 @@ function ymkrf_product_compare( $before_id, $after_id, $name = '' ) {
 	$h .= '</div>';
 	return $h;
 }
+
+
+/* ============================================================
+   商品一覧の、使わない絞りこみを出しません
+   ------------------------------------------------------------
+   （2026/09/18 ユーザー「すべて／公開済み／下書き／ゴミ箱／非公開、
+     分類のリンク、日付で絞り込む　これらは不要です」）
+
+   ★もし、またゴミ箱や下書きを見たくなったら、
+     下の .subsubsub の行を消してください。
+     （URLの後ろに &post_status=trash を付けても開けます）
+   ============================================================ */
+add_filter( 'disable_months_dropdown', function ( $off, $type ) {
+	return ( $type === 'ymkrf_product' ) ? true : $off;
+}, 10, 2 );
+
+add_action( 'admin_head-edit.php', function () {
+	$s = get_current_screen();
+	if ( ! $s || $s->post_type !== 'ymkrf_product' ) return;
+	echo '<style>.post-type-ymkrf_product .subsubsub{display:none !important}</style>' . "\n";
+} );
+
+
+/* ============================================================
+   キッチンの工期を、ぜんぶ4日にします（1度だけ）
+   ------------------------------------------------------------
+   （2026/09/18 ユーザー指示
+     「キッチンの施工日数は3日から、全てキッチンは4日にして」）
+
+   ★もう一度走らせたいときは、下の日付（版）を新しくしてください。
+   ============================================================ */
+add_action( 'admin_init', function () {
+
+	$ver = '2026-09-18-kitchen4';
+	if ( get_option( 'ymkrf_days_fix' ) === $ver ) return;
+	if ( ! current_user_can( 'manage_options' ) ) return;
+	if ( ! taxonomy_exists( 'ymkrf_product_cat' ) ) return;
+
+	$ids = get_posts( array(
+		'post_type'      => 'ymkrf_product',
+		'post_status'    => 'any',
+		'posts_per_page' => -1,
+		'fields'         => 'ids',
+		'tax_query'      => array( array(
+			'taxonomy' => 'ymkrf_product_cat',
+			'field'    => 'slug',
+			'terms'    => 'kitchen',
+		) ),
+	) );
+
+	$n = 0;
+	foreach ( (array) $ids as $id ) {
+		if ( (int) get_post_meta( $id, '_ymkrf_days', true ) === 4 ) continue;
+		update_post_meta( $id, '_ymkrf_days', 4 );
+		$n++;
+	}
+
+	update_option( 'ymkrf_days_fix', $ver, false );
+	if ( $n ) set_transient( 'ymkrf_days_fixed', $n, 120 );
+} );
+
+add_action( 'admin_notices', function () {
+	$n = get_transient( 'ymkrf_days_fixed' );
+	if ( ! $n ) return;
+	delete_transient( 'ymkrf_days_fixed' );
+	echo '<div class="notice notice-success is-dismissible"><p>'
+	   . 'キッチンの工期を <b>' . (int) $n . '件</b> 4日に直しました。'
+	   . '</p></div>';
+} );
