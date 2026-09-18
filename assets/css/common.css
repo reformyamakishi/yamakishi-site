@@ -434,6 +434,236 @@ address{ font-style:normal; }
 }
 .p-price__card:hover{ transform:translateY(-6px); box-shadow:var(--shadow-lg); border-color:var(--brand-tint2); }
 .p-price__card--feature{ border-color:var(--brand); }
+
+/* ── 低いカード（外壁塗装）─────────────────────────
+   （2026/09/18 ユーザー指示「2/3の高さにして、プランを見る＞を削除、
+     北陸の雪〜の分を削除」）
+
+   写真を横長（16:9）にして、文字まわりの余白も詰めています。
+
+   ★となりの4点セットのバナーと、かならず同じ高さになります
+     （2026/09/18 ユーザー「縦は外壁と合わせて」）。
+     どちらも伸ばす形にしているので、背の高いほうに自動でそろいます。
+
+   マウスを乗せたときのぴょんと浮く動きは、ほかのカードと同じままです
+   （2026/09/18 ユーザー「マウスホバーしたらピョンってうごかなくなったわよ」）。 */
+.p-price__card--slim .p-price__photo{ aspect-ratio:16/9; }
+
+/* ── 空き枠（これから中身を入れるところ）───────────────
+   （2026/09/18 ユーザー指示
+     「外壁と同じサイズで2枠、枠だけ作って空白にしておいてください」）
+
+   大きさは外壁塗装のカードと同じです。
+   中身を入れるときは、HTMLから p-price__card--blank を外して、
+   ほかのカードと同じように写真・名前・金額を書いてください。 */
+.p-price__card--blank{
+  background:var(--bg-soft);
+  border:2px dashed var(--border);
+  box-shadow:none;
+}
+.p-price__card--blank:hover{
+  transform:none; box-shadow:none; border-color:var(--border);
+}
+.p-price__card--blank .p-price__photo{ background:#fff; }
+/* 中身が空でも、外壁塗装のカードと同じ高さになるようにしています */
+.p-price__card--blank .p-price__body{ min-height:106px; }
+
+/* ── 水まわり4点セットのバナー ─────────────────────
+   （2026/09/18 ユーザー指示
+     「外壁塗装の横、2/3の空いているスペースすべて使って、4点セットのバナーを作ります」
+     「最安値ではなく、一番人気プランの写真にします。価格は162.8万円〜にして下さい」
+     「写真をその枠の上部に4枚並べて入れて。下に価格を入れて」）
+
+   外壁塗装のカードの横に空いていた2列ぶんを、まるごと使います。
+   上に「いちばん人気のプラン」の4点の写真、下に文字と金額とボタン。
+
+   写真は4点セットのページ（ymkrf-pack4.php）のPLAN 3と同じものです。
+   商品を入れ替えたときは、あちらとここの両方を直してください。 */
+.p-price__bnr{
+  display:flex; flex-direction:column; overflow:hidden;
+  background:linear-gradient(180deg,var(--brand-tint),#fff 55%);
+  border:2px solid var(--brand-tint2); border-radius:var(--radius);
+  box-shadow:var(--shadow); text-decoration:none; color:inherit;
+  transition:transform .22s, box-shadow .22s, border-color .22s;
+}
+.p-price__bnr:hover{
+  transform:translateY(-6px); box-shadow:var(--shadow-lg); border-color:var(--brand);
+}
+/* スマホより広い画面では、横はばをまるごと使います */
+@media (min-width:768px){  .p-price__bnr{ grid-column:1 / -1; } }
+/* パソコンでは、外壁塗装のとなりの2列ぶん */
+@media (min-width:1024px){ .p-price__bnr{ grid-column:span 2; } }
+
+/* ── 上の写真4枚 ── */
+/* 写真の帯の高さを、外壁塗装のカードの写真とぴったり合わせます
+   （2026/09/18 ユーザー「外壁の写真に4点セットの写真を合わせてほしい」）。
+
+   外壁のカードは1列ぶんの幅で、写真は 16:9。
+   このバナーは2列ぶんの幅なので、同じ高さにするには
+   よこ2倍 ＝ 32:9 にすればそろいます。 */
+.p-price__bnr__photo{
+  position:relative; flex:0 0 auto; aspect-ratio:32/9;
+  display:grid; grid-template-columns:repeat(4,1fr); gap:2px;
+  background:#fff;
+}
+.p-price__bnr__cell{
+  /* 高さは上の帯まかせ（余った高さぶん、たてに伸びます） */
+  position:relative; overflow:hidden; background:#fff;
+}
+/* 写真は切り取らず、全体が入るようにします
+   （2026/09/18 ユーザー「トイレの画像、もう少し引きで」）。
+   商品の写真は白い背景の切り抜きなので、切り取ると
+   すみが欠けて、かえって窮屈に見えます。 */
+.p-price__bnr__cell img{
+  position:absolute; inset:0; width:100%; height:100%;
+  object-fit:contain; padding:6px; display:block;
+}
+/* キッチン・お風呂…の札。写真の下に重ねます */
+.p-price__bnr__part{
+  position:absolute; left:0; right:0; bottom:0; z-index:2;
+  padding:3px 4px; text-align:center;
+  background:linear-gradient(transparent,rgba(0,0,0,.62) 55%);
+  color:#fff; font-size:10.5px; font-weight:900; letter-spacing:.02em; line-height:1.4;
+}
+.p-price__bnr__ribbon{
+  position:absolute; left:0; top:10px; z-index:3;
+  background:var(--brand); color:#fff;
+  padding:5px 14px 5px 12px; border-radius:0 999px 999px 0;
+  font-size:12.5px; font-weight:900; letter-spacing:.04em; white-space:nowrap;
+  box-shadow:0 2px 8px rgba(0,0,0,.2);
+}
+
+/* ── 下の中身 ── */
+.p-price__bnr__inner{
+  flex:1 1 auto; min-width:0;
+  /* 下の帯は金額だけ。高さが余ったときは、ここが受けもちます
+     （写真の高さは動かしません） */
+  flex:1 1 auto;
+  display:flex; flex-direction:row; align-items:center; justify-content:center;
+  gap:18px; padding:10px 18px 12px;
+}
+
+/* 「水まわり4点セット」と、そのよこの短い説明 */
+/* 「水まわり4点セット」と、そのよこの短い説明。写真の左上にのせます
+   （2026/09/18 ユーザー「水まわり4点セットは左上（写真の上）に、
+     その横にキッチン・お風呂〜のテキスト」） */
+.p-price__bnr__head{
+  position:absolute; left:0; right:0; top:0; z-index:3;
+  display:flex; align-items:center; gap:12px; flex-wrap:nowrap;
+  padding:11px 16px 14px;
+  background:linear-gradient(rgba(0,0,0,.58), rgba(0,0,0,.3) 70%, transparent);
+}
+.p-price__bnr__lbl{
+  flex:none; padding:4px 14px; border-radius:999px;
+  background:var(--brand); color:#fff;
+  font-size:clamp(13px,1.4vw,15px); font-weight:900; letter-spacing:.04em; white-space:nowrap;
+}
+/* 説明の文字。ここは読ませる文ではなく「そえ書き」なので小さくしています
+   （2026/09/18 ユーザー「キッチン・お風呂〜のテキストはもっと小さくして」）。
+   写真の上にのせるので、白文字にふちを付けて読めるようにしています。 */
+.p-price__bnr__ttl{
+  /* よこ幅をできるだけ使います（2026/09/18 ユーザー指示） */
+  flex:1 1 auto; min-width:0;
+  font-size:clamp(13px,1.5vw,16px); font-weight:800;
+  line-height:1.5; color:#fff; word-break:auto-phrase;
+  text-shadow:0 1px 4px rgba(0,0,0,.7), 0 0 2px rgba(0,0,0,.8);
+}
+/* 高さは外壁塗装のカードとそろえます
+   （2026/09/18 ユーザー「縦は外壁と合わせて」「高さは外壁バナーと同じにあわせてっていったやん」）。
+   どちらも伸ばす形にしているので、背の高いほうに自動でそろいます。 */
+.p-price__bnr{ align-self:stretch; }
+
+/* 金額とボタン */
+.p-price__bnr__foot{
+  flex:0 0 auto;
+  display:flex; align-items:center; justify-content:center;
+  gap:16px; flex-wrap:wrap;
+}
+/* 「工事費も処分費も 全部コミコミ!!」は、金額の上ではなく左どなりに置きます
+   （2026/09/18 ユーザー「工事費も処分費も全部コミコミ！！は左横（価格の左に）」） */
+/* 折り返さないようにして、かならず価格の左どなりに並べます
+   （2026/09/18 ユーザー「工事費も処分費もの吹き出し、価格の左横へ持ってきて上ではなく」）。
+
+   ★ここは、ぜんぶ .p-price__bnr を頭に付けています。
+     共通の .p-price__yen ... の指定がこのファイルの後ろにあるため、
+     頭を付けて強くしておかないと、そちらに負けてしまいます。
+     （負けていたせいで、吹き出しが価格の上の行に回っていました） */
+.p-price__bnr .p-price__bnr__yen{
+  display:flex; align-items:center; justify-content:center; flex-wrap:nowrap; gap:12px;
+  margin-bottom:0;
+  color:var(--brand); font-weight:900; line-height:1.05;
+}
+/* 上の行に回さず、よこに並べます（共通の flex-basis:100% を打ち消します） */
+.p-price__bnr .p-price__bnr__yen .above{
+  flex-basis:auto; width:auto; margin-bottom:0;
+}
+.p-price__bnr .p-price__bnr__yen .above--all{
+  margin-bottom:0; gap:12px; flex-wrap:nowrap; align-items:center;
+}
+.p-price__bnr .p-price__bnr__yen .above--all b{
+  font-size:clamp(14px,1.7vw,17px); padding:5px 16px;
+}
+/* 吹き出しは、ほかのカードと同じくらいの大きさに
+   （2026/09/18 ユーザー「もっと大きくして」） */
+.p-price__bnr .p-price__bnr__yen .fuki{
+  font-size:clamp(12px,1.35vw,14px); padding:6px 11px 7px;
+  transform:translateY(-4px);
+}
+.p-price__bnr .p-price__bnr__yen .num{ font-size:clamp(30px,3.4vw,40px); letter-spacing:-.035em; }
+.p-price__bnr .p-price__bnr__yen .dec{ font-size:.62em; }
+.p-price__bnr .p-price__bnr__yen .unit{ font-size:15px; }
+.p-price__bnr .p-price__bnr__yen .tax{ font-size:.78em; font-weight:900; color:var(--ink-sub); }
+
+/* 「4つのプランを見る」のボタンは出しません
+   （2026/09/18 ユーザー指示「4つのプランを見るを削除」）。
+   バナー全体が押せるので、ボタンが無くてもページへ行けます。 */
+
+/* 細い画面では、写真4枚を2枚ずつ2段に。
+   4枚横並びのままだと、1枚が小さくなりすぎて何の写真か分からなくなります。 */
+/* タブレットでは、バナーが横はばいっぱい（1列ぶんではない）になるので、
+   写真の帯も16:9にもどします */
+@media (max-width:1023px){
+  .p-price__bnr__photo{ aspect-ratio:16/9; }
+}
+@media (max-width:767px){
+  .p-price__bnr__inner{ flex-direction:column; gap:8px; }
+}
+@media (max-width:520px){
+  /* 2枚ずつ2段になるので、高さはなりゆきにします */
+  .p-price__bnr__photo{ grid-template-columns:repeat(2,1fr); aspect-ratio:auto; }
+  .p-price__bnr__cell{ aspect-ratio:4/3; }
+  .p-price__bnr__inner{ padding:14px 16px 16px; }
+  /* 細い画面では、説明のそえ書きは出しません（写真が見えなくなるため） */
+  .p-price__bnr__ttl{ display:none; }
+}
+
+/* 写真の上にのせる札（外壁塗装の「足場代込み！」）
+   （2026/09/18 ユーザー指示「足場代込は、外壁のみ（屋根だけだと別途かかる）ので、
+     画像の男性の脚元に、外壁塗装は足場代込み！と入れて」）
+
+   足場代が込みなのは外壁塗装だけです。屋根だけを塗るときは別にかかるので、
+   「外壁塗装は」を頭に付けて、誤解のないようにしています。
+   写真の下のほう（職人さんの足もと）に置いています。 */
+.p-price__onphoto{
+  position:absolute; left:0; right:0; bottom:10px; z-index:2;
+  text-align:center; color:#fff;
+  padding:0 10px;
+  font-size:clamp(14px,3.6vw,16px); font-weight:900; letter-spacing:.02em;
+  line-height:1.4;
+  /* 背景は敷かず、写真の上に直接のせています（2026/09/18 ユーザー指示）。
+     写真の明るさによっては文字が読みにくくなるので、
+     まわりに濃いふちを付けて、どんな写真でも読めるようにしています。 */
+  text-shadow:
+    0 2px 6px rgba(0,0,0,.65),
+    0 0 3px rgba(0,0,0,.85),
+    0 1px 2px rgba(0,0,0,.9);
+}
+.p-price__card--slim .p-price__body{
+  padding:14px 18px 16px;
+  justify-content:center;   /* 高さが余ったときは、中身を上下まん中に */
+}
+.p-price__card--slim .p-price__yen{ margin-bottom:0; margin-top:6px; }
+.p-price__card--slim .p-price__yen .num{ font-size:clamp(38px,10vw,48px); }
 .p-price__badge{
   background:var(--brand); color:#fff; text-align:center;
   font-size:13px; font-weight:900; padding:7px; letter-spacing:.04em;
