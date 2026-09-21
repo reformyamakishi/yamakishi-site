@@ -270,6 +270,19 @@ function ymkrf_voice_metabox( $post ) {
 	    </span>
 	  </p>
 
+	  <?php /* 案件番号は、いちばん上で入力します
+	           （2026/09/21 ユーザー指示「案件番号が一番上に入力にして」） */ ?>
+	  <p class="ymkrf-voice__caseno"
+	     style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:14px 0 6px">
+	    <label style="display:flex;align-items:center;gap:8px;font-size:15px"><b>案件番号</b>
+	      <input type="text" name="_ymkrf_case_no" class="regular-text"
+	             value="<?php echo esc_attr( $get( '_ymkrf_case_no' ) ); ?>"
+	             placeholder="例：2604-0180"></label>
+	    <span class="description">
+	      画像のファイル名から自動で入ります。同じ番号の施工事例を登録すると、自動でリンクします。
+	    </span>
+	  </p>
+
 	  <p>
 	    <button type="button" class="button button-primary" id="ymkrf-pick">アンケート画像を選ぶ</button>
 	    <button type="button" class="button" id="ymkrf-reread" <?php disabled( ! $sid ); ?>>もう一度読み取る</button>
@@ -303,12 +316,6 @@ function ymkrf_voice_metabox( $post ) {
 	  </p>
 
 	  <table class="form-table ymkrf-voice__table">
-	    <tr>
-	      <th>案件番号</th>
-	      <td><input type="text" name="_ymkrf_case_no" value="<?php echo esc_attr( $get( '_ymkrf_case_no' ) ); ?>" class="regular-text">
-	          <p class="description">画像のファイル名から自動で入ります。ページの下のほうに小さく出ます。<br>
-	            同じ番号の施工事例を登録すると、自動でリンクします。</p></td>
-	    </tr>
 	    <tr>
 	      <th>① 工事した箇所</th>
 	      <td class="ymkrf-voice__checks" id="ymkrf-parts">

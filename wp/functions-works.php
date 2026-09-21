@@ -322,6 +322,12 @@ function ymkrf_works_prod_groups() {
 		$slugs = wp_get_object_terms( $pr->ID, 'ymkrf_product_cat', array( 'fields' => 'slugs' ) );
 		if ( is_wp_error( $slugs ) ) $slugs = array();
 
+		/* 水まわり4点セットのプランは、使った商品にはならべません
+		   （2026/09/21 ユーザー指示「その他の お財布に優しいプラン…
+		     主婦が憧れるプレミアムプラン 削除して」）。
+		   キッチン・お風呂・トイレ・洗面化粧台を、それぞれえらんでください。 */
+		if ( in_array( 'pack4', (array) $slugs, true ) ) continue;
+
 		$key = 'other';
 		foreach ( array_keys( ymkrf_works_prod_groups_master() ) as $k ) {
 			if ( in_array( $k, (array) $slugs, true ) ) { $key = $k; break; }
@@ -593,16 +599,6 @@ function ymkrf_works_metabox( $post ) {
 	            window.ymkrfStaffList  = <?php echo wp_json_encode( $sdata ); ?>;
 	            window.ymkrfStaffOrder = <?php echo wp_json_encode( array_keys( ymkrf_staff_shops() ) ); ?>;
 	          </script>
-	          <p class="description">
-	            上の「担当した店舗」をえらぶと、<b>その店舗の人だけ</b>が出ます。<br>
-	            ほかの店舗や本部・工事部の人にするときは、いちばん下の
-	            <b>「その他」にマウスを乗せる</b>と、横に全員の名前が出ます。<br>
-	            名前と顔写真は「スタッフ」で登録してください。<br>
-	            担当された方が退職されて、お名前をえらべないときは、いちばん下の
-	            <b>「お店が担当」</b>からお店をえらんでください。
-	            お客様のページには「<b>◯◯店が担当しました</b>」と出ます。<br>
-	            <b>えらばないと公開できません。</b>
-	          </p>
 	        <?php endif; ?>
 	      </td>
 	    </tr>
