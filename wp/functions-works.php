@@ -243,9 +243,9 @@ function ymkrf_works_prod_groups_master() {
 		'carport'        => 'カーポート',
 		'storage'        => '物置',
 		'fence'          => 'フェンス・門まわり',
-		'outer-wall'     => '外壁・屋根',
-		'repair'         => '修理・小工事',
-		'demolition'     => '解体',
+		/* 外壁・屋根／修理・小工事／解体 は、使った商品としてはえらびません
+		   （2026/09/21 ユーザー指示「使った商品の外壁塗装、修理小工事、解体は削除して」）。
+		   工事の種類のほうでえらんでください。 */
 		'other'          => 'その他',
 	);
 }
@@ -644,6 +644,15 @@ function ymkrf_works_metabox( $post ) {
 	    </tr>
 
 	    <tr>
+	      <th>その他施工箇所など</th>
+	      <td>
+	        <textarea name="_ymkrf_work_items" rows="6" class="large-text ymkrf-works__items"
+	                  placeholder="上のチェックにない施工箇所、工夫した箇所、お客様からのご要望など、参考になることがあれば入力してください。"><?php
+	          echo esc_textarea( $items ); ?></textarea>
+	      </td>
+	    </tr>
+
+	    <tr>
 	      <th>写真</th>
 	      <td>
 	        <div class="ymkrf-photos">
@@ -663,15 +672,6 @@ function ymkrf_works_metabox( $post ) {
 	          写真の上の <b>◀ ▶</b> で順番を入れかえ、<b>×</b> ではずせます。<br>
 	          BeforeとAfterは、同じ場所・同じ向きで撮ると、きれいに見くらべられます。
 	        </p>
-	      </td>
-	    </tr>
-
-	    <tr>
-	      <th>備考</th>
-	      <td>
-	        <textarea name="_ymkrf_work_items" rows="6" class="large-text ymkrf-works__items"
-	                  placeholder="工夫した箇所、お客様からの要望など参考になることがあれば入力してください。"><?php
-	          echo esc_textarea( $items ); ?></textarea>
 	      </td>
 	    </tr>
 
