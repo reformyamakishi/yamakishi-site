@@ -491,7 +491,7 @@ get_header();
         <span class="p-menu__icon"></span>
         <span class="p-menu__name">エコキュート</span><span class="p-menu__note">電気でお湯をつくる</span>
       </a>
-      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_cat_url( 'ih' ) ); ?>" data-icon="ih">
+      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_cat_url( 'cooktop' ) ); ?>" data-icon="ih">
         <span class="p-menu__icon"></span>
         <span class="p-menu__name">IH・ガスコンロ</span><span class="p-menu__note">クッキングヒーター交換</span>
       </a>

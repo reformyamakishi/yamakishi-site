@@ -354,14 +354,14 @@ function ymkrf_product_fields() {
 		   シートは日々変わるので、たまに入れ直してください。 */
 		/* ── IH・コンロ（2026/09/22 ユーザー指示「こんろね」） ── */
 		'_ymkrf_ihtype'  => array( '種類', 'select', '', '一覧ページの「ガスコンロ／IH」の切り替えに使います',
-			array( 'ガスコンロ', 'IHクッキングヒーター' ), array( 'ih' ) ),
+			array( 'ガスコンロ', 'IHクッキングヒーター' ), array( 'cooktop' ) ),
 		'_ymkrf_gas'     => array( 'ガス種', 'select', '', 'IHのときは「—」のままでかまいません',
-			array( '—', 'LPガス用', '都市ガス用' ), array( 'ih' ) ),
+			array( '—', 'LPガス用', '都市ガス用' ), array( 'cooktop' ) ),
 		'_ymkrf_model'   => array( '型番', 'text', '例：N3WV6M', '商品名の下に小さく出ます',
-			array(), array( 'ih', 'fence' ) ),
+			array(), array( 'cooktop', 'fence' ) ),
 		'_ymkrf_list'    => array( 'メーカー定価', 'yen', '例：249,370',
 			'入れると「定価249,370円の品」と出ます。無ければ空のままでOK',
-			array(), array( 'ih' ) ),
+			array(), array( 'cooktop' ) ),
 
 		'_ymkrf_stock'      => array( '在庫数（社内用）', 'number', '例：12',
 			'★お客様のページには出ません。ダッシュボードの一覧にだけ出ます',
@@ -392,7 +392,7 @@ function ymkrf_product_field_overrides() {
 	return array(
 		/* IH・コンロ（2026/09/22 追加）。
 		   工事費と商品代に分けず、「入替工事込の価格」の1つだけにします。 */
-		'ih' => array(
+		'cooktop' => array(
 			'_ymkrf_name'  => array( '商品名', 'text', '例：LPガス用 スタンダードタイプ',
 				'空欄なら上のタイトルを使います' ),
 			'_ymkrf_item'  => array( '入替工事込の価格', 'yen', '例：109,800',
@@ -472,7 +472,7 @@ function ymkrf_product_field_order() {
 		),
 		/* IH・コンロ（2026/09/22 ユーザー指示「こんろね」）。
 		   グレードは使いません。工事費込みの一本価格です。 */
-		'ih' => array(
+		'cooktop' => array(
 			'_ymkrf_makerpick', '_ymkrf_ihtype',
 			/* 特徴は型番のすぐ下です
 			   （2026/09/22 ユーザー指示「特徴を型番の下に移動して」） */
@@ -547,7 +547,7 @@ function ymkrf_product_fields_for( $cat = '' ) {
 
 	/* IH・コンロは、使う欄だけにしぼります
 	   （2026/09/22 ユーザー指示「グレード 削除」） */
-	if ( $cat === 'ih' ) {
+	if ( $cat === 'cooktop' ) {
 		/* キャッチコピーはやめて、特徴に一本化しました
 		   （2026/09/22 ユーザー指示「キャッチコピーを特徴にして」） */
 		/* ガス種は使わないことになりました
@@ -579,7 +579,7 @@ function ymkrf_product_fields_for( $cat = '' ) {
 	/* 金額の欄は、いちばん下（「総額」のすぐ上）に置きます
 	   （2026/09/18 ユーザー指示「標準工事費と商品代は総額の上に移動して」） */
 	$money = array();
-	if ( $cat !== 'ih' ) {   /* IH・コンロは金額も上の並び順のままにします */
+	if ( $cat !== 'cooktop' ) {   /* IH・コンロは金額も上の並び順のままにします */
 		foreach ( array( '_ymkrf_work', '_ymkrf_item' ) as $k ) {
 			if ( isset( $out[ $k ] ) ) { $money[ $k ] = $out[ $k ]; unset( $out[ $k ] ); }
 		}
@@ -599,7 +599,7 @@ function ymkrf_product_fields_for( $cat = '' ) {
 	   （2026/09/18 ユーザー指示「キャッチコピーは商品名の下に、その下に特徴1〜3を」）
 	     グレード → 商品名 → キャッチコピー → 特徴1・2・3 → （のこり） */
 	$head = array();
-	if ( $cat !== 'ih' ) {   /* IH・コンロは上の並び順をそのまま使います */
+	if ( $cat !== 'cooktop' ) {   /* IH・コンロは上の並び順をそのまま使います */
 		foreach ( array( '_ymkrf_grade', '_ymkrf_makerpick', '_ymkrf_name',
 		                 '_ymkrf_catch', '_ymkrf_pts' ) as $k ) {
 			if ( isset( $out[ $k ] ) ) { $head[ $k ] = $out[ $k ]; unset( $out[ $k ] ); }
@@ -916,7 +916,7 @@ add_action( 'add_meta_boxes', function () {
 		   （2026/09/22 ユーザー指示「これらの商品は、とりあえず基本情報だけでよいわ」）。
 		   おすすめポイントなどを使いたくなったら、下の array に欄の名前を足してください。
 		   例：array( '_ymkrf_features', '_ymkrf_options' ) */
-		if ( $cat_now === 'ih' && ! in_array( $key, array(), true ) ) continue;
+		if ( $cat_now === 'cooktop' && ! in_array( $key, array(), true ) ) continue;
 
 		/* 色見本の枠は、ぜんぶまとめて1つの箱に入れます
 		   （2026/09/18 ユーザー指示「自由に増やしたり消したりできるように」）。
@@ -1306,7 +1306,7 @@ function ymkrf_product_box_basic( $post ) {
 					. ' style="flex:1 1 180px;min-width:0;width:auto">',
 					esc_attr( $pk ),
 					esc_attr( (string) get_post_meta( $post->ID, $pk, true ) ),
-					esc_attr( $cat === 'ih'
+					esc_attr( $cat === 'cooktop'
 						? array( '例：水無し両面焼き', '例：60cm', '例：3口' )[ $n ]
 						: array( '例：お手頃価格', '例：収納抜群', '例：おそうじ楽々' )[ $n ] )
 				);
@@ -2145,14 +2145,14 @@ add_filter( 'manage_ymkrf_product_posts_columns', function ( $cols ) {
 			}
 
 			if ( $cat === 'boiler' )                            $new['ymkrf_grade'] = 'ふろ機能';
-			elseif ( ! in_array( $cat, array( 'ecocute', 'ih' ), true ) ) $new['ymkrf_grade'] = 'グレード';
+			elseif ( ! in_array( $cat, array( 'ecocute', 'cooktop' ), true ) ) $new['ymkrf_grade'] = 'グレード';
 			$new['ymkrf_price'] = '込み価格';
 		}
 	}
 
 	/* IH・コンロの一覧（2026/09/22 ユーザー指示
 	   「グレードは不要。商品名、写真、メーカー、価格、公開か未公開か、展示店舗、日付の順に」） */
-	if ( $cat === 'ih' ) {
+	if ( $cat === 'cooktop' ) {
 
 		$out = array();
 		if ( isset( $new['cb'] ) ) $out['cb'] = $new['cb'];
@@ -3247,7 +3247,7 @@ function ymkrf_pointnote( $slug ) {
 		),
 		/* IH・コンロ（2026/09/22 追加）。
 		   チラシと同じく「入替工事込」の一本価格でご案内します。 */
-		'ih' => array(
+		'cooktop' => array(
 				'label' => 'IH・コンロの標準工事費',
 				'price' => 0,
 				'nocalc' => true,
@@ -3427,7 +3427,7 @@ function ymkrf_cat_label( $slug, $fallback = '' ) {
 		'boiler'   => '給湯器',
 		'ecocute'  => 'エコキュート',
 		/* 2026/09/22 追加 */
-		'ih'       => 'IH・コンロ',
+		'cooktop'       => 'IH・コンロ',
 		'exterior' => 'エクステリア',
 		'window'   => '窓リフォーム',
 	);
@@ -3445,7 +3445,7 @@ function ymkrf_cat_listtitle( $slug, $fallback = '商品' ) {
 		'bathroom' => 'ユニットバス商品一覧',
 		'toilet'   => 'トイレ商品一覧',
 		'lavatory' => '洗面化粧台商品一覧',
-		'ih'       => 'IH・ガスコンロ 商品一覧',
+		'cooktop'       => 'IH・ガスコンロ 商品一覧',
 	);
 	return isset( $map[ $slug ] ) ? $map[ $slug ] : $fallback . 'の商品一覧';
 }
@@ -3465,7 +3465,7 @@ function ymkrf_cat_brand( $cat ) {
 		'lavatory' => '洗面化粧台リフォームパック',
 		'boiler'   => 'ヤマキシ給湯センター',
 		'ecocute'  => 'ヤマキシ給湯センター',
-		'ih'       => 'IH・ガスコンロ',
+		'cooktop'       => 'IH・ガスコンロ',
 		'exterior' => 'エクステリア',
 		'window'   => '窓リフォーム',
 	);

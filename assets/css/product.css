@@ -1888,3 +1888,10 @@ a.p-pack__item:hover{ border-color:var(--brand); transform:translateY(-4px); box
   margin-top:7px; font-size:11.5px; color:var(--ink-sub);
 }
 .p-cat__cardlist s{ color:var(--ink-sub); }
+
+/* 商品ページの書き出しの一文（2026/09/22 追加） */
+.p-prd__lead{
+  margin-top:14px; max-width:760px;
+  font-size:14px; line-height:1.9; color:var(--ink-sub);
+}
+@media (min-width:900px){ .p-prd__lead{ font-size:14.5px; } }

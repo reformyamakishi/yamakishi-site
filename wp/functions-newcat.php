@@ -28,8 +28,8 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 /** 新しく足す分類（スラッグ => 名前・説明・並び順） */
 function ymkrf_newcat_list() {
 	return array(
-		'ih' => array(
-			'name' => 'IH・コンロ',
+		'cooktop' => array(
+			'name' => 'コンロ・IH',
 			'desc' => 'ビルトインコンロとIHクッキングヒーター。取り外し・処分・取り付けまで込みの価格でご案内します。',
 			'ord'  => 70,
 		),
@@ -50,6 +50,27 @@ function ymkrf_newcat_list() {
 function ymkrf_newcat_lp() {
 	return array( 'exterior', 'window' );
 }
+
+/* さきに作ってしまった「IH・コンロ（ih）」を「コンロ・IH（cooktop）」に付けかえます。
+   ガスコンロもふくむ分類なので、URLに ih が入るのはおかしい、という理由です
+   （2026/09/22 ユーザー指摘「ガスコンロはIHではないのに、URLはIHってつくよね？」）。
+   一度だけ動きます。 */
+add_action( 'admin_init', function () {
+
+	if ( get_option( 'ymkrf_cooktop_done' ) === '1' ) return;
+	if ( ! current_user_can( 'manage_options' ) ) return;
+	if ( ! taxonomy_exists( 'ymkrf_product_cat' ) ) return;
+
+	$t = get_term_by( 'slug', 'ih', 'ymkrf_product_cat' );
+	if ( $t && ! is_wp_error( $t ) && ! get_term_by( 'slug', 'cooktop', 'ymkrf_product_cat' ) ) {
+		wp_update_term( (int) $t->term_id, 'ymkrf_product_cat', array(
+			'name' => 'コンロ・IH',
+			'slug' => 'cooktop',
+		) );
+	}
+	update_option( 'ymkrf_cooktop_done', '1' );
+}, 9 );
+
 
 add_action( 'admin_init', function () {
 

@@ -15,10 +15,12 @@
  *             お客様のページに出るのは「商品名」の欄のほうです。
  *
  *   URL  … 分類 ＋ 商品名（英数字）　例： /products/kitchen-rakuera/
+ *           コンロ・IHだけは、あいだに「ガスかIHか」が入ります
+ *           　　例： /products/cooktop-gas-n3wv6m/　/products/cooktop-ih-kz-k33xst/
  *           ・商品名に英字があれば、それを使います（V-style → v-style）
  *           ・無ければカタカナをローマ字にします（オフローラ → ofurora）
  *             このときは「要確認」の赤い印を出します。正しい綴りに直してください
- *           ・商品名から作れないときは型番を使います（N3WV6M → n3wv6m）
+ *           ・型番が入っているときは、型番をそのまま使います（N3WV6M → n3wv6m）
  *
  *   ★ URLは、一度公開すると変えられません（変えると前のURLが404になります）。
  *      本番公開の前にそろえてください。
@@ -78,6 +80,19 @@ function ymkrf_roman( $text ) {
 	$text = trim( (string) $text );
 	if ( $text === '' ) return '';
 
+	/* よく出る言葉は、先に英語に置きかえます
+	   （内装・改装の「畳 → フローリング（6帖パック）」などのため。2026/09/22） */
+	$words = array(
+		'→' => '-to-', '＞' => '-to-',
+		'畳' => 'tatami', '和室' => 'washitsu', '洋室' => 'yoshitsu',
+		'帖' => 'jo', '室' => '', '間' => '',
+		'リフォーム' => '', 'リフレッシュ' => 'refresh', 'パック' => 'pack',
+		'張替' => 'harikae', '張り替え' => 'harikae', '重ね貼り' => 'kasanebari',
+		'クロス' => 'cross', '天井' => 'tenjo', '床' => 'yuka', '壁' => 'kabe',
+		'フローリング' => 'flooring', 'カウンター' => 'counter',
+	);
+	$text = strtr( $text, $words );
+
 	/* ひらがな → カタカナ */
 	if ( function_exists( 'mb_convert_kana' ) ) {
 		$text = mb_convert_kana( $text, 'KVC', 'UTF-8' );
@@ -94,8 +109,9 @@ function ymkrf_roman( $text ) {
 		$two = ( $i + 1 < $len ) ? mb_substr( $text, $i, 2, 'UTF-8' ) : '';
 		$one = mb_substr( $text, $i, 1, 'UTF-8' );
 
-		/* 長音「ー」は落とします（オフローラ → ofurora） */
-		if ( $one === 'ー' || $one === '-' || $one === '―' ) { $i++; continue; }
+		/* 長音「ー」だけ落とします。英字のハイフンは区切りとして残します */
+		if ( $one === 'ー' || $one === '―' ) { $i++; continue; }
+		if ( $one === '-' ) { $out .= '-'; $i++; continue; }
 
 		/* 促音「ッ」 */
 		if ( $one === 'ッ' ) { $sokuon = true; $i++; continue; }
@@ -104,7 +120,8 @@ function ymkrf_roman( $text ) {
 		if ( $two !== '' && isset( $map[ $two ] ) ) { $r = $map[ $two ]; $i += 2; }
 		elseif ( isset( $map[ $one ] ) )            { $r = $map[ $one ]; $i += 1; }
 		elseif ( preg_match( '/^[0-9A-Za-z]$/', $one ) ) { $r = strtolower( $one ); $i += 1; }
-		elseif ( preg_match( '/^[\s　・（）\(\)\/／,、。]$/u', $one ) ) { $i += 1; continue; }
+		/* 空白や記号は、区切りの「-」にします（言葉がくっつかないように） */
+		elseif ( preg_match( '/^[\s　・（）\(\)【】\[\]\/／,、。]$/u', $one ) ) { $out .= '-'; $i += 1; continue; }
 		else {
 			/* 漢字などは読めません */
 			return '';
@@ -136,29 +153,60 @@ function ymkrf_slug_guess( $post_id ) {
 	$check = false;
 	$base  = '';
 
-	/* ① 商品名の中の英字（V-style（Vスタイル） → v-style） */
-	if ( preg_match_all( '/[0-9A-Za-z][0-9A-Za-z\-\. ]*/', $name, $m ) ) {
+	/* ⓪ 水まわり4点セットのプランは、名前が日本語なのでローマ字にできません。
+	     並び順の番号を使って plan1〜plan4 にします（2026/09/22） */
+	if ( $cat === 'pack4' ) {
+		$no = (int) get_post_field( 'menu_order', $post_id );
+		if ( $no < 1 ) $no = 1;
+		return array( 'slug' => 'pack4-plan' . $no, 'check' => false );
+	}
+
+	/* ① 型番があれば、それがいちばん確かです
+	     （IH・コンロやフェンスのように、商品名がブランド名になっていないもの）
+	     2026/09/22 ユーザー指摘「商品名が無いものは型番っていってなかった？」 */
+	$mo = trim( (string) get_post_meta( $post_id, '_ymkrf_model', true ) );
+	if ( $mo !== '' ) $base = $mo;
+
+	/* ② いま付いているURLが英数字なら、それを活かします
+	     （2026/09/22 ユーザー確認。alauno-vs5 や gga1-counter など、
+	       手で付けたURLがよくできているため。頭に分類を足すだけにします） */
+	if ( $base === '' ) {
+		$now = (string) get_post_field( 'post_name', $post_id );
+		$now = strtolower( rawurldecode( $now ) );
+		if ( $now !== ''
+		  && preg_match( '/^[a-z0-9\-]+$/', $now )     /* 日本語や％が入っていない */
+		  && ! preg_match( '/^[0-9\-]+$/', $now ) ) {  /* 番号だけでもない */
+			/* すでに分類が頭に付いているときは、二重にしません */
+			$base = ( $cat !== '' && strpos( $now, $cat . '-' ) === 0 )
+				? substr( $now, strlen( $cat ) + 1 ) : $now;
+		}
+	}
+
+	/* ③ 商品名の中の英字（V-style（Vスタイル） → v-style）。
+	     ただし「NewアラウーノV」の New のように、名前のごく一部でしかないときは使いません */
+	if ( $base === '' && preg_match_all( '/[0-9A-Za-z][0-9A-Za-z\-\. ]*/', $name, $m ) ) {
 		$cand = '';
 		foreach ( $m[0] as $one ) {
 			$one = trim( $one );
 			if ( mb_strlen( $one, 'UTF-8' ) > mb_strlen( $cand, 'UTF-8' ) ) $cand = $one;
 		}
-		if ( preg_match( '/[A-Za-z]/', $cand ) ) $base = $cand;
+		/* 記号や空白をのぞいた文字数でくらべます */
+		$bare = preg_replace( '/[\s　（）\(\)【】\[\]・,、。\/／]/u', '', $name );
+		$ok   = ( mb_strlen( $cand, 'UTF-8' ) * 2 >= mb_strlen( (string) $bare, 'UTF-8' ) );
+		if ( preg_match( '/[A-Za-z0-9]/', $cand ) && $ok ) $base = $cand;
 	}
 
-	/* ② カタカナをローマ字に */
+	/* ④ カタカナをローマ字に */
 	if ( $base === '' ) {
 		$r = ymkrf_roman( $name );
-		if ( $r !== '' ) { $base = $r; $check = true; }
+		if ( $r !== '' ) {
+			$base = $r;
+			/* かなが入っていたときだけ「要確認」にします（D7 などは確認不要） */
+			$check = (bool) preg_match( '/[ぁ-んァ-ヶ]/u', $name );
+		}
 	}
 
-	/* ③ 型番 */
-	if ( $base === '' ) {
-		$mo = trim( (string) get_post_meta( $post_id, '_ymkrf_model', true ) );
-		if ( $mo !== '' ) $base = $mo;
-	}
-
-	/* ④ それでもだめなら、番号で置いておきます */
+	/* ⑤ それでもだめなら、番号で置いておきます */
 	if ( $base === '' ) { $base = 'item-' . (int) $post_id; $check = true; }
 
 	$base = strtolower( $base );
@@ -166,7 +214,16 @@ function ymkrf_slug_guess( $post_id ) {
 	$base = trim( (string) $base, '-' );
 	if ( $base === '' ) { $base = 'item-' . (int) $post_id; $check = true; }
 
-	$slug = ( $cat !== '' ? $cat . '-' : '' ) . $base;
+	/* コンロ・IHは、分類と型番のあいだに「ガスかIHか」を入れます
+	   （2026/09/22 ユーザー指示。/products/cooktop-gas-n3wv6m/ の形） */
+	$mid = '';
+	if ( $cat === 'cooktop' ) {
+		$kind = (string) get_post_meta( $post_id, '_ymkrf_ihtype', true );
+		if ( strpos( $kind, 'ガス' ) !== false )      $mid = 'gas';
+		elseif ( strpos( $kind, 'IH' ) !== false )    $mid = 'ih';
+	}
+
+	$slug = ( $cat !== '' ? $cat . '-' : '' ) . ( $mid !== '' ? $mid . '-' : '' ) . $base;
 
 	return array( 'slug' => $slug, 'check' => $check );
 }

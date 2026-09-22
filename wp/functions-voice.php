@@ -163,6 +163,9 @@ function ymkrf_voice_meta_keys() {
 			'_ymkrf_trouble', '_ymkrf_after', '_ymkrf_comment',
 			'_ymkrf_customer', '_ymkrf_area', '_ymkrf_read_info',
 			'_ymkrf_city', '_ymkrf_initial', '_ymkrf_shop', '_ymkrf_illust',
+			/* ①工事した箇所で「その他」に✓が入ったときの、中身の言葉
+			   （2026/09/22 ユーザー指示「その他の横に入力欄をもう1つ置いて」） */
+			'_ymkrf_parts_other',
 		),
 		array_keys( ymkrf_voice_rating_fields() )
 	);
@@ -322,7 +325,25 @@ function ymkrf_voice_metabox( $post ) {
 	        <?php foreach ( ymkrf_voice_parts_list() as $v ) : ?>
 	          <label><input type="checkbox" name="_ymkrf_parts[]" value="<?php echo esc_attr( $v ); ?>"
 	            <?php checked( in_array( $v, $parts, true ) ); ?>> <?php echo esc_html( $v ); ?></label>
+	          <?php /* 「その他」のときは、すぐ横に中身を書く欄を出します
+	                   （2026/09/22 ユーザー指示） */ ?>
+	          <?php if ( $v === 'その他' ) :
+	            $other = (string) $get( '_ymkrf_parts_other' );
+	            $on    = in_array( 'その他', $parts, true ); ?>
+	            <input type="text" name="_ymkrf_parts_other" id="ymkrf-parts-other"
+	                   value="<?php echo esc_attr( $other ); ?>"
+	                   placeholder="例：屋根の雪止め"
+	                   style="width:260px;margin-left:-4px<?php if ( ! $on ) echo ';display:none'; ?>">
+	          <?php endif; ?>
 	        <?php endforeach; ?>
+	        <script>
+	        jQuery(function($){
+	          /* 「その他」に✓が入っているときだけ、横の欄を出します */
+	          $('#ymkrf-parts input[type=checkbox][value="その他"]').on('change', function(){
+	            $('#ymkrf-parts-other').toggle( this.checked );
+	          });
+	        });
+	        </script>
 	      </td>
 	    </tr>
 	    <tr>

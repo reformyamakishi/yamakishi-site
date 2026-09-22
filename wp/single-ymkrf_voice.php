@@ -11,6 +11,14 @@ while ( have_posts() ) : the_post();
   $id      = get_the_ID();
   $score   = ymkrf_voice_score( $id );
   $parts   = ymkrf_voice_meta_array( $id, '_ymkrf_parts' );
+  /* 「その他」に✓があるときは、書いていただいた言葉に置きかえます
+     （2026/09/22 ユーザー指示「その他の横に入力欄を置いて」） */
+  $pother  = trim( (string) get_post_meta( $id, '_ymkrf_parts_other', true ) );
+  if ( $pother !== '' ) {
+    foreach ( $parts as $_i => $_p ) {
+      if ( $_p === 'その他' ) $parts[ $_i ] = $pother;
+    }
+  }
   $reasons = ymkrf_voice_meta_array( $id, '_ymkrf_reasons' );
   $cust    = ymkrf_voice_customer_label( $id );
   $shop    = ymkrf_voice_shop_name( $id );

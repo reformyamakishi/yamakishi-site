@@ -133,7 +133,7 @@ $maker = ! empty( $d['makers'] ) ? $d['makers'][0] : null;
              「60cmのアイコンは横だけの長さなので、それを表示するマークにして」）
              1つめ＝炎（焼き方）／2つめ＝横はば／3つめ＝口の数 */
         $catslug = ( ! empty( $d['cats'] ) && ! is_wp_error( $d['cats'] ) ) ? $d['cats'][0]->slug : '';
-        if ( $catslug === 'ih' ) {
+        if ( $catslug === 'cooktop' ) {
           $icons = array(
             /* 炎 */
             '<path d="M12 2.6c2.6 3.2 5.5 5.3 5.5 9a5.5 5.5 0 0 1-11 0c0-2 1-3.5 2.2-4.7'
@@ -153,6 +153,13 @@ $maker = ! empty( $d['makers'] ) ? $d['makers'][0] : null;
           </li>
         <?php endforeach; ?>
       </ul>
+    <?php endif; ?>
+
+    <?php /* 書き出しの一文（2026/09/22 ユーザー承認）。
+             「コンロ 交換 金沢」のように、人が打つ言葉をページの中に入れます。
+             文は inc/functions-product-seo.php で自動で組み立てています。 */ ?>
+    <?php if ( function_exists( 'ymkrf_seo_lead' ) ) : ?>
+      <p class="p-prd__lead"><?php echo esc_html( ymkrf_seo_lead() ); ?></p>
     <?php endif; ?>
   </div>
 </div>
