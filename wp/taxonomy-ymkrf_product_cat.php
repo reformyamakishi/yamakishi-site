@@ -1056,6 +1056,8 @@ if ( ! empty( $pn['items'] ) ) :
                 /* エコキュートは「設置方法」より、タンクの大きさのほうが大事なので
                    そちらを出します（2026/09/01） */
                 $cardmeta = $d['size'];
+                /* IH・コンロは「型番」を出します（2026/09/22 追加） */
+                if ( $slug === 'ih' && ! empty( $d['model'] ) ) $cardmeta = $d['model'];
                 if ( $slug === 'ecocute' && ! empty( $d['tank'] ) ) {
                   $cardmeta = 'タンク' . $d['tank'] . 'L';
                   if ( ! empty( $d['people'] ) ) $cardmeta .= '／' . $d['people'];
@@ -1064,13 +1066,26 @@ if ( ! empty( $pn['items'] ) ) :
               <?php if ( $cardmeta ) : ?>
                 <p class="p-cat__cardmeta p-cat__cardmeta--size"><span><?php echo esc_html( $cardmeta ); ?></span></p>
               <?php endif; ?>
+              <?php /* IH・コンロは、特徴を小さな札で出します
+                       （2026/09/22 ユーザー指示。チラシの「水無し両面焼き／60cm／3口」にあたります） */ ?>
+              <?php if ( $slug === 'ih' && ! empty( $d['points'] ) ) : ?>
+                <p class="p-cat__cardpts">
+                  <?php foreach ( array_slice( $d['points'], 0, 3 ) as $pt ) : ?>
+                    <span><?php echo esc_html( $pt ); ?></span>
+                  <?php endforeach; ?>
+                </p>
+              <?php endif; ?>
               <?php /* エコキュートの赤いふだ（補助金対象商品！／在庫残り○台！ など） */ ?>
               <?php if ( $slug === 'ecocute' && $d['catch'] ) : ?>
                 <p class="p-cat__cardbadge"><?php echo esc_html( $d['catch'] ); ?></p>
               <?php endif; ?>
+              <?php /* メーカー定価（IH・コンロ）。入れてあるときだけ出ます */ ?>
+              <?php if ( $slug === 'ih' && ! empty( $d['list'] ) ) : ?>
+                <p class="p-cat__cardlist">定価 <s><?php echo esc_html( number_format( $d['list'] ) ); ?>円</s> の品</p>
+              <?php endif; ?>
               <?php if ( $d['total'] ) : ?>
                 <p class="p-cat__cardprice">
-                  <span class="lbl">工事費込み</span>
+                  <span class="lbl"><?php echo $slug === 'ih' ? '入替工事込' : '工事費込み'; ?></span>
                   <span class="num"><?php echo esc_html( number_format( $d['total'] ) ); ?></span>
                   <span class="unit">円（税込）</span>
                 </p>

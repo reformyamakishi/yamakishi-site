@@ -3020,6 +3020,9 @@ function ymkrf_product_data( $post_id = null ) {
 		'grade'    => ymkrf_grade_label( $m( '_ymkrf_grade' ), $cat1 ),
 		'name'     => $m( '_ymkrf_name' ) ?: get_the_title( $post_id ),
 		'size'     => $m( '_ymkrf_size' ),
+		/* IH・コンロで使います（2026/09/22 追加） */
+		'model'    => $m( '_ymkrf_model' ),
+		'list'     => (int) $m( '_ymkrf_list' ),
 		'sub'      => $m( '_ymkrf_sub' ),
 		'work'     => $work,
 		'item'     => $item,
