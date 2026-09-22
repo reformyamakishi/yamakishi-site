@@ -399,7 +399,9 @@ function ymkrf_product_field_overrides() {
 				'★税込の金額を入れてください。カンマは自動で付きます。'
 				. '取り外し・処分・取り付けまで込みの金額です' ),
 			'_ymkrf_pts'   => array( '特徴', 'pt3', '',
-				'例：水無し両面焼き／60cm／3口　のように3つまで' ),
+				'商品名の下に、丸い札で3つまで出ます' ),
+			'_ymkrf_model' => array( '型番', 'short', '例：N3WV6M',
+				'商品名の下に小さく出ます' ),
 			'_ymkrf_catch' => array( 'キャッチコピー', 'text', '例：数量限定！',
 				'商品名の上に、小さな赤い文字で出ます' ),
 			'_ymkrf_caution' => array( '注意書き', 'area', '例：※写真はイメージです。',
@@ -472,10 +474,12 @@ function ymkrf_product_field_order() {
 		   グレードは使いません。工事費込みの一本価格です。 */
 		'ih' => array(
 			'_ymkrf_makerpick', '_ymkrf_ihtype', '_ymkrf_gas',
-			'_ymkrf_name', '_ymkrf_model', '_ymkrf_pts',
+			/* 特徴は、前にキャッチコピーがあったところ（商品名の上）に置きます
+			   （2026/09/22 ユーザー指示「下にある特徴は不要」） */
+			'_ymkrf_pts',
+			'_ymkrf_name', '_ymkrf_model', '_ymkrf_caution',
 			'_ymkrf_list', '_ymkrf_item',
 			'_ymkrf_days',
-			'_ymkrf_catch', '_ymkrf_caution',
 		),
 		'ecocute' => array(
 			'_ymkrf_name', '_ymkrf_tank', '_ymkrf_people', '_ymkrf_grade',
@@ -542,6 +546,21 @@ function ymkrf_product_fields_for( $cat = '' ) {
 		return $only;
 	}
 
+	/* IH・コンロは、使う欄だけにしぼります
+	   （2026/09/22 ユーザー指示「グレード 削除」） */
+	if ( $cat === 'ih' ) {
+		/* キャッチコピーはやめて、特徴に一本化しました
+		   （2026/09/22 ユーザー指示「キャッチコピーを特徴にして」） */
+		$keep = array(
+			'_ymkrf_makerpick', '_ymkrf_ihtype', '_ymkrf_gas',
+			'_ymkrf_name', '_ymkrf_model', '_ymkrf_caution', '_ymkrf_pts',
+			'_ymkrf_list', '_ymkrf_item', '_ymkrf_days',
+		);
+		foreach ( array_keys( $out ) as $k ) {
+			if ( ! in_array( $k, $keep, true ) ) unset( $out[ $k ] );
+		}
+	}
+
 	/* 給湯器・エコキュートでは「商品名の横の言葉」は使いません。
 	   塗装鋼板・ステンレスは「外装」の欄に入れます（2026/09/01 ユーザー指示） */
 	if ( in_array( $cat, array( 'boiler', 'ecocute' ), true ) ) {
@@ -559,8 +578,10 @@ function ymkrf_product_fields_for( $cat = '' ) {
 	/* 金額の欄は、いちばん下（「総額」のすぐ上）に置きます
 	   （2026/09/18 ユーザー指示「標準工事費と商品代は総額の上に移動して」） */
 	$money = array();
-	foreach ( array( '_ymkrf_work', '_ymkrf_item' ) as $k ) {
-		if ( isset( $out[ $k ] ) ) { $money[ $k ] = $out[ $k ]; unset( $out[ $k ] ); }
+	if ( $cat !== 'ih' ) {   /* IH・コンロは金額も上の並び順のままにします */
+		foreach ( array( '_ymkrf_work', '_ymkrf_item' ) as $k ) {
+			if ( isset( $out[ $k ] ) ) { $money[ $k ] = $out[ $k ]; unset( $out[ $k ] ); }
+		}
 	}
 
 	/* 並び順 */
@@ -577,9 +598,11 @@ function ymkrf_product_fields_for( $cat = '' ) {
 	   （2026/09/18 ユーザー指示「キャッチコピーは商品名の下に、その下に特徴1〜3を」）
 	     グレード → 商品名 → キャッチコピー → 特徴1・2・3 → （のこり） */
 	$head = array();
-	foreach ( array( '_ymkrf_grade', '_ymkrf_makerpick', '_ymkrf_name',
-	                 '_ymkrf_catch', '_ymkrf_pts' ) as $k ) {
-		if ( isset( $out[ $k ] ) ) { $head[ $k ] = $out[ $k ]; unset( $out[ $k ] ); }
+	if ( $cat !== 'ih' ) {   /* IH・コンロは上の並び順をそのまま使います */
+		foreach ( array( '_ymkrf_grade', '_ymkrf_makerpick', '_ymkrf_name',
+		                 '_ymkrf_catch', '_ymkrf_pts' ) as $k ) {
+			if ( isset( $out[ $k ] ) ) { $head[ $k ] = $out[ $k ]; unset( $out[ $k ] ); }
+		}
 	}
 	if ( $head ) $out = array_merge( $head, $out );
 
@@ -888,10 +911,11 @@ add_action( 'add_meta_boxes', function () {
 		   （2026/09/17 ユーザー指示。標準仕様や扉カラーなどは使いません） */
 		if ( $cat_now === 'interior' && $key !== '_ymkrf_ba' ) continue;
 
-		/* IH・コンロは、色見本・取っ手・標準仕様（写真）は使いません
-		   （2026/09/22 追加）。おすすめポイント・機能一覧・オプションだけ出します。 */
-		if ( $cat_now === 'ih' && ! in_array( $key,
-			array( '_ymkrf_features', '_ymkrf_speclist', '_ymkrf_options' ), true ) ) continue;
+		/* IH・コンロは、いまのところ「商品データ（基本）」だけです
+		   （2026/09/22 ユーザー指示「これらの商品は、とりあえず基本情報だけでよいわ」）。
+		   おすすめポイントなどを使いたくなったら、下の array に欄の名前を足してください。
+		   例：array( '_ymkrf_features', '_ymkrf_options' ) */
+		if ( $cat_now === 'ih' && ! in_array( $key, array(), true ) ) continue;
 
 		/* 色見本の枠は、ぜんぶまとめて1つの箱に入れます
 		   （2026/09/18 ユーザー指示「自由に増やしたり消したりできるように」）。
@@ -1259,6 +1283,18 @@ function ymkrf_product_box_basic( $post ) {
 				esc_attr( $key ), esc_textarea( $val ), esc_attr( $f[2] )
 			);
 
+		} elseif ( $f[1] === 'pt1' ) {
+
+			/* 特徴を1つだけ入れる欄（2026/09/22 ユーザー指示「特徴1つで」）。
+			   保存さきは特徴1と同じ _ymkrf_pt1 です。 */
+			printf(
+				'<input type="text" id="%1$s" name="%1$s" value="%2$s" placeholder="%3$s"'
+				. ' style="width:100%%;max-width:420px">',
+				'_ymkrf_pt1',
+				esc_attr( (string) get_post_meta( $post->ID, '_ymkrf_pt1', true ) ),
+				esc_attr( $f[2] !== '' ? $f[2] : '例：水無し両面焼き' )
+			);
+
 		} elseif ( $f[1] === 'pt3' ) {
 
 			/* 特徴を3つ、横にならべます */
@@ -1269,7 +1305,9 @@ function ymkrf_product_box_basic( $post ) {
 					. ' style="flex:1 1 180px;min-width:0;width:auto">',
 					esc_attr( $pk ),
 					esc_attr( (string) get_post_meta( $post->ID, $pk, true ) ),
-					esc_attr( array( '例：お手頃価格', '例：収納抜群', '例：おそうじ楽々' )[ $n ] )
+					esc_attr( $cat === 'ih'
+						? array( '例：水無し両面焼き', '例：60cm', '例：3口' )[ $n ]
+						: array( '例：お手頃価格', '例：収納抜群', '例：おそうじ楽々' )[ $n ] )
 				);
 			}
 			echo '</span>';

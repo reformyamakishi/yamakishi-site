@@ -421,91 +421,11 @@ get_header();
         </div>
       </div>
 
-      <?php /* ============ 水まわり4点セットのバナー ============
-               （2026/09/18 ユーザー指示
-                 「外壁塗装の横、2/3の空いているスペースすべて使って、
-                   次は4点セットのバナーを作ります」
-                 「キッチン・バス・トイレ・洗面台の4点がセットになっていて
-                   4点一緒にすることで少し安くなるプランです。プランは4種類あります」）
-
-               外壁塗装のカードの横に空いていた2列ぶんを、まるごと使います。
-               ここでは中身を並べず、いちばん安いプランの金額だけを出して、
-               4点セットのページ（/products/pack4/）へお送りします。
-
-               ★金額を直すときは、4点セットのページ（ymkrf-pack4.php）の
-                 PLAN 1 の金額と、ここの数字を合わせてください。 */ ?>
-      <a class="p-price__bnr" href="<?php echo esc_url( ymkrf_cat_url( 'pack4' ) ); ?>"
-         data-reveal data-reveal-delay="240">
-
-        <?php /* 写真は、登録してある「水まわり4点セット」の
-                 「いちばん人気」のプランの4点から取ります
-                 （2026/09/18 ユーザー「写真は基本、登録してある商品のものを引っ張ってきてほしい」）。
-
-                 まだ登録が無いときは、いまの4点セットのページと同じ写真を出します。
-                 ここは「イメージ」です。くわしい中身は書きません
-                 （2026/09/18 ユーザー「トップのバナーはイメージなので、詳しくは書かないで」）。 */
-
-        $ymkrf_p4 = array();
-        if ( function_exists( 'ymkrf_p4_best' ) ) {
-          $ymkrf_p4best = ymkrf_p4_best();
-          if ( $ymkrf_p4best ) {
-            foreach ( ymkrf_p4_items( $ymkrf_p4best->ID ) as $it ) {
-              $ymkrf_p4[] = array( 'id' => $it[2], 'label' => $it[0] );
-            }
-          }
-        }
-        /* 登録がまだのときの写真 */
-        if ( ! $ymkrf_p4 ) {
-          $ymkrf_p4 = array(
-            array( 'file' => 'stedia',  'label' => 'キッチン' ),
-            array( 'file' => 'sazanat', 'label' => 'お風呂' ),
-            array( 'file' => 's160',    'label' => 'トイレ' ),
-            array( 'file' => 'fansio',  'label' => '洗面台' ),
-          );
-        }
-        ?>
-        <span class="p-price__bnr__photo">
-          <?php foreach ( $ymkrf_p4 as $p4 ) : ?>
-            <span class="p-price__bnr__cell">
-              <?php
-              $p4alt = '水まわり4点セットの' . $p4['label'];
-              if ( ! empty( $p4['id'] ) && has_post_thumbnail( $p4['id'] ) ) {
-                echo get_the_post_thumbnail( $p4['id'], 'medium_large', array(
-                  'alt' => esc_attr( $p4alt ), 'loading' => 'lazy', 'decoding' => 'async',
-                ) );
-              } else {
-                $p4f = ! empty( $p4['file'] ) ? $p4['file'] : '';
-                if ( $p4f !== '' ) : ?>
-                  <picture>
-                    <source srcset="<?php echo $asset; ?>/assets/img/products/_pack4/<?php echo $p4f; ?>.webp" type="image/webp">
-                    <img src="<?php echo $asset; ?>/assets/img/products/_pack4/<?php echo $p4f; ?>.jpg"
-                         width="1200" height="900" alt="<?php echo esc_attr( $p4alt ); ?>"
-                         loading="lazy" decoding="async">
-                  </picture>
-                <?php endif;
-              }
-              ?>
-              <span class="p-price__bnr__part"><?php echo esc_html( $p4['label'] ); ?></span>
-            </span>
-          <?php endforeach; ?>
-
-          <?php /* 「水まわり4点セット」と、そのよこの短い説明。
-                   写真の左上にのせます（2026/09/18 ユーザー指示） */ ?>
-          <span class="p-price__bnr__head">
-            <span class="p-price__bnr__lbl">水まわり4点セット</span>
-            <span class="p-price__bnr__ttl">キッチン・お風呂・トイレ・洗面をまとめて、おトクに。</span>
-          </span>
-        </span>
-
-        <span class="p-price__bnr__inner">
-          <span class="p-price__bnr__foot">
-            <?php /* ほかのカードと同じ「工事費も処分費も 全部コミコミ!!」
-                     （2026/09/18 ユーザー指示） */ ?>
-            <span class="p-price__yen p-price__bnr__yen"><span class="above above--all"><i class="fuki">工事費も<br>処分費も</i><b>全部コミコミ!!</b></span><span class="p-price__amount"><span class="num">162<span class="dec">.8</span></span><span class="unit">万円〜<small class="tax">（税込）</small></span></span></span>
-          </span>
-        </span>
-
-      </a>
+      <?php /* 水まわり4点セットのバナーは、いちばん上の「水まわり4点パック」の
+               カードと同じ中身で二重になっていたので、やめました
+               （2026/09/22 ユーザー指示「水まわり4点セットが2つあります。
+                 下のものは削除したはずだけど」）。
+               もう一度出したくなったときは、Gitの履歴から戻せます。 */ ?>
 
       <?php /* ============ 空き枠 2つ ============
                （2026/09/18 ユーザー指示
