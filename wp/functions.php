@@ -29,6 +29,8 @@ require_once get_stylesheet_directory() . '/inc/functions-outerwall.php';
 require_once get_stylesheet_directory() . '/inc/functions-pack4.php';
 require_once get_stylesheet_directory() . '/inc/functions-maker.php';
 require_once get_stylesheet_directory() . '/inc/functions-newcat.php';
+require_once get_stylesheet_directory() . '/inc/functions-slug.php';
+require_once get_stylesheet_directory() . '/inc/functions-check.php';
 require_once get_stylesheet_directory() . '/inc/functions-column.php';
 /* ↓ 旧ブログ（コラム）の取り込み。終わったらこの行とファイルを消してください */
 require_once get_stylesheet_directory() . '/inc/functions-column-import.php';

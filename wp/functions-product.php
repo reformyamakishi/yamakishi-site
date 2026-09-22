@@ -473,11 +473,10 @@ function ymkrf_product_field_order() {
 		/* IH・コンロ（2026/09/22 ユーザー指示「こんろね」）。
 		   グレードは使いません。工事費込みの一本価格です。 */
 		'ih' => array(
-			'_ymkrf_makerpick', '_ymkrf_ihtype', '_ymkrf_gas',
-			/* 特徴は、前にキャッチコピーがあったところ（商品名の上）に置きます
-			   （2026/09/22 ユーザー指示「下にある特徴は不要」） */
-			'_ymkrf_pts',
-			'_ymkrf_name', '_ymkrf_model', '_ymkrf_caution',
+			'_ymkrf_makerpick', '_ymkrf_ihtype',
+			/* 特徴は型番のすぐ下です
+			   （2026/09/22 ユーザー指示「特徴を型番の下に移動して」） */
+			'_ymkrf_name', '_ymkrf_model', '_ymkrf_pts', '_ymkrf_caution',
 			'_ymkrf_list', '_ymkrf_item',
 			'_ymkrf_days',
 		),
@@ -551,9 +550,11 @@ function ymkrf_product_fields_for( $cat = '' ) {
 	if ( $cat === 'ih' ) {
 		/* キャッチコピーはやめて、特徴に一本化しました
 		   （2026/09/22 ユーザー指示「キャッチコピーを特徴にして」） */
+		/* ガス種は使わないことになりました
+		   （2026/09/22 ユーザー指示「ガス種は不要です」） */
 		$keep = array(
-			'_ymkrf_makerpick', '_ymkrf_ihtype', '_ymkrf_gas',
-			'_ymkrf_name', '_ymkrf_model', '_ymkrf_caution', '_ymkrf_pts',
+			'_ymkrf_makerpick', '_ymkrf_ihtype',
+			'_ymkrf_name', '_ymkrf_model', '_ymkrf_pts', '_ymkrf_caution',
 			'_ymkrf_list', '_ymkrf_item', '_ymkrf_days',
 		);
 		foreach ( array_keys( $out ) as $k ) {
@@ -2143,15 +2144,54 @@ add_filter( 'manage_ymkrf_product_posts_columns', function ( $cols ) {
 				$new['ymkrf_stockshop'] = '在庫店舗';
 			}
 
-			if ( $cat === 'boiler' )      $new['ymkrf_grade'] = 'ふろ機能';
-			elseif ( $cat !== 'ecocute' ) $new['ymkrf_grade'] = 'グレード';
+			if ( $cat === 'boiler' )                            $new['ymkrf_grade'] = 'ふろ機能';
+			elseif ( ! in_array( $cat, array( 'ecocute', 'ih' ), true ) ) $new['ymkrf_grade'] = 'グレード';
 			$new['ymkrf_price'] = '込み価格';
 		}
 	}
+
+	/* IH・コンロの一覧（2026/09/22 ユーザー指示
+	   「グレードは不要。商品名、写真、メーカー、価格、公開か未公開か、展示店舗、日付の順に」） */
+	if ( $cat === 'ih' ) {
+
+		$out = array();
+		if ( isset( $new['cb'] ) ) $out['cb'] = $new['cb'];
+
+		$out['title']                 = '商品名';
+		$out['ymkrf_model']           = '型番';
+		$out['ymkrf_thumb']           = '写真';
+		$out['taxonomy-ymkrf_maker']  = 'メーカー';
+		$out['ymkrf_price']           = '入替工事込の価格';
+		$out['ymkrf_state']           = '公開';
+		$out['taxonomy-ymkrf_shop']   = '展示店舗';
+		$out['date']                  = '日付';
+
+		return $out;
+	}
+
 	return $new;
 } );
 
 add_action( 'manage_ymkrf_product_posts_custom_column', function ( $col, $post_id ) {
+	/* 型番（2026/09/22 追加）。IH・コンロの一覧で使います */
+	if ( $col === 'ymkrf_model' ) {
+		$mo = (string) get_post_meta( $post_id, '_ymkrf_model', true );
+		echo $mo !== '' ? esc_html( $mo ) : '<span style="color:#a7aaad">—</span>';
+	}
+	/* 公開か未公開か（2026/09/22 追加）。IH・コンロの一覧で使います */
+	if ( $col === 'ymkrf_state' ) {
+		$st = get_post_status( $post_id );
+		$d  = array(
+			'publish' => array( '公開',   '#0a6b2d' ),
+			'draft'   => array( '下書き', '#b26a00' ),
+			'pending' => array( '確認待ち', '#b26a00' ),
+			'private' => array( '非公開', '#b32d2e' ),
+			'future'  => array( '予約',   '#2b5f86' ),
+		);
+		$one = isset( $d[ $st ] ) ? $d[ $st ] : array( $st, '#6b615c' );
+		printf( '<span style="color:%s;font-weight:700">%s</span>',
+			esc_attr( $one[1] ), esc_html( $one[0] ) );
+	}
 	if ( $col === 'ymkrf_thumb' ) {
 		echo has_post_thumbnail( $post_id )
 			? get_the_post_thumbnail( $post_id, array( 70, 70 ) )

@@ -126,6 +126,26 @@ $maker = ! empty( $d['makers'] ) ? $d['makers'][0] : null;
           '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M10 9v6M10 3v6"/>',
           '<path d="M12 3l1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6z"/><path d="M18.5 15.5l.7 1.9 1.9.7-1.9.7-.7 1.9-.7-1.9-1.9-.7 1.9-.7zM5.5 15.5l.6 1.5 1.5.6-1.5.6-.6 1.5-.6-1.5L3.4 18l1.5-.6z"/>',
         );
+
+        /* IH・コンロは、中身に合ったアイコンにします
+           （2026/09/22 ユーザー指示
+             「\ のアイコンを火のマークにして」
+             「60cmのアイコンは横だけの長さなので、それを表示するマークにして」）
+             1つめ＝炎（焼き方）／2つめ＝横はば／3つめ＝口の数 */
+        $catslug = ( ! empty( $d['cats'] ) && ! is_wp_error( $d['cats'] ) ) ? $d['cats'][0]->slug : '';
+        if ( $catslug === 'ih' ) {
+          $icons = array(
+            /* 炎 */
+            '<path d="M12 2.6c2.6 3.2 5.5 5.3 5.5 9a5.5 5.5 0 0 1-11 0c0-2 1-3.5 2.2-4.7'
+            . '.3 1.2 1 2 1.9 2.4C10.2 7.2 11 4.8 12 2.6z"/>',
+            /* 横はば（左右の壁と、その間の矢印） */
+            '<path d="M4 5.5v13M20 5.5v13"/><path d="M7 12h10"/>'
+            . '<path d="M7 12l2.6-2.6M7 12l2.6 2.6M17 12l-2.6-2.6M17 12l-2.6 2.6"/>',
+            /* 口の数（上に1つ、下に2つの三角ならび）
+               2026/09/22 ユーザー指示「3口は3つの点（上1つ、下2つ）のトライアングルの形にして」 */
+            '<circle cx="12" cy="7.2" r="3"/><circle cx="7.4" cy="16.4" r="3"/><circle cx="16.6" cy="16.4" r="3"/>',
+          );
+        }
         foreach ( $d['points'] as $i => $pt ) : ?>
           <li>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><?php echo $icons[ $i % 3 ]; ?></svg>
