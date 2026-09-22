@@ -102,7 +102,7 @@ $maker = ! empty( $d['makers'] ) ? $d['makers'][0] : null;
     </h1>
 
     <div class="p-prd__meta">
-      <?php if ( $maker ) echo ymkrf_maker_logo( $maker, 'p-prd__makerlogo' ); /* phpcs:ignore */ ?>
+      <?php if ( $maker ) echo ymkrf_maker_logo( $maker, 'p-prd__makerlogo', true ); /* phpcs:ignore */ ?>
       <?php if ( $d['size'] ) : ?><span class="p-prd__size"><?php echo esc_html( $d['size'] ); ?></span><?php endif; ?>
       <?php if ( $d['daystext'] || $d['days'] ) : ?>
         <span class="p-prd__days">

@@ -46,6 +46,22 @@ while ( have_posts() ) : the_post();
     ?></li>
   </ol>
 </nav>
+<?php
+/* 画面のパンくずと同じ中身を、Googleにも伝えます（2026/09/22 追加） */
+if ( function_exists( 'ymkrf_crumb_ld' ) ) {
+	$ldc = array(
+		array( 'ホーム',   home_url( '/' ) ),
+		array( '施工事例', get_post_type_archive_link( 'ymkrf_works' ) ),
+	);
+	$wct2 = get_the_terms( $id, 'ymkrf_works_cat' );
+	if ( $wct2 && ! is_wp_error( $wct2 ) ) {
+		$wc2 = reset( $wct2 );
+		$ldc[] = array( $wc2->name, get_term_link( $wc2 ) );
+	}
+	$ldc[] = array( trim( $wcrumb . ( $wwho !== '' ? '｜' . $wwho : '' ), '｜' ), get_permalink( $id ) );
+	ymkrf_crumb_ld( $ldc );
+}
+?>
 
 <main id="main">
 

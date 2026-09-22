@@ -38,6 +38,16 @@ while ( have_posts() ) : the_post();
     <li><?php echo esc_html( ymkrf_voice_short_title( get_the_ID() ) ); ?></li>
   </ol>
 </nav>
+<?php
+/* 画面のパンくずと同じ中身を、Googleにも伝えます（2026/09/22 追加） */
+if ( function_exists( 'ymkrf_crumb_ld' ) ) {
+	ymkrf_crumb_ld( array(
+		array( 'ホーム',       home_url( '/' ) ),
+		array( 'お客様の声',   get_post_type_archive_link( 'ymkrf_voice' ) ),
+		array( ymkrf_voice_short_title( get_the_ID() ), get_permalink() ),
+	) );
+}
+?>
 
 <main id="main">
 

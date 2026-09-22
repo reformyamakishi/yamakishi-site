@@ -23,6 +23,16 @@ while ( have_posts() ) : the_post();
     <li><?php the_title(); ?></li>
   </ol>
 </nav>
+<?php
+/* 画面のパンくずと同じ中身を、Googleにも伝えます（2026/09/22 追加） */
+if ( function_exists( 'ymkrf_crumb_ld' ) ) {
+	ymkrf_crumb_ld( array(
+		array( 'ホーム',         home_url( '/' ) ),
+		array( 'お役立ち情報',   get_post_type_archive_link( 'ymkrf_column' ) ),
+		array( get_the_title(),  get_permalink() ),
+	) );
+}
+?>
 
 <main id="main">
 

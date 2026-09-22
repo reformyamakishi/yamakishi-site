@@ -4211,7 +4211,7 @@ endif;
    ロゴが無いメーカーは、これまでどおり文字で出します。
    ============================================================ */
 if ( ! function_exists( 'ymkrf_maker_logo' ) ) :
-function ymkrf_maker_logo( $term, $class = 'p-maker' ) {
+function ymkrf_maker_logo( $term, $class = 'p-maker', $withname = false ) {
 
 	if ( ! $term || is_wp_error( $term ) ) return '';
 	$name = $term->name;
@@ -4235,12 +4235,18 @@ function ymkrf_maker_logo( $term, $class = 'p-maker' ) {
 	$size = @getimagesize( $path . '.png' );
 	$wh   = $size ? ' width="' . (int) $size[0] . '" height="' . (int) $size[1] . '"' : '';
 
+	/* ロゴの横に、メーカー名を文字でも出します
+	   （2026/09/22 ユーザー指示「SEOに強くなるようメーカー名も表示お願い」）。
+	   画像のALTは補助でしかないので、文字でも書いておきます。 */
+	$txt = $withname
+		? '<span class="' . esc_attr( $class ) . '__name">' . esc_html( $name ) . '</span>' : '';
+
 	return '<span class="' . esc_attr( $class ) . '"><picture>' . $webp
 	     . '<img class="' . esc_attr( $class ) . '__img" src="' . esc_url( $uri . '.png' ) . '"'
 	     . $wh
 	     . ' alt="' . esc_attr( $name ) . '"'
 	     . ' title="' . esc_attr( $name . 'の製品です' ) . '"'
-	     . ' loading="lazy" decoding="async"></picture></span>';
+	     . ' loading="lazy" decoding="async"></picture>' . $txt . '</span>';
 }
 endif;
 

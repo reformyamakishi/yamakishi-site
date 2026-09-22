@@ -28,7 +28,44 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '4.5.1' );   // ファイル更新時はここを上げるとキャッシュが切れます
+
+/**
+ * パンくずの構造化データ（BreadcrumbList）を出します。
+ * 画面に出ているパンくずと同じ中身を、Googleにも伝えるためのものです。
+ * （2026/09/22 ユーザー指示「SEOに強くなるように」）
+ *
+ * 使いかた：
+ *   ymkrf_crumb_ld( array(
+ *     array( 'ホーム',   home_url( '/' ) ),
+ *     array( '施工事例', get_post_type_archive_link( 'ymkrf_works' ) ),
+ *     array( 'キッチン', get_term_link( $t ) ),
+ *     array( '金沢市 K様', get_permalink() ),
+ *   ) );
+ */
+if ( ! function_exists( 'ymkrf_crumb_ld' ) ) :
+function ymkrf_crumb_ld( $crumbs ) {
+
+	$items = array();
+	$n     = 0;
+
+	foreach ( (array) $crumbs as $c ) {
+		$name = isset( $c[0] ) ? trim( (string) $c[0] ) : '';
+		$url  = isset( $c[1] ) ? (string) $c[1] : '';
+		if ( $name === '' ) continue;
+		$n++;
+		$one = array( '@type' => 'ListItem', 'position' => $n, 'name' => $name );
+		if ( $url !== '' && ! is_wp_error( $url ) ) $one['item'] = $url;
+		$items[] = $one;
+	}
+	if ( ! $items ) return;
+
+	echo '<script type="application/ld+json">' . wp_json_encode( array(
+		'@context' => 'https://schema.org', '@type' => 'BreadcrumbList', 'itemListElement' => $items,
+	), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ) . '</script>' . "\n";
+}
+endif;
+
+if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '4.5.2' );   // ファイル更新時はここを上げるとキャッシュが切れます
 
 /* ============================================================
    1. CSS / JS の読み込み
