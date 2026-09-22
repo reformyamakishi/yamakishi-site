@@ -55,6 +55,8 @@ require_once get_stylesheet_directory() . '/inc/functions-voice-status.php';
    wp-content/ymkrf-debug.txt も消してかまいません。 */
 require_once get_stylesheet_directory() . '/inc/functions-voice-alt.php';
 require_once get_stylesheet_directory() . '/inc/functions-voice-check.php';
+/* ↓ お客様の声の✓の見直し（作業用）。終わったらこの行とファイルを消してください */
+require_once get_stylesheet_directory() . '/inc/functions-voice-fix.php';
 require_once get_stylesheet_directory() . '/inc/functions-voice-mail.php';
 /* アンケート画像の入れ直しは、終わりました（2026/09/16）。
    ダッシュボードから「アンケートの入れ直し」を消すため、読み込みをやめています。
