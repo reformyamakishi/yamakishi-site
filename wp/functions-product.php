@@ -352,6 +352,17 @@ function ymkrf_product_fields() {
 		/* ---- ここから下は社内用です。お客様のページには出ません ----
 		   Gドライブの「住設機器　在庫確認＆発注確認」を見て入れています。
 		   シートは日々変わるので、たまに入れ直してください。 */
+		/* ── IH・コンロ（2026/09/22 ユーザー指示「こんろね」） ── */
+		'_ymkrf_ihtype'  => array( '種類', 'select', '', '一覧ページの「ガスコンロ／IH」の切り替えに使います',
+			array( 'ガスコンロ', 'IHクッキングヒーター' ), array( 'ih' ) ),
+		'_ymkrf_gas'     => array( 'ガス種', 'select', '', 'IHのときは「—」のままでかまいません',
+			array( '—', 'LPガス用', '都市ガス用' ), array( 'ih' ) ),
+		'_ymkrf_model'   => array( '型番', 'text', '例：N3WV6M', '商品名の下に小さく出ます',
+			array(), array( 'ih', 'fence' ) ),
+		'_ymkrf_list'    => array( 'メーカー定価', 'yen', '例：249,370',
+			'入れると「定価249,370円の品」と出ます。無ければ空のままでOK',
+			array(), array( 'ih' ) ),
+
 		'_ymkrf_stock'      => array( '在庫数（社内用）', 'number', '例：12',
 			'★お客様のページには出ません。ダッシュボードの一覧にだけ出ます',
 			array(), array( 'ecocute' ) ),
@@ -379,6 +390,21 @@ function ymkrf_product_fields() {
 if ( ! function_exists( 'ymkrf_product_field_overrides' ) ) :
 function ymkrf_product_field_overrides() {
 	return array(
+		/* IH・コンロ（2026/09/22 追加）。
+		   工事費と商品代に分けず、「入替工事込の価格」の1つだけにします。 */
+		'ih' => array(
+			'_ymkrf_name'  => array( '商品名', 'text', '例：LPガス用 スタンダードタイプ',
+				'空欄なら上のタイトルを使います' ),
+			'_ymkrf_item'  => array( '入替工事込の価格', 'yen', '例：109,800',
+				'★税込の金額を入れてください。カンマは自動で付きます。'
+				. '取り外し・処分・取り付けまで込みの金額です' ),
+			'_ymkrf_pts'   => array( '特徴', 'pt3', '',
+				'例：水無し両面焼き／60cm／3口　のように3つまで' ),
+			'_ymkrf_catch' => array( 'キャッチコピー', 'text', '例：数量限定！',
+				'商品名の上に、小さな赤い文字で出ます' ),
+			'_ymkrf_caution' => array( '注意書き', 'area', '例：※写真はイメージです。',
+				'商品写真の下に小さく出ます' ),
+		),
 		'boiler' => array(
 			'_ymkrf_catch' => array( '給湯器カテゴリ', 'select', '',
 				'商品ページで、型式の上に小さく出ます。一覧の分け方にも使われます',
@@ -441,6 +467,15 @@ function ymkrf_product_field_order() {
 			'_ymkrf_pt1', '_ymkrf_pt2', '_ymkrf_pt3',
 			'_ymkrf_caution',
 			'_ymkrf_order',
+		),
+		/* IH・コンロ（2026/09/22 ユーザー指示「こんろね」）。
+		   グレードは使いません。工事費込みの一本価格です。 */
+		'ih' => array(
+			'_ymkrf_makerpick', '_ymkrf_ihtype', '_ymkrf_gas',
+			'_ymkrf_name', '_ymkrf_model', '_ymkrf_pts',
+			'_ymkrf_list', '_ymkrf_item',
+			'_ymkrf_days',
+			'_ymkrf_catch', '_ymkrf_caution',
 		),
 		'ecocute' => array(
 			'_ymkrf_name', '_ymkrf_tank', '_ymkrf_people', '_ymkrf_grade',
@@ -852,6 +887,11 @@ add_action( 'add_meta_boxes', function () {
 		/* 内装・改装では、Before/After だけを出します
 		   （2026/09/17 ユーザー指示。標準仕様や扉カラーなどは使いません） */
 		if ( $cat_now === 'interior' && $key !== '_ymkrf_ba' ) continue;
+
+		/* IH・コンロは、色見本・取っ手・標準仕様（写真）は使いません
+		   （2026/09/22 追加）。おすすめポイント・機能一覧・オプションだけ出します。 */
+		if ( $cat_now === 'ih' && ! in_array( $key,
+			array( '_ymkrf_features', '_ymkrf_speclist', '_ymkrf_options' ), true ) ) continue;
 
 		/* 色見本の枠は、ぜんぶまとめて1つの箱に入れます
 		   （2026/09/18 ユーザー指示「自由に増やしたり消したりできるように」）。
@@ -3124,6 +3164,27 @@ function ymkrf_pointnote( $slug ) {
 					       'sub'  => '新しいエコキュート本体とヒートポンプの取り付け工事' ),
 				),
 		),
+		/* IH・コンロ（2026/09/22 追加）。
+		   チラシと同じく「入替工事込」の一本価格でご案内します。 */
+		'ih' => array(
+				'label' => 'IH・コンロの標準工事費',
+				'price' => 0,
+				'nocalc' => true,
+				'note'  => '表示している価格は、いまお使いの機器の取り外し・処分から、'
+				         . '新しい機器の取り付けまで込みの価格です。',
+				'note2' => '※電気配線の工事が必要なときは、別途お見積りをお出しします。'
+				         . '※お家の形や、ガス・電気の状態によっては、追加の工事が必要になることがあります。'
+				         . 'その場合も着工前にかならずお見積りをお出しし、ご了承をいただいてから進めます。',
+				'itemsttl' => 'リフォームヤマキシの|入替工事にふくまれる工事',
+				'items' => array(
+					array( 'name' => '既存機器の取り外し', 'icon' => 'hammer',
+					       'sub'  => 'いまお使いのコンロ・IHの取り外し' ),
+					array( 'name' => '処分・運搬',         'icon' => 'truck',
+					       'sub'  => '取り外した機器の処分にかかる費用' ),
+					array( 'name' => '取り付け・設置工事', 'icon' => 'flame',
+					       'sub'  => '新しいコンロ・IHの取り付けと動作の確認' ),
+				),
+		),
 		'lavatory' => array(
 				'label' => '洗面化粧台の標準工事費',
 				'price' => 24200,
@@ -3284,6 +3345,10 @@ function ymkrf_cat_label( $slug, $fallback = '' ) {
 		'lavatory' => '洗面化粧台',
 		'boiler'   => '給湯器',
 		'ecocute'  => 'エコキュート',
+		/* 2026/09/22 追加 */
+		'ih'       => 'IH・コンロ',
+		'exterior' => 'エクステリア',
+		'window'   => '窓リフォーム',
 	);
 	return isset( $map[ $slug ] ) ? $map[ $slug ] : $fallback;
 }
@@ -3299,6 +3364,7 @@ function ymkrf_cat_listtitle( $slug, $fallback = '商品' ) {
 		'bathroom' => 'ユニットバス商品一覧',
 		'toilet'   => 'トイレ商品一覧',
 		'lavatory' => '洗面化粧台商品一覧',
+		'ih'       => 'IH・ガスコンロ 商品一覧',
 	);
 	return isset( $map[ $slug ] ) ? $map[ $slug ] : $fallback . 'の商品一覧';
 }
@@ -3318,6 +3384,9 @@ function ymkrf_cat_brand( $cat ) {
 		'lavatory' => '洗面化粧台リフォームパック',
 		'boiler'   => 'ヤマキシ給湯センター',
 		'ecocute'  => 'ヤマキシ給湯センター',
+		'ih'       => 'IH・ガスコンロ',
+		'exterior' => 'エクステリア',
+		'window'   => '窓リフォーム',
 	);
 	return isset( $map[ $cat->slug ] ) ? $map[ $cat->slug ] : $cat->name . 'マルシェ';
 }
