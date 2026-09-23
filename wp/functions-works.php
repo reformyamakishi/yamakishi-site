@@ -481,6 +481,95 @@ function ymkrf_area_fix_name( $name ) {
 	return $n;
 }
 
+/**
+ * その町がどの郡に入っているか。
+ * 市には郡がないので、空を返します。
+ *
+ * （2026/09/23 ユーザー指示「越前市は別であります。越前町は、丹生郡なんです」）
+ *
+ * ページは町ごとに1つのままにして、郡は「町の持ちもの」として
+ * ここに置きます。正式な住所を書くときに使います。
+ *   例）福井県丹生郡越前町
+ */
+function ymkrf_area_gun_of( $city ) {
+
+	$map = array(
+		/* 石川県 */
+		'川北町'     => '能美郡',
+		'津幡町'     => '河北郡',
+		'内灘町'     => '河北郡',
+		'志賀町'     => '羽咋郡',
+		'宝達志水町' => '羽咋郡',
+		'中能登町'   => '鹿島郡',
+		'穴水町'     => '鳳珠郡',
+		'能登町'     => '鳳珠郡',
+		/* 福井県 */
+		'永平寺町'   => '吉田郡',
+		'越前町'     => '丹生郡',
+		'池田町'     => '今立郡',
+	);
+
+	$city = trim( (string) $city );
+	return isset( $map[ $city ] ) ? $map[ $city ] : '';
+}
+
+/**
+ * 正式な住所の書きかた（県 ＋ 郡 ＋ 市町）
+ *   越前町 → 福井県丹生郡越前町
+ *   福井市 → 福井県福井市
+ */
+function ymkrf_area_full_name( $city ) {
+
+	$city = trim( (string) $city );
+	if ( $city === '' ) return '';
+
+	$pref = function_exists( 'ymkrf_area_pref' ) ? ymkrf_area_pref( $city ) : '';
+	$gun  = ymkrf_area_gun_of( $city );
+
+	return $pref . $gun . $city;
+}
+
+/**
+ * 地図の北から南へ、市町をならべた表。
+ * （2026/09/23 ユーザー指示
+ *   「地図の北からの順にして。石川県なら田鶴浜エリアから、
+ *     福井県なら金津エリアから」）
+ *
+ * 担当しているお店の受け持ちが、自然にまとまる順でもあります。
+ *   石川県 … 田鶴浜店 → 羽咋店 → 金沢の3店 → 川北店 → 小松店 → 新加賀店
+ *   福井県 … 金津店 → 開発店 → 朝日店
+ */
+function ymkrf_area_northsouth() {
+	return array(
+		/* --- 石川県（北 → 南） --- */
+		'珠洲市', '輪島市', '能登町', '穴水町',
+		'七尾市', '中能登町', '志賀町', '羽咋市', '宝達志水町',
+		'かほく市', '津幡町', '内灘町',
+		'金沢市', '野々市市', '白山市', '川北町', '能美市', '小松市', '加賀市',
+
+		/* --- 福井県（北 → 南） --- */
+		'あわら市', '坂井市', '福井市', '永平寺町',
+		'鯖江市', '越前町', '越前市', '池田町',
+		'大野市', '勝山市', '敦賀市', '小浜市',
+	);
+}
+
+/**
+ * 市町郡の並び（近いところどうしが、となりに来る順）と、URL用の英字。
+ * 市町の表（南から北へ）のあとに、郡をつづけます。
+ */
+function ymkrf_area_order() {
+
+	static $out = null;
+	if ( $out !== null ) return $out;
+
+	$out = function_exists( 'ymkrf_voice_city_roman' ) ? ymkrf_voice_city_roman() : array();
+	foreach ( ymkrf_area_gun() as $name => $v ) {
+		if ( ! isset( $out[ $name ] ) ) $out[ $name ] = $v[1];
+	}
+	return $out;
+}
+
 /** その名前の県と、URL用の英字 */
 function ymkrf_area_fix_bits( $name ) {
 
@@ -503,7 +592,7 @@ function ymkrf_area_fix_bits( $name ) {
  */
 add_action( 'admin_init', function () {
 
-	if ( get_option( 'ymkrf_area_tree_ver' ) === '2' ) return;
+	if ( get_option( 'ymkrf_area_tree_ver' ) === '3' ) return;
 	if ( ! taxonomy_exists( 'ymkrf_works_area' ) ) return;
 	if ( ! current_user_can( 'manage_options' ) ) return;
 
@@ -516,7 +605,7 @@ add_action( 'admin_init', function () {
 	}
 
 	$terms = get_terms( array( 'taxonomy' => 'ymkrf_works_area', 'hide_empty' => false ) );
-	if ( ! $terms || is_wp_error( $terms ) ) { update_option( 'ymkrf_area_tree_ver', '2' ); return; }
+	if ( ! $terms || is_wp_error( $terms ) ) { update_option( 'ymkrf_area_tree_ver', '3' ); return; }
 
 	/* 記事の多いものを先に見ます（残すほうを先に決めるためです） */
 	usort( $terms, function ( $a, $b ) { return $b->count - $a->count; } );
@@ -604,7 +693,7 @@ add_action( 'admin_init', function () {
 	$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient%ymkrf_area_cnt_%'" );
 
 	update_option( 'ymkrf_area_tidy_log', $log );
-	update_option( 'ymkrf_area_tree_ver', '2' );
+	update_option( 'ymkrf_area_tree_ver', '3' );
 } );
 
 /* 整理のけっかを、エリアの画面に1回だけ出します */
@@ -703,6 +792,266 @@ function ymkrf_works_area_term( $city ) {
 }
 
 
+/* ------------------------------------------------------------
+   エリアに「担当店舗」をえらぶ欄を付けます
+   （2026/09/23 ユーザー指示
+     「担当店舗もえらべるようにして。登録のところも、編集ページでも」）
+
+   ・1つの市町を何店かで担当することがあるので、えらべる形にしています
+     （金沢市＝東金沢店・金沢野々市店・金沢田上店）
+   ・何もえらばないうちは、店舗側の「担当エリア」の設定をそのまま使います。
+     えらんだら、そちらが優先されます。
+   ------------------------------------------------------------ */
+define( 'YMKRF_AREA_SHOPS', '_ymkrf_shops' );
+
+/** お店の一覧（県ごと） */
+function ymkrf_area_shop_list() {
+
+	$out = array( '石川県' => array(), '福井県' => array() );
+	if ( ! function_exists( 'ymkrf_shops' ) ) return $out;
+
+	foreach ( ymkrf_shops() as $s ) {
+		if ( empty( $s['slug'] ) ) continue;
+		$p = ( isset( $s['pref'] ) && isset( $out[ $s['pref'] ] ) ) ? $s['pref'] : '石川県';
+		$out[ $p ][] = $s;
+	}
+	return $out;
+}
+
+/** そのエリアの担当店舗（えらんであればそれ、無ければ店舗側の設定） */
+function ymkrf_area_shops_of( $name, $term_id = 0 ) {
+
+	if ( $term_id ) {
+		$saved = (string) get_term_meta( $term_id, YMKRF_AREA_SHOPS, true );
+		if ( $saved !== '' ) {
+
+			$want = array_filter( array_map( 'trim', explode( ',', $saved ) ) );
+			$out  = array();
+
+			if ( function_exists( 'ymkrf_shops' ) ) {
+				foreach ( ymkrf_shops() as $s ) {
+					if ( empty( $s['slug'] ) ) continue;
+					if ( in_array( $s['slug'], $want, true ) ) {
+						$out[] = array( 'slug' => $s['slug'], 'name' => $s['name'] );
+					}
+				}
+			}
+			return $out;
+		}
+	}
+
+	$map = ymkrf_area_shopmap();
+	return isset( $map[ $name ] ) ? $map[ $name ] : array();
+}
+
+/**
+ * お店のならべかた（パソコンのときの列分け）
+ * （2026/09/23 ユーザー指示「石川県店舗、PCの時、3列に下記のように分けて」）
+ * 北から南へ、地図のまとまりで3列にしています。
+ */
+function ymkrf_area_shop_cols() {
+	return array(
+		'石川県' => array(
+			array( 'tazuruhama', 'hakui' ),
+			array( 'higashikanazawa', 'tagami', 'nonoichi' ),
+			array( 'kawakita', 'komathu', 'shinkaga' ),
+		),
+		'福井県' => array(
+			array( 'kanadu', 'kahahothu', 'asahi' ),
+		),
+	);
+}
+
+/** えらぶ欄の中身 */
+function ymkrf_area_shops_field( $checked = array(), $cell = false ) {
+
+	$checked = (array) $checked;
+
+	/* slug → お店 */
+	$by = array();
+	if ( function_exists( 'ymkrf_shops' ) ) {
+		foreach ( ymkrf_shops() as $sh ) {
+			if ( ! empty( $sh['slug'] ) ) $by[ $sh['slug'] ] = $sh;
+		}
+	}
+
+	$cols = ymkrf_area_shop_cols();
+
+	/* 表に無いお店（あとから増えたぶん）は、その県の最後の列に足します */
+	$used = array();
+	foreach ( $cols as $list ) foreach ( $list as $c ) foreach ( $c as $sl ) $used[] = $sl;
+
+	foreach ( ymkrf_area_shop_list() as $pref => $list ) {
+		foreach ( $list as $sh ) {
+			if ( in_array( $sh['slug'], $used, true ) ) continue;
+			if ( ! isset( $cols[ $pref ] ) ) $cols[ $pref ] = array( array() );
+			$last = count( $cols[ $pref ] ) - 1;
+			$cols[ $pref ][ $last ][] = $sh['slug'];
+		}
+	}
+	?>
+	<div class="ymkrf-shoppick">
+	  <?php foreach ( $cols as $pref => $group ) :
+	    /* そもそもお店が無い県は出しません */
+	    $any = false;
+	    foreach ( $group as $c ) foreach ( $c as $sl ) if ( isset( $by[ $sl ] ) ) $any = true;
+	    if ( ! $any ) continue;
+	  ?>
+	    <div class="ymkrf-shoppick__pref">
+	      <b><?php echo esc_html( $pref ); ?></b>
+	      <div class="ymkrf-shoppick__cols" style="--n:<?php echo (int) count( $group ); ?>">
+	        <?php foreach ( $group as $c ) : ?>
+	          <div class="ymkrf-shoppick__col">
+	            <?php foreach ( $c as $sl ) :
+	              if ( ! isset( $by[ $sl ] ) ) continue; ?>
+	              <label>
+	                <input type="checkbox" name="ymkrf_area_shops[]" value="<?php echo esc_attr( $sl ); ?>"
+	                       <?php checked( in_array( $sl, $checked, true ) ); ?>>
+	                <?php echo esc_html( $by[ $sl ]['name'] ); ?>
+	              </label>
+	            <?php endforeach; ?>
+	          </div>
+	        <?php endforeach; ?>
+	      </div>
+	    </div>
+	  <?php endforeach; ?>
+	</div>
+	<style>
+	  .ymkrf-shoppick{display:flex;flex-wrap:wrap;gap:14px 40px}
+	  .ymkrf-shoppick__pref > b{display:block;margin-bottom:4px;font-size:12px;color:#50575e}
+	  .ymkrf-shoppick__cols{
+	    display:grid;grid-template-columns:repeat(var(--n,1), minmax(130px, max-content));
+	    gap:0 24px}
+	  .ymkrf-shoppick label{display:block;font-size:13px;line-height:2;white-space:nowrap}
+	  .ymkrf-shoppick input{margin:0 5px 0 0}
+	  /* 携帯・タブレットのときは1列に（2026/09/23 ユーザー指示） */
+	  @media screen and (max-width:782px){
+	    .ymkrf-shoppick{gap:10px 0;display:block}
+	    .ymkrf-shoppick__cols{grid-template-columns:1fr}
+	    .ymkrf-shoppick__pref{margin-bottom:10px}
+	    .ymkrf-shoppick label{line-height:2.4}
+	  }
+	</style>
+	<?php
+}
+
+/* 追加のフォーム */
+add_action( 'ymkrf_works_area_add_form_fields', function () {
+	?>
+	<div class="form-field term-ymkrfshops-wrap">
+	  <label>担当店舗</label>
+	  <?php ymkrf_area_shops_field( array() ); ?>
+	  <p class="description">
+	    何店かで担当していれば、いくつでもえらべます。<br>
+	    えらばないときは、店舗の設定にある「担当エリア」がそのまま使われます。
+	  </p>
+	</div>
+	<?php
+} );
+
+/* 編集のページ */
+add_action( 'ymkrf_works_area_edit_form_fields', function ( $term ) {
+
+	$saved = (string) get_term_meta( $term->term_id, YMKRF_AREA_SHOPS, true );
+	$now   = array();
+
+	if ( $saved !== '' ) {
+		$now = array_filter( array_map( 'trim', explode( ',', $saved ) ) );
+	} else {
+		/* まだえらんでいないときは、店舗側の設定を最初から入れておきます */
+		foreach ( ymkrf_area_shops_of( $term->name ) as $one ) $now[] = $one['slug'];
+	}
+	?>
+	<tr class="form-field term-ymkrfshops-wrap">
+	  <th scope="row"><label>担当店舗</label></th>
+	  <td>
+	    <?php ymkrf_area_shops_field( $now, true ); ?>
+	    <p class="description">
+	      何店かで担当していれば、いくつでもえらべます。<br>
+	      ひとつもえらばずに更新すると、店舗の設定にある「担当エリア」にもどります。
+	    </p>
+	  </td>
+	</tr>
+	<?php
+} );
+
+/* しまう */
+function ymkrf_area_shops_save( $term_id ) {
+
+	if ( ! isset( $_POST['ymkrf_area_shops'] ) ) {
+		/* 編集ページで全部はずしたときは、店舗側の設定にもどします */
+		if ( isset( $_POST['action'] ) && $_POST['action'] === 'editedtag' ) {
+			delete_term_meta( $term_id, YMKRF_AREA_SHOPS );
+		}
+		return;
+	}
+
+	$ok = array();
+	if ( function_exists( 'ymkrf_shops' ) ) {
+		foreach ( ymkrf_shops() as $s ) if ( ! empty( $s['slug'] ) ) $ok[] = $s['slug'];
+	}
+
+	$in = array_map( 'sanitize_key', (array) $_POST['ymkrf_area_shops'] );
+	$in = array_values( array_intersect( $ok, $in ) );   /* 店舗の並び順にそろえます */
+
+	if ( $in ) update_term_meta( $term_id, YMKRF_AREA_SHOPS, implode( ',', $in ) );
+	else       delete_term_meta( $term_id, YMKRF_AREA_SHOPS );
+}
+add_action( 'created_ymkrf_works_area', 'ymkrf_area_shops_save' );
+add_action( 'edited_ymkrf_works_area',  'ymkrf_area_shops_save' );
+
+
+/**
+ * 県（親）を自動で決めます。
+ * （2026/09/23 ユーザー指示「店舗を選ぶことで親エリアは不要になりました」）
+ *
+ *   ① えらんだ担当店舗の県
+ *   ② 店舗をえらんでいなければ、市町の名前から
+ */
+function ymkrf_area_fix_parent( $term_id ) {
+
+	static $busy = false;
+	if ( $busy ) return;
+
+	$t = get_term( $term_id, 'ymkrf_works_area' );
+	if ( ! $t || is_wp_error( $t ) ) return;
+
+	$prefs = ymkrf_works_area_prefs();
+	if ( isset( $prefs[ $t->name ] ) ) return;   /* 県そのもの */
+
+	/* ① お店から */
+	$pref = '';
+	$by   = array();
+	if ( function_exists( 'ymkrf_shops' ) ) {
+		foreach ( ymkrf_shops() as $sh ) {
+			if ( ! empty( $sh['slug'] ) ) $by[ $sh['slug'] ] = isset( $sh['pref'] ) ? $sh['pref'] : '';
+		}
+	}
+	foreach ( ymkrf_area_shops_of( $t->name, $t->term_id ) as $one ) {
+		if ( ! empty( $by[ $one['slug'] ] ) && isset( $prefs[ $by[ $one['slug'] ] ] ) ) {
+			$pref = $by[ $one['slug'] ];
+			break;
+		}
+	}
+
+	/* ② 名前から */
+	if ( $pref === '' ) {
+		$gun  = ymkrf_area_gun();
+		$pref = isset( $gun[ $t->name ] ) ? $gun[ $t->name ][0] : ymkrf_area_pref( $t->name );
+	}
+	if ( ! isset( $prefs[ $pref ] ) ) return;
+
+	$pid = ymkrf_works_area_pref_term( $pref );
+	if ( ! $pid || (int) $t->parent === (int) $pid ) return;
+
+	$busy = true;
+	wp_update_term( $term_id, 'ymkrf_works_area', array( 'parent' => $pid ) );
+	$busy = false;
+}
+add_action( 'created_ymkrf_works_area', 'ymkrf_area_fix_parent', 20 );
+add_action( 'edited_ymkrf_works_area',  'ymkrf_area_fix_parent', 20 );
+
+
 /** 一覧を入れなおすとき（「登録したエリアを読みこむ」のボタン） */
 add_action( 'wp_ajax_ymkrf_area_reload', function () {
 
@@ -718,28 +1067,6 @@ add_action( 'wp_ajax_ymkrf_area_reload', function () {
 		$out[ $pref ] = $list;
 	}
 	wp_send_json_success( array( 'groups' => $out ) );
-} );
-
-
-/* エリアの登録画面に、書きかたのご案内を出します
-   （施工事例から「その他のエリア」でひらいたときの受け皿です） */
-add_action( 'admin_notices', function () {
-	$s = get_current_screen();
-	if ( ! $s || $s->taxonomy !== 'ymkrf_works_area' ) return;
-	?>
-	<div class="notice notice-info">
-	  <p><b>エリアの登録のしかた</b></p>
-	  <p>
-	    <b>名前</b>　… 市・町の名前をそのまま入れてください（例：<b>中能登町</b>）。<br>
-	    　　　　　県名は付けません（× 石川県七尾市）。町名・字は入れません（× 矢田町）。<br>
-	    <b>親</b>　　… <b>石川県</b>か<b>福井県</b>をえらんでください。<br>
-	    <b>スラッグ</b> … URLに使う英字です（例：<b>nakanoto</b>）。
-	    地域ごとのページ <code>/area/nakanoto/</code> になります。
-	  </p>
-	  <p>登録がおわったら、施工事例の画面にもどって
-	     <b>［登録したエリアを読みこむ］</b>を押してください。</p>
-	</div>
-	<?php
 } );
 
 
@@ -817,69 +1144,6 @@ add_filter( 'manage_ymkrf_works_area_custom_column', function ( $out, $col, $ter
 	return implode( '<br>', $names );
 }, 10, 3 );
 
-/* 店舗でしぼるボタンと、「説明」欄かくし */
-add_action( 'admin_notices', function () {
-
-	$s = get_current_screen();
-	if ( ! $s || $s->taxonomy !== 'ymkrf_works_area' ) return;
-
-	$now  = isset( $_GET['ymkrf_shop'] ) ? sanitize_key( $_GET['ymkrf_shop'] ) : '';
-	$base = admin_url( 'edit-tags.php?taxonomy=ymkrf_works_area&post_type=ymkrf_works' );
-	?>
-	<?php
-	/* お店を県ごとに分けます（2026/09/23 ユーザー指示「石川県と福井県に枠を分けて」） */
-	$byp = array( '石川県' => array(), '福井県' => array() );
-	if ( function_exists( 'ymkrf_shops' ) ) {
-		foreach ( ymkrf_shops() as $sh ) {
-			if ( empty( $sh['slug'] ) ) continue;
-			$p = isset( $sh['pref'] ) && isset( $byp[ $sh['pref'] ] ) ? $sh['pref'] : '石川県';
-			$byp[ $p ][] = $sh;
-		}
-	}
-	?>
-	<style>
-	  .term-description-wrap{display:none}
-	  .ymkrf-shopbar{margin:12px 0 4px}
-	  .ymkrf-shopbar__top{margin-bottom:8px}
-	  .ymkrf-shopbar__cols{display:flex;flex-wrap:wrap;gap:10px}
-	  .ymkrf-shopbar__box{
-	    flex:1 1 320px;padding:10px 12px;background:#fff;
-	    border:1px solid #c3c4c7;border-radius:4px}
-	  .ymkrf-shopbar__box h3{
-	    margin:0 0 6px;padding:0 0 4px;font-size:13px;
-	    border-bottom:2px solid #fe3301;display:inline-block}
-	  .ymkrf-shopbar a{
-	    display:inline-block;margin:2px 4px 2px 0;padding:3px 10px;border-radius:12px;
-	    background:#f0f0f1;color:#2c3338;text-decoration:none;font-size:12.5px}
-	  .ymkrf-shopbar a:hover{background:#fff2ee;color:#fe3301}
-	  .ymkrf-shopbar a.is-on{background:#fe3301;color:#fff;font-weight:700}
-	</style>
-	<div class="ymkrf-shopbar">
-
-	  <div class="ymkrf-shopbar__top">
-	    <b>店舗でしぼる</b>
-	    <a class="<?php echo $now === '' ? 'is-on' : ''; ?>" href="<?php echo esc_url( $base ); ?>">すべて</a>
-	    <a class="<?php echo $now === '_none' ? 'is-on' : ''; ?>"
-	       href="<?php echo esc_url( add_query_arg( 'ymkrf_shop', '_none', $base ) ); ?>">担当のないエリア</a>
-	  </div>
-
-	  <div class="ymkrf-shopbar__cols">
-	    <?php foreach ( $byp as $pref => $list ) : if ( ! $list ) continue; ?>
-	      <div class="ymkrf-shopbar__box">
-	        <h3><?php echo esc_html( $pref ); ?></h3><br>
-	        <?php foreach ( $list as $sh ) : ?>
-	          <a class="<?php echo $now === $sh['slug'] ? 'is-on' : ''; ?>"
-	             href="<?php echo esc_url( add_query_arg( 'ymkrf_shop', $sh['slug'], $base ) ); ?>">
-	            <?php echo esc_html( $sh['name'] ); ?></a>
-	        <?php endforeach; ?>
-	      </div>
-	    <?php endforeach; ?>
-	  </div>
-
-	</div>
-	<?php
-} );
-
 /* しぼり込みの中身 */
 add_filter( 'get_terms_args', function ( $args, $taxonomies ) {
 
@@ -924,6 +1188,445 @@ add_filter( 'get_terms_args', function ( $args, $taxonomies ) {
 	$args['include'] = $ids ? array_values( array_unique( $ids ) ) : array( 0 );
 	return $args;
 }, 10, 2 );
+
+
+/* ------------------------------------------------------------
+   エリアの一覧を、石川県・福井県の2つの枠に分けて出します
+   （2026/09/23 ユーザー指示「石川県と福井県に枠を分けて」）
+
+   ワードプレスのもとの一覧は1つの表で、20件ずつに切れてしまうので、
+   こちらで作りなおしています（もとの表はかくします）。
+   ------------------------------------------------------------ */
+add_action( 'after-ymkrf_works_area-table', function () {
+
+	$prefs = ymkrf_works_area_prefs();
+	$map   = ymkrf_area_shopmap();
+	$now   = isset( $_GET['ymkrf_shop'] ) ? sanitize_key( $_GET['ymkrf_shop'] ) : '';
+
+	$all = get_terms( array(
+		'taxonomy'   => 'ymkrf_works_area',
+		'hide_empty' => false,
+		'orderby'    => 'name',
+		'order'      => 'ASC',
+	) );
+	if ( is_wp_error( $all ) ) return;
+
+	/* 地図の北から南へならべます
+	   （2026/09/23 ユーザー指示
+	     「石川県なら田鶴浜エリアから、福井県なら金津エリアから」）
+
+	   担当のお店が無いところ（輪島市・穴水町や、郡だけのもの）は、
+	   いちばん下にまとめます。そうすると石川県は七尾市（田鶴浜店）から、
+	   福井県はあわら市（金津店）から始まります。 */
+	$order = ymkrf_area_northsouth();
+	$all   = (array) $all;
+	usort( $all, function ( $a, $b ) use ( $order, $map ) {
+
+		$ha = empty( $map[ $a->name ] ) ? 1 : 0;
+		$hb = empty( $map[ $b->name ] ) ? 1 : 0;
+		if ( $ha !== $hb ) return ( $ha < $hb ) ? -1 : 1;
+
+		$ia = array_search( $a->name, $order, true );
+		$ib = array_search( $b->name, $order, true );
+		if ( $ia === false ) $ia = 900;
+		if ( $ib === false ) $ib = 900;
+		if ( $ia === $ib ) return strcmp( $a->name, $b->name );
+		return ( $ia < $ib ) ? -1 : 1;
+	} );
+
+	/* 県ごとに分けます。
+	   親の分類があればそれを、無ければ市町の名前から判定します。
+	   （親を使わない運びかたにされても、そのまま動くようにしてあります） */
+	$boxes = array();
+	foreach ( array_keys( $prefs ) as $p ) $boxes[ $p ] = array();
+
+	$pid2name = array();
+	foreach ( (array) $all as $t ) {
+		if ( isset( $prefs[ $t->name ] ) ) $pid2name[ (int) $t->term_id ] = $t->name;
+	}
+
+	foreach ( (array) $all as $t ) {
+
+		if ( isset( $prefs[ $t->name ] ) ) continue;   /* 県そのもの */
+
+		/* 店舗でしぼっているとき */
+		if ( $now === '_none' ) {
+			if ( ! empty( $map[ $t->name ] ) ) continue;
+		} elseif ( $now !== '' ) {
+			$hit = false;
+			foreach ( (array) ( isset( $map[ $t->name ] ) ? $map[ $t->name ] : array() ) as $one ) {
+				if ( $one['slug'] === $now ) { $hit = true; break; }
+			}
+			if ( ! $hit ) continue;
+		}
+
+		if ( isset( $pid2name[ (int) $t->parent ] ) ) {
+			$p = $pid2name[ (int) $t->parent ];
+		} else {
+			$gun = ymkrf_area_gun();
+			if ( isset( $gun[ $t->name ] ) ) {
+				$p = $gun[ $t->name ][0];
+			} else {
+				$p = function_exists( 'ymkrf_area_pref' ) ? ymkrf_area_pref( $t->name ) : '石川県';
+			}
+		}
+		if ( ! isset( $boxes[ $p ] ) ) $p = '石川県';
+		$boxes[ $p ][] = $t;
+	}
+
+	$edit = admin_url( 'edit-tags.php?taxonomy=ymkrf_works_area&post_type=ymkrf_works' );
+	?>
+	<style>
+	  /* もとの表と、そのページ送りはかくします */
+	  .taxonomy-ymkrf_works_area .wp-list-table.tags,
+	  .taxonomy-ymkrf_works_area .tablenav{display:none}
+	  /* 「説明」の入力欄は使いません */
+	  .term-description-wrap{display:none}
+
+	  /* 「エリアを追加」の下に、2つの枠をならべます
+	     （2026/09/23 ユーザー指示「2枠は、追加の下にもってきて」） */
+	  .taxonomy-ymkrf_works_area #col-container{display:block}
+	  .taxonomy-ymkrf_works_area #col-left,
+	  .taxonomy-ymkrf_works_area #col-right{width:100%;float:none;padding:0}
+	  .taxonomy-ymkrf_works_area #col-left{margin-bottom:20px}
+	  .taxonomy-ymkrf_works_area #col-left .form-wrap{max-width:720px}
+
+	  .ymkrf-areas{display:flex;flex-wrap:wrap;gap:12px;margin-top:6px}
+	  .ymkrf-areas__col{flex:1 1 340px}
+	  .ymkrf-areas__box{
+	    background:#fff;border:1px solid #c3c4c7;border-radius:4px;overflow:hidden}
+	  /* 見出しは枠の外（2026/09/23 ユーザー指示
+	     「石川県18件とかは、この枠から出して枠の上に持ってきて」） */
+	  .ymkrf-areas__ttl{
+	    margin:0 0 6px;padding:0;font-size:15px;font-weight:700}
+	  .ymkrf-areas__ttl span{color:#787c82;font-weight:400;font-size:12px;margin-left:8px}
+	  .ymkrf-areas table{width:100%;border-collapse:collapse}
+	  .ymkrf-areas td{padding:7px 12px;border-top:1px solid #f0f0f1;font-size:13px;vertical-align:top}
+	  .ymkrf-areas tr:hover td{background:#fafafa}
+	  /* 見出しの一行に色を付けます（2026/09/23 ユーザー指示） */
+	  .ymkrf-areas__head th{
+	    padding:6px 12px;border-bottom:2px solid #fe3301;background:#fdece6;
+	    font-size:12px;color:#9c2f0b;font-weight:700;text-align:left}
+	  .ymkrf-areas__head th.ymkrf-areas__num{text-align:right}
+	  .ymkrf-areas__head + tr td{border-top:0}
+	  .ymkrf-areas__name{font-weight:600;white-space:nowrap}
+	  .ymkrf-areas__name small{display:block;font-weight:400;color:#787c82}
+	  /* 郡は、町の前に小さく出します（2026/09/23） */
+	  .ymkrf-areas__gun{font-weight:400;font-size:11.5px;color:#787c82;margin-right:2px}
+	  .ymkrf-areas__shop{color:#3c434a}
+	  .ymkrf-areas__none{color:#b32d2e}
+	  .ymkrf-areas__num{white-space:nowrap;color:#787c82;text-align:right}
+	  .ymkrf-areas__ops{white-space:nowrap;text-align:right}
+	  .ymkrf-areas__ops a{text-decoration:none;font-size:12px;margin-left:8px}
+	  .ymkrf-areas__del{color:#b32d2e}
+	  .ymkrf-areas__empty{padding:12px;color:#787c82}
+
+	  /* 見やすくするための手だて（2026/09/23 ユーザー
+	     「ページは分けてほしくない。ただ、管理者として見にくい」） */
+	  .ymkrf-areas tbody tr:nth-child(odd) td{background:#fcfcfc}
+	  .ymkrf-areas tbody tr:hover td{background:#fff6f3}
+	  .ymkrf-areas__gunrow{
+	    display:inline-block;margin-right:4px;padding:1px 6px;border-radius:9px;
+	    background:#eef1f4;color:#50575e;font-size:11px;font-weight:600;vertical-align:1px}
+	  .ymkrf-areas__flag{
+	    display:inline-block;margin-left:6px;padding:1px 6px;border-radius:3px;
+	    background:#fcf0f1;color:#b32d2e;font-size:11px;font-weight:600}
+	  .ymkrf-find{margin:14px 0 4px}
+	  .ymkrf-find input{width:280px;max-width:60%}
+	  .ymkrf-find .ymkrf-find__hit{margin-left:10px;color:#787c82;font-size:12px}
+	  /* 登録のときのご注意（2026/09/23 ユーザー指示「赤字で注意書き」） */
+	  .ymkrf-warn{
+	    max-width:600px;margin:12px 0;padding:9px 12px;border-left:4px solid #d63638;
+	    background:#fcf0f1;color:#b32d2e;font-size:13px;line-height:1.7}
+	</style>
+
+	<p class="ymkrf-find">
+	  <label for="ymkrf-find"><b>エリアをさがす</b></label>
+	  <input type="search" id="ymkrf-find" placeholder="市町名・英字・店舗名のどれでも（例：越前／echizen／朝日店）">
+	  <span class="ymkrf-find__hit"></span>
+	</p>
+
+	<div class="ymkrf-areas">
+	  <?php foreach ( $boxes as $pref => $list ) : ?>
+	    <div class="ymkrf-areas__col">
+
+	      <?php /* 見出しは枠の外、枠の上に出します（2026/09/23 ユーザー指示） */ ?>
+	      <h2 class="ymkrf-areas__ttl">
+	        <?php echo esc_html( $pref ); ?><span><?php echo count( $list ); ?>件</span>
+	      </h2>
+
+	      <div class="ymkrf-areas__box">
+	      <?php if ( ! $list ) : ?>
+	        <p class="ymkrf-areas__empty">あてはまるエリアはありません。</p>
+	      <?php else : ?>
+	        <table>
+	          <?php /* 見出しの一行（2026/09/23 ユーザー指示
+	                   「石川県の下に一行欄作って、エリア名、担当店舗、登録件数を表示」） */ ?>
+	          <thead>
+	          <tr class="ymkrf-areas__head">
+	            <th class="ymkrf-areas__name">エリア名</th>
+	            <th class="ymkrf-areas__shop">担当店舗</th>
+	            <th class="ymkrf-areas__num">登録件数</th>
+	            <th class="ymkrf-areas__ops"></th>
+	          </tr>
+	          </thead>
+	          <tbody>
+	          <?php foreach ( $list as $t ) :
+	            $shops = ymkrf_area_shops_of( $t->name, $t->term_id );
+
+	            $find = $t->name . ' ' . $t->slug . ' ' . ymkrf_area_gun_of( $t->name );
+	            foreach ( $shops as $one ) $find .= ' ' . $one['name'];
+	            ?>
+	            <tr data-find="<?php echo esc_attr( $find ); ?>">
+	              <td class="ymkrf-areas__name">
+	                <?php
+	                $gun  = ymkrf_area_gun_of( $t->name );
+	                /* 郡だけの分類（丹生郡など）は、ページを作らないので目印を付けます */
+	                $only = ( substr( $t->name, -3 ) === '郡' );
+	                ?>
+	                <?php if ( $gun ) : ?><span class="ymkrf-areas__gunrow"><?php echo esc_html( $gun ); ?></span><?php endif; ?>
+	                <?php echo esc_html( $t->name ); ?>
+	                <?php if ( $only ) : ?><span class="ymkrf-areas__flag">郡だけ／不要</span><?php endif; ?>
+	                <small><?php echo esc_html( $t->slug ); ?></small>
+	              </td>
+	              <td class="ymkrf-areas__shop">
+	                <?php if ( $shops ) {
+	                  $n = array();
+	                  foreach ( $shops as $one ) $n[] = esc_html( $one['name'] );
+	                  echo implode( '<br>', $n );
+	                } else { ?>
+	                  <span class="ymkrf-areas__none">担当店舗なし</span>
+	                <?php } ?>
+	              </td>
+	              <td class="ymkrf-areas__num"><?php echo (int) $t->count; ?>件</td>
+	              <?php /* 削除は編集ページでおこないます（2026/09/23 ユーザー指示） */ ?>
+	              <td class="ymkrf-areas__ops">
+	                <a href="<?php echo esc_url( add_query_arg( array( 'action' => 'edit', 'tag_ID' => $t->term_id ), $edit ) ); ?>">編集</a>
+	              </td>
+	            </tr>
+	          <?php endforeach; ?>
+	          </tbody>
+	        </table>
+	      <?php endif; ?>
+	      </div>
+
+	    </div>
+	  <?php endforeach; ?>
+	</div>
+
+	<p class="description" style="margin-top:10px">
+	  「件数」は<b>公開ずみ</b>の施工事例の数です。下書きはふくみません。
+	</p>
+
+	<script>
+	/* エリアをさがす ── 打つそばから、あてはまる行だけ残します
+	   （2026/09/23 ユーザー「管理者として見にくいから、なんかよい方法ない？」） */
+	jQuery(function ($) {
+
+		var $in  = $('#ymkrf-find');
+		var $hit = $('.ymkrf-find__hit');
+		if (!$in.length) return;
+
+		$in.on('input', function () {
+
+			var q = $.trim($(this).val()).toLowerCase();
+			var n = 0;
+
+			$('.ymkrf-areas tbody tr').each(function () {
+				var ok = (q === '') || ($(this).data('find') || '').toString().toLowerCase().indexOf(q) !== -1;
+				$(this).toggle(ok);
+				if (ok) n++;
+			});
+
+			/* 中身が無くなった枠は、うすくします */
+			$('.ymkrf-areas__col').each(function () {
+				var has = $(this).find('tbody tr:visible').length > 0;
+				$(this).css('opacity', has ? 1 : 0.35);
+			});
+
+			$hit.text(q === '' ? '' : n + '件');
+		});
+	});
+	</script>
+	<?php
+} );
+
+/* ------------------------------------------------------------
+   「親エリア」は石川県・福井県だけから
+   （2026/09/23 ユーザー指示
+     「親カテゴリーは石川県、福井県から選択、スラッグの前にもってきて」）
+   ------------------------------------------------------------ */
+add_filter( 'wp_dropdown_cats', function ( $out, $args ) {
+
+	if ( ! is_admin() ) return $out;
+
+	$tax = isset( $args['taxonomy'] ) ? (array) $args['taxonomy'] : array();
+	if ( ! in_array( 'ymkrf_works_area', $tax, true ) ) return $out;
+	if ( ! isset( $args['name'] ) || $args['name'] !== 'parent' ) return $out;
+
+	$sel = isset( $args['selected'] ) ? (int) $args['selected'] : 0;
+
+	$html  = '<select name="parent" id="parent" class="postform">';
+	$html .= '<option value="-1">（えらんでください）</option>';
+
+	foreach ( array_keys( ymkrf_works_area_prefs() ) as $pref ) {
+		$tid = ymkrf_works_area_pref_term( $pref );
+		if ( ! $tid ) continue;
+		$html .= '<option value="' . (int) $tid . '"' . selected( $sel, $tid, false ) . '>'
+		       . esc_html( $pref ) . '</option>';
+	}
+	$html .= '</select>';
+
+	return $html;
+}, 10, 2 );
+
+
+/* ------------------------------------------------------------
+   エリアを追加する画面の手直し
+
+   ・「名前」→「エリア名」
+   ・「親エリア」を「スラッグ」の上へ
+   ・エリア名を入れると、スラッグ（英字）を自動で入れます
+     できあがったURLをその場に出すので、目で見て確かめてから登録できます
+   （2026/09/23 ユーザー指示）
+   ------------------------------------------------------------ */
+add_action( 'admin_footer', function () {
+
+	$s = get_current_screen();
+	if ( ! $s || $s->taxonomy !== 'ymkrf_works_area' ) return;
+
+	/* 市町郡 → 英字 の表 */
+	$roman = ymkrf_area_order();
+
+	/* 県 → 分類のID（自動でえらぶために使います） */
+	$pref = array();
+	foreach ( array_keys( ymkrf_works_area_prefs() ) as $p ) {
+		$pref[ $p ] = ymkrf_works_area_pref_term( $p );
+	}
+
+	/* 市町 → 県 */
+	$city2pref = array();
+	foreach ( array_keys( $roman ) as $city ) {
+		$gun = ymkrf_area_gun();
+		$city2pref[ $city ] = isset( $gun[ $city ] ) ? $gun[ $city ][0] : ymkrf_area_pref( $city );
+	}
+	?>
+	<script>
+	jQuery(function ($) {
+
+		var ROMAN = <?php echo wp_json_encode( $roman ); ?>;
+		var PREF  = <?php echo wp_json_encode( $pref ); ?>;
+		var C2P   = <?php echo wp_json_encode( $city2pref ); ?>;
+
+		/* ① 言いかえ */
+		$('label[for="tag-name"], label[for="name"]').each(function () {
+			if ($.trim($(this).text()) === '名前') $(this).text('エリア名');
+		});
+		$('.term-name-wrap p').each(function () {
+			if ($(this).text().indexOf('サイト上に表示される名前') === 0) {
+				$(this).text('ページに出る市・町の名前です（例：中能登町）。県名や町名・字は入れません。');
+			}
+		});
+
+		/* ② ならびを　エリア名 → 担当店舗 → スラッグ　に
+		   「親エリア」は、えらんだ担当店舗から自動で決まるので出しません。
+		   （2026/09/23 ユーザー指示「店舗を選ぶことで親エリアは不要になりました」） */
+		var $s = $('.term-slug-wrap');
+		$('.term-parent-wrap').hide();
+
+		var $sh = $('.term-ymkrfshops-wrap');
+		if ($sh.length && $s.length) $sh.insertBefore($s);
+
+		/* ③ エリア名 → スラッグを自動で */
+		var $name = $('#tag-name'), $slug = $('#tag-slug'), $par = $('#parent');
+		if (!$name.length || !$slug.length) return;
+
+		var $note = $('<p class="description ymkrf-slugnote"></p>');
+		if ($s.length) { $s.append($note); } else { $note.insertAfter($slug); }
+		var touched = false;
+		$slug.on('input', function () { touched = true; draw(); });
+
+		function draw() {
+			var v = $.trim($slug.val());
+			if (v === '') { $note.html(''); return; }
+			$note.html('登録後のURL： <b>/area/' + $('<div>').text(v).html() + '/</b>');
+		}
+
+		/* ------------------------------------------------------------
+		   2つの段にします（2026/09/23 ユーザー指示）
+
+		     ① エリア名と担当店舗を入れて ［スラッグを自動生成］
+		        → スラッグとURLが出ます
+		     ② それでよければ ［エリアを登録］ → できあがり
+		   ------------------------------------------------------------ */
+
+		/* ワードプレスの送信ボタンは「エリアを登録」にして、スラッグの下へ
+		   （2026/09/23 ユーザー指示） */
+		var $sub = $('#addtag p.submit');
+		$('#submit').val('エリアを登録');
+		$sub.insertAfter($s);
+
+		/* 「スラッグを自動生成」は、スラッグの上に */
+		var $make = $(
+			'<p class="ymkrf-make" style="margin:1em 0">'
+			+ '<button type="button" class="button button-primary" id="ymkrf-make">スラッグを自動生成</button>'
+			+ '</p>'
+		).insertBefore($s);
+
+		/* 赤字のご注意を、［エリアを登録］の上に */
+		$('<p class="ymkrf-warn">'
+			+ '※ <b>スラッグを確認してから</b>、エリアを登録してください。<br>'
+			+ 'エリアのURL（/area/◯◯/）になります。登録したあとに変えると、'
+			+ 'それまでのURLが見られなくなります。'
+			+ '</p>').insertBefore($sub);
+
+		/* ★スラッグと［登録］は、はじめから見えるようにしておきます。
+		   かくすと「スラッグが確認できない」ことになるためです。
+		   （2026/09/23 ユーザー「スラッグ確認できないよ？」） */
+
+		$('#ymkrf-make').on('click', function () {
+
+			var n = $.trim($name.val());
+			if (n === '') {
+				window.alert('エリア名を入れてください。');
+				$name.trigger('focus');
+				return;
+			}
+
+			/* ボタンを押したときは、かならず作りなおします */
+			$slug.val(ROMAN[n] ? ROMAN[n] : $.trim($slug.val()));
+			touched = false;
+			draw();
+
+			if ($.trim($slug.val()) === '') {
+				$note.html('<b style="color:#b32d2e">「' + $('<div>').text(n).html()
+					+ '」は表にありません。スラッグを英字で入れてください（例：nakanoto）</b>');
+				$slug.trigger('focus');
+			}
+		});
+
+		/* エリア名を打つそばから、スラッグとURLを出します */
+		$name.on('input', function () {
+			var n = $.trim($name.val());
+			if (!touched) $slug.val(ROMAN[n] ? ROMAN[n] : '');
+			draw();
+		});
+
+		/* ［登録］のあとは、一覧に出るよう画面を読みなおします */
+		$('#submit').on('click', function () {
+			if ($.trim($slug.val()) === '') {
+				window.alert('スラッグ（URLに使う英字）を入れてください。');
+				$slug.trigger('focus');
+				return false;
+			}
+			$(document).one('ajaxComplete', function () {
+				setTimeout(function () { location.reload(); }, 400);
+			});
+		});
+	});
+	</script>
+	<?php
+} );
 
 
 add_action( 'add_meta_boxes', function () {

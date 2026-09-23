@@ -105,6 +105,32 @@ function ymkrf_area_list() {
 		}
 	}
 
+	/* ③ エリアの画面で「担当店舗」をえらんであれば、そちらを使います。
+	     （2026/09/23 ユーザー指示「担当店舗もえらべるようにして」）
+	     お店の設定と、エリアの設定と、2か所がずれないようにするためです。 */
+	if ( $ts && ! is_wp_error( $ts ) && function_exists( 'ymkrf_shops' ) ) {
+
+		$by = array();
+		foreach ( ymkrf_shops() as $s ) {
+			if ( ! empty( $s['slug'] ) ) $by[ $s['slug'] ] = $s;
+		}
+
+		foreach ( $ts as $t ) {
+
+			$saved = (string) get_term_meta( $t->term_id, '_ymkrf_shops', true );
+			if ( $saved === '' ) continue;
+
+			$slug = ymkrf_area_roman( ymkrf_area_clean( $t->name ) );
+			if ( $slug === '' || ! isset( $out[ $slug ] ) ) continue;
+
+			$list = array();
+			foreach ( array_filter( array_map( 'trim', explode( ',', $saved ) ) ) as $sl ) {
+				if ( isset( $by[ $sl ] ) ) $list[] = $by[ $sl ];
+			}
+			$out[ $slug ]['shops'] = $list;
+		}
+	}
+
 	return $out;
 }
 

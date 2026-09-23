@@ -54,9 +54,15 @@ if ( function_exists( 'ymkrf_crumb_ld' ) ) {
     <p class="p-area__lead">
       <?php if ( $lead !== '' ) : ?>
         <?php echo nl2br( esc_html( $lead ) ); ?>
-      <?php else : ?>
+      <?php else :
+        /* 正式な住所（福井県丹生郡越前町）を、書き出しに1回だけ入れます。
+           郡で探された方にも届くようにするためで、見出しは町名のままにします。
+           （2026/09/23 ユーザー指示「越前町は、丹生郡なんです」） */
+        $full = function_exists( 'ymkrf_area_full_name' ) ? ymkrf_area_full_name( $city ) : $city;
+        ?>
         <?php echo esc_html(
-          $city . 'で' . ( $c['works'] ? number_format( $c['works'] ) . '件の施工実績。' : 'リフォームを承っています。' )
+          ( $full !== '' && $full !== $city ? $full : $city )
+          . 'で' . ( $c['works'] ? number_format( $c['works'] ) . '件の施工実績。' : 'リフォームを承っています。' )
           . 'キッチン・お風呂・トイレ・洗面台の交換から、外壁塗装・カーポートまで。'
           . '本体・標準工事費・古い設備の撤去処分費まで込みの、分かりやすい価格でご案内します。'
           . '見積り・現地調査は無料です。'

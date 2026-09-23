@@ -1195,6 +1195,27 @@ add_action( 'init', function () {
 	/* エリア（金沢市／小松市 …）＝ 地域検索の受け皿になります */
 	register_taxonomy( 'ymkrf_works_area', 'ymkrf_works', array(
 		'label'        => 'エリア',
+		/* 画面の言葉を「カテゴリー」から「エリア」に変えます
+		   （2026/09/23 ユーザー指示「カテゴリーを追加ではなく、エリアを追加」） */
+		'labels'       => array(
+			'name'              => 'エリア',
+			'singular_name'     => 'エリア',
+			'menu_name'         => 'エリア',
+			'all_items'         => 'すべてのエリア',
+			'add_new_item'      => 'エリアを追加',
+			'new_item_name'     => '新しいエリアの名前',
+			'edit_item'         => 'エリアを編集',
+			'view_item'         => 'エリアを表示',
+			'update_item'       => 'エリアを更新',
+			'search_items'      => 'エリアを検索',
+			'parent_item'       => '親エリア',
+			'parent_item_colon' => '親エリア：',
+			'not_found'         => 'エリアが見つかりません',
+			'back_to_items'     => '← エリアの一覧にもどる',
+			'name_field_description' => 'ページに出る市・町の名前です（例：中能登町）。県名や町名・字は入れません。',
+			'slug_field_description' => 'URLに使う英字です（例：nakanoto）。地域ごとのページ /area/nakanoto/ になります。',
+			'parent_field_description' => '石川県か福井県をえらんでください。',
+		),
 		'hierarchical' => true,
 		'rewrite'      => array( 'slug' => 'works-area', 'with_front' => false ),
 		'show_in_rest' => true,
