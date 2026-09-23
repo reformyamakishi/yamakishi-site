@@ -26,7 +26,7 @@ define( 'YMKRF_IMPORT_HOST', 'yamakishi-reform.jp' );
 add_action( 'admin_menu', function () {
 	add_submenu_page(
 		'edit.php?post_type=ymkrf_works',
-		'いまのサイトから取り込む', 'いまのサイトから取り込む',
+		'旧サイトから取り込む', '旧サイトから取り込む',
 		'manage_options', 'ymkrf-works-import', 'ymkrf_works_import_page'
 	);
 } );
@@ -50,7 +50,7 @@ function ymkrf_works_import_page() {
 	}
 	?>
 	<div class="wrap">
-	  <h1>いまのサイトから施工事例を取り込む</h1>
+	  <h1>旧サイトから施工事例を取り込む</h1>
 
 	  <?php if ( $done ) : ?>
 	    <h2>取り込みの結果</h2>
@@ -71,7 +71,7 @@ function ymkrf_works_import_page() {
 	  <?php endif; ?>
 
 	  <p style="max-width:900px;line-height:2">
-	    いまのサイトの施工事例ページのURLと、案件番号を貼ってください。<br>
+	    旧サイトの施工事例ページのURLと、案件番号を貼ってください。<br>
 	    <b>1行に1件</b>です。URLと案件番号のあいだは、タブ・カンマ・スペースのどれでもかまいません。<br>
 	    案件番号が分からないときは、URLだけでも取り込めます（あとから入力できます）。
 	  </p>
