@@ -976,7 +976,6 @@ if ( ! empty( $pn['items'] ) ) :
       if ( ! in_array( $slug, array( 'boiler', 'ecocute' ), true ) ) : ?>
       <p class="p-cat__listlead">
         価格はすべて<strong>標準工事費・既存品の撤去処分費まで込み</strong>の税込表示です。
-        安い順に並べています。
       </p>
       <?php endif; ?>
 
@@ -1024,7 +1023,9 @@ if ( ! empty( $pn['items'] ) ) :
         ?></p>
       <?php endif; ?>
 
-      <div class="p-cat__cards">
+      <?php /* 4点セットは、写真が4枚組みで大きいので、上2つ・下2つの2列にします
+               （2026/09/23 ユーザー指示「画像を上下2段にして」「上2段、下2段」） */ ?>
+      <div class="p-cat__cards<?php echo $slug === 'pack4' ? ' p-cat__cards--2' : ''; ?>">
         <?php foreach ( $sg['posts'] as $post ) : setup_postdata( $post );
           $d  = ymkrf_product_data();
           $mt = ! empty( $d['makers'] ) ? $d['makers'][0] : null;
@@ -1083,7 +1084,26 @@ if ( ! empty( $pn['items'] ) ) :
               <?php if ( $slug === 'cooktop' && ! empty( $d['list'] ) ) : ?>
                 <p class="p-cat__cardlist">定価 <s><?php echo esc_html( number_format( $d['list'] ) ); ?>円</s> の品</p>
               <?php endif; ?>
-              <?php if ( $d['total'] ) : ?>
+              <?php /* 水まわり4点セットは、セット価格と「◯◯円おトク！」を出します
+                       （2026/09/23 ユーザー指示「値段もあった方がよい」） */ ?>
+              <?php if ( $slug === 'pack4' && function_exists( 'ymkrf_p4_prices' ) ) :
+                $pp = ymkrf_p4_prices( get_the_ID() );
+                if ( $pp['now'] ) : ?>
+                  <p class="p-cat__cardprice">
+                    <span class="lbl">4点セット</span>
+                    <span class="num"><?php echo esc_html( number_format( $pp['now'] ) ); ?></span>
+                    <span class="unit">円（税込）</span>
+                  </p>
+                  <?php if ( $pp['off'] ) : ?>
+                    <p class="p-cat__cardoff">
+                      <span class="p-cat__cardwas">別々にすると <s><?php echo esc_html( number_format( $pp['was'] ) ); ?>円</s></span>
+                      <span class="p-p4__burst p-p4__burst--sm">
+                        <b><?php echo esc_html( number_format( $pp['off'] ) ); ?>円</b><span>おトク！</span>
+                      </span>
+                    </p>
+                  <?php endif; ?>
+                <?php endif; ?>
+              <?php elseif ( $d['total'] ) : ?>
                 <p class="p-cat__cardprice">
                   <span class="lbl"><?php echo $slug === 'cooktop' ? '入替工事込' : '工事費込み'; ?></span>
                   <span class="num"><?php echo esc_html( number_format( $d['total'] ) ); ?></span>

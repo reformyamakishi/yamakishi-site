@@ -1316,7 +1316,11 @@ endif;
  *   side   … 'r' でふだを右に、'l' で左に出します
  */
 if ( ! function_exists( 'ymkrf_flyer_map' ) ) :
-function ymkrf_flyer_map( $shops, $sel, $map ) {
+/**
+ * @param string $mode 'flyer'（そのお店のチラシへ）／'shop'（そのお店のページへ）
+ *                     （2026/09/23 ユーザー指示：対応エリアのページにも地図を出す）
+ */
+function ymkrf_flyer_map( $shops, $sel, $map, $mode = 'flyer' ) {
 
 	$dir = get_stylesheet_directory_uri();
 	$mw  = 1350;   /* 地図画像の大きさ */
@@ -1367,12 +1371,18 @@ function ymkrf_flyer_map( $shops, $sel, $map ) {
 	      $ex  = ( $p['side'] === 'r' ) ? $bx : $bx + $bw;
 	      /* リンク先。SVGの中のリンクなので、古いブラウザ用に
 	         xlink:href もいっしょに付けています。 */
-	      $pin_url = add_query_arg( 'shop', $slug, home_url( '/flyer/' ) ) . '#flyer';
+	      if ( $mode === 'shop' && function_exists( 'ymkrf_shop_url' ) ) {
+	        $pin_url  = ymkrf_shop_url( $slug );
+	        $pin_lbl  = $sp['name'] . 'のページを見る';
+	      } else {
+	        $pin_url  = add_query_arg( 'shop', $slug, home_url( '/flyer/' ) ) . '#flyer';
+	        $pin_lbl  = $sp['name'] . 'のチラシを見る';
+	      }
 	    ?>
 	      <a class="p-flyer__pick p-fmap__pin<?php echo $on ? ' is-on' : ''; ?><?php echo $soon ? ' is-soon' : ''; ?>"
 	         href="<?php echo esc_url( $pin_url ); ?>"
 	         xlink:href="<?php echo esc_url( $pin_url ); ?>"
-	         aria-label="<?php echo esc_attr( $sp['name'] . 'のチラシを見る' ); ?>"
+	         aria-label="<?php echo esc_attr( $pin_lbl ); ?>"
 	         data-shop="<?php echo esc_attr( $slug ); ?>">
 	        <line class="p-fmap__lead" x1="<?php echo esc_attr( $p['x'] ); ?>" y1="<?php echo esc_attr( $p['y'] ); ?>"
 	              x2="<?php echo esc_attr( $ex ); ?>" y2="<?php echo esc_attr( $p['ly'] ); ?>"></line>

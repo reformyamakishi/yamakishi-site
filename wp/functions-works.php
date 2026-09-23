@@ -833,6 +833,10 @@ function ymkrf_area_shops_of( $name, $term_id = 0 ) {
 
 	if ( $term_id ) {
 		$saved = (string) get_term_meta( $term_id, YMKRF_AREA_SHOPS, true );
+
+		/* 「担当店舗なし」をえらんだとき（2026/09/23 ユーザー指示） */
+		if ( $saved === '_none' ) return array();
+
 		if ( $saved !== '' ) {
 
 			$want = array_filter( array_map( 'trim', explode( ',', $saved ) ) );
@@ -900,6 +904,15 @@ function ymkrf_area_shops_field( $checked = array(), $cell = false ) {
 		}
 	}
 	?>
+	<?php $none = in_array( '_none', $checked, true ); ?>
+	<p class="ymkrf-shopnone">
+	  <label class="ymkrf-shoppick__item<?php echo $none ? ' is-on' : ''; ?>">
+	    <input type="checkbox" name="ymkrf_area_shops[]" value="_none" id="ymkrf-shopnone"
+	           <?php checked( $none ); ?>>
+	    <span>担当店舗なし</span>
+	  </label>
+	</p>
+
 	<div class="ymkrf-shoppick">
 	  <?php foreach ( $cols as $pref => $group ) :
 	    /* そもそもお店が無い県は出しません */
@@ -950,6 +963,23 @@ function ymkrf_area_shops_field( $checked = array(), $cell = false ) {
 	  .ymkrf-shoppick__item.is-on,
 	  .ymkrf-shoppick__item:has(input:checked){background:#fff2ee;color:#9c2f0b;font-weight:700}
 
+	  /* 編集ページは入力欄の幅が800pxで足りず、県の枠が縦に折れていました。
+	     広げて、石川県と福井県が横に並ぶようにします。
+	     （2026/09/23 ユーザー指示「エリアを編集ページ、担当店舗、
+	       PCの場合、石川県と福井県、横並びにして」） */
+	  body.term-php.taxonomy-ymkrf_works_area #edittag,
+	  body.term-php.taxonomy-ymkrf_works_cat  #edittag{max-width:1060px}
+	  @media screen and (min-width:1100px){
+	    body.term-php .ymkrf-shoppick{flex-wrap:nowrap}
+	  }
+
+	  /* 「担当店舗なし」（2026/09/23 ユーザー指示） */
+	  .ymkrf-shopnone{margin:4px 0 8px}
+	  .ymkrf-shopnone .ymkrf-shoppick__item{
+	    display:inline-flex;border:1px solid #c3c4c7;border-radius:4px;background:#fff}
+	  .ymkrf-shopnone .ymkrf-shoppick__item.is-on{
+	    border-color:#d63638;background:#fcf0f1;color:#b32d2e}
+
 	  /* 携帯・タブレットのときは1列に（2026/09/23 ユーザー指示） */
 	  @media screen and (max-width:782px){
 	    .ymkrf-shoppick{display:block}
@@ -967,6 +997,18 @@ function ymkrf_area_shops_field( $checked = array(), $cell = false ) {
 	  $(document).on('change', '.ymkrf-shoppick__item input', function () {
 	    $(this).closest('.ymkrf-shoppick__item').toggleClass('is-on', this.checked);
 	  });
+
+	  /* 「担当店舗なし」とお店は、いっしょにはえらべません（2026/09/23） */
+	  $(document).on('change', '#ymkrf-shopnone', function () {
+	    if (!this.checked) return;
+	    $('.ymkrf-shoppick input[type=checkbox]').prop('checked', false)
+	      .closest('.ymkrf-shoppick__item').removeClass('is-on');
+	  });
+	  $(document).on('change', '.ymkrf-shoppick input[type=checkbox]', function () {
+	    if (!this.checked) return;
+	    $('#ymkrf-shopnone').prop('checked', false)
+	      .closest('.ymkrf-shoppick__item').removeClass('is-on');
+	  });
 	});
 	</script>
 	<?php
@@ -978,7 +1020,7 @@ add_action( 'ymkrf_works_area_add_form_fields', function () {
 	<div class="form-field term-ymkrfgun-wrap">
 	  <label for="ymkrf-gun">郡名</label>
 	  <input type="text" name="ymkrf_area_gun" id="ymkrf-gun" value="" placeholder="例：丹生郡">
-	  <p class="description">町の場合だけ、入れておけます（例：丹生郡越前町）。空でもかまいません。</p>
+	  <p class="description">町の名前の方が強い場合は入力</p>
 	</div>
 
 	<div class="form-field term-ymkrfshops-wrap">
@@ -999,7 +1041,7 @@ add_action( 'ymkrf_works_area_edit_form_fields', function ( $term ) {
 	$now   = array();
 
 	if ( $saved !== '' ) {
-		$now = array_filter( array_map( 'trim', explode( ',', $saved ) ) );
+		$now = array_filter( array_map( 'trim', explode( ',', $saved ) ) );   /* '_none' もそのまま */
 	} else {
 		/* まだえらんでいないときは、店舗側の設定を最初から入れておきます */
 		foreach ( ymkrf_area_shops_of( $term->name ) as $one ) $now[] = $one['slug'];
@@ -1011,7 +1053,7 @@ add_action( 'ymkrf_works_area_edit_form_fields', function ( $term ) {
 	    <input type="text" name="ymkrf_area_gun" id="ymkrf-gun"
 	           value="<?php echo esc_attr( (string) get_term_meta( $term->term_id, '_ymkrf_gun', true ) ); ?>"
 	           placeholder="例：丹生郡">
-	    <p class="description">町の場合だけ、入れておけます（例：丹生郡越前町）。空でもかまいません。</p>
+	    <p class="description">町の名前の方が強い場合は入力</p>
 	  </td>
 	</tr>
 
@@ -1045,6 +1087,14 @@ function ymkrf_area_shops_save( $term_id ) {
 	}
 
 	$in = array_map( 'sanitize_key', (array) $_POST['ymkrf_area_shops'] );
+
+	/* 「担当店舗なし」をえらんだとき（2026/09/23 ユーザー指示）。
+	   店舗側の設定にもどさず、はっきり「なし」としてしまいます。 */
+	if ( in_array( '_none', $in, true ) ) {
+		update_term_meta( $term_id, YMKRF_AREA_SHOPS, '_none' );
+		return;
+	}
+
 	$in = array_values( array_intersect( $ok, $in ) );   /* 店舗の並び順にそろえます */
 
 	if ( $in ) update_term_meta( $term_id, YMKRF_AREA_SHOPS, implode( ',', $in ) );
@@ -1620,9 +1670,15 @@ add_action( 'admin_footer', function () {
 		/* ★エリア名の欄は短くして、その横に郡名を置きます
 		   （2026/09/23 ユーザー指示） */
 		var $nw = $('.term-name-wrap'), $gw = $('.term-ymkrfgun-wrap');
-		if ($nw.length && $gw.length && $('#tag-name').length) {
-			var $row = $('<div class="ymkrf-namerow"></div>').insertBefore($nw);
-			$row.append($nw).append($gw);
+		if ($nw.length && $gw.length) {
+			if ($('#tag-name').length) {
+				/* 追加の画面は、横にならべます */
+				var $row = $('<div class="ymkrf-namerow"></div>').insertBefore($nw);
+				$row.append($nw).append($gw);
+			} else {
+				/* 編集のページは表なので、エリア名のすぐ下に置きます */
+				$gw.insertAfter($nw);
+			}
 		}
 
 		/* ② ならびを　エリア名 → 担当店舗 → スラッグ　に

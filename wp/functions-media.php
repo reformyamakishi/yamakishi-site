@@ -731,7 +731,37 @@ function ymkrf_media_name_dict() {
 		'裏面'         => 'back',
 		'正面'         => 'front',
 		'全体'         => 'full',
+
+		/* ここから下は、もともと英語の言葉です。
+		   そのままローマ字にすると nesuto のようになってしまうので、
+		   英語のつづりに置きかえます
+		   （2026/09/23 ユーザー指示「ネストですが、nestなので、
+		     URLがnesutoになっていたら変更して」）。
+		   ほかにも出てきたら、この下に1行ずつ足してください。 */
+		'ネスト'       => 'nest',
 	);
+
+	/* メーカーの名前は、登録してあるメーカーのスラッグを使います
+	   （ノーリツ → noritz、クリナップ → cleanup など。
+	     2026/09/23 ユーザー指示「ノーリツも、noritzね」）。
+	   メーカーを足したり、スラッグを直したりすれば、ここも自動でついてきます。
+	   ＝ 商品 ＞ メーカーの設定 で直せます。 */
+	if ( taxonomy_exists( 'ymkrf_maker' ) ) {
+		$mk = get_terms( array( 'taxonomy' => 'ymkrf_maker', 'hide_empty' => false ) );
+		if ( ! is_wp_error( $mk ) ) {
+			foreach ( (array) $mk as $t ) {
+				$n = trim( (string) $t->name );
+				$g = (string) $t->slug;
+				if ( $g === '' ) continue;
+				if ( mb_strlen( $n, 'UTF-8' ) >= 2 ) $d[ $n ] = $g;
+				/* 「WOODONE（ウッドワン）」のように、かっこ書きのカタカナも拾います */
+				if ( preg_match( '/[（(]([^）)]+)[）)]/u', $n, $m2 ) ) {
+					$in = trim( $m2[1] );
+					if ( mb_strlen( $in, 'UTF-8' ) >= 2 ) $d[ $in ] = $g;
+				}
+			}
+		}
+	}
 
 	/* ながい言葉から先に置きかえます
 	   （「お客様の声」を「お客様」より先に当てるため） */
@@ -857,4 +887,356 @@ add_filter( 'wp_handle_upload_prefilter', function ( $file ) {
 add_filter( 'wp_handle_sideload_prefilter', function ( $file ) {
 	if ( ! empty( $file['name'] ) ) $file['name'] = ymkrf_media_ascii_name( $file['name'] );
 	return $file;
+} );
+
+
+/* ============================================================
+   すでに入っている写真の名前を、正しいつづりに直します（1回だけ）
+   ------------------------------------------------------------
+   （2026/09/23 ユーザー指示
+     「ネストですが、nestなので、URLがnesutoになっていたら変更して」
+     「ノーリツも、noritzね」
+      → noritsunest-nesuto.jpg のような名前が残っていたため）
+
+   ・直す表は、登録してあるメーカーから自動で作ります
+       ノーリツ … ローマ字にすると noritsu ですが、スラッグは noritz
+       クリナップ … kurinappu ですが、スラッグは cleanup
+     ＋「nesuto → nest」だけ、手で足しています。
+   ・ファイルそのもの（大きさちがいも全部）の名前を変えます
+   ・メディアの情報（_wp_attached_file／_wp_attachment_metadata／guid）も直します
+   ・本文に古いURLが書いてあれば、そこも書きかえます
+   ・すでに正しいつづりが入っている名前は、くり返しにならないように
+     まちがいのほうを外します（noritsunest-nesuto → noritznest）
+
+   1回動いたら、二度と動きません（ymkrf_media_name_fix_ver を見ています）。
+   本番に出したあとは、この節ごと消してかまいません。
+   ============================================================ */
+
+/** まちがったつづり => 正しいつづり の表 */
+if ( ! function_exists( 'ymkrf_media_fix_table' ) ) :
+function ymkrf_media_fix_table() {
+
+	$t = array( 'nesuto' => 'nest' );
+
+	if ( ! taxonomy_exists( 'ymkrf_maker' ) ) return $t;
+
+	$mk = get_terms( array( 'taxonomy' => 'ymkrf_maker', 'hide_empty' => false ) );
+	if ( is_wp_error( $mk ) ) return $t;
+
+	foreach ( (array) $mk as $m ) {
+
+		$slug = (string) $m->slug;
+		if ( $slug === '' ) continue;
+
+		/* カタカナの名前を、いったんローマ字にしてみます
+		   （＝これまでファイル名に入っていた、まちがったつづり） */
+		$was = ymkrf_media_kana_romaji( (string) $m->name );
+		$was = strtolower( (string) preg_replace( '/[^A-Za-z0-9]+/', '', $was ) );
+
+		/* 漢字が残ったもの（三菱電機など）や、もう同じものは使いません */
+		if ( $was === '' || strlen( $was ) < 4 || $was === $slug ) continue;
+
+		$t[ $was ] = $slug;
+	}
+
+	/* ながいつづりから先に直します（takarasutandado を takara より先に） */
+	uksort( $t, function ( $a, $b ) { return strlen( $b ) - strlen( $a ); } );
+
+	return $t;
+}
+endif;
+
+/** ファイル名を、正しいつづりに直します */
+if ( ! function_exists( 'ymkrf_media_fix_name' ) ) :
+function ymkrf_media_fix_name( $file ) {
+
+	$dot  = strrpos( $file, '.' );
+	$ext  = ( $dot === false ) ? '' : substr( $file, $dot );
+	$body = ( $dot === false ) ? $file : substr( $file, 0, $dot );
+	$new  = $body;
+
+	foreach ( ymkrf_media_fix_table() as $was => $now ) {
+
+		if ( strpos( $new, $was ) === false ) continue;
+
+		/* 正しいつづりが、すでにほかの場所に入っているとき（noritsunest-nesuto の
+		   「nest」など）は、くり返しにならないよう、まちがいのほうを外します */
+		$off = preg_replace( '/-?' . preg_quote( $was, '/' ) . '/', '', $new );
+
+		if ( strpos( $off, $now ) !== false ) {
+			$new = $off;
+		} else {
+			/* 前後に「-」を入れて、言葉の切れ目が分かるようにします
+			   （noritsunest → noritz-nest。
+			     2026/09/23 ユーザー指示「noritz-nest.jpg に変えて」） */
+			$new = str_replace( $was, '-' . $now . '-', $new );
+		}
+
+		/* 「-」「_」がつづいたら、1つの「-」にまとめます（cleanup-_horo3 → cleanup-horo3） */
+		$new = trim( (string) preg_replace( '/[-_]{2,}/', '-', $new ), '-_' );
+	}
+
+	$new = trim( (string) preg_replace( '/-{2,}/', '-', $new ), '-' );
+	if ( $new === '' ) return $file;
+
+	return $new . $ext;
+}
+endif;
+
+add_action( 'admin_init', function () {
+
+	if ( get_option( 'ymkrf_media_name_fix_ver' ) === '1' ) return;
+	if ( ! current_user_can( 'manage_options' ) ) return;
+
+	global $wpdb;
+
+	$rows = $wpdb->get_results(
+		"SELECT post_id, meta_value FROM {$wpdb->postmeta}
+		  WHERE meta_key = '_wp_attached_file'"
+	);
+
+	$up   = wp_get_upload_dir();
+	$done = 0;
+
+	foreach ( (array) $rows as $r ) {
+
+		$id  = (int) $r->post_id;
+		$rel = (string) $r->meta_value;              /* 例：2026/09/noritsunest-nesuto.jpg */
+		$sub = ( dirname( $rel ) === '.' ) ? '' : dirname( $rel ) . '/';
+
+		$newrel = $sub . ymkrf_media_fix_name( basename( $rel ) );
+		if ( $newrel === $rel ) continue;
+
+		$from = $up['basedir'] . '/' . $rel;
+		$to   = $up['basedir'] . '/' . $newrel;
+		if ( ! file_exists( $from ) || file_exists( $to ) ) continue;
+		if ( ! @rename( $from, $to ) ) continue;
+
+		update_post_meta( $id, '_wp_attached_file', $newrel );
+
+		/* 大きさちがい（サムネイルなど）も、いっしょに直します */
+		$meta = wp_get_attachment_metadata( $id );
+		if ( is_array( $meta ) ) {
+
+			if ( ! empty( $meta['file'] ) ) $meta['file'] = $newrel;
+
+			if ( ! empty( $meta['sizes'] ) && is_array( $meta['sizes'] ) ) {
+				foreach ( $meta['sizes'] as $k => $s ) {
+					if ( empty( $s['file'] ) ) continue;
+					$sn = ymkrf_media_fix_name( $s['file'] );
+					if ( $sn === $s['file'] ) continue;
+					$sf = $up['basedir'] . '/' . $sub . $s['file'];
+					$st = $up['basedir'] . '/' . $sub . $sn;
+					if ( file_exists( $sf ) && ! file_exists( $st ) && @rename( $sf, $st ) ) {
+						$meta['sizes'][ $k ]['file'] = $sn;
+					}
+				}
+			}
+
+			/* 大きい写真を縮めたときの「元の写真」 */
+			if ( ! empty( $meta['original_image'] ) ) {
+				$on = ymkrf_media_fix_name( $meta['original_image'] );
+				if ( $on !== $meta['original_image'] ) {
+					$of = $up['basedir'] . '/' . $sub . $meta['original_image'];
+					$ot = $up['basedir'] . '/' . $sub . $on;
+					if ( file_exists( $of ) && ! file_exists( $ot ) && @rename( $of, $ot ) ) {
+						$meta['original_image'] = $on;
+					}
+				}
+			}
+
+			wp_update_attachment_metadata( $id, $meta );
+		}
+
+		/* メディアそのもののURL（guid）と、本文に書かれた古いURL */
+		$oldurl = $up['baseurl'] . '/' . $rel;
+		$newurl = $up['baseurl'] . '/' . $newrel;
+		$wpdb->update( $wpdb->posts, array( 'guid' => $newurl ), array( 'ID' => $id ) );
+		$wpdb->query( $wpdb->prepare(
+			"UPDATE {$wpdb->posts} SET post_content = REPLACE( post_content, %s, %s )
+			  WHERE post_content LIKE %s",
+			$oldurl, $newurl, '%' . $wpdb->esc_like( basename( $rel ) ) . '%'
+		) );
+
+		clean_post_cache( $id );
+		$done++;
+	}
+
+	update_option( 'ymkrf_media_name_fix_ver', '1', false );
+
+	if ( $done ) set_transient( 'ymkrf_media_name_fix_msg', $done, 120 );
+} );
+
+/* 直したときだけ、管理画面に一言出します */
+add_action( 'admin_notices', function () {
+	$n = get_transient( 'ymkrf_media_name_fix_msg' );
+	if ( ! $n ) return;
+	delete_transient( 'ymkrf_media_name_fix_msg' );
+	echo '<div class="notice notice-success is-dismissible"><p>写真の名前のつづりを直しました（'
+	   . (int) $n . '枚）。</p></div>';
+} );
+
+
+/* ============================================================
+   商品の写真のファイル名を、かんたんな形で自動でつけます
+   ------------------------------------------------------------
+   （2026/09/23 ユーザー指示「URLはシンプルに、汲み取って自動で作って」）
+
+   商品の編集画面から写真を上げると、名前をこうします。
+
+       メーカー － 商品名の中の英語（なければ型番）
+
+   　例： ノーリツの「ビルトインコンロLPガス用NEST(ネスト)」
+   　　　　→ noritz-nest.jpg
+   　　　 ノーリツの「…Fami(ファミ)スタンダードタイプ」
+   　　　　→ noritz-fami.jpg
+   　　　 クリナップの「…ホーロー片面」（英語の名前なし）
+   　　　　→ cleanup-zgfnk6r18nke-e.jpg（型番から）
+
+   2枚目からは、WordPressが自動で -1 -2 を付けます。
+   ============================================================ */
+
+/** その商品の写真につける、かんたんな名前（拡張子なし） */
+if ( ! function_exists( 'ymkrf_media_product_filebase' ) ) :
+function ymkrf_media_product_filebase( $pid ) {
+
+	$pid = (int) $pid;
+	if ( ! $pid || get_post_type( $pid ) !== 'ymkrf_product' ) return '';
+
+	/* メーカー（登録してあるスラッグをそのまま使います） */
+	$mk    = wp_get_object_terms( $pid, 'ymkrf_maker', array( 'fields' => 'slugs' ) );
+	$maker = ( ! is_wp_error( $mk ) && ! empty( $mk ) ) ? (string) $mk[0] : '';
+
+	/* 商品名の中の英語（NEST、Fami など）。
+	   「LP」のようにみじかいものは、名前ではないので使いません。 */
+	$name = trim( (string) get_post_meta( $pid, '_ymkrf_name', true ) );
+	if ( $name === '' ) $name = (string) get_the_title( $pid );
+
+	$word = '';
+	if ( preg_match_all( '/[A-Za-z][A-Za-z0-9]{2,}/', $name, $m ) ) {
+		foreach ( $m[0] as $one ) {
+			if ( strlen( $one ) > strlen( $word ) ) $word = $one;
+		}
+	}
+
+	/* 英語の名前が無ければ、型番を使います */
+	if ( $word === '' ) $word = trim( (string) get_post_meta( $pid, '_ymkrf_model', true ) );
+
+	/* それも無ければ、いまのURL（分類の頭は外します） */
+	if ( $word === '' ) {
+		$word = rawurldecode( (string) get_post_field( 'post_name', $pid ) );
+		$cat  = function_exists( 'ymkrf_product_current_cat' ) ? ymkrf_product_current_cat( $pid ) : '';
+		if ( $cat !== '' && strpos( $word, $cat . '-' ) === 0 ) $word = substr( $word, strlen( $cat ) + 1 );
+	}
+
+	$out = strtolower( trim( $maker . '-' . $word, '-' ) );
+	$out = preg_replace( '/[^a-z0-9]+/', '-', $out );
+	$out = trim( (string) preg_replace( '/-{2,}/', '-', $out ), '-' );
+
+	return $out;
+}
+endif;
+
+/* 商品の編集画面から上げた写真は、上の名前にします。
+   （メディアの画面から直接上げたときは、これまでどおりです） */
+add_filter( 'wp_handle_upload_prefilter', function ( $file ) {
+
+	$pid = 0;
+	if ( isset( $_REQUEST['post_id'] ) ) $pid = (int) $_REQUEST['post_id'];   /* phpcs:ignore */
+	if ( ! $pid ) return $file;
+
+	$base = ymkrf_media_product_filebase( $pid );
+	if ( $base === '' || empty( $file['name'] ) ) return $file;
+
+	$ext = '';
+	if ( preg_match( '/(\.[A-Za-z0-9]{1,5})$/', $file['name'], $m ) ) $ext = strtolower( $m[1] );
+
+	$file['name'] = $base . $ext;
+	return $file;
+}, 5 );   /* 英字に直す filter より先に動かします */
+
+
+/* ------------------------------------------------------------
+   コンロ・IHの商品写真だけ、いまの名前も上の形にそろえます（1回だけ）
+   （2026/09/23 ユーザー指示「URLはシンプルに、汲み取って自動で作って」）
+   ほかの分類の写真はさわりません。
+   本番に出したあとは、この節ごと消してかまいません。
+   ------------------------------------------------------------ */
+add_action( 'admin_init', function () {
+
+	if ( get_option( 'ymkrf_media_cooktop_name_ver' ) === '1' ) return;
+	if ( ! current_user_can( 'manage_options' ) ) return;
+
+	$ids = get_posts( array(
+		'post_type'      => 'ymkrf_product',
+		'posts_per_page' => -1,
+		'post_status'    => 'any',
+		'fields'         => 'ids',
+		'tax_query'      => array( array(
+			'taxonomy' => 'ymkrf_product_cat', 'field' => 'slug', 'terms' => 'cooktop',
+		) ),
+	) );
+
+	$up   = wp_get_upload_dir();
+	$done = 0;
+
+	foreach ( (array) $ids as $pid ) {
+
+		$att = (int) get_post_thumbnail_id( $pid );
+		if ( ! $att ) continue;
+
+		$base = ymkrf_media_product_filebase( $pid );
+		if ( $base === '' ) continue;
+
+		$rel = (string) get_post_meta( $att, '_wp_attached_file', true );
+		if ( $rel === '' ) continue;
+
+		$sub = ( dirname( $rel ) === '.' ) ? '' : dirname( $rel ) . '/';
+		$ext = '';
+		if ( preg_match( '/(\.[A-Za-z0-9]{1,5})$/', $rel, $m ) ) $ext = strtolower( $m[1] );
+
+		$newrel = $sub . $base . $ext;
+		if ( $newrel === $rel ) continue;
+
+		$from = $up['basedir'] . '/' . $rel;
+		$to   = $up['basedir'] . '/' . $newrel;
+		if ( ! file_exists( $from ) || file_exists( $to ) ) continue;
+		if ( ! @rename( $from, $to ) ) continue;
+
+		update_post_meta( $att, '_wp_attached_file', $newrel );
+
+		$meta = wp_get_attachment_metadata( $att );
+		if ( is_array( $meta ) ) {
+
+			if ( ! empty( $meta['file'] ) ) $meta['file'] = $newrel;
+
+			if ( ! empty( $meta['sizes'] ) && is_array( $meta['sizes'] ) ) {
+				foreach ( $meta['sizes'] as $k => $s ) {
+					if ( empty( $s['file'] ) ) continue;
+					/* -800x600 の部分だけ残して、頭を新しい名前にします */
+					$tail = '';
+					if ( preg_match( '/(-\d+x\d+)(\.[A-Za-z0-9]{1,5})$/', $s['file'], $m2 ) ) {
+						$tail = $m2[1] . strtolower( $m2[2] );
+					}
+					if ( $tail === '' ) continue;
+					$sn = $base . $tail;
+					$sf = $up['basedir'] . '/' . $sub . $s['file'];
+					$st = $up['basedir'] . '/' . $sub . $sn;
+					if ( file_exists( $sf ) && ! file_exists( $st ) && @rename( $sf, $st ) ) {
+						$meta['sizes'][ $k ]['file'] = $sn;
+					}
+				}
+			}
+			wp_update_attachment_metadata( $att, $meta );
+		}
+
+		global $wpdb;
+		$wpdb->update( $wpdb->posts,
+			array( 'guid' => $up['baseurl'] . '/' . $newrel ), array( 'ID' => $att ) );
+		clean_post_cache( $att );
+		$done++;
+	}
+
+	update_option( 'ymkrf_media_cooktop_name_ver', '1', false );
+	if ( $done ) set_transient( 'ymkrf_media_name_fix_msg', $done, 120 );
 } );

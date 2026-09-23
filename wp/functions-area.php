@@ -123,6 +123,9 @@ function ymkrf_area_list() {
 			$slug = ymkrf_area_roman( ymkrf_area_clean( $t->name ) );
 			if ( $slug === '' || ! isset( $out[ $slug ] ) ) continue;
 
+			/* 「担当店舗なし」（2026/09/23 ユーザー指示） */
+			if ( $saved === '_none' ) { $out[ $slug ]['shops'] = array(); continue; }
+
 			$list = array();
 			foreach ( array_filter( array_map( 'trim', explode( ',', $saved ) ) ) as $sl ) {
 				if ( isset( $by[ $sl ] ) ) $list[] = $by[ $sl ];
@@ -240,6 +243,57 @@ function ymkrf_area_counts( $city ) {
 
 	set_transient( $key, $c, DAY_IN_SECONDS );
 	return $c;
+}
+
+
+/**
+ * 近くの市町（地図の北から南の並びで、前後をとります）
+ *
+ * （2026/09/23 ユーザー承認
+ *   「七尾市なのに野々市市・小松市・加賀市が出ています」→ 直します）
+ *
+ * これまでは「同じ県で、公開ずみの事例が1件以上」という条件だけで、
+ * 近さを見ていませんでした。能登の七尾市のページに、
+ * 加賀地方の市町が並んでしまっていました。
+ *
+ * @param string $slug いま見ている市町（ローマ字）
+ * @param int    $n    前後にいくつずつ出すか
+ * @return array array( array( 'slug' =>, 'city' => ), … )
+ */
+function ymkrf_area_near( $slug, $n = 3 ) {
+
+	$me = ymkrf_area_get( $slug );
+	if ( ! $me ) return array();
+
+	/* 北から南の並び（施工事例の画面と同じ表を使います） */
+	$order = function_exists( 'ymkrf_area_northsouth' ) ? ymkrf_area_northsouth() : array();
+	$all   = ymkrf_area_list();
+
+	/* ページのある市町だけを、並び順にならべます */
+	$line = array();
+	foreach ( $order as $city ) {
+		foreach ( $all as $sl => $a2 ) {
+			if ( $a2['city'] === $city ) { $line[] = array( 'slug' => $sl, 'city' => $city, 'pref' => $a2['pref'] ); break; }
+		}
+	}
+	if ( ! $line ) return array();
+
+	/* 自分の場所 */
+	$at = -1;
+	foreach ( $line as $i => $one ) if ( $one['slug'] === $slug ) { $at = $i; break; }
+	if ( $at < 0 ) return array();
+
+	/* 前後を、同じ県のものから順にひろいます */
+	$out = array();
+	for ( $d = 1; $d <= count( $line ); $d++ ) {
+		foreach ( array( $at - $d, $at + $d ) as $j ) {
+			if ( $j < 0 || $j >= count( $line ) ) continue;
+			if ( $line[ $j ]['pref'] !== $me['pref'] ) continue;
+			$out[] = array( 'slug' => $line[ $j ]['slug'], 'city' => $line[ $j ]['city'] );
+			if ( count( $out ) >= $n * 2 ) return $out;
+		}
+	}
+	return $out;
 }
 
 

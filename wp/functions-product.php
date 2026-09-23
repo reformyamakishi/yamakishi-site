@@ -514,6 +514,136 @@ function ymkrf_product_current_cat( $post_id = 0 ) {
 }
 endif;
 
+
+/* ------------------------------------------------------------
+   見出しの行（← ／ 商品を編集 ／ URL ／ 商品を追加）を、
+   1本のならびとして組み直します。
+   （2026/09/23 ユーザー「なんかがたついてみえるんだよね」）
+
+   ワードプレスのもとの並びは、見出しもボタンも高さがばらばらで、
+   中心をそろえても線が通って見えません。
+   ひとつの入れものに入れて、高さをそろえます。
+   ------------------------------------------------------------ */
+add_action( 'admin_footer', function () {
+
+	$sc = get_current_screen();
+	if ( ! $sc || $sc->base !== 'post' || $sc->post_type !== 'ymkrf_product' ) return;
+	?>
+	<style>
+	  /* 題名の入力欄のすぐ上に来るように、下に寄せます
+	     （2026/09/23 ユーザー指示「もっと下に下げて、
+	       お財布にやさしいプランに沿わせるように」） */
+	  .ymkrf-titlerow{
+	    display:flex;align-items:center;flex-wrap:wrap;gap:12px;
+	    margin:14px 0 0;padding:0}
+	  .post-type-ymkrf_product #poststuff{padding-top:6px}
+	  .post-type-ymkrf_product .wrap > .wp-header-end{margin:0}
+	  .post-type-ymkrf_product #titlediv{margin-top:0}
+	  .ymkrf-titlerow .wp-heading-inline{margin:0;padding:0;line-height:1.3}
+	  .ymkrf-titlerow .page-title-action{
+	    margin:0;top:0;
+	    display:inline-flex;align-items:center;height:32px;
+	    padding:0 14px;line-height:1}
+	  .ymkrf-titlerow .ymkrf-p4url{
+	    margin:0;height:32px;padding:0 14px;box-sizing:border-box}
+	  .ymkrf-titlerow .ymkrf-back{margin:0}
+	</style>
+	<script>
+	jQuery(function ($) {
+	  /* ほかの手当てが終わってから組みます */
+	  window.setTimeout(function () {
+
+	    var $h = $('.wrap > .wp-heading-inline').first();
+	    if (!$h.length || $h.parent().hasClass('ymkrf-titlerow')) return;
+
+	    var $row = $('<div class="ymkrf-titlerow"></div>').insertBefore($h);
+
+	    $row.append($('.ymkrf-back').first());
+	    $row.append($h);
+	    $row.append($('.ymkrf-p4url').first());
+	    $row.append($('.wrap > .page-title-action').first());
+
+	  }, 0);
+	});
+	</script>
+	<?php
+} );
+
+
+/* ------------------------------------------------------------
+   商品の編集画面の見出しの左に、もどる ← を出します
+   （2026/09/23 ユーザー指示
+     「戻るとき使いにくいな、商品全て、戻るでカテゴリの一覧にもどれない？」
+      「商品を編集の左横に←　あれば」）
+
+   ワードプレスには、編集中の記事から「その分類の一覧」へもどる道が
+   ありません。毎回ひだりのメニューから入りなおすことになるので、
+   見出しの左の ← でその分類の一覧へもどれるようにしています。
+
+   ※ 見出しの下に出していたバー（◯◯の一覧へ／前の商品／次の商品）は、
+      ユーザー指示（2026/09/23）により取りやめました。
+   ------------------------------------------------------------ */
+add_action( 'admin_footer', function () {
+
+	$sc = get_current_screen();
+	if ( ! $sc || $sc->base !== 'post' || $sc->post_type !== 'ymkrf_product' ) return;
+
+	$id = isset( $_GET['post'] ) ? (int) $_GET['post'] : 0;
+	if ( ! $id ) return;
+
+	/* 4点セットは、専用のバーを出しているのでここでは出しません */
+	if ( function_exists( 'ymkrf_p4_is' ) && ymkrf_p4_is( $id ) ) return;
+
+	$cat = ymkrf_product_current_cat( $id );
+	if ( $cat === '' ) return;
+
+	$t = get_term_by( 'slug', $cat, 'ymkrf_product_cat' );
+	if ( ! $t || is_wp_error( $t ) ) return;
+
+	$all = admin_url( 'edit.php?post_type=ymkrf_product&ymkrf_product_cat=' . rawurlencode( $cat ) );
+
+	$data = array(
+		'all'   => $all,
+		'label' => $t->name,
+	);
+	?>
+	<style>
+	  /* 「商品を編集」の左の ← （2026/09/23 ユーザー指示） */
+	  /* もどる ← （2026/09/23 ユーザー指示「矢印もっと太くして 背景は濃いグレーで」） */
+	  /* もどる ←（2026/09/23 ユーザー指示「矢印サークルの中央にして」
+	     文字の「←」だと字の下地のぶん中心がずれるので、絵（SVG）にしました） */
+	  .ymkrf-back{
+	    display:inline-flex;align-items:center;justify-content:center;
+	    width:36px;height:36px;margin-right:12px;border-radius:50%;
+	    background:#3c434a;color:#fff;text-decoration:none;
+	    vertical-align:middle;line-height:0}
+	  /* 「商品を編集」の文字と、高さをそろえます
+	     （2026/09/23 ユーザー指示「商品を編集の文字と同じ高さにして、並べて」） */
+	  .wp-heading-inline{vertical-align:middle}
+	  .post-type-ymkrf_product .page-title-action{
+	    vertical-align:middle;margin-left:12px;top:0}
+	  .ymkrf-back svg{display:block}
+	  .ymkrf-back:hover{background:#1d2327;color:#fff}
+	</style>
+	<script>
+	jQuery(function ($) {
+
+	  var D = <?php echo wp_json_encode( $data ); ?>;
+	  if (!$('.wp-heading-inline').length) return;
+
+	  /* 見出しの左に ← を置きます */
+	  $('.wp-heading-inline').first().before(
+	    $('<a class="ymkrf-back"></a>').html('<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M19 12H6"/><path d="M11 5 4 12l7 7"/></svg>')
+	      .attr('href', D.all)
+	      .attr('title', D.label + 'の一覧へもどる')
+	      .attr('aria-label', D.label + 'の一覧へもどる')
+	  );
+	});
+	</script>
+	<?php
+} );
+
+
 /** その分類で出す入力欄（名前・種類・並び順を入れかえたもの） */
 if ( ! function_exists( 'ymkrf_product_fields_for' ) ) :
 function ymkrf_product_fields_for( $cat = '' ) {
@@ -836,6 +966,34 @@ function ymkrf_product_repeaters() {
 				'frame'=> array( '白い枠をつける',    'text', '説明図・グラフのときだけ 1' ),
 			),
 		),
+		/* 気をつけたいこと（2026/09/23 ユーザー指示
+		   「商品説明の下に、3つの特徴をカード型でおいて　画像と説明入れたい」）。
+		   デメリットをかくすより、正直に書いたほうが問い合わせは増えます。
+		   気になる方には、その場で上の機種をご案内できるようにしてあります。 */
+		'_ymkrf_notes' => array(
+			'label' => '特徴カード',
+			'size'  => '写真は 800×600px くらい（よこ4：たて3）',
+			/* 3列2段（＝6枚）で出します（2026/09/23 ユーザー指示
+			   「ダッシュボードで特徴カードを3列に2段並べて」）。
+			   枚数を変えたいときは、下の 'slots' の数字を直してください。 */
+			'card'  => 3,
+			'slots' => 6,
+			/* キッチン・お風呂・トイレ・洗面化粧台と、水まわり4点セットでは使いません
+			   （2026/09/23 ユーザー指示「特徴カードはパック商品
+			     （キッチン、風呂、トイレ、洗面台）は不要です。
+			      すでに、説明しっかりありますので」）。
+			   これらは「おすすめポイント」で、しっかり説明を入れています。
+			   すでに中身を入れてある商品では、消えないように出しつづけます。 */
+			'not'   => array( 'kitchen', 'bathroom', 'toilet', 'lavatory', 'pack4' ),
+			'note'  => '写真・見出し・説明の3つだけです。使わない枠は、空のままでかまいません。',
+			'cols'  => array(
+				'img'  => array( '写真', 'image' ),
+				'alt'  => array( 'ALT（写真の説明）', 'text', '例：グリルの中のようす' ),
+				'ttl'  => array( '見出し', 'text', '例：グリルは片面焼きです' ),
+				'text' => array( '説明', 'textarea',
+					'例：魚は、途中でひっくり返してください。両面焼きにくらべると、焼き上がりまで少し時間がかかります。' ),
+			),
+		),
 		'_ymkrf_options' => array(
 			'label' => 'おすすめオプション',
 			'kind'  => 'option',   /* 専用の見た目で出します（2026/09/18 ユーザー指示） */
@@ -922,8 +1080,10 @@ add_action( 'add_meta_boxes', function () {
 		/* IH・コンロは、いまのところ「商品データ（基本）」だけです
 		   （2026/09/22 ユーザー指示「これらの商品は、とりあえず基本情報だけでよいわ」）。
 		   おすすめポイントなどを使いたくなったら、下の array に欄の名前を足してください。
-		   例：array( '_ymkrf_features', '_ymkrf_options' ) */
-		if ( $cat_now === 'cooktop' && ! in_array( $key, array(), true ) ) continue;
+		   例：array( '_ymkrf_features', '_ymkrf_options' )
+		   2026/09/23 「気をつけたいこと」を足しました。 */
+		if ( $cat_now === 'cooktop'
+			&& ! in_array( $key, array( '_ymkrf_notes' ), true ) ) continue;
 
 		/* 色見本の枠は、ぜんぶまとめて1つの箱に入れます
 		   （2026/09/18 ユーザー指示「自由に増やしたり消したりできるように」）。
@@ -1453,14 +1613,32 @@ function ymkrf_product_box_repeater( $post, $key ) {
 	$first = current( $def['cols'] );
 	$card  = ( $kind === '' && isset( $first[1] ) && $first[1] === 'image' && count( $def['cols'] ) <= 3 );
 
+	/* 'card' を書いてある欄は、欄の数にかかわらずカードにします。
+	   数字を書くと、その列数でならべます（2026/09/23 ユーザー指示
+	   「ダッシュボードで特徴カードを3列に2段並べて」） */
+	$cols3 = 0;
+	if ( $kind === '' && ! empty( $def['card'] ) ) {
+		$card  = true;
+		$cols3 = (int) $def['card'];
+	}
+
+	/* 枠の数を決めているとき（slots）は、空の枠を先に出しておきます。
+	   空のままの枠は保存されないので、使わない枠はそのままで大丈夫です。 */
+	$slots = isset( $def['slots'] ) ? (int) $def['slots'] : 0;
+
 	$cls = 'ymkrf-rep';
 	if ( $card )                                            $cls .= ' ymkrf-rep--card';
+	if ( $cols3 > 1 )                                       $cls .= ' ymkrf-rep--card' . $cols3;
 	if ( $kind === 'point' || $kind === 'option' )          $cls .= ' ymkrf-rep--point';
 
 	echo '<div class="' . esc_attr( $cls ) . '" data-key="' . esc_attr( $key ) . '">';
 	echo '<div class="ymkrf-rep__rows">';
 
-	$list = $rows ? $rows : array( 0 => array() );
+	$list = $rows ? $rows : array();
+	if ( $slots ) {
+		for ( $ymkrf_i = count( $list ); $ymkrf_i < $slots; $ymkrf_i++ ) $list[ $ymkrf_i ] = array();
+	}
+	if ( ! $list ) $list = array( 0 => array() );
 	foreach ( $list as $n => $row ) {
 		if ( $kind === 'point' )       ymkrf_product_row_point( $key, $n, (array) $row );
 		elseif ( $kind === 'option' )  ymkrf_product_row_option( $key, $n, (array) $row );
@@ -1471,7 +1649,9 @@ function ymkrf_product_box_repeater( $post, $key ) {
 	   下の「＋ 行を追加」のボタンは出しません
 	   （2026/09/18 ユーザー指示「＋行を追加 を削除して、追加する場合は
 	     その最後の要素に空の枠を作って ＋ などの表示して」） */
-	if ( $card ) {
+	/* 枠の数を決めている欄（slots）では、「＋」は出しません。
+	   増やしたいときは ymkrf_product_repeaters() の 'slots' を直してください。 */
+	if ( $card && ! $slots ) {
 		echo '<button type="button" class="ymkrf-rep__addcard" title="押すと1つ増やせます">＋</button>';
 	}
 	echo '</div>';
@@ -2357,8 +2537,19 @@ add_filter( 'posts_clauses', function ( $clauses, $q ) {
 	$clauses['join'] .= " LEFT JOIN {$wpdb->postmeta} AS ymkrf_ot"
 	                  . " ON ( ymkrf_ot.post_id = {$wpdb->posts}.ID AND ymkrf_ot.meta_key = '_ymkrf_total' )";
 
-	/* 並び順に数字が入っていればそれを、無ければグレードの序列を使います */
-	$gs = "CAST( COALESCE( NULLIF( ymkrf_od.meta_value, '' ), ymkrf_gs.meta_value, 999 ) AS SIGNED )";
+	/* 並び順に数字が入っていればそれを、無ければグレードの序列を使います。
+
+	   ★「順序」は、画面右の［投稿の属性 ＞ 順序］の数字そのもの
+	     （wp_posts の menu_order）を見ます
+	     （2026/09/23 ユーザー指示「順番、反映していない。
+	       ダッシュボードもフロント（コンロの一覧ぺージ）も」）。
+	     前は _ymkrf_order という控えのほうを見ていましたが、
+	     クイック編集や一括編集で「順序」を直したときは控えが
+	     書きかわらないため、順番が変わらないことがありました。
+	     いまは順序そのものを見るので、どこで直しても効きます。
+	     0 は「決めていない」あつかいです（前からある控えも、いちおう見ます）。 */
+	$gs = "CAST( COALESCE( NULLIF( {$wpdb->posts}.menu_order, 0 ),"
+	    . " NULLIF( ymkrf_od.meta_value, '' ), ymkrf_gs.meta_value, 999 ) AS SIGNED )";
 	$pr = "CAST( COALESCE( NULLIF( ymkrf_ot.meta_value, '' ), 0 ) AS SIGNED )";
 
 	/* エコキュートの一覧は「メーカーごと → その中は価格の安い順」にします。
@@ -3102,6 +3293,8 @@ function ymkrf_product_data( $post_id = null ) {
 		'specs'    => $rep( '_ymkrf_specs' ),
 		'speclist' => $rep( '_ymkrf_speclist' ),
 		'features' => $rep( '_ymkrf_features' ),
+		/* 気をつけたいこと（2026/09/23 追加） */
+		'notes'    => $rep( '_ymkrf_notes' ),
 		'options'  => $rep( '_ymkrf_options' ),
 		'works'    => $rep( '_ymkrf_works' ),
 		'makers'   => $terms( 'ymkrf_maker' ),
@@ -3623,6 +3816,15 @@ endif;
 function ymkrf_product_admin_assets() {
 	ob_start(); ?>
 <style>
+/* 入力欄にうすく出ている見本の文（プレースホルダー）を、もっと薄くします。
+   自分で書いた文字と見まちがえないためです
+   （2026/09/23 ユーザー指示「グレーの文字もっと薄くして」
+     →「入力する箇所に入っている文字」）。
+   opacity:1 は、ブラウザによって勝手に薄くならないようにするためのものです。 */
+#poststuff input::placeholder,
+#poststuff textarea::placeholder{color:#c0c4c8;opacity:1}
+#poststuff input::-webkit-input-placeholder,
+#poststuff textarea::-webkit-input-placeholder{color:#c0c4c8}
 .ymkrf-tbl{width:100%;border-collapse:collapse}
 .ymkrf-tbl th{width:180px;text-align:left;padding:12px 10px;vertical-align:top;font-weight:700}
 .ymkrf-tbl td{padding:10px}
@@ -3683,6 +3885,26 @@ function ymkrf_product_admin_assets() {
 }
 .ymkrf-rep--card .ymkrf-rep__addcard:hover{
   border-color:#fe3301;color:#fe3301;background:#fff6f3;
+}
+/* 特徴カードは、3列にきっちりならべます（2026/09/23 ユーザー指示
+   「ダッシュボードで特徴カードを3列に2段並べて」）。
+   6枠なので、3列2段になります。 */
+.ymkrf-rep--card3 .ymkrf-rep__rows{grid-template-columns:repeat(3,1fr);gap:14px}
+.ymkrf-rep--card3 .ymkrf-row{padding:12px}
+/* 写真は、ページに出るのと同じ よこ4：たて3 で見せます */
+.ymkrf-rep--card3 .ymkrf-img__prev{aspect-ratio:4/3}
+.ymkrf-rep--card3 .ymkrf-f span{font-size:11.5px;color:#646970}
+/* 説明の欄は、書いた文の量にあわせて下にのびます
+   （2026/09/23 ユーザー指示「特徴カードのテキストが一部見切れている」）。
+   のばす高さは、下のほうの JavaScript で入れています。 */
+.ymkrf-rep--card3 textarea{
+  min-height:82px;line-height:1.7;overflow:hidden;resize:vertical;
+}
+@media (max-width:1100px){
+  .ymkrf-rep--card3 .ymkrf-rep__rows{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:782px){
+  .ymkrf-rep--card3 .ymkrf-rep__rows{grid-template-columns:1fr}
 }
 
 /* おすすめポイント。1つぶんを「まとまりの見出し」「写真」「文章」に分けます */
@@ -3844,6 +4066,25 @@ jQuery(function($){
   /* 箱の見出しにある入力欄をさわっても、箱が閉じないようにします
      （2026/09/18 ユーザー指示「ここに枠の見出しを入れたい」） */
   $('.ymkrf-hlbl input').on('click mousedown keydown', function(e){ e.stopPropagation(); });
+
+  /* 特徴カードの「説明」は、書いた文の量にあわせて欄をのばします
+     （2026/09/23 ユーザー指示「特徴カードのテキストが一部見切れている」）。
+     欄の高さが足りないと、文の下のほうが切れて見えなくなるためです。 */
+  function ymkrfGrow(el){
+    if ( ! el ) return;
+    el.style.height = 'auto';
+    el.style.height = (el.scrollHeight + 2) + 'px';
+  }
+  function ymkrfGrowAll(){
+    $('.ymkrf-rep--card3 textarea').each(function(){ ymkrfGrow(this); });
+  }
+  ymkrfGrowAll();
+  /* 箱を開いたとき・画面の幅が変わったときも、高さを合わせなおします */
+  $(document).on('input', '.ymkrf-rep--card3 textarea', function(){ ymkrfGrow(this); });
+  $(document).on('click', '#ymkrf_box_ymkrf_notes .handlediv, #ymkrf_box_ymkrf_notes .hndle', function(){
+    window.setTimeout(ymkrfGrowAll, 30);
+  });
+  $(window).on('resize', function(){ window.setTimeout(ymkrfGrowAll, 60); });
 
   /* カラーの枠を足す（次のあき枠を出します） */
   $(document).on('click', '.ymkrf-cadd', function(){

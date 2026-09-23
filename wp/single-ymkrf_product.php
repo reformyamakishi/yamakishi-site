@@ -110,7 +110,12 @@ if ( $cat && $cat->slug === 'pack4' ) {
     </h1>
 
     <div class="p-prd__meta">
-      <?php if ( $maker ) echo ymkrf_maker_logo( $maker, 'p-prd__makerlogo', true ); /* phpcs:ignore */ ?>
+      <?php
+      /* メーカーロゴは、商品写真の左上に重ねて出します
+         （2026/09/23 ユーザー指示「ロゴマークは、写真の左上に重ねて」）。
+         写真が入っていない商品では、これまでどおりここに出します。 */
+      if ( $maker && ! has_post_thumbnail() ) echo ymkrf_maker_logo( $maker, 'p-prd__makerlogo', true ); /* phpcs:ignore */
+      ?>
       <?php if ( $d['size'] ) : ?><span class="p-prd__size"><?php echo esc_html( $d['size'] ); ?></span><?php endif; ?>
       <?php if ( $d['daystext'] || $d['days'] ) : ?>
         <span class="p-prd__days">
@@ -171,6 +176,7 @@ if ( $cat && $cat->slug === 'pack4' ) {
     <?php if ( function_exists( 'ymkrf_seo_lead' ) ) : ?>
       <p class="p-prd__lead"><?php echo esc_html( ymkrf_seo_lead() ); ?></p>
     <?php endif; ?>
+
   </div>
 </div>
 
@@ -194,10 +200,27 @@ if ( $cat && $cat->slug === 'pack4' ) {
           </div>
         <?php endif; ?>
       </div>
+
+      <?php
+      /* IH・コンロは、価格の下に小さくおことわりを出します
+         （2026/09/23 ユーザー指示
+           「価格の下に小さく、電気配線工事が必要な場合は別途かかります。
+             をいれて。IH・コンロの商品は全て自動で」）。
+         金額のことに触れるので、お見積りの一文もそえています。 */
+      $cat1 = ( ! empty( $d['cats'] ) && ! is_wp_error( $d['cats'] ) ) ? $d['cats'][0]->slug : '';
+      if ( $cat1 === 'cooktop' ) : ?>
+        <p class="p-prd__pricenote">※ 電気配線工事が必要な場合は、別途かかります。着工前にかならずお見積りをお出しします。</p>
+      <?php endif; ?>
     <?php endif; ?>
 
     <?php if ( has_post_thumbnail() ) : ?>
       <div class="p-prd__photo">
+        <?php
+        /* 写真の左上に、メーカーロゴを重ねます
+           （2026/09/23 ユーザー指示「ロゴマークは、写真の左上に重ねて」）。
+           メーカー名の文字も、いっしょに出しています（検索のため）。 */
+        if ( $maker ) echo ymkrf_maker_logo( $maker, 'p-prd__makerlogo', true ); /* phpcs:ignore */
+        ?>
         <?php the_post_thumbnail( 'large', array(
           'alt'           => esc_attr( trim( ( $maker ? $maker->name . ' ' : '' ) . $d['name'] . ' ' . $d['size'] ) ),
           'fetchpriority' => 'high',
@@ -217,6 +240,65 @@ if ( $cat && $cat->slug === 'pack4' ) {
 
     <?php if ( $d['caution'] ) : ?>
       <p class="p-prd__caution"><?php echo esc_html( $d['caution'] ); ?></p>
+    <?php endif; ?>
+
+    <?php
+    /* ---------- 特徴カード（2026/09/23 ユーザー指示
+         「商品説明の下に、3つの特徴をカード型でおいて　画像と説明入れたい」
+         「カードの中身は画像（とalt）と、見出しと説明の3つだけで良いです」） ----------
+
+       写真・見出し・説明の3つだけの、かんたんなカードです。
+       買う前に知っておいてほしいことを、正直に書く場所として使っています。
+
+       置き場所は、商品写真のすぐ下です
+       （2026/09/23 ユーザー指示「この商品の特徴は、商品写真下に持ってきて」）。 */
+    $nv = function ( $row, $k ) {
+      return isset( $row[ $k ] ) ? trim( (string) $row[ $k ] ) : '';
+    };
+    $notes = array();
+    foreach ( (array) $d['notes'] as $nrow ) {
+      $nrow = (array) $nrow;
+      if ( $nv( $nrow, 'ttl' ) !== '' || $nv( $nrow, 'text' ) !== '' ) $notes[] = $nrow;
+    }
+    ?>
+    <?php if ( $notes ) : ?>
+      <section class="p-prd__fcards" aria-labelledby="p-prd-fcards">
+        <h2 class="p-prd__fcards__ttl" id="p-prd-fcards">
+          この商品の特徴
+          <?php
+          /* 写真が1枚でも入っているときだけ、おことわりを出します
+             （2026/09/23 ユーザー指示
+               「この商品の特徴　の横に、※画像はイメージです　と
+                 小さくグレー文字で表示して」） */
+          $haspic = false;
+          foreach ( $notes as $nrow ) { if ( $nv( $nrow, 'img' ) !== '' ) { $haspic = true; break; } }
+          if ( $haspic ) : ?>
+            <span class="p-prd__fcards__note">※画像はイメージです</span>
+          <?php endif; ?>
+        </h2>
+        <ul class="p-prd__fcards__list">
+          <?php foreach ( $notes as $nrow ) : ?>
+            <li class="p-prd__fcard">
+              <?php if ( $nv( $nrow, 'img' ) !== '' ) : ?>
+                <div class="p-prd__fcard__pic"><?php
+                  /* ALT は、書いてあればそれを。空なら見出しから作ります */
+                  $nalt = $nv( $nrow, 'alt' );
+                  if ( $nalt === '' ) $nalt = ymkrf_alt( $altb, $nv( $nrow, 'ttl' ) );
+                  echo ymkrf_img( (int) $nrow['img'], 'medium_large', $nalt ); /* phpcs:ignore */
+                ?></div>
+              <?php endif; ?>
+              <div class="p-prd__fcard__body">
+                <?php if ( $nv( $nrow, 'ttl' ) !== '' ) : ?>
+                  <h3 class="p-prd__fcard__ttl"><?php echo esc_html( $nv( $nrow, 'ttl' ) ); ?></h3>
+                <?php endif; ?>
+                <?php if ( $nv( $nrow, 'text' ) !== '' ) : ?>
+                  <p class="p-prd__fcard__text"><?php echo nl2br( esc_html( $nv( $nrow, 'text' ) ) ); ?></p>
+                <?php endif; ?>
+              </div>
+            </li>
+          <?php endforeach; ?>
+        </ul>
+      </section>
     <?php endif; ?>
 
     <?php /* 上のボタン3つは、ページの下にも同じものが出るので消しました（2026/09/10 ユーザー指示）。

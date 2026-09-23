@@ -183,6 +183,16 @@ add_action( 'add_meta_boxes', function ( $type, $post ) {
 	if ( $type !== 'ymkrf_product' ) return;
 	if ( ! $post || ! ymkrf_p4_is( $post->ID ) ) return;
 
+	/* プランは4つで増えないので、URLの箱は出しません。
+	   かわりに「商品を編集」の横に、URLを見るだけの形で出します。
+	   （2026/09/23 ユーザー指示「URLを商品を編集の横に編集無しで表示にして」） */
+	remove_meta_box( 'ymkrf_product_url', 'ymkrf_product', 'normal' );
+
+	/* タイトルのすぐ下に置きます（2026/09/23 ユーザー指示
+	   「タイトル下にテキスト欄作成」） */
+	add_meta_box( 'ymkrf_p4_lead', 'プランの説明',
+		'ymkrf_p4_box_lead', 'ymkrf_product', 'normal', 'high' );
+
 	add_meta_box( 'ymkrf_p4_items', '4点の中身',
 		'ymkrf_p4_box_items', 'ymkrf_product', 'normal', 'high' );
 
@@ -191,6 +201,156 @@ add_action( 'add_meta_boxes', function ( $type, $post ) {
 
 }, 20, 2 );
 
+
+/* 4つのプランのURLを、pack4-plan1 → plan1 に直します（1回だけ）
+   （2026/09/23 ユーザー指摘「pack4/pack4-plan1 ➡ pack4/plan1 でよくない？」）
+   分類の pack4 がURLの前に付くので、スラッグに pack4 は要りません。
+   数字を上げると、もう一度だけ走ります。 */
+add_action( 'admin_init', function () {
+
+	if ( get_option( 'ymkrf_p4_slug_ver' ) === '1' ) return;
+	if ( ! post_type_exists( 'ymkrf_product' ) ) return;
+
+	$ids = get_posts( array(
+		'post_type'      => 'ymkrf_product',
+		'posts_per_page' => -1,
+		'post_status'    => 'any',
+		'fields'         => 'ids',
+		'tax_query'      => array( array(
+			'taxonomy' => 'ymkrf_product_cat', 'field' => 'slug', 'terms' => YMKRF_P4_CAT,
+		) ),
+	) );
+
+	foreach ( (array) $ids as $id ) {
+		$now = (string) get_post_field( 'post_name', $id );
+		if ( strpos( $now, 'pack4-' ) !== 0 ) continue;
+		wp_update_post( array( 'ID' => $id, 'post_name' => substr( $now, 6 ) ) );
+	}
+
+	update_option( 'ymkrf_p4_slug_ver', '1' );
+} );
+
+
+/* 「商品を編集」の横に、URLを見るだけの形で出します
+   （2026/09/23 ユーザー指示） */
+add_action( 'admin_footer', function () {
+
+	$s = get_current_screen();
+	if ( ! $s || $s->base !== 'post' || $s->post_type !== 'ymkrf_product' ) return;
+
+	$id = isset( $_GET['post'] ) ? (int) $_GET['post'] : 0;
+	if ( ! $id || ! ymkrf_p4_is( $id ) ) return;
+
+	$url = get_permalink( $id );
+	$path = $url ? str_replace( home_url(), '', $url ) : '';
+
+	/* ほかのプランへ、すぐ行けるようにします
+	   （2026/09/23 ユーザー指示「他のプランを編集したいのに、
+	     上の階層（4点パック一覧ページ）にはいけないんだ」） */
+	$list = get_posts( array(
+		'post_type'      => 'ymkrf_product',
+		'posts_per_page' => -1,
+		'post_status'    => array( 'publish', 'draft', 'pending', 'private' ),
+		'orderby'        => 'menu_order',
+		'order'          => 'ASC',
+		'tax_query'      => array( array(
+			'taxonomy' => 'ymkrf_product_cat', 'field' => 'slug', 'terms' => YMKRF_P4_CAT,
+		) ),
+	) );
+
+	$others = array();
+	foreach ( $list as $one ) {
+		$others[] = array(
+			'id'   => (int) $one->ID,
+			'name' => get_the_title( $one ),
+			'url'  => get_edit_post_link( $one->ID, '' ),
+			'now'  => ( (int) $one->ID === $id ),
+		);
+	}
+
+	$all = admin_url( 'edit.php?post_type=ymkrf_product&ymkrf_product_cat=' . YMKRF_P4_CAT );
+	?>
+	<style>
+	  /* もどる ← （2026/09/23 ユーザー指示「矢印もっと太くして 背景は濃いグレーで」） */
+	  /* もどる ←（2026/09/23 ユーザー指示「矢印サークルの中央にして」
+	     文字の「←」だと字の下地のぶん中心がずれるので、絵（SVG）にしました） */
+	  .ymkrf-back{
+	    display:inline-flex;align-items:center;justify-content:center;
+	    width:36px;height:36px;margin-right:12px;border-radius:50%;
+	    background:#3c434a;color:#fff;text-decoration:none;
+	    vertical-align:middle;line-height:0}
+	  /* 「商品を編集」の文字と、高さをそろえます
+	     （2026/09/23 ユーザー指示「商品を編集の文字と同じ高さにして、並べて」） */
+	  .wp-heading-inline{vertical-align:middle}
+	  .ymkrf-back svg{display:block}
+	  .ymkrf-back:hover{background:#1d2327;color:#fff}
+	  .ymkrf-back{
+	    display:inline-flex;align-items:center;justify-content:center;
+	    width:36px;height:36px;margin-right:12px;border-radius:50%;
+	    background:#3c434a;color:#fff;text-decoration:none;
+	    vertical-align:middle;line-height:0}
+	  /* 「商品を編集」の文字と、高さをそろえます
+	     （2026/09/23 ユーザー指示「商品を編集の文字と同じ高さにして、並べて」） */
+	  .wp-heading-inline{vertical-align:middle}
+	  .ymkrf-back svg{display:block}
+	  .ymkrf-back:hover{background:#1d2327;color:#fff}
+	  /* 見出し・URL・「商品を追加」を、一列にそろえます
+	     （2026/09/23 ユーザー指示「URLと商品を追加の文字も横一列キレイにそろえて」） */
+	  .ymkrf-p4url{
+	    display:inline-flex;align-items:center;gap:8px;
+	    margin-left:12px;padding:5px 14px;border-radius:999px;
+	    background:#f6f7f7;border:1px solid #dcdcde;
+	    font-size:12.5px;font-weight:400;color:#50575e;
+	    vertical-align:middle;line-height:1.6}
+	  .post-type-ymkrf_product .page-title-action{
+	    vertical-align:middle;margin-left:12px;top:0}
+	  .ymkrf-p4url code{background:none;padding:0;font-size:12.5px;color:#1d2327;font-weight:700}
+	  .ymkrf-p4url a{text-decoration:none;font-size:12px}
+	</style>
+	<script>
+	jQuery(function ($) {
+
+	  var $h = $('.wp-heading-inline').first();
+	  if (!$h.length) return;
+
+	  /* 見出しの左に ←（2026/09/23 ユーザー指示「商品を編集の左横に←」） */
+	  $h.before(
+	    $('<a class="ymkrf-back"></a>').html('<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M19 12H6"/><path d="M11 5 4 12l7 7"/></svg>')
+	      .attr('href', <?php echo wp_json_encode( $all ); ?>)
+	      .attr('title', '水まわり4点セットの一覧へもどる')
+	      .attr('aria-label', '水まわり4点セットの一覧へもどる')
+	  );
+
+	  <?php if ( $path !== '' ) : ?>
+	  $h.after(
+	    $('<span class="ymkrf-p4url"></span>')
+	      .append($('<span>URL</span>'))
+	      .append($('<code></code>').text(<?php echo wp_json_encode( $path ); ?>))
+	      .append($('<a target="_blank" rel="noopener">ページを見る</a>')
+	        .attr('href', <?php echo wp_json_encode( $url ); ?>))
+	  );
+	  <?php endif; ?>
+
+	});
+	</script>
+	<?php
+} );
+
+
+/** プランの説明（タイトルのすぐ下） */
+function ymkrf_p4_box_lead( $post ) {
+
+	$v = (string) get_post_meta( $post->ID, '_ymkrf_desc', true );
+	?>
+	<textarea name="_ymkrf_p4desc" rows="4" style="width:100%;line-height:1.8"
+	  placeholder="例：はじめてのリフォームでも選びやすい、いちばん人気の組み合わせです。キッチンとお風呂は掃除のしやすさを重視しました。"><?php
+	  echo esc_textarea( $v ); ?></textarea>
+	<p class="description" style="margin-top:6px">
+	  ページの見出しのすぐ下に出ます。空のときは、4点の商品名から自動で文を作ります。<br>
+	  そのプランならではのことを1〜3行で書くと、検索にも強くなります。
+	</p>
+	<?php
+}
 
 /** 4点の中身 */
 function ymkrf_p4_box_items( $post ) {
@@ -374,6 +534,13 @@ add_action( 'save_post_ymkrf_product', function ( $post_id ) {
 	/* プラン名の欄は、画面から外しました（2026/09/18 ユーザー指示）。
 	   プラン名は、いちばん上のタイトルを使います。 */
 
+	/* プランの説明（2026/09/23 追加） */
+	if ( isset( $_POST['_ymkrf_p4desc'] ) ) {
+		$d = trim( sanitize_textarea_field( wp_unslash( $_POST['_ymkrf_p4desc'] ) ) );
+		if ( $d !== '' ) update_post_meta( $post_id, '_ymkrf_desc', $d );
+		else             delete_post_meta( $post_id, '_ymkrf_desc' );
+	}
+
 	if ( isset( $_POST['_ymkrf_p4now'] ) ) {
 		update_post_meta( $post_id, '_ymkrf_p4now',
 			preg_replace( '/[^0-9]/', '', (string) wp_unslash( $_POST['_ymkrf_p4now'] ) ) );
@@ -423,6 +590,34 @@ function ymkrf_p4_best() {
  * プランの4点を返します。
  * 返すのは  部位のキー => array( 見出し, 商品の投稿, 商品ID )
  */
+/**
+ * プランの値段（セット価格・別々にしたときの合計・差額）
+ * （2026/09/23 ユーザー指示。一覧のカードでも使うので、ここにまとめました）
+ */
+function ymkrf_p4_prices( $plan_id ) {
+
+	$was = (int) get_post_meta( $plan_id, '_ymkrf_p4was', true );
+	$now = (int) get_post_meta( $plan_id, '_ymkrf_p4now', true );
+
+	/* 通常価格が入っていないときは、4点の合計から出します */
+	if ( ! $was ) {
+		foreach ( ymkrf_p4_items( $plan_id ) as $one ) {
+			$t = (int) get_post_meta( $one[2], '_ymkrf_total', true );
+			if ( ! $t ) {
+				$t = (int) get_post_meta( $one[2], '_ymkrf_work', true )
+				   + (int) get_post_meta( $one[2], '_ymkrf_item', true );
+			}
+			$was += $t;
+		}
+	}
+
+	return array(
+		'was' => $was,
+		'now' => $now,
+		'off' => ( $was && $now && $was > $now ) ? $was - $now : 0,
+	);
+}
+
 function ymkrf_p4_items( $plan_id ) {
 
 	$out = array();

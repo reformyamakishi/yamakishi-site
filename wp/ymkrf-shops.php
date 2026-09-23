@@ -31,6 +31,40 @@ $shops = ymkrf_shops();
    /flyer/ でも同じ表を使っています） */
 $cities = ymkrf_shop_cities();
 
+/* お店ごとの「担当エリア」と、そのエリアの件数。
+   ③の地図の案内と、④のカードの数字に使います。
+   （2026/09/23 ユーザー承認「①〜④ 全部やってみましょう」） */
+$shopareas = array();
+foreach ( $shops as $s0 ) {
+	if ( empty( $s0['slug'] ) ) continue;
+
+	$rows = array(); $w = 0; $v = 0;
+	foreach ( (array) ( isset( $s0['areas'] ) ? $s0['areas'] : array() ) as $a0 ) {
+
+		$part = ( strpos( $a0, '（一部）' ) !== false );
+		$cty  = trim( str_replace( '（一部）', '', $a0 ) );
+		if ( function_exists( 'ymkrf_area_clean' ) ) $cty = ymkrf_area_clean( $cty );
+		if ( $cty === '' ) continue;
+
+		$rm = function_exists( 'ymkrf_area_roman' ) ? ymkrf_area_roman( $cty ) : '';
+		$cn = function_exists( 'ymkrf_area_counts' ) ? ymkrf_area_counts( $cty ) : array( 'works' => 0, 'voices' => 0 );
+
+		$w += (int) $cn['works'];
+		$v += (int) $cn['voices'];
+
+		$rows[] = array(
+			'name' => $cty . ( $part ? '（一部）' : '' ),
+			'url'  => ( $rm !== '' && function_exists( 'ymkrf_area_url' ) ) ? ymkrf_area_url( $rm ) : '',
+		);
+	}
+	$shopareas[ $s0['slug'] ] = array(
+		'name'   => $s0['name'],
+		'areas'  => $rows,
+		'works'  => $w,
+		'voices' => $v,
+	);
+}
+
 /* 名前を引くための表 */
 $byslug = array();
 foreach ( $shops as $s ) $byslug[ $s['slug'] ] = $s['name'];
@@ -93,21 +127,46 @@ get_header();
   </div>
 </div>
 
-<!-- =========== お住まいの市町から探す =========== -->
+<!-- =========== 地図からえらぶ =========== -->
+<?php /* 石川・福井の地図（チラシページと同じものです）。
+         押すと、そのお店のところへ移動します。
+         （2026/09/23 ユーザー指示「対応エリアの地図がなくなってない？」） */ ?>
+<?php if ( function_exists( 'ymkrf_flyer_map' ) ) : ?>
 <section class="l-section">
+  <div class="l-wrap">
+    <div class="c-head">
+      <h2 class="c-head__title"><span class="marker">地図</span>からえらぶ</h2>
+      <p class="c-head__lead">お店の名前を押すと、そのお店のご案内へ移動します。</p>
+    </div>
+    <?php ymkrf_flyer_map( $shops, '', '', 'shop' ); ?>
+
+  </div>
+</section>
+<?php endif; ?>
+
+<!-- =========== お住まいの市町から探す =========== -->
+<section class="l-section l-section--soft">
   <div class="l-wrap l-wrap--narrow">
     <div class="c-head">
       <h2 class="c-head__title">お住まいの<span class="marker">市や町</span>から探す</h2>
-      <p class="c-head__lead">お住まいの地域を押すと、担当するお店へ移動します。</p>
+      <p class="c-head__lead">お住まいの地域を押すと、その市や町のリフォームのご案内へ移動します。</p>
     </div>
 
     <?php foreach ( $cities as $pref => $list ) : ?>
       <div class="p-city" data-reveal>
         <p class="p-city__pref"><?php echo esc_html( $pref ); ?></p>
         <ul class="p-city__list">
-          <?php foreach ( $list as $city => $slugs ) : ?>
+          <?php foreach ( $list as $city => $slugs ) :
+            /* カードまるごとが、その市町のページ（/area/kanazawa/）への
+               リンクです。よけいな文字は置きません。
+               （2026/09/23 ユーザー「特にことばいらなくない？
+                 なんかごちゃごちゃして見える」）
+               担当店舗は、行った先のページのいちばん上に出ます。 */
+            $aslug = function_exists( 'ymkrf_area_roman' ) ? ymkrf_area_roman( $city ) : '';
+            $ahref = ( $aslug !== '' ) ? ymkrf_area_url( $aslug ) : '#' . $slugs[0];
+          ?>
             <li>
-              <a href="#<?php echo esc_attr( $slugs[0] ); ?>">
+              <a class="p-city__go" href="<?php echo esc_url( $ahref ); ?>" data-shop="<?php echo esc_attr( $slugs[0] ); ?>">
                 <span class="p-city__name"><?php echo esc_html( $city ); ?></span>
                 <span class="p-city__shop"><?php
                   $ns = array();
@@ -267,6 +326,20 @@ foreach ( $shops as $s ) :
         </tbody>
       </table>
 
+      <?php /* ④ そのお店が担当しているエリアの実績（2026/09/23 ユーザー承認） */ ?>
+      <?php $sa = isset( $shopareas[ $s['slug'] ] ) ? $shopareas[ $s['slug'] ] : null; ?>
+      <?php if ( $sa && ( $sa['works'] || $sa['voices'] ) ) : ?>
+        <p class="p-shop__stat">
+          <?php if ( $sa['works'] ) : ?>
+            <span><b><?php echo number_format( $sa['works'] ); ?></b>件の施工事例</span>
+          <?php endif; ?>
+          <?php if ( $sa['voices'] ) : ?>
+            <span><b><?php echo number_format( $sa['voices'] ); ?></b>件のお客様の声</span>
+          <?php endif; ?>
+          <small>担当エリアぜんぶの数です</small>
+        </p>
+      <?php endif; ?>
+
       <?php if ( $s['srnote'] !== '' ) : ?>
         <p class="p-shop__srnote">※<?php echo esc_html( $s['srnote'] ); ?></p>
       <?php endif; ?>
@@ -401,6 +474,39 @@ foreach ( $shops as $s ) :
     </div>
   </div>
 </section>
+
+<?php /* ②③ 地図とお店のカードをつなぎます（2026/09/23 ユーザー承認） */ ?>
+<script>
+(function () {
+
+  /* ── ② 押したお店のカードを、少し光らせます ── */
+  function flash(slug) {
+    var card = document.getElementById(slug);
+    if (!card) return;
+    card.classList.remove('is-hit');
+    void card.offsetWidth;          /* いったん切って、もう一度あてます */
+    card.classList.add('is-hit');
+    window.setTimeout(function () { card.classList.remove('is-hit'); }, 2200);
+
+    document.querySelectorAll('.p-fmap__pin').forEach(function (p) {
+      p.classList.toggle('is-on', p.getAttribute('data-shop') === slug);
+    });
+  }
+
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest ? e.target.closest('.p-fmap__pin, .p-city__go') : null;
+    if (!a) return;
+    var slug = a.getAttribute('data-shop');
+    if (!slug) return;
+    window.setTimeout(function () { flash(slug); }, 400);
+  });
+
+  /* URLのうしろに #tazuruhama が付いて来たときも光らせます */
+  if (location.hash.length > 1) {
+    window.setTimeout(function () { flash(location.hash.slice(1)); }, 500);
+  }
+})();
+</script>
 
 <?php foreach ( $ld as $one ) : ?>
 <script type="application/ld+json"><?php echo wp_json_encode( $one, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ); ?></script>

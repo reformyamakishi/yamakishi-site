@@ -79,6 +79,12 @@ if ( function_exists( 'ymkrf_crumb_ld' ) ) {
 
     <p class="p-p4__lead">
       <?php
+      /* 手で書いた「プランの説明」があれば、それを出します
+         （2026/09/23 ユーザー指示「タイトル下にテキスト欄作成」） */
+      $own = trim( (string) get_post_meta( $plan_id, '_ymkrf_desc', true ) );
+      if ( $own !== '' ) {
+        echo nl2br( esc_html( $own ) );
+      } else {
       $names = array();
       foreach ( $items as $one ) {
         $nm = (string) get_post_meta( $one[2], '_ymkrf_name', true );
@@ -90,10 +96,77 @@ if ( function_exists( 'ymkrf_crumb_ld' ) ) {
         . ( $now ? '本体・標準工事費・古い設備の撤去処分まで込みで' . number_format( $now ) . '円（税込）。' : '' )
         . '石川県・福井県のリフォームヤマキシが、お見積りから工事まで承ります。'
       );
+      }
       ?>
     </p>
   </div>
 </div>
+
+<!-- =========== プランの写真と、要点 =========== -->
+<?php /* 写真だけだと寂しいので、右に「何が入って、いくらか」を並べます。
+         スクロールしなくても中身と価格が分かるようにするためです。
+         （2026/09/23 ユーザー承認「じゃ、Cで見せて」） */ ?>
+<?php if ( has_post_thumbnail( $plan_id ) || $items ) : ?>
+<section class="l-section l-section--soft">
+  <div class="l-wrap">
+    <div class="p-p4__hero">
+
+      <?php if ( has_post_thumbnail( $plan_id ) ) : ?>
+        <figure class="p-p4__hero__ph">
+          <?php echo get_the_post_thumbnail( $plan_id, 'large', array(
+            'alt' => trim( get_the_title( $plan_id ) . ' 水まわり4点セット' ),
+          ) ); ?>
+          <figcaption>※写真はイメージです</figcaption>
+        </figure>
+      <?php endif; ?>
+
+      <div class="p-p4__hero__bd">
+        <p class="p-p4__hero__ttl"><?php the_title(); ?></p>
+
+        <?php if ( $items ) : ?>
+          <dl class="p-p4__hero__list">
+            <?php foreach ( $items as $one ) :
+              list( $label, $p, $pid ) = $one;
+              $nm = (string) get_post_meta( $pid, '_ymkrf_name', true );
+              if ( $nm === '' ) $nm = get_the_title( $pid );
+              $mk = get_the_terms( $pid, 'ymkrf_maker' );
+              $mk = ( $mk && ! is_wp_error( $mk ) ) ? $mk[0]->name : '';
+            ?>
+              <dt><?php echo esc_html( $label ); ?></dt>
+              <dd>
+                <a href="<?php echo esc_url( get_permalink( $pid ) ); ?>">
+                  <?php if ( $mk ) : ?><span class="p-p4__hero__mk"><?php echo esc_html( $mk ); ?></span><?php endif; ?>
+                  <?php echo esc_html( $nm ); ?>
+                </a>
+              </dd>
+            <?php endforeach; ?>
+          </dl>
+        <?php endif; ?>
+
+        <?php if ( $now ) : ?>
+          <p class="p-p4__hero__yen">
+            <span class="lbl">4点セット</span>
+            <span class="num"><?php echo esc_html( number_format( $now ) ); ?></span>
+            <span class="unit">円<small>（税込）</small></span>
+          </p>
+          <?php if ( $off ) : ?>
+            <?php /* 「◯◯円おトク！」は、黄色いギザギザの中に出します
+                     （2026/09/23 ユーザー指示） */ ?>
+            <p class="p-p4__hero__off">
+              <span class="p-p4__hero__was">別々にすると <s><?php echo esc_html( number_format( $was ) ); ?>円</s></span>
+              <span class="p-p4__burst">
+                <b><?php echo esc_html( number_format( $off ) ); ?>円</b><span>おトク！</span>
+              </span>
+            </p>
+          <?php endif; ?>
+          <p class="p-p4__hero__note">本体・標準工事費・古い設備の撤去処分費まで込みの価格です。</p>
+        <?php endif; ?>
+      </div>
+
+    </div>
+  </div>
+</section>
+<?php endif; ?>
 
 <!-- =========== 4点の中身 =========== -->
 <?php if ( $items ) : ?>

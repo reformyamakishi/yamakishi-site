@@ -65,7 +65,7 @@ function ymkrf_crumb_ld( $crumbs ) {
 }
 endif;
 
-if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '4.6.3' );   // ファイル更新時はここを上げるとキャッシュが切れます
+if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '4.8.0' );   // ファイル更新時はここを上げるとキャッシュが切れます
 
 /* ============================================================
    1. CSS / JS の読み込み
@@ -149,10 +149,13 @@ add_action( 'wp_enqueue_scripts', function () {
 		wp_enqueue_style( 'ymkrf-faq', $dir . '/assets/css/faq.css', array( 'ymkrf-lp' ), YMKRF_VER );
 	}
 
-	/* 店舗・対応エリアのページ（CTAの見た目は lp.css を使っています） */
+	/* 店舗・対応エリアのページ（CTAの見た目は lp.css を使っています）。
+	   地図はチラシページと同じものを使うので、flyer.css も読みます
+	   （2026/09/23 ユーザー指示「対応エリアの地図がなくなってない？」） */
 	if ( function_exists( 'ymkrf_is_shops' ) && ymkrf_is_shops() ) {
 		wp_enqueue_style( 'ymkrf-lp', $dir . '/assets/css/lp.css', array( 'ymkrf-page' ), YMKRF_VER );
-		wp_enqueue_style( 'ymkrf-shops', $dir . '/assets/css/shops.css', array( 'ymkrf-lp' ), YMKRF_VER );
+		wp_enqueue_style( 'ymkrf-flyer', $dir . '/assets/css/flyer.css', array( 'ymkrf-lp' ), YMKRF_VER );
+		wp_enqueue_style( 'ymkrf-shops', $dir . '/assets/css/shops.css', array( 'ymkrf-flyer' ), YMKRF_VER );
 	}
 
 	/* プライバシーポリシーのページ */

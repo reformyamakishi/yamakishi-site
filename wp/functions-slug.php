@@ -90,7 +90,35 @@ function ymkrf_roman( $text ) {
 		'張替' => 'harikae', '張り替え' => 'harikae', '重ね貼り' => 'kasanebari',
 		'クロス' => 'cross', '天井' => 'tenjo', '床' => 'yuka', '壁' => 'kabe',
 		'フローリング' => 'flooring', 'カウンター' => 'counter',
+
+		/* ここから下は、もともと英語の商品名です。
+		   そのままローマ字にすると nesuto のようになってしまうので、
+		   英語のつづりに置きかえます
+		   （2026/09/23 ユーザー指示「ネストですが、nestなので、
+		     URLがnesutoになっていたら変更して」）。
+		   ほかにも出てきたら、この下に1行ずつ足してください。 */
+		'ネスト' => 'nest',
 	);
+
+	/* メーカーの名前は、登録してあるメーカーのスラッグを使います
+	   （ノーリツ → noritsu ではなく noritz。
+	     2026/09/23 ユーザー指示「ノーリツも、noritzね」）。
+	   商品 ＞ メーカーの設定 で直せば、ここも自動でついてきます。 */
+	if ( taxonomy_exists( 'ymkrf_maker' ) ) {
+		$mk = get_terms( array( 'taxonomy' => 'ymkrf_maker', 'hide_empty' => false ) );
+		if ( ! is_wp_error( $mk ) ) {
+			foreach ( (array) $mk as $t ) {
+				$n = trim( (string) $t->name );
+				if ( (string) $t->slug === '' ) continue;
+				if ( mb_strlen( $n, 'UTF-8' ) >= 2 ) $words[ $n ] = $t->slug;
+				if ( preg_match( '/[（(]([^）)]+)[）)]/u', $n, $m2 ) ) {
+					$in = trim( $m2[1] );
+					if ( mb_strlen( $in, 'UTF-8' ) >= 2 ) $words[ $in ] = $t->slug;
+				}
+			}
+		}
+	}
+
 	$text = strtr( $text, $words );
 
 	/* ひらがな → カタカナ */
@@ -158,7 +186,10 @@ function ymkrf_slug_guess( $post_id ) {
 	if ( $cat === 'pack4' ) {
 		$no = (int) get_post_field( 'menu_order', $post_id );
 		if ( $no < 1 ) $no = 1;
-		return array( 'slug' => 'pack4-plan' . $no, 'check' => false );
+		/* URLは /products/pack4/plan1/ です。分類の pack4 が前に付くので、
+		   スラッグには pack4 を入れません
+		   （2026/09/23 ユーザー指摘「pack4/pack4-plan1 ➡ pack4/plan1 でよくない？」） */
+		return array( 'slug' => 'plan' . $no, 'check' => false );
 	}
 
 	/* ① 型番があれば、それがいちばん確かです
@@ -307,6 +338,33 @@ add_action( 'add_meta_boxes', function () {
 		'ymkrf_product', 'normal', 'high' );
 }, 5 );
 
+/* URLの箱は、題名のすぐ下に置きます
+   （2026/09/23 ユーザー指示「URLはタイトル下に置いて」）。
+   ワードプレスのつくり上、箱は「商品データ（基本）」より下に出てしまうので、
+   画面ができあがったあとに、題名の欄のすぐ下へ移しています。 */
+add_action( 'admin_footer', function () {
+
+	$sc = get_current_screen();
+	if ( ! $sc || $sc->base !== 'post' || $sc->post_type !== 'ymkrf_product' ) return;
+	?>
+	<style>
+	  /* 題名のすぐ下にくるので、少し小さめの見た目にします */
+	  #ymkrf_product_url{ margin:10px 0 16px; }
+	  #ymkrf_product_url .hndle{ font-size:13px; padding:8px 12px; }
+	  #ymkrf_product_url .inside{ margin-top:0; }
+	</style>
+	<script>
+	jQuery(function ($) {
+	  var $box = $('#ymkrf_product_url');
+	  var $ttl = $('#titlediv');
+	  if (!$box.length || !$ttl.length) return;
+	  /* 題名の欄のすぐ下へ動かします（中身はそのままなので、保存に影響はありません） */
+	  $ttl.after($box);
+	});
+	</script>
+	<?php
+} );
+
 function ymkrf_slug_box( $post ) {
 
 	wp_nonce_field( 'ymkrf_slug', 'ymkrf_slug_nonce' );
@@ -328,21 +386,31 @@ function ymkrf_slug_box( $post ) {
 	  <?php endif; ?>
 	</p>
 
-	<p style="margin:0 0 8px">
-	  <label style="font-size:13.5px">
-	    <input type="checkbox" name="ymkrf_slug_auto" value="1" <?php checked( $auto ); ?>>
-	    自動でつくる（分類＋商品名の英数字）
-	  </label>
-	</p>
+	<?php /* 4点セットは、URLが plan1 のように決まっているので、
+	         「自動でつくる」のチェックと注意書きは出しません。
+	         （2026/09/23 ユーザー指示「削除」） */
+	$is_p4 = function_exists( 'ymkrf_p4_is' ) && ymkrf_p4_is( $post->ID );
+	if ( ! $is_p4 ) : ?>
 
-	<p class="description" style="margin:0;line-height:1.85">
-	  <?php if ( $check && $auto ) : ?>
-	    <b style="color:#b32d2e">カタカナをローマ字に直したので、綴りをご確認ください。</b>
-	    直すときは、上のチェックを外してから書きかえてください。<br>
-	  <?php endif; ?>
-	  ★<b>公開したあとにURLを変えると、前のURLは開けなくなります（404）。</b>
-	  本番公開の前にそろえてください。
-	</p>
+	  <p style="margin:0 0 8px">
+	    <label style="font-size:13.5px">
+	      <input type="checkbox" name="ymkrf_slug_auto" value="1" <?php checked( $auto ); ?>>
+	      自動でつくる（分類＋商品名の英数字）
+	    </label>
+	  </p>
+
+	  <p class="description" style="margin:0;line-height:1.85">
+	    <?php if ( $check && $auto ) : ?>
+	      <b style="color:#b32d2e">カタカナをローマ字に直したので、綴りをご確認ください。</b>
+	      直すときは、上のチェックを外してから書きかえてください。<br>
+	    <?php endif; ?>
+	    ★<b>公開したあとにURLを変えると、前のURLは開けなくなります（404）。</b>
+	    本番公開の前にそろえてください。
+	  </p>
+
+	<?php else : ?>
+	  <input type="hidden" name="ymkrf_slug_auto" value="1">
+	<?php endif; ?>
 	<?php
 }
 

@@ -276,15 +276,13 @@ if ( $vq->have_posts() ) : ?>
     <h2 class="p-prd__bar" style="margin-top:<?php echo $towns !== '' ? '30px' : '0'; ?>">近くの市町</h2>
     <p class="p-area__towns">
       <?php
-      $near = 0;
-      foreach ( ymkrf_area_list() as $s2 => $a2 ) {
-        if ( $s2 === $slug ) continue;
-        if ( $a2['pref'] !== $a['pref'] ) continue;
-        $c2 = ymkrf_area_counts( $a2['city'] );
-        if ( $c2['works'] < 1 ) continue;
-        $near++; ?>
-        <a href="<?php echo esc_url( ymkrf_area_url( $s2 ) ); ?>"><?php echo esc_html( $a2['city'] ); ?></a>
-      <?php }
+      /* 地図の北から南の並びで、前後の市町をとります。
+         （2026/09/23 ユーザー承認。これまでは「同じ県で事例が1件以上」
+           というだけで、近さを見ていませんでした） */
+      $near = function_exists( 'ymkrf_area_near' ) ? ymkrf_area_near( $slug, 3 ) : array();
+      foreach ( $near as $one ) : ?>
+        <a href="<?php echo esc_url( ymkrf_area_url( $one['slug'] ) ); ?>"><?php echo esc_html( $one['city'] ); ?></a>
+      <?php endforeach;
       if ( ! $near ) echo '<a href="' . esc_url( ymkrf_area_url() ) . '">対応エリアの一覧</a>'; ?>
     </p>
   </div>
