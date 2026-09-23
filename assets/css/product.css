@@ -154,11 +154,35 @@
   color:#a08b80; font-weight:800; font-size:14px; text-align:center;
 }
 .p-prd__photo img{ width:auto; height:auto; max-width:min(100%,720px); }
+
+/* メーカーロゴは、写真の左上に重ねます
+   （2026/09/23 ユーザー指示「ロゴマークは、写真の左上に重ねて」） */
+.p-prd__photo{ position:relative; }
+.p-prd__photo .p-prd__makerlogo{
+  position:absolute; top:10px; left:10px; z-index:2; margin:0;
+}
+.p-prd__photo .p-prd__makerlogo:not(.p-prd__makerlogo--text){
+  gap:6px; padding:5px 11px; border-radius:999px;
+  background:rgba(255,255,255,.93); border:1px solid var(--border);
+  box-shadow:0 1px 4px rgba(0,0,0,.07);
+}
+.p-prd__photo .p-prd__makerlogo__img{ height:20px; max-width:118px; }
+.p-prd__photo .p-prd__makerlogo__name{ font-size:11.5px; }
+@media (min-width:768px){
+  .p-prd__photo .p-prd__makerlogo{ top:14px; left:14px; }
+  .p-prd__photo .p-prd__makerlogo__img{ height:24px; max-width:150px; }
+  .p-prd__photo .p-prd__makerlogo__name{ font-size:12.5px; }
+}
 /* 写真がまだ入っていない場合の高さ確保 */
 .p-prd__photo:not(:has(img)){ aspect-ratio:16/10; }
 .p-prd__shops{ margin-top:12px; font-size:13.5px; color:var(--ink-sub); line-height:1.9; }
 .p-prd__shops b{ color:var(--ink); }
 .p-prd__caution{ margin-top:6px; font-size:12.5px; color:var(--ink-light); }
+/* 価格の下の、小さなおことわり（2026/09/23 ユーザー指示）
+   IH・コンロの商品ぜんぶに、自動で出ます。 */
+.p-prd__pricenote{
+  margin:8px 0 0; font-size:12px; line-height:1.8; color:var(--ink-light); text-align:center;
+}
 
 /* --------------------------------------------------------------------------
    3. セクション見出し（オレンジの帯）
@@ -955,6 +979,18 @@ body.term-lavatory .p-cat__cardnoph{ aspect-ratio:1/1; }
    （contain にすると、手洗いカウンター付きの写真の上下に
      白い帯ができてしまうため、cover に戻しました） */
 body.term-toilet .p-cat__cardph img{ background:#fff; }
+/* コンロ・IH は、メーカーからもらう写真の縦横がまちまちです。
+   枠いっぱいに切り取る（cover）と、写真によって商品が大きく見えたり
+   小さく見えたりして、大きさがそろって見えません。
+   枠の大きさはそのままに、写真ぜんぶが入るようにしました
+   （2026/09/23 ユーザー指示「商品写真の大きさ揃えて」）。 */
+body.term-cooktop .p-cat__cardph{ background:#fff; }
+/* まわりに余白をとって、写真を少し小さく・まん中に置きます
+   （2026/09/23 ユーザー指示「写真、もう少し小さくして中央に持ってきて」）。
+   contain は、はじめからまん中ぞろえです。 */
+body.term-cooktop .p-cat__cardph img{
+  object-fit:contain; object-position:center; background:#fff; padding:10px 16px;
+}
 /* 洗面化粧台は縦長の商品です。横長の枠だと上下が切れてしまうので、
    この分類のカードだけ正方形にしています（写真も正方形で書き出しています）。 */
 body.term-lavatory .p-cat__cardph img{ aspect-ratio:1/1; }
@@ -994,6 +1030,33 @@ body.term-ecocute .p-cat__cardgrade{
    2行ぶんの高さをあらかじめ確保して、工期の位置をそろえます。
    キッチン・お風呂は全部1行なので、確保すると逆に間が空いてしまいます。 */
 body.term-toilet .p-cat__cardname{ min-height:2.7em; }
+
+/* 4点セットのプラン名は、いちばん目を引かせたいので大きく・赤く。
+   下に太い下線を敷いて、札のように見せます。
+   （2026/09/23 ユーザー指示「●●なプラン のテキスト、もうちょっと派手にして」） */
+/* プランのカードは、オレンジの外枠にします（2026/09/23 ユーザー指示） */
+body.term-pack4 .p-cat__card{
+  border:2px solid var(--brand, #fe3301);
+}
+body.term-pack4 .p-cat__card:hover{
+  border-color:var(--brand-dark, #b3350f);
+}
+
+/* プラン名は、まんなかに寄せます（2026/09/23 ユーザー指示） */
+body.term-pack4 .p-cat__cardbody{ align-items:center; text-align:center; }
+body.term-pack4 .p-cat__cardname{
+  display:inline-block;
+  align-self:center;
+  text-align:center;
+  font-size:clamp(20px,5.2vw,25px);
+  font-weight:900;
+  letter-spacing:.01em;
+  line-height:1.4;
+  color:var(--brand, #fe3301);
+  /* 文字の高さぜんぶを黄色に（2026/09/23 ユーザー指示） */
+  background:#ffe14d;
+  padding:.12em .3em;
+}
 /* 一覧カードでも、商品名の横に小さく出します */
 .p-cat__cardsub{
   display:inline-block; margin-left:.45em;
@@ -1075,6 +1138,16 @@ body.term-toilet .p-cat__cardname{ min-height:2.7em; }
 @media (min-width:1024px){
   .p-cat__sols{ grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; }
   .p-cat__cards{ grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; }
+}
+
+/* 水まわり4点セットだけ、上2つ・下2つの2列にします。
+   写真が4枚組みなので、3列だと1枚ずつが小さくなりすぎるためです。
+   （2026/09/23 ユーザー指示「上2段、下2段」） */
+@media (min-width:640px){
+  .p-cat__cards--2{ grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media (min-width:1024px){
+  .p-cat__cards--2{ grid-template-columns:repeat(2,minmax(0,1fr)); gap:22px; }
 }
 
 /* ------------------------------------------------------------
@@ -1896,6 +1969,57 @@ a.p-pack__item:hover{ border-color:var(--brand); transform:translateY(-4px); box
 }
 @media (min-width:900px){ .p-prd__lead{ font-size:14.5px; } }
 
+/* --------------------------------------------------------------------------
+   特徴カード（2026/09/23 ユーザー指示
+     「商品説明の下に、3つの特徴をカード型でおいて　画像と説明入れたい」
+     「カードの中身は画像（とalt）と、見出しと説明の3つだけで良いです」
+     「この商品の特徴は、商品写真下に持ってきて」）
+   写真・見出し・説明の3つだけのカードを、商品写真の下にならべます。
+   ※ クラス名は p-prd__fcard です。p-prd__note は「見出しの横の注記」で
+      すでに使われていて、白い文字づめ（nowrap）が効いてしまうためです
+      （2026/09/23 ユーザー指示「特徴カードのテキストが一部見切れている」）。
+   -------------------------------------------------------------------------- */
+.p-prd__fcards{ margin-top:26px; }
+.p-prd__fcards__ttl{
+  margin:0; font-size:16px; font-weight:900; line-height:1.5; color:var(--ink);
+  display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 10px;
+}
+/* 見出しの横の、小さなおことわり（2026/09/23 ユーザー指示
+   「※画像はイメージです　と小さくグレー文字で表示して」）。
+   狭い画面では、見出しの下に回ります。 */
+.p-prd__fcards__note{
+  font-size:11.5px; font-weight:700; color:var(--ink-light); line-height:1.7;
+}
+.p-prd__fcards__list{
+  list-style:none; margin:14px 0 0; padding:0;
+  display:grid; gap:14px; grid-template-columns:1fr;
+}
+@media (min-width:768px){
+  .p-prd__fcards{ margin-top:30px; }
+  .p-prd__fcards__list{ grid-template-columns:repeat(3,1fr); gap:16px; }
+}
+.p-prd__fcard{
+  background:#fff; border:1px solid var(--border); border-radius:var(--radius);
+  overflow:hidden; display:flex; flex-direction:column; min-width:0;
+  white-space:normal;
+}
+.p-prd__fcard__pic{ background:#fff; }
+.p-prd__fcard__pic img{
+  display:block; width:100%; height:auto; aspect-ratio:4/3; object-fit:cover;
+}
+.p-prd__fcard__body{
+  padding:14px 15px 16px; display:flex; flex-direction:column; gap:8px;
+  flex:1 1 auto; min-width:0;
+}
+.p-prd__fcard__ttl{
+  margin:0; font-size:14.5px; font-weight:900; line-height:1.6; color:var(--ink);
+  min-width:0; white-space:normal; overflow-wrap:anywhere;
+}
+.p-prd__fcard__text{
+  margin:0; font-size:13.5px; line-height:1.9; color:var(--ink-sub);
+  min-width:0; white-space:normal; overflow-wrap:anywhere;
+}
+
 /* メーカーロゴの横の、メーカー名の文字（2026/09/22 追加） */
 .p-prd__makerlogo{ display:inline-flex; align-items:center; gap:7px; }
 .p-prd__makerlogo__name{
@@ -1925,6 +2049,128 @@ a.p-pack__item:hover{ border-color:var(--brand); transform:translateY(-4px); box
   padding:5px 18px; font-size:15px; font-weight:900;
 }
 .p-p4__price__note{ margin-top:14px; font-size:12.5px; line-height:1.85; color:var(--ink-sub); }
+
+/* プランの写真と、要点（2026/09/23 ユーザー承認）
+   左に写真、右に「何が入って、いくらか」。
+   せまい画面では、写真の下に文字がまわります。 */
+.p-p4__hero{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:22px;
+  align-items:center;
+  max-width:1000px;
+  margin:0 auto;
+}
+@media (min-width:860px){
+  .p-p4__hero{ grid-template-columns:1.15fr 1fr; gap:34px; }
+}
+
+.p-p4__hero__ph{ margin:0; }
+.p-p4__hero__ph img{
+  display:block; width:100%; height:auto;
+  border-radius:var(--radius-lg, 14px);
+  background:#fff;
+}
+.p-p4__hero__ph figcaption{
+  margin-top:7px; font-size:11.5px; color:var(--ink-light); text-align:right;
+}
+
+.p-p4__hero__ttl{
+  margin:0 0 12px; font-size:1.15rem; font-weight:900; line-height:1.5;
+}
+
+.p-p4__hero__list{
+  display:grid; grid-template-columns:auto 1fr; gap:0;
+  margin:0 0 18px; padding:0;
+  background:#fff; border-radius:var(--radius, 10px); overflow:hidden;
+}
+.p-p4__hero__list dt{
+  padding:9px 12px; border-top:1px solid var(--line, #eadfd9);
+  font-size:12.5px; font-weight:700; color:var(--ink-sub); white-space:nowrap;
+}
+.p-p4__hero__list dd{
+  margin:0; padding:9px 14px; border-top:1px solid var(--line, #eadfd9);
+  font-size:14px; font-weight:700; line-height:1.5;
+}
+.p-p4__hero__list dt:first-of-type,
+.p-p4__hero__list dt:first-of-type + dd{ border-top:0; }
+.p-p4__hero__list a{ color:inherit; text-decoration:none; }
+.p-p4__hero__list a:hover{ color:var(--brand); text-decoration:underline; }
+.p-p4__hero__mk{
+  display:block; font-size:11px; font-weight:400; color:var(--ink-light);
+}
+
+.p-p4__hero__yen{
+  display:flex; align-items:baseline; flex-wrap:wrap; gap:6px;
+  margin:0;
+}
+.p-p4__hero__yen .lbl{ font-size:13px; font-weight:700; color:var(--ink-sub); }
+.p-p4__hero__yen .num{
+  font-size:2.1rem; font-weight:900; line-height:1.1; color:var(--brand);
+}
+.p-p4__hero__yen .unit{ font-size:14px; font-weight:700; }
+.p-p4__hero__yen .unit small{ font-size:11.5px; font-weight:400; }
+
+.p-p4__hero__off{
+  display:flex; align-items:center; flex-wrap:wrap; gap:6px 14px;
+  margin:8px 0 0; font-size:13px; color:var(--ink-sub);
+}
+.p-p4__hero__was{ white-space:nowrap; }
+
+/* 「◯◯円おトク！」の黄色いギザギザ
+   （2026/09/23 ユーザー指示「黄色のギザギザ背景欲しい」）
+   画像は使わず、CSSの clip-path で形を切りぬいています。
+   文字が長くなっても、ギザギザが伸びてついてきます。 */
+.p-p4__burst{
+  position:relative;
+  display:inline-flex; align-items:center; gap:2px;
+  padding:14px 26px;
+  color:var(--brand, #fe3301); font-size:14px; font-weight:800; line-height:1.2;
+  white-space:nowrap;
+}
+/* ギザギザも文字も、まっすぐにします
+   （2026/09/23 ユーザー指示「文字は斜めやめて」「ギザギザ、まっすぐにして」） */
+.p-p4__burst::before{
+  content:"";
+  position:absolute; inset:-4px;
+  background:linear-gradient(180deg,#ffe14d 0%,#ffd21a 100%);
+  clip-path:polygon(50.0% 0.0%, 54.6% 9.3%, 61.1% 1.3%, 63.5% 11.3%, 71.7% 5.0%, 71.8% 15.3%, 81.2% 10.9%, 79.0% 21.0%, 89.1% 18.8%, 84.7% 28.2%, 95.0% 28.3%, 88.7% 36.5%, 98.7% 38.9%, 90.7% 45.4%, 100.0% 50.0%, 90.7% 54.6%, 98.7% 61.1%, 88.7% 63.5%, 95.0% 71.7%, 84.7% 71.8%, 89.1% 81.2%, 79.0% 79.0%, 81.2% 89.1%, 71.8% 84.7%, 71.7% 95.0%, 63.5% 88.7%, 61.1% 98.7%, 54.6% 90.7%, 50.0% 100.0%, 45.4% 90.7%, 38.9% 98.7%, 36.5% 88.7%, 28.3% 95.0%, 28.2% 84.7%, 18.8% 89.1%, 21.0% 79.0%, 10.9% 81.2%, 15.3% 71.8%, 5.0% 71.7%, 11.3% 63.5%, 1.3% 61.1%, 9.3% 54.6%, 0.0% 50.0%, 9.3% 45.4%, 1.3% 38.9%, 11.3% 36.5%, 5.0% 28.3%, 15.3% 28.2%, 10.9% 18.8%, 21.0% 21.0%, 18.8% 10.9%, 28.2% 15.3%, 28.3% 5.0%, 36.5% 11.3%, 38.9% 1.3%, 45.4% 9.3%);
+  z-index:0;
+}
+/* 文字は、かならず黄色の上に出します
+   （地の文字だと黄色の下に隠れてしまうため、文字はすべて span/b に入れています） */
+.p-p4__burst > *{ position:relative; z-index:1; }
+.p-p4__burst b{ font-size:19px; font-weight:900; color:var(--brand, #fe3301); letter-spacing:-.01em; }
+.p-p4__burst span{ font-size:14px; font-weight:800; }
+
+/* 一覧のカードでは、小さめに出します（2026/09/23） */
+.p-p4__burst--sm{ padding:10px 18px; }
+.p-p4__burst--sm b{ font-size:16px; }
+.p-p4__burst--sm span{ font-size:12px; }
+
+.p-cat__cardoff{
+  display:flex; align-items:center; flex-wrap:wrap; gap:4px 10px;
+  margin:6px 0 0; font-size:12px; color:var(--ink-sub);
+}
+/* 4点セットのカードは、中身もまんなか寄せです（2026/09/23） */
+body.term-pack4 .p-cat__cardprice,
+body.term-pack4 .p-cat__cardoff{ justify-content:center; }
+/* 「くわしく見る」は、ふだんからオレンジの地に白い文字。
+   マウスを乗せたときに白地・オレンジ文字に入れかわります。
+   （2026/09/23 ユーザー指示「背景をオレンジ、テキストを白に 逆にして」） */
+body.term-pack4 .p-cat__cardlink{
+  align-self:stretch;
+  background:var(--brand, #fe3301);
+  color:#fff;
+}
+body.term-pack4 .p-cat__card:hover .p-cat__cardlink{
+  background:#fff;
+  color:var(--brand, #fe3301);
+}
+.p-cat__cardwas{ white-space:nowrap; }
+.p-p4__hero__note{
+  margin:8px 0 0; font-size:12px; line-height:1.8; color:var(--ink-sub);
+}
 
 .p-p4__items{ display:grid; gap:14px; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); }
 .p-p4__item{

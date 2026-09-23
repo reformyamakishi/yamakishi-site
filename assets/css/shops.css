@@ -268,3 +268,58 @@
   background:var(--brand-tint); border-radius:10px;
   font-size:13.5px; line-height:1.85; color:var(--ink); text-wrap:pretty;
 }
+
+/* --------------------------------------------------------------------------
+   地図とお店のカードをつなぐ（2026/09/23 ユーザー承認）
+
+   ① 市や町から「その市町のページ」へ
+   ② 押したお店のカードが少し光る
+   ④ カードに施工事例・お客様の声の件数
+   -------------------------------------------------------------------------- */
+
+/* ① 市町のカードまるごとが、その市町のページへのリンクです
+   （2026/09/23 ユーザー「特にことばいらなくない？」→ 文字を足さない形に） */
+.p-city__list li { display: flex; }
+.p-city__list .p-city__go { flex: 1 1 auto; }
+
+/* ② 押したお店のカードを光らせます */
+.p-shop.is-hit {
+  animation: ymkrf-hit 2.2s ease-out;
+}
+@keyframes ymkrf-hit {
+  0%   { box-shadow: 0 0 0 0 rgba(254, 51, 1, .55); }
+  25%  { box-shadow: 0 0 0 10px rgba(254, 51, 1, 0); }
+  50%  { box-shadow: 0 0 0 0 rgba(254, 51, 1, .40); }
+  75%  { box-shadow: 0 0 0 10px rgba(254, 51, 1, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(254, 51, 1, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .p-shop.is-hit { animation: none; outline: 3px solid var(--c-main, #fe3301); }
+}
+
+/* ④ カードの実績 */
+.p-shop__stat {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 18px;
+  margin: 14px 0 0;
+  padding: 10px 14px;
+  background: #fff8f5;
+  border-radius: 8px;
+  font-size: 13.5px;
+}
+.p-shop__stat b {
+  margin-right: 3px;
+  color: var(--c-main, #fe3301);
+  font-size: 19px;
+  font-weight: 800;
+}
+.p-shop__stat small {
+  color: var(--ink-sub, #6f6f6f);
+  font-size: 11.5px;
+}
+
+@media (max-width: 640px) {
+  .p-shop__stat { gap: 2px 12px; }
+}
