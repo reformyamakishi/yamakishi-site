@@ -191,7 +191,7 @@ address{ font-style:normal; }
 /* もっと見るリンク */
 .c-more{
   display:flex; align-items:center; justify-content:center; gap:10px;
-  max-width:340px; margin:28px auto 0; min-height:58px; padding:12px 24px;
+  max-width:min(100%, 420px); margin:28px auto 0; min-height:58px; padding:12px 24px;
   background:#fff; border:2px solid var(--brand); border-radius:999px;
   color:var(--brand-dark); font-weight:800; font-size:17px; text-decoration:none;
   transition:background .18s, transform .18s;
@@ -200,7 +200,15 @@ address{ font-style:normal; }
 .c-more{ white-space:nowrap; }
 @media (max-width:400px){ .c-more{ font-size:15.5px; padding:12px 18px; } }
 .c-more:hover{ background:var(--brand-tint); transform:translateY(-2px); }
-.c-more::after{ content:""; width:8px; height:8px; border-right:2.5px solid currentColor; border-bottom:2.5px solid currentColor; transform:rotate(-45deg); }
+/* 矢印。ボタンの文字が長いとき、ここが縮んで「、」のように見えていたので
+   縮まないようにしました（2026/09/23 ユーザー
+   「もっと見る（2件）の後についている「、」はなに？」） */
+.c-more::after{
+  content:""; flex:0 0 auto; box-sizing:content-box;
+  width:8px; height:8px;
+  border-right:2.5px solid currentColor; border-bottom:2.5px solid currentColor;
+  transform:rotate(-45deg);
+}
 
 /* --------------------------------------------------------------------------
    5. キャラクター
