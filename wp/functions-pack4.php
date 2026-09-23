@@ -607,6 +607,9 @@ add_action( 'add_meta_boxes', function () {
 	remove_meta_box( 'ymkrf_makerdiv',       'ymkrf_product', 'side' );   /* メーカー */
 	remove_meta_box( 'ymkrf_shopdiv',        'ymkrf_product', 'side' );   /* 展示店舗 */
 
+	/* カラー・取っ手の箱（2026/09/22 に1つにまとめたもの）も消します */
+	remove_meta_box( 'ymkrf_product_colors', 'ymkrf_product', 'normal' );
+
 	/* 何行でも増やせる欄（扉カラー・標準仕様など）も、ぜんぶ消します */
 	if ( function_exists( 'ymkrf_product_repeaters' ) ) {
 		foreach ( array_keys( ymkrf_product_repeaters() ) as $key ) {

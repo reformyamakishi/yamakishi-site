@@ -359,6 +359,13 @@ function ymkrf_product_fields() {
 			array( '—', 'LPガス用', '都市ガス用' ), array( 'cooktop' ) ),
 		'_ymkrf_model'   => array( '型番', 'text', '例：N3WV6M', '商品名の下に小さく出ます',
 			array(), array( 'cooktop', 'fence' ) ),
+		/* 商品説明（2026/09/23 ユーザー指示
+		   「注意書きの下に、商品説明の欄を作って」）。
+		   空のままなら、これまでどおり自動の一文が出ます。 */
+		'_ymkrf_desc'    => array( '商品説明', 'area', '',
+			'商品名の下に出る文です。空のままなら自動で作ります（メーカー・分類・金額・工期・エリア）。'
+			. '書くと、そちらが使われます',
+			array(), array( 'cooktop' ) ),
 		'_ymkrf_list'    => array( 'メーカー定価', 'yen', '例：249,370',
 			'入れると「定価249,370円の品」と出ます。無ければ空のままでOK',
 			array(), array( 'cooktop' ) ),
@@ -476,7 +483,7 @@ function ymkrf_product_field_order() {
 			'_ymkrf_makerpick', '_ymkrf_ihtype',
 			/* 特徴は型番のすぐ下です
 			   （2026/09/22 ユーザー指示「特徴を型番の下に移動して」） */
-			'_ymkrf_name', '_ymkrf_model', '_ymkrf_pts', '_ymkrf_caution',
+			'_ymkrf_name', '_ymkrf_model', '_ymkrf_pts', '_ymkrf_caution', '_ymkrf_desc',
 			'_ymkrf_list', '_ymkrf_item',
 			'_ymkrf_days',
 		),
@@ -554,7 +561,7 @@ function ymkrf_product_fields_for( $cat = '' ) {
 		   （2026/09/22 ユーザー指示「ガス種は不要です」） */
 		$keep = array(
 			'_ymkrf_makerpick', '_ymkrf_ihtype',
-			'_ymkrf_name', '_ymkrf_model', '_ymkrf_pts', '_ymkrf_caution',
+			'_ymkrf_name', '_ymkrf_model', '_ymkrf_pts', '_ymkrf_caution', '_ymkrf_desc',
 			'_ymkrf_list', '_ymkrf_item', '_ymkrf_days',
 		);
 		foreach ( array_keys( $out ) as $k ) {

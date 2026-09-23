@@ -679,3 +679,102 @@
    升目に押しこめず、文字の長さに合わせた幅にします。 */
 .p-form__row--past .wpcf7-checkbox{ display:block; }
 .p-form__row--past .wpcf7-list-item label{ display:inline-flex; width:auto; }
+
+/* ============================================================
+   市町別ページ（/area/◯◯/）　2026/09/23 追加
+   ============================================================ */
+.p-area__head{ background:linear-gradient(180deg,#fff6f3,#fff); padding:34px 0 28px; }
+.p-area__title{ font-size:clamp(22px,5.4vw,32px); font-weight:900; line-height:1.5; letter-spacing:.01em; }
+.p-area__lead{ margin-top:14px; max-width:860px; font-size:14.5px; line-height:1.95; color:var(--ink-sub); }
+.p-area__stats{ display:flex; gap:10px; flex-wrap:wrap; margin-top:20px; }
+.p-area__stat{
+  background:#fff; border:1px solid var(--border); border-radius:12px;
+  padding:12px 20px; text-align:center; min-width:118px;
+}
+.p-area__stat b{ display:block; font-size:28px; font-weight:900; color:var(--brand); line-height:1.15; }
+.p-area__stat span{ font-size:12px; color:var(--ink-sub); font-weight:700; }
+
+.p-area__shops{ display:grid; gap:14px; grid-template-columns:repeat(auto-fit,minmax(290px,1fr)); }
+.p-area__shop{ background:#fff; border:1px solid var(--border); border-radius:14px; padding:18px 20px; }
+.p-area__shop h3{ font-size:18px; font-weight:900; margin-bottom:8px; }
+.p-area__shop__new{
+  display:inline-block; margin-left:6px; background:var(--brand); color:#fff;
+  border-radius:999px; padding:2px 10px; font-size:11.5px; font-weight:800; vertical-align:2px;
+}
+.p-area__shop dl{ font-size:13.5px; line-height:1.85; }
+.p-area__shop dt{ color:var(--ink-sub); font-size:11.5px; font-weight:700; margin-top:7px; }
+.p-area__shop dd{ margin:0; }
+.p-area__tel a{ font-size:21px; font-weight:900; color:var(--brand); text-decoration:none; }
+.p-area__tel small{ font-size:11.5px; color:var(--ink-sub); margin-left:5px; }
+.p-area__shop__txt{ margin-top:10px; font-size:13px; line-height:1.85; color:var(--ink-sub); }
+.p-area__note{ margin-top:12px; font-size:12.5px; line-height:1.85; color:var(--ink-sub); }
+
+.p-area__cards{ display:grid; gap:12px; grid-template-columns:repeat(auto-fill,minmax(215px,1fr)); }
+.p-area__card{
+  display:block; background:#fff; border:1px solid var(--border); border-radius:12px;
+  overflow:hidden; text-decoration:none; color:var(--ink);
+}
+.p-area__card:hover{ border-color:var(--brand); }
+.p-area__card__ph{ display:grid; place-items:center; aspect-ratio:4/3; background:var(--bg-gray); overflow:hidden; }
+.p-area__card__ph img{ width:100%; height:100%; object-fit:cover; }
+.p-area__card__noph{ color:#b3a8a2; font-size:11.5px; font-weight:800; }
+.p-area__card__bd{ display:block; padding:10px 12px 12px; }
+.p-area__card__ttl{ display:block; margin-top:4px; font-size:13.5px; font-weight:700; line-height:1.55; }
+.p-area__tag{
+  display:inline-block; background:#fff1ec; color:var(--brand-dark);
+  border-radius:999px; padding:2px 10px; font-size:11px; font-weight:800;
+}
+
+.p-area__voices{ display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); }
+.p-area__voice{
+  display:block; background:#fff; border:1px solid var(--border); border-radius:12px;
+  padding:14px 16px; text-decoration:none; color:var(--ink);
+}
+.p-area__voice:hover{ border-color:var(--brand); }
+.p-area__voice__who{ display:block; margin-top:7px; font-size:14px; font-weight:800; }
+.p-area__voice__who small{ font-size:11.5px; color:var(--ink-sub); font-weight:700; }
+.p-area__voice__txt{ display:block; margin-top:6px; font-size:13px; line-height:1.85; color:var(--ink-sub); }
+
+.p-area__menu{ display:grid; gap:10px; grid-template-columns:repeat(auto-fit,minmax(155px,1fr)); }
+.p-area__menu a{
+  display:block; background:#fff; border:1px solid var(--border); border-radius:12px;
+  padding:14px 12px; text-align:center; text-decoration:none; color:var(--ink);
+  font-size:13.5px; font-weight:700;
+}
+.p-area__menu a:hover{ border-color:var(--brand); }
+.p-area__menu b{ display:block; margin-top:4px; color:var(--brand); font-size:18px; font-weight:900; }
+
+.p-area__faq{ background:#fff; border:1px solid var(--border); border-radius:12px; padding:14px 18px; margin-bottom:10px; }
+.p-area__faq b{ display:block; font-size:15px; font-weight:800; margin-bottom:5px; }
+.p-area__faq p{ font-size:13.5px; line-height:1.9; color:var(--ink-sub); }
+
+.p-area__towns{ display:flex; flex-wrap:wrap; gap:7px; }
+.p-area__towns span,
+.p-area__towns a{
+  background:#fff; border:1px solid var(--border); border-radius:999px;
+  padding:6px 14px; font-size:13px; font-weight:700; text-decoration:none; color:var(--ink);
+}
+.p-area__towns a:hover{ border-color:var(--brand); color:var(--brand); }
+
+.p-area__list{ display:grid; gap:10px; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); }
+.p-area__listitem{
+  display:block; background:#fff; border:1px solid var(--border); border-radius:12px;
+  padding:14px 16px; text-decoration:none; color:var(--ink);
+}
+.p-area__listitem:hover{ border-color:var(--brand); }
+.p-area__listitem__name{ display:block; font-size:16px; font-weight:900; }
+.p-area__listitem__num{ display:block; margin-top:3px; font-size:12px; color:var(--ink-sub); font-weight:700; }
+
+.p-area__cta{
+  background:#fff8f6; border:2px solid var(--brand); border-radius:16px;
+  padding:24px 20px; text-align:center;
+}
+.p-area__cta b{ display:block; font-size:clamp(17px,4.2vw,21px); font-weight:900; }
+.p-area__cta p{ margin-top:8px; font-size:13.5px; color:var(--ink-sub); }
+.p-area__cta__btns{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:16px; }
+.p-area__btn{
+  display:inline-block; background:var(--brand); color:#fff; text-decoration:none;
+  border-radius:999px; padding:13px 28px; font-size:15px; font-weight:800;
+}
+.p-area__btn--line{ background:#06c755; }
+.p-area__btn:hover{ opacity:.88; }

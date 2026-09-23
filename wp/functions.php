@@ -50,6 +50,7 @@ require_once get_stylesheet_directory() . '/inc/functions-works-import.php';
       公開したら、この行と inc/functions-works-import2.php を消してください */
 require_once get_stylesheet_directory() . '/inc/functions-works-import2.php';
 require_once get_stylesheet_directory() . '/inc/functions-shops.php';
+require_once get_stylesheet_directory() . '/inc/functions-area.php';
 require_once get_stylesheet_directory() . '/inc/functions-staff.php';
 require_once get_stylesheet_directory() . '/inc/functions-flyer.php';
 require_once get_stylesheet_directory() . '/inc/functions-media.php';

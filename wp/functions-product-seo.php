@@ -48,6 +48,7 @@ function ymkrf_seo_word( $slug, $post_id = 0 ) {
 		'outer-wall' => '外壁・屋根塗装',
 		'window'     => '内窓・窓リフォーム',
 		'exterior'   => 'カーポート・物置・サンルーム',
+		'pack4'      => '水まわり4点セット（キッチン・お風呂・トイレ・洗面台）',
 	);
 
 	/* コンロ・IHは、ガスかIHかで言葉を変えます */
@@ -152,6 +153,14 @@ add_action( 'wp_head', function () {
 
 		$b = ymkrf_seo_bits( get_the_ID() );
 
+		/* 手で書いた商品説明があれば、それを先に置きます */
+		$own = trim( (string) get_post_meta( get_the_ID(), '_ymkrf_desc', true ) );
+		if ( $own !== '' ) {
+			echo '<meta name="description" content="'
+			   . esc_attr( mb_strimwidth( $own, 0, 240, '…', 'UTF-8' ) ) . '">' . "\n";
+			return;
+		}
+
 		$desc = trim( $b['maker'] . ' ' . $b['name'] );
 		if ( $b['model'] !== '' ) $desc .= '（' . $b['model'] . '）';
 		$desc .= 'の' . $b['word'] . 'なら、';
@@ -195,6 +204,12 @@ add_action( 'wp_head', function () {
 function ymkrf_seo_lead( $post_id = 0 ) {
 
 	$post_id = $post_id ? $post_id : get_the_ID();
+
+	/* 手で「商品説明」を書いてあれば、そちらを使います
+	   （2026/09/23 ユーザー指示） */
+	$own = trim( (string) get_post_meta( $post_id, '_ymkrf_desc', true ) );
+	if ( $own !== '' ) return $own;
+
 	$b = ymkrf_seo_bits( $post_id );
 
 	$s = trim( ( $b['maker'] !== '' ? $b['maker'] . 'の' : '' ) . $b['word'] );
