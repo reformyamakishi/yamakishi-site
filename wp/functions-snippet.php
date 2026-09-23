@@ -65,7 +65,7 @@ function ymkrf_crumb_ld( $crumbs ) {
 }
 endif;
 
-if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '4.6.2' );   // ファイル更新時はここを上げるとキャッシュが切れます
+if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '4.6.3' );   // ファイル更新時はここを上げるとキャッシュが切れます
 
 /* ============================================================
    1. CSS / JS の読み込み
@@ -547,11 +547,9 @@ add_action( 'template_redirect', function () {
 		exit;
 	}
 
-	/* 対応エリアは、店舗ページに1枚でまとめました */
-	if ( $path === 'area' ) {
-		wp_redirect( home_url( '/shops/' ), 301 );
-		exit;
-	}
+	/* ★/area/ は「対応エリアの一覧」になりました（2026/09/23）。
+	     むかしは店舗ページに飛ばしていましたが、市町ごとのページを
+	     作ったので、その入口として使います。転送はやめました。 */
 
 	$old = array( 'concept', 'lp/seikatsu-kaizen' );
 	if ( in_array( $path, $old, true ) ) {
@@ -845,6 +843,27 @@ add_filter( 'document_title_parts', function ( $parts ) {
 if ( ! function_exists( 'ymkrf_is_shops' ) ) :
 function ymkrf_is_shops() {
 	return (bool) get_query_var( 'ymkrf_shops' );
+}
+endif;
+
+/**
+ * お店1つぶんのページのURL。
+ *
+ * （2026/09/23 ユーザー「担当店舗は田鶴浜店の専用ページへ。
+ *   ちなみに、店舗毎に1ページ作る予定です」）
+ *
+ * いまは1枚もの（/shops/）の中の位置へ送っています。
+ * 店舗ごとのページを作ったら、★の1行を
+ *   return home_url( '/shops/' . $slug . '/' );
+ * に変えるだけで、サイト中のリンクがいっせいに切りかわります。
+ */
+if ( ! function_exists( 'ymkrf_shop_url' ) ) :
+function ymkrf_shop_url( $slug ) {
+	$slug = sanitize_title( (string) $slug );
+	if ( $slug === '' ) return home_url( '/shops/' );
+
+	/* ★店舗ごとのページができたら、ここを差しかえます */
+	return home_url( '/shops/#' . $slug );
 }
 endif;
 
@@ -1181,6 +1200,26 @@ add_action( 'init', function () {
 	/* 部位（キッチン／お風呂／トイレ …） */
 	register_taxonomy( 'ymkrf_works_cat', 'ymkrf_works', array(
 		'label'        => '部位',
+		/* 画面の言葉を「カテゴリー」から「部位」に
+		   （2026/09/23 ユーザー指示「施工事例の部位も同じような仕組みにして」） */
+		'labels'       => array(
+			'name'              => '部位',
+			'singular_name'     => '部位',
+			'menu_name'         => '部位',
+			'all_items'         => 'すべての部位',
+			'add_new_item'      => '部位を追加',
+			'new_item_name'     => '新しい部位の名前',
+			'edit_item'         => '部位を編集',
+			'view_item'         => '部位を表示',
+			'update_item'       => '部位を更新',
+			'search_items'      => '部位を検索',
+			'parent_item'       => '親の部位',
+			'parent_item_colon' => '親の部位：',
+			'not_found'         => '部位が見つかりません',
+			'back_to_items'     => '← 部位の一覧にもどる',
+			'name_field_description' => 'ページに出る部位の名前です（例：キッチン）。',
+			'slug_field_description' => 'URLに使う英字です（例：kitchen）。部位ごとの一覧 /works/kitchen/ になります。',
+		),
 		'hierarchical' => true,
 		'rewrite'      => array( 'slug' => 'works', 'with_front' => false ),
 		'show_in_rest' => true,
@@ -1212,7 +1251,8 @@ add_action( 'init', function () {
 			'parent_item_colon' => '親エリア：',
 			'not_found'         => 'エリアが見つかりません',
 			'back_to_items'     => '← エリアの一覧にもどる',
-			'name_field_description' => 'ページに出る市・町の名前です（例：中能登町）。県名や町名・字は入れません。',
+			/* 2026/09/23 ユーザー指示「県名や町名・字は入れません。削除」 */
+			'name_field_description' => 'ページに出る市・町の名前です（例：中能登町）。',
 			'slug_field_description' => 'URLに使う英字です（例：nakanoto）。地域ごとのページ /area/nakanoto/ になります。',
 			'parent_field_description' => '石川県か福井県をえらんでください。',
 		),

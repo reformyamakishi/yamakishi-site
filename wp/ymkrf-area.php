@@ -17,7 +17,10 @@ $city = $a['city'];
 $c    = ymkrf_area_counts( $city );
 $t    = ymkrf_area_text( $slug );
 
-$lead  = isset( $t['lead'] ) ? trim( $t['lead'] ) : '';
+/* 書き出しは「対応エリア」画面 → エリア分類の説明 → 自動の文、の順で使います
+   （2026/09/23 ユーザー指示） */
+$lead  = function_exists( 'ymkrf_area_lead' ) ? ymkrf_area_lead( $slug, $city ) : '';
+if ( $lead === '' && isset( $t['lead'] ) ) $lead = trim( $t['lead'] );
 $towns = isset( $t['towns'] ) ? trim( $t['towns'] ) : '';
 $faq   = isset( $t['faq'] ) && is_array( $t['faq'] ) ? $t['faq'] : array();
 
@@ -92,8 +95,10 @@ if ( function_exists( 'ymkrf_crumb_ld' ) ) {
     <h2 class="p-prd__bar"><?php echo esc_html( $city ); ?>の担当店舗</h2>
     <div class="p-area__shops">
       <?php foreach ( $a['shops'] as $s ) : ?>
+        <?php $surl = function_exists( 'ymkrf_shop_url' ) ? ymkrf_shop_url( $s['slug'] ) : home_url( '/shops/' ); ?>
         <div class="p-area__shop">
-          <h3>ヤマキシ <?php echo esc_html( $s['name'] ); ?>
+          <h3>
+            <a href="<?php echo esc_url( $surl ); ?>">ヤマキシ <?php echo esc_html( $s['name'] ); ?></a>
             <?php if ( ! empty( $s['open'] ) ) : ?><span class="p-area__shop__new"><?php echo esc_html( $s['open'] ); ?></span><?php endif; ?>
           </h3>
           <dl>
@@ -114,6 +119,10 @@ if ( function_exists( 'ymkrf_crumb_ld' ) ) {
           <?php if ( ! empty( $s['feature'] ) ) : ?>
             <p class="p-area__shop__txt"><?php echo esc_html( $s['feature'] ); ?></p>
           <?php endif; ?>
+          <?php /* お店の専用ページへ（2026/09/23 ユーザー指示） */ ?>
+          <p class="p-area__shop__link">
+            <a href="<?php echo esc_url( $surl ); ?>">ヤマキシ <?php echo esc_html( $s['name'] ); ?>のページを見る</a>
+          </p>
         </div>
       <?php endforeach; ?>
     </div>
@@ -193,8 +202,16 @@ if ( $vq->have_posts() ) : ?>
         </a>
       <?php endwhile; wp_reset_postdata(); ?>
     </div>
+    <?php /* 施工事例と同じように、その市町のお客様の声だけの一覧へ送ります
+             （2026/09/23 ユーザー指示「お客様の声も同様にできる？」）
+             /voice/area/nanao/ の形です。 */
+      $vurl = function_exists( 'ymkrf_voice_url' ) && function_exists( 'ymkrf_area_roman' )
+        ? ymkrf_voice_url( '', ymkrf_area_roman( $city ) )
+        : (string) get_post_type_archive_link( 'ymkrf_voice' );
+    ?>
     <p style="text-align:center;margin-top:20px">
-      <a class="c-more" href="<?php echo esc_url( (string) get_post_type_archive_link( 'ymkrf_voice' ) ); ?>">お客様の声をもっと見る</a>
+      <a class="c-more" href="<?php echo esc_url( $vurl ); ?>"><?php
+        echo esc_html( $city ); ?>のお客様の声をもっと見る（<?php echo number_format( $c['voices'] ); ?>件）</a>
     </p>
   </div>
 </section>

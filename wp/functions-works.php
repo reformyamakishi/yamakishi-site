@@ -493,6 +493,17 @@ function ymkrf_area_fix_name( $name ) {
  */
 function ymkrf_area_gun_of( $city ) {
 
+	$city = trim( (string) $city );
+	if ( $city === '' ) return '';
+
+	/* 手で入れた郡名があれば、そちらを先に使います
+	   （2026/09/23 ユーザー指示「エリア名の横に郡名を入れられる欄作っておいて」） */
+	$t = get_term_by( 'name', $city, 'ymkrf_works_area' );
+	if ( $t && ! is_wp_error( $t ) ) {
+		$own = trim( (string) get_term_meta( $t->term_id, '_ymkrf_gun', true ) );
+		if ( $own !== '' ) return $own;
+	}
+
 	$map = array(
 		/* 石川県 */
 		'川北町'     => '能美郡',
@@ -509,7 +520,6 @@ function ymkrf_area_gun_of( $city ) {
 		'池田町'     => '今立郡',
 	);
 
-	$city = trim( (string) $city );
 	return isset( $map[ $city ] ) ? $map[ $city ] : '';
 }
 
@@ -898,16 +908,17 @@ function ymkrf_area_shops_field( $checked = array(), $cell = false ) {
 	    if ( ! $any ) continue;
 	  ?>
 	    <div class="ymkrf-shoppick__pref">
-	      <b><?php echo esc_html( $pref ); ?></b>
+	      <div class="ymkrf-shoppick__ttl"><?php echo esc_html( $pref ); ?></div>
 	      <div class="ymkrf-shoppick__cols" style="--n:<?php echo (int) count( $group ); ?>">
 	        <?php foreach ( $group as $c ) : ?>
 	          <div class="ymkrf-shoppick__col">
 	            <?php foreach ( $c as $sl ) :
-	              if ( ! isset( $by[ $sl ] ) ) continue; ?>
-	              <label>
+	              if ( ! isset( $by[ $sl ] ) ) continue;
+	              $on = in_array( $sl, $checked, true ); ?>
+	              <label class="ymkrf-shoppick__item<?php echo $on ? ' is-on' : ''; ?>">
 	                <input type="checkbox" name="ymkrf_area_shops[]" value="<?php echo esc_attr( $sl ); ?>"
-	                       <?php checked( in_array( $sl, $checked, true ) ); ?>>
-	                <?php echo esc_html( $by[ $sl ]['name'] ); ?>
+	                       <?php checked( $on ); ?>>
+	                <span><?php echo esc_html( $by[ $sl ]['name'] ); ?></span>
 	              </label>
 	            <?php endforeach; ?>
 	          </div>
@@ -917,27 +928,59 @@ function ymkrf_area_shops_field( $checked = array(), $cell = false ) {
 	  <?php endforeach; ?>
 	</div>
 	<style>
-	  .ymkrf-shoppick{display:flex;flex-wrap:wrap;gap:14px 40px}
-	  .ymkrf-shoppick__pref > b{display:block;margin-bottom:4px;font-size:12px;color:#50575e}
+	  /* 担当店舗のえらび欄（2026/09/23 ユーザー指示「もうちょい見やすくして」） */
+	  .ymkrf-shoppick{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;margin:4px 0 2px}
+	  .ymkrf-shoppick__pref{
+	    background:#fff;border:1px solid #c3c4c7;border-radius:5px;overflow:hidden}
+	  .ymkrf-shoppick__ttl{
+	    padding:6px 12px;border-bottom:2px solid #fe3301;background:#fdece6;
+	    font-size:12px;font-weight:700;color:#9c2f0b}
 	  .ymkrf-shoppick__cols{
-	    display:grid;grid-template-columns:repeat(var(--n,1), minmax(130px, max-content));
-	    gap:0 24px}
-	  .ymkrf-shoppick label{display:block;font-size:13px;line-height:2;white-space:nowrap}
-	  .ymkrf-shoppick input{margin:0 5px 0 0}
+	    display:grid;grid-template-columns:repeat(var(--n,1), minmax(150px, max-content));
+	    gap:0;padding:8px}
+	  .ymkrf-shoppick__col + .ymkrf-shoppick__col{
+	    border-left:1px dashed #e0e0e2;padding-left:8px;margin-left:8px}
+	  .ymkrf-shoppick__item{
+	    display:flex;align-items:center;gap:7px;
+	    padding:6px 10px;border-radius:4px;
+	    font-size:13.5px;line-height:1.4;white-space:nowrap;cursor:pointer}
+	  .ymkrf-shoppick__item:hover{background:#f6f7f7}
+	  .ymkrf-shoppick__item input{margin:0;flex:0 0 auto}
+	  /* えらんだお店は、色を付けて太字に */
+	  .ymkrf-shoppick__item.is-on,
+	  .ymkrf-shoppick__item:has(input:checked){background:#fff2ee;color:#9c2f0b;font-weight:700}
+
 	  /* 携帯・タブレットのときは1列に（2026/09/23 ユーザー指示） */
 	  @media screen and (max-width:782px){
-	    .ymkrf-shoppick{gap:10px 0;display:block}
+	    .ymkrf-shoppick{display:block}
+	    .ymkrf-shoppick__pref{margin-bottom:12px}
 	    .ymkrf-shoppick__cols{grid-template-columns:1fr}
-	    .ymkrf-shoppick__pref{margin-bottom:10px}
-	    .ymkrf-shoppick label{line-height:2.4}
+	    .ymkrf-shoppick__col + .ymkrf-shoppick__col{
+	      border-left:0;border-top:1px dashed #e0e0e2;padding-left:0;margin-left:0;
+	      padding-top:4px;margin-top:4px}
+	    .ymkrf-shoppick__item{padding:9px 10px}
 	  }
 	</style>
+	<script>
+	jQuery(function ($) {
+	  /* えらんだところに色を付けます（:has が効かないブラウザのため） */
+	  $(document).on('change', '.ymkrf-shoppick__item input', function () {
+	    $(this).closest('.ymkrf-shoppick__item').toggleClass('is-on', this.checked);
+	  });
+	});
+	</script>
 	<?php
 }
 
 /* 追加のフォーム */
 add_action( 'ymkrf_works_area_add_form_fields', function () {
 	?>
+	<div class="form-field term-ymkrfgun-wrap">
+	  <label for="ymkrf-gun">郡名</label>
+	  <input type="text" name="ymkrf_area_gun" id="ymkrf-gun" value="" placeholder="例：丹生郡">
+	  <p class="description">町の場合だけ、入れておけます（例：丹生郡越前町）。空でもかまいません。</p>
+	</div>
+
 	<div class="form-field term-ymkrfshops-wrap">
 	  <label>担当店舗</label>
 	  <?php ymkrf_area_shops_field( array() ); ?>
@@ -962,6 +1005,16 @@ add_action( 'ymkrf_works_area_edit_form_fields', function ( $term ) {
 		foreach ( ymkrf_area_shops_of( $term->name ) as $one ) $now[] = $one['slug'];
 	}
 	?>
+	<tr class="form-field term-ymkrfgun-wrap">
+	  <th scope="row"><label for="ymkrf-gun">郡名</label></th>
+	  <td>
+	    <input type="text" name="ymkrf_area_gun" id="ymkrf-gun"
+	           value="<?php echo esc_attr( (string) get_term_meta( $term->term_id, '_ymkrf_gun', true ) ); ?>"
+	           placeholder="例：丹生郡">
+	    <p class="description">町の場合だけ、入れておけます（例：丹生郡越前町）。空でもかまいません。</p>
+	  </td>
+	</tr>
+
 	<tr class="form-field term-ymkrfshops-wrap">
 	  <th scope="row"><label>担当店舗</label></th>
 	  <td>
@@ -999,6 +1052,16 @@ function ymkrf_area_shops_save( $term_id ) {
 }
 add_action( 'created_ymkrf_works_area', 'ymkrf_area_shops_save' );
 add_action( 'edited_ymkrf_works_area',  'ymkrf_area_shops_save' );
+
+/** 郡名をしまいます */
+function ymkrf_area_gun_save( $term_id ) {
+	if ( ! isset( $_POST['ymkrf_area_gun'] ) ) return;
+	$v = trim( sanitize_text_field( wp_unslash( $_POST['ymkrf_area_gun'] ) ) );
+	if ( $v !== '' ) update_term_meta( $term_id, '_ymkrf_gun', $v );
+	else             delete_term_meta( $term_id, '_ymkrf_gun' );
+}
+add_action( 'created_ymkrf_works_area', 'ymkrf_area_gun_save' );
+add_action( 'edited_ymkrf_works_area',  'ymkrf_area_gun_save' );
 
 
 /**
@@ -1190,6 +1253,77 @@ add_filter( 'get_terms_args', function ( $args, $taxonomies ) {
 }, 10, 2 );
 
 
+/**
+ * エリアと部位、どちらの一覧でも使う見た目です。
+ * （2026/09/23 部位の画面もエリアと同じ作りにしたので、1か所にまとめました）
+ */
+function ymkrf_panel_css() {
+	static $done = false;
+	if ( $done ) return;
+	$done = true;
+	?>
+	<style>
+	  .ymkrf-areas{display:flex;flex-wrap:wrap;gap:12px;margin-top:6px}
+	  .ymkrf-areas__col{flex:1 1 340px}
+	  .ymkrf-areas__box{
+	    background:#fff;border:1px solid #c3c4c7;border-radius:4px;overflow:hidden}
+	  /* 見出しは枠の外（2026/09/23 ユーザー指示
+	     「石川県18件とかは、この枠から出して枠の上に持ってきて」） */
+	  .ymkrf-areas__ttl{
+	    margin:0 0 6px;padding:0;font-size:15px;font-weight:700}
+	  .ymkrf-areas__ttl span{color:#787c82;font-weight:400;font-size:12px;margin-left:8px}
+	  .ymkrf-areas table{width:100%;border-collapse:collapse}
+	  .ymkrf-areas td{padding:7px 12px;border-top:1px solid #f0f0f1;font-size:13px;vertical-align:top}
+	  .ymkrf-areas tr:hover td{background:#fafafa}
+	  /* 見出しの一行に色を付けます（2026/09/23 ユーザー指示） */
+	  .ymkrf-areas__head th{
+	    padding:6px 12px;border-bottom:2px solid #fe3301;background:#fdece6;
+	    font-size:12px;color:#9c2f0b;font-weight:700;text-align:left}
+	  .ymkrf-areas__head th.ymkrf-areas__num{text-align:right}
+	  .ymkrf-areas__head + tr td{border-top:0}
+	  .ymkrf-areas__name{font-weight:600;white-space:nowrap}
+	  .ymkrf-areas__name small{display:block;font-weight:400;color:#787c82}
+	  /* 郡は、町の前に小さく出します（2026/09/23） */
+	  .ymkrf-areas__gun{font-weight:400;font-size:11.5px;color:#787c82;margin-right:2px}
+	  .ymkrf-areas__shop{color:#3c434a}
+	  .ymkrf-areas__none{color:#b32d2e}
+	  .ymkrf-areas__num{white-space:nowrap;color:#787c82;text-align:right}
+	  .ymkrf-areas__ops{white-space:nowrap;text-align:right}
+	  .ymkrf-areas__ops a{text-decoration:none;font-size:12px;margin-left:8px}
+	  .ymkrf-areas__del{color:#b32d2e}
+	  .ymkrf-areas__empty{padding:12px;color:#787c82}
+
+	  /* 見やすくするための手だて（2026/09/23 ユーザー
+	     「ページは分けてほしくない。ただ、管理者として見にくい」） */
+	  .ymkrf-areas tbody tr:nth-child(odd) td{background:#fcfcfc}
+	  .ymkrf-areas tbody tr:hover td{background:#fff6f3}
+	  .ymkrf-areas__gunrow{
+	    display:inline-block;margin-right:4px;padding:1px 6px;border-radius:9px;
+	    background:#eef1f4;color:#50575e;font-size:11px;font-weight:600;vertical-align:1px}
+	  .ymkrf-areas__flag{
+	    display:inline-block;margin-left:6px;padding:1px 6px;border-radius:3px;
+	    background:#fcf0f1;color:#b32d2e;font-size:11px;font-weight:600}
+	  .ymkrf-find{margin:14px 0 4px}
+	  .ymkrf-find input{width:280px;max-width:60%}
+	  .ymkrf-find .ymkrf-find__hit{margin-left:10px;color:#787c82;font-size:12px}
+	  /* 登録のときのご注意（2026/09/23 ユーザー指示「赤字で注意書き」） */
+	  .ymkrf-warn{
+	    max-width:600px;margin:12px 0;padding:9px 12px;border-left:4px solid #d63638;
+	    background:#fcf0f1;color:#b32d2e;font-size:13px;line-height:1.7}
+
+	  /* エリア名と郡名を横にならべます（2026/09/23 ユーザー指示
+	     「エリア名の横に郡名」「エリア名のランもっと短くてOK」） */
+	  .ymkrf-namerow{display:flex;flex-wrap:wrap;gap:0 18px;align-items:flex-start}
+	  .ymkrf-namerow .form-field{margin:0 0 12px}
+	  .ymkrf-namerow #tag-name{width:260px}
+	  .ymkrf-namerow #ymkrf-gun{width:150px}
+	  .ymkrf-namerow .description{max-width:280px}
+	  #ymkrf-gun{width:150px}
+	</style>
+	<?php
+}
+
+
 /* ------------------------------------------------------------
    エリアの一覧を、石川県・福井県の2つの枠に分けて出します
    （2026/09/23 ユーザー指示「石川県と福井県に枠を分けて」）
@@ -1291,54 +1425,8 @@ add_action( 'after-ymkrf_works_area-table', function () {
 	  .taxonomy-ymkrf_works_area #col-left{margin-bottom:20px}
 	  .taxonomy-ymkrf_works_area #col-left .form-wrap{max-width:720px}
 
-	  .ymkrf-areas{display:flex;flex-wrap:wrap;gap:12px;margin-top:6px}
-	  .ymkrf-areas__col{flex:1 1 340px}
-	  .ymkrf-areas__box{
-	    background:#fff;border:1px solid #c3c4c7;border-radius:4px;overflow:hidden}
-	  /* 見出しは枠の外（2026/09/23 ユーザー指示
-	     「石川県18件とかは、この枠から出して枠の上に持ってきて」） */
-	  .ymkrf-areas__ttl{
-	    margin:0 0 6px;padding:0;font-size:15px;font-weight:700}
-	  .ymkrf-areas__ttl span{color:#787c82;font-weight:400;font-size:12px;margin-left:8px}
-	  .ymkrf-areas table{width:100%;border-collapse:collapse}
-	  .ymkrf-areas td{padding:7px 12px;border-top:1px solid #f0f0f1;font-size:13px;vertical-align:top}
-	  .ymkrf-areas tr:hover td{background:#fafafa}
-	  /* 見出しの一行に色を付けます（2026/09/23 ユーザー指示） */
-	  .ymkrf-areas__head th{
-	    padding:6px 12px;border-bottom:2px solid #fe3301;background:#fdece6;
-	    font-size:12px;color:#9c2f0b;font-weight:700;text-align:left}
-	  .ymkrf-areas__head th.ymkrf-areas__num{text-align:right}
-	  .ymkrf-areas__head + tr td{border-top:0}
-	  .ymkrf-areas__name{font-weight:600;white-space:nowrap}
-	  .ymkrf-areas__name small{display:block;font-weight:400;color:#787c82}
-	  /* 郡は、町の前に小さく出します（2026/09/23） */
-	  .ymkrf-areas__gun{font-weight:400;font-size:11.5px;color:#787c82;margin-right:2px}
-	  .ymkrf-areas__shop{color:#3c434a}
-	  .ymkrf-areas__none{color:#b32d2e}
-	  .ymkrf-areas__num{white-space:nowrap;color:#787c82;text-align:right}
-	  .ymkrf-areas__ops{white-space:nowrap;text-align:right}
-	  .ymkrf-areas__ops a{text-decoration:none;font-size:12px;margin-left:8px}
-	  .ymkrf-areas__del{color:#b32d2e}
-	  .ymkrf-areas__empty{padding:12px;color:#787c82}
-
-	  /* 見やすくするための手だて（2026/09/23 ユーザー
-	     「ページは分けてほしくない。ただ、管理者として見にくい」） */
-	  .ymkrf-areas tbody tr:nth-child(odd) td{background:#fcfcfc}
-	  .ymkrf-areas tbody tr:hover td{background:#fff6f3}
-	  .ymkrf-areas__gunrow{
-	    display:inline-block;margin-right:4px;padding:1px 6px;border-radius:9px;
-	    background:#eef1f4;color:#50575e;font-size:11px;font-weight:600;vertical-align:1px}
-	  .ymkrf-areas__flag{
-	    display:inline-block;margin-left:6px;padding:1px 6px;border-radius:3px;
-	    background:#fcf0f1;color:#b32d2e;font-size:11px;font-weight:600}
-	  .ymkrf-find{margin:14px 0 4px}
-	  .ymkrf-find input{width:280px;max-width:60%}
-	  .ymkrf-find .ymkrf-find__hit{margin-left:10px;color:#787c82;font-size:12px}
-	  /* 登録のときのご注意（2026/09/23 ユーザー指示「赤字で注意書き」） */
-	  .ymkrf-warn{
-	    max-width:600px;margin:12px 0;padding:9px 12px;border-left:4px solid #d63638;
-	    background:#fcf0f1;color:#b32d2e;font-size:13px;line-height:1.7}
 	</style>
+	<?php ymkrf_panel_css(); ?>
 
 	<p class="ymkrf-find">
 	  <label for="ymkrf-find"><b>エリアをさがす</b></label>
@@ -1524,9 +1612,18 @@ add_action( 'admin_footer', function () {
 		});
 		$('.term-name-wrap p').each(function () {
 			if ($(this).text().indexOf('サイト上に表示される名前') === 0) {
-				$(this).text('ページに出る市・町の名前です（例：中能登町）。県名や町名・字は入れません。');
+				/* 2026/09/23 ユーザー指示「県名や町名・字は入れません。削除」 */
+				$(this).text('ページに出る市・町の名前です（例：中能登町）。');
 			}
 		});
+
+		/* ★エリア名の欄は短くして、その横に郡名を置きます
+		   （2026/09/23 ユーザー指示） */
+		var $nw = $('.term-name-wrap'), $gw = $('.term-ymkrfgun-wrap');
+		if ($nw.length && $gw.length && $('#tag-name').length) {
+			var $row = $('<div class="ymkrf-namerow"></div>').insertBefore($nw);
+			$row.append($nw).append($gw);
+		}
 
 		/* ② ならびを　エリア名 → 担当店舗 → スラッグ　に
 		   「親エリア」は、えらんだ担当店舗から自動で決まるので出しません。
@@ -1613,6 +1710,272 @@ add_action( 'admin_footer', function () {
 		});
 
 		/* ［登録］のあとは、一覧に出るよう画面を読みなおします */
+		$('#submit').on('click', function () {
+			if ($.trim($slug.val()) === '') {
+				window.alert('スラッグ（URLに使う英字）を入れてください。');
+				$slug.trigger('focus');
+				return false;
+			}
+			$(document).one('ajaxComplete', function () {
+				setTimeout(function () { location.reload(); }, 400);
+			});
+		});
+	});
+	</script>
+	<?php
+} );
+
+
+/* ============================================================
+   部位の画面を、エリアと同じ作りにします
+   （2026/09/23 ユーザー指示「施工事例の部位も同じような仕組みにして」）
+
+   ・画面の言葉を「カテゴリー」から「部位」に
+   ・「説明」と「親」の欄は出しません
+   ・部位名を入れると、スラッグ（英字）を自動で作ります
+   ・一覧は「水まわり」「家まわり・外まわり」の2つの枠に分けます
+   ・削除は編集ページでおこないます
+   ============================================================ */
+
+/** 一覧の枠分け（左：水まわり ／ 右：家まわり・外まわり） */
+function ymkrf_works_cat_groups() {
+	return array(
+		'水まわり' => array(
+			'kitchen', 'bathroom', 'toilet', 'lavatory',
+			'boiler', 'oiltank', 'ecocute', 'ih', 'ventilation',
+		),
+		'家まわり・外まわり' => array(
+			'interior', 'renovation', 'window', 'door',
+			'exterior', 'carport', 'storage', 'fence',
+			'outer-wall', 'repair', 'demolition', 'other',
+		),
+	);
+}
+
+/** 名前 → 英字（部位の表から） */
+function ymkrf_works_cat_roman() {
+	$out = array();
+	foreach ( ymkrf_works_parts_master() as $slug => $v ) {
+		if ( ! empty( $v[0] ) ) $out[ $v[0] ] = $slug;
+	}
+	return $out;
+}
+
+
+/* ------------------------------------------------------------
+   一覧を2つの枠で出します（もとの表はかくします）
+   ------------------------------------------------------------ */
+add_action( 'after-ymkrf_works_cat-table', function () {
+
+	$all = get_terms( array(
+		'taxonomy'   => 'ymkrf_works_cat',
+		'hide_empty' => false,
+	) );
+	if ( is_wp_error( $all ) || ! $all ) return;
+
+	$cnt    = function_exists( 'ymkrf_works_cat_counts' ) ? ymkrf_works_cat_counts() : array();
+	$groups = ymkrf_works_cat_groups();
+	$master = ymkrf_works_parts_master();
+
+	/* 枠ごとに分けます。表に無い部位は、右の枠のいちばん下へ */
+	$boxes = array();
+	foreach ( array_keys( $groups ) as $g ) $boxes[ $g ] = array();
+
+	foreach ( (array) $all as $t ) {
+		$in = '家まわり・外まわり';
+		foreach ( $groups as $g => $slugs ) {
+			if ( in_array( $t->slug, $slugs, true ) ) { $in = $g; break; }
+		}
+		$boxes[ $in ][] = $t;
+	}
+
+	/* 決めた順（トップページのメニューと同じ順）にならべます */
+	foreach ( $boxes as $g => $list ) {
+		$order = isset( $groups[ $g ] ) ? $groups[ $g ] : array();
+		usort( $list, function ( $a, $b ) use ( $order ) {
+			$ia = array_search( $a->slug, $order, true );
+			$ib = array_search( $b->slug, $order, true );
+			if ( $ia === false ) $ia = 900;
+			if ( $ib === false ) $ib = 900;
+			if ( $ia === $ib ) return strcmp( $a->name, $b->name );
+			return ( $ia < $ib ) ? -1 : 1;
+		} );
+		$boxes[ $g ] = $list;
+	}
+
+	$edit = admin_url( 'edit-tags.php?taxonomy=ymkrf_works_cat&post_type=ymkrf_works' );
+	?>
+	<style>
+	  .taxonomy-ymkrf_works_cat .wp-list-table.tags,
+	  .taxonomy-ymkrf_works_cat .tablenav{display:none}
+	  .taxonomy-ymkrf_works_cat .term-description-wrap{display:none}
+
+	  .taxonomy-ymkrf_works_cat #col-container{display:block}
+	  .taxonomy-ymkrf_works_cat #col-left,
+	  .taxonomy-ymkrf_works_cat #col-right{width:100%;float:none;padding:0}
+	  .taxonomy-ymkrf_works_cat #col-left{margin-bottom:20px}
+	  .taxonomy-ymkrf_works_cat #col-left .form-wrap{max-width:720px}
+	</style>
+	<?php ymkrf_panel_css(); ?>
+
+	<p class="ymkrf-find">
+	  <label for="ymkrf-findcat"><b>部位をさがす</b></label>
+	  <input type="search" id="ymkrf-findcat" placeholder="部位名・英字のどちらでも（例：風呂／bathroom）">
+	  <span class="ymkrf-find__hit"></span>
+	</p>
+
+	<div class="ymkrf-areas">
+	  <?php foreach ( $boxes as $g => $list ) : ?>
+	    <div class="ymkrf-areas__col">
+
+	      <h2 class="ymkrf-areas__ttl">
+	        <?php echo esc_html( $g ); ?><span><?php echo count( $list ); ?>件</span>
+	      </h2>
+
+	      <div class="ymkrf-areas__box">
+	      <?php if ( ! $list ) : ?>
+	        <p class="ymkrf-areas__empty">あてはまる部位はありません。</p>
+	      <?php else : ?>
+	        <table>
+	          <thead>
+	          <tr class="ymkrf-areas__head">
+	            <th class="ymkrf-areas__name">部位名</th>
+	            <th class="ymkrf-areas__num">公開</th>
+	            <th class="ymkrf-areas__num">下書き</th>
+	            <th class="ymkrf-areas__ops"></th>
+	          </tr>
+	          </thead>
+	          <tbody>
+	          <?php foreach ( $list as $t ) :
+	            $c    = isset( $cnt[ $t->term_id ] ) ? $cnt[ $t->term_id ] : array( 'pub' => 0, 'other' => 0 );
+	            $find = $t->name . ' ' . $t->slug;
+	            $new  = ! isset( $master[ $t->slug ] );
+	          ?>
+	            <tr data-find="<?php echo esc_attr( $find ); ?>">
+	              <td class="ymkrf-areas__name">
+	                <?php echo esc_html( $t->name ); ?>
+	                <?php if ( $new ) : ?><span class="ymkrf-areas__flag">表に無い部位</span><?php endif; ?>
+	                <small><?php echo esc_html( $t->slug ); ?></small>
+	              </td>
+	              <td class="ymkrf-areas__num"><b><?php echo number_format( (int) $c['pub'] ); ?></b></td>
+	              <td class="ymkrf-areas__num"><?php echo number_format( (int) $c['other'] ); ?></td>
+	              <td class="ymkrf-areas__ops">
+	                <a href="<?php echo esc_url( add_query_arg( array( 'action' => 'edit', 'tag_ID' => $t->term_id ), $edit ) ); ?>">編集</a>
+	              </td>
+	            </tr>
+	          <?php endforeach; ?>
+	          </tbody>
+	        </table>
+	      <?php endif; ?>
+	      </div>
+
+	    </div>
+	  <?php endforeach; ?>
+	</div>
+
+	<p class="description" style="margin-top:10px">
+	  「公開」「下書き」は、その部位が付いている施工事例の数です。
+	</p>
+
+	<script>
+	jQuery(function ($) {
+		var $in = $('#ymkrf-findcat'), $hit = $('.ymkrf-find__hit');
+		if (!$in.length) return;
+		$in.on('input', function () {
+			var q = $.trim($(this).val()).toLowerCase(), n = 0;
+			$('.ymkrf-areas tbody tr').each(function () {
+				var ok = (q === '') || ($(this).data('find') || '').toString().toLowerCase().indexOf(q) !== -1;
+				$(this).toggle(ok);
+				if (ok) n++;
+			});
+			$('.ymkrf-areas__col').each(function () {
+				$(this).css('opacity', $(this).find('tbody tr:visible').length ? 1 : 0.35);
+			});
+			$hit.text(q === '' ? '' : n + '件');
+		});
+	});
+	</script>
+	<?php
+} );
+
+
+/* ------------------------------------------------------------
+   部位を追加する画面の手直し（エリアと同じ流れにします）
+   ------------------------------------------------------------ */
+add_action( 'admin_footer', function () {
+
+	$s = get_current_screen();
+	if ( ! $s || $s->taxonomy !== 'ymkrf_works_cat' ) return;
+
+	$roman = ymkrf_works_cat_roman();
+	?>
+	<script>
+	jQuery(function ($) {
+
+		var ROMAN = <?php echo wp_json_encode( $roman ); ?>;
+
+		/* ① 言いかえ */
+		$('label[for="tag-name"], label[for="name"]').each(function () {
+			if ($.trim($(this).text()) === '名前') $(this).text('部位名');
+		});
+		$('.term-name-wrap p').each(function () {
+			if ($(this).text().indexOf('サイト上に表示される名前') === 0) {
+				$(this).text('ページに出る部位の名前です（例：キッチン）。');
+			}
+		});
+
+		/* ② 「親」は使いません */
+		var $s = $('.term-slug-wrap');
+		$('.term-parent-wrap').hide();
+
+		var $name = $('#tag-name'), $slug = $('#tag-slug');
+		if (!$name.length || !$slug.length) return;
+
+		var $note = $('<p class="description ymkrf-slugnote"></p>');
+		if ($s.length) { $s.append($note); } else { $note.insertAfter($slug); }
+		var touched = false;
+		$slug.on('input', function () { touched = true; draw(); });
+
+		function draw() {
+			var v = $.trim($slug.val());
+			if (v === '') { $note.html(''); return; }
+			$note.html('登録後のURL： <b>/works/' + $('<div>').text(v).html() + '/</b>');
+		}
+
+		/* ③ ボタン */
+		var $sub = $('#addtag p.submit');
+		$('#submit').val('部位を登録');
+		$sub.insertAfter($s);
+
+		$('<p class="ymkrf-make" style="margin:1em 0">'
+			+ '<button type="button" class="button button-primary" id="ymkrf-makecat">スラッグを自動生成</button>'
+			+ '</p>').insertBefore($s);
+
+		$('<p class="ymkrf-warn">'
+			+ '※ <b>スラッグを確認してから</b>、部位を登録してください。<br>'
+			+ '部位のURL（/works/◯◯/）になります。登録したあとに変えると、'
+			+ 'それまでのURLが見られなくなります。'
+			+ '</p>').insertBefore($sub);
+
+		$('#ymkrf-makecat').on('click', function () {
+			var n = $.trim($name.val());
+			if (n === '') { window.alert('部位名を入れてください。'); $name.trigger('focus'); return; }
+			$slug.val(ROMAN[n] ? ROMAN[n] : $.trim($slug.val()));
+			touched = false;
+			draw();
+			if ($.trim($slug.val()) === '') {
+				$note.html('<b style="color:#b32d2e">「' + $('<div>').text(n).html()
+					+ '」は表にありません。スラッグを英字で入れてください（例：kitchen）</b>');
+				$slug.trigger('focus');
+			}
+		});
+
+		$name.on('input', function () {
+			var n = $.trim($name.val());
+			if (!touched) $slug.val(ROMAN[n] ? ROMAN[n] : '');
+			draw();
+		});
+
 		$('#submit').on('click', function () {
 			if ($.trim($slug.val()) === '') {
 				window.alert('スラッグ（URLに使う英字）を入れてください。');

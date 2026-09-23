@@ -166,6 +166,39 @@ function ymkrf_area_text( $slug, $key = '' ) {
 	return isset( $one[ $key ] ) ? $one[ $key ] : '';
 }
 
+/**
+ * エリアの分類（施工事例 ＞ エリア）に書いた「説明」。
+ * （2026/09/23 ユーザー
+ *   「七尾市に説明を追加しました」「ここに説明表示すればよいんじゃないの？」）
+ */
+function ymkrf_area_term_text( $city ) {
+	$t = get_term_by( 'name', $city, 'ymkrf_works_area' );
+	if ( ! $t || is_wp_error( $t ) ) return '';
+	return trim( (string) $t->description );
+}
+
+/**
+ * ページの書き出しに使う文。手で書いたものを先に使います。
+ *
+ *   ① 「対応エリア」の画面に入れた書き出し
+ *   ② エリアの分類に書いた説明
+ *   ③ どちらも無ければ、自動の文
+ *
+ * 市町ごとにちがう文が入っているほど、検索に強くなります
+ * （24ページが同じ文だと、中身のうすい似たページと見られます）。
+ */
+function ymkrf_area_lead( $slug, $city = '' ) {
+
+	$lead = trim( (string) ymkrf_area_text( $slug, 'lead' ) );
+	if ( $lead !== '' ) return $lead;
+
+	if ( $city === '' ) {
+		$a = ymkrf_area_get( $slug );
+		$city = $a ? $a['city'] : '';
+	}
+	return ymkrf_area_term_text( $city );
+}
+
 
 /* ============================================================
    2. 件数と、中身を取ってくるところ
@@ -305,6 +338,19 @@ add_action( 'wp_head', function () {
 	$c   = ymkrf_area_counts( $a['city'] );
 	$sh  = array();
 	foreach ( $a['shops'] as $s ) $sh[] = $s['name'];
+
+	/* 手で書いた文があれば、検索結果の説明文にもそれを使います。
+	   市町ごとにちがう文のほうが、検索に強くなります。（2026/09/23） */
+	$own = ymkrf_area_lead( $slug, $a['city'] );
+	if ( $own !== '' ) {
+		echo '<meta name="description" content="'
+		   . esc_attr( mb_strimwidth( preg_replace( '/\s+/u', ' ', $own ), 0, 240, '…', 'UTF-8' ) ) . '">' . "\n";
+
+		if ( $c['works'] < YMKRF_AREA_MIN ) {
+			echo '<meta name="robots" content="noindex,follow">' . "\n";
+		}
+		return;
+	}
 
 	$desc = $a['city'] . 'のリフォームなら創業127年のリフォームヤマキシ。'
 	      . $a['city'] . 'での施工実績' . number_format( $c['works'] ) . '件、'
