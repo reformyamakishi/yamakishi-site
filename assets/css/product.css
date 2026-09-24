@@ -979,6 +979,68 @@ body.term-lavatory .p-cat__cardnoph{ aspect-ratio:1/1; }
    （contain にすると、手洗いカウンター付きの写真の上下に
      白い帯ができてしまうため、cover に戻しました） */
 body.term-toilet .p-cat__cardph img{ background:#fff; }
+/* 写真の右上に置く、ガス／IHの丸い印
+   （2026/09/24 ユーザー指示「なんか斜めいやだなー」「丸にして」。
+     はじめは斜めのリボンでしたが、丸に変えました） */
+.p-cat__kindmark{
+  position:absolute; top:9px; right:9px; z-index:2; pointer-events:none;
+  display:inline-flex; align-items:center; justify-content:center;
+}
+
+/* ガス … 炎の形そのものが印です。文字は炎のふくらみの中に置きます */
+.p-cat__kindmark--gas{
+  width:66px; height:66px; color:var(--brand);
+  filter:drop-shadow(0 2px 4px rgba(0,0,0,.28));
+}
+.p-cat__kindmark__ico{
+  position:absolute; inset:0; width:100%; height:100%;
+  /* 白いふちどりを付けて、どんな写真の上でも形が分かるようにします */
+  stroke:#fff; stroke-width:1.1; paint-order:stroke;
+}
+/* 炎のいちばんふくらんでいるところ（上から6割あたり）に、文字を置きます。
+   align-items:center なので、margin-top の半分だけ下にずれます
+   （2026/09/24 ユーザー指示「ガスの文字を真ん中にして、読めるように」） */
+.p-cat__kindmark--gas b{
+  position:relative; margin-top:6px;
+  font-size:14px; font-weight:900; color:#fff; letter-spacing:.04em; line-height:1;
+  text-shadow:0 1px 2px rgba(0,0,0,.28);
+}
+
+/* IH … 赤い線の四角の中に「IH」 */
+.p-cat__kindmark--ih{
+  width:46px; height:46px; border-radius:6px;
+  background:#fff; border:2.5px solid var(--brand);
+  box-shadow:0 2px 6px rgba(0,0,0,.16);
+}
+.p-cat__kindmark--ih b{
+  font-size:16px; font-weight:900; color:var(--brand); letter-spacing:.02em; line-height:1;
+}
+
+@media (max-width:599px){
+  .p-cat__kindmark{ top:7px; right:7px; }
+  .p-cat__kindmark--gas{ width:56px; height:56px; }
+  .p-cat__kindmark--gas b{ margin-top:5px; font-size:12px; }
+  .p-cat__kindmark--ih{ width:40px; height:40px; border-width:2px; }
+  .p-cat__kindmark--ih b{ font-size:14px; }
+}
+
+/* 商品名の上に小さく出す「種類」
+   （2026/09/24 ユーザー指示「種類を商品名の上に小さく載せて」） */
+.p-cat__cardkind{
+  margin:0 0 3px; font-size:11.5px; font-weight:800; line-height:1.5;
+  color:var(--ink-light); letter-spacing:.02em;
+}
+/* メーカーのロゴは、種類（ガスコンロ）の上に置きます
+   （2026/09/24 ユーザー指示「メーカーのロゴマークをガスコンロの上にもってきて」） */
+.p-cat__cardmaker{ margin:0 0 7px; line-height:0; }
+/* 上に上げたぶん、下のメタ行にロゴが無くなっても間があかないようにします */
+.p-cat__cardmaker + .p-cat__cardkind{ margin-top:0; }
+.p-prd__kind{
+  margin:0 0 4px; font-size:12.5px; font-weight:800; line-height:1.6;
+  color:var(--ink-light); letter-spacing:.02em;
+}
+@media (min-width:768px){ .p-prd__kind{ font-size:13.5px; } }
+
 /* コンロ・IH は、メーカーからもらう写真の縦横がまちまちです。
    枠いっぱいに切り取る（cover）と、写真によって商品が大きく見えたり
    小さく見えたりして、大きさがそろって見えません。
@@ -991,6 +1053,10 @@ body.term-cooktop .p-cat__cardph{ background:#fff; }
 body.term-cooktop .p-cat__cardph img{
   object-fit:contain; object-position:center; background:#fff; padding:10px 16px;
 }
+/* 枠より縦長の写真（正方形のIHなど）は、枠いっぱいに広げます。
+   そうしないと、よこ長の写真とくらべて商品が小さく見えます
+   （2026/09/24 ユーザー指示「他のガスのやつと同じ大きさにして」）。 */
+body.term-cooktop .p-cat__cardph.is-fill img{ object-fit:cover; }
 /* 洗面化粧台は縦長の商品です。横長の枠だと上下が切れてしまうので、
    この分類のカードだけ正方形にしています（写真も正方形で書き出しています）。 */
 body.term-lavatory .p-cat__cardph img{ aspect-ratio:1/1; }
@@ -1323,6 +1389,24 @@ body.term-pack4 .p-cat__cardname{
   font-size:11.5px; font-weight:700; color:var(--ink-sub);
 }
 /* 一覧カードの中。薄いピンクの下地（.p-cat__cardmeta span）を打ち消します */
+/* 三菱電機のロゴは、マーク＋「MITSUBISHI／ELECTRIC」の2段組みです。
+   ほかのメーカー（1段）と同じ高さにすると、文字が半分の大きさになり
+   小さく見えてしまうので、この1社だけ少し大きくします
+   （2026/09/24 ユーザー指示「三菱のマークだけ少し小さく見える」）。
+   ほかにも2段組みのロゴが出てきたら、ここに1行足してください。 */
+.p-maker--mitsubishi .p-maker__img{ height:28px; max-width:165px; }
+.p-cat__makerlogo--mitsubishi .p-cat__makerlogo__img{ height:24px; }
+.p-prd__makerlogo--mitsubishi .p-prd__makerlogo__img{ height:33px; max-width:215px; }
+.p-prd__photo .p-prd__makerlogo--mitsubishi .p-prd__makerlogo__img{ height:26px; max-width:150px; }
+@media (min-width:600px){
+  .p-maker--mitsubishi .p-maker__img{ height:32px; max-width:190px; }
+  .p-cat__makerlogo--mitsubishi .p-cat__makerlogo__img{ height:28px; }
+}
+@media (min-width:768px){
+  .p-prd__makerlogo--mitsubishi .p-prd__makerlogo__img{ height:41px; max-width:265px; }
+  .p-prd__photo .p-prd__makerlogo--mitsubishi .p-prd__makerlogo__img{ height:31px; max-width:190px; }
+}
+
 .p-cat__cardmeta .p-maker{ background:none; border:0; padding:0; margin-right:2px; }
 .p-cat__cardmeta .p-maker--text{ background:var(--brand-tint); padding:3px 8px; margin-right:0; }
 @media (min-width:600px){
@@ -2003,9 +2087,30 @@ a.p-pack__item:hover{ border-color:var(--brand); transform:translateY(-4px); box
   overflow:hidden; display:flex; flex-direction:column; min-width:0;
   white-space:normal;
 }
+/* --------------------------------------------------------------------------
+   商品説明（手書き）。サイズ・質量など、お客様に伝えたいこと
+   （2026/09/24 ユーザー指示「例えば、サイズや質量などの説明を入れたい」）
+   -------------------------------------------------------------------------- */
+.p-prd__about{ margin-top:24px; }
+.p-prd__about__ttl{
+  margin:0; font-size:16px; font-weight:900; line-height:1.5; color:var(--ink);
+}
+.p-prd__about__text{
+  margin:10px 0 0; max-width:820px;
+  font-size:14px; line-height:1.95; color:var(--ink-sub);
+}
+@media (min-width:768px){
+  .p-prd__about{ margin-top:28px; }
+  .p-prd__about__text{ font-size:14.5px; }
+}
+
+/* 写真は切り取らず、全体が見えるようにします。枠の大きさはそろえたいので、
+   よこ4：たて3 の白い枠のまん中に、まるごと収めます
+   （2026/09/24 ユーザー指示「…の写真、全体写して」）。 */
 .p-prd__fcard__pic{ background:#fff; }
 .p-prd__fcard__pic img{
-  display:block; width:100%; height:auto; aspect-ratio:4/3; object-fit:cover;
+  display:block; width:100%; height:auto; aspect-ratio:4/3;
+  object-fit:contain; object-position:center; background:#fff;
 }
 .p-prd__fcard__body{
   padding:14px 15px 16px; display:flex; flex-direction:column; gap:8px;
@@ -2236,3 +2341,50 @@ body.term-pack4 .p-cat__card:hover .p-cat__cardlink{
 .p-p4__other__yen{ display:block; margin-top:4px; font-size:15px; font-weight:900; color:var(--brand); }
 .p-p4__other__yen small{ font-size:11px; color:var(--ink-sub); font-weight:700; }
 .p-p4__other:hover{ border-color:var(--brand); }
+
+/* ==========================================================================
+   コラムの記事の下に出す「この記事で紹介した商品」
+   （2026/09/24 ユーザー指示
+     「コラム登録ぺージに商品や場所を選択できるものが必要じゃないかな？」）
+   ========================================================================== */
+.p-colprd{
+  display:grid; gap:14px; grid-template-columns:1fr; margin-top:18px;
+}
+@media (min-width:600px){ .p-colprd{ grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; } }
+@media (min-width:900px){ .p-colprd{ grid-template-columns:repeat(3,minmax(0,1fr)); } }
+
+.p-colprd__card{
+  display:grid; grid-template-rows:auto 1fr; min-width:0;
+  background:#fff; border:1px solid var(--border); border-radius:14px; overflow:hidden;
+  box-shadow:var(--shadow); text-decoration:none; color:inherit;
+  transition:transform .18s ease, box-shadow .18s ease;
+}
+.p-colprd__card:hover{ transform:translateY(-2px); box-shadow:0 10px 24px rgba(0,0,0,.10); }
+.p-colprd__ph{ display:block; background:#fff; }
+.p-colprd__ph img{
+  display:block; width:100%; height:auto; aspect-ratio:7/5;
+  object-fit:contain; background:#fff; padding:10px 14px;
+}
+.p-colprd__noph{
+  display:flex; align-items:center; justify-content:center;
+  width:100%; aspect-ratio:7/5; background:#f4f4f4;
+  color:#a9a9a9; font-size:13px; letter-spacing:.06em;
+}
+.p-colprd__body{
+  display:flex; flex-direction:column; gap:7px; padding:13px 15px 16px; min-width:0;
+}
+.p-colprd__maker{ display:block; line-height:0; }
+.p-colprd__name{
+  font-size:15px; font-weight:900; line-height:1.55; color:var(--ink);
+  overflow-wrap:anywhere;
+}
+.p-colprd__price{ font-size:13px; color:var(--ink-sub); }
+.p-colprd__price b{
+  font-size:21px; font-weight:900; color:var(--brand); margin-right:2px;
+}
+.p-colprd__go{
+  margin-top:auto; align-self:stretch; text-align:center;
+  border:2px solid var(--brand); border-radius:999px; padding:8px 14px;
+  font-size:13.5px; font-weight:800; color:var(--brand); background:#fff;
+}
+.p-colprd__card:hover .p-colprd__go{ background:var(--brand); color:#fff; }
