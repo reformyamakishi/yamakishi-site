@@ -312,4 +312,40 @@ if ( function_exists( 'ymkrf_crumb_ld' ) ) {
 </section>
 <?php endif; ?>
 
+<?php
+/* このプランに入っている4つの商品の施工事例を出します。
+   商品名・型番が合うものが上に来ます
+   （2026/09/24 ユーザー指示
+     「4点セットは該当する商品名のものが上位に来るように」）。 */
+$p4_wk = array();
+if ( function_exists( 'ymkrf_works_for_product' ) ) {
+	foreach ( array( 'kitchen', 'bathroom', 'toilet', 'lavatory' ) as $p4_part ) {
+		$p4_pid = (int) get_post_meta( get_the_ID(), '_ymkrf_p4_' . $p4_part, true );
+		if ( ! $p4_pid ) continue;
+		foreach ( ymkrf_works_for_product( $p4_pid, 2 ) as $p4_w ) {
+			if ( ! in_array( (int) $p4_w, $p4_wk, true ) ) $p4_wk[] = (int) $p4_w;
+		}
+	}
+}
+$p4_wk = array_slice( $p4_wk, 0, 3 );
+if ( $p4_wk ) :
+?>
+<section class="l-section" id="works">
+  <div class="l-wrap">
+    <div class="c-head">
+      <span class="c-head__en">WORKS</span>
+      <h2 class="c-head__title">このプランの商品を使った施工事例</h2>
+      <p class="c-head__lead">石川・福井の実際のお宅で、どう変わったか。金額も公開しています。</p>
+    </div>
+    <div class="p-works__grid">
+      <?php foreach ( $p4_wk as $p4_wid ) :
+        $GLOBALS['post'] = get_post( $p4_wid ); setup_postdata( $GLOBALS['post'] );
+        if ( function_exists( 'ymkrf_works_card' ) ) ymkrf_works_card();
+      endforeach; wp_reset_postdata(); ?>
+    </div>
+    <a class="c-more" href="<?php echo esc_url( get_post_type_archive_link( 'ymkrf_works' ) ); ?>">施工事例をもっと見る</a>
+  </div>
+</section>
+<?php endif; ?>
+
 </main>

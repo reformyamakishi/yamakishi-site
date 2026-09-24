@@ -579,27 +579,34 @@ endif;
 
 add_filter( 'manage_ymkrf_column_posts_columns', function ( $cols ) {
 
-	/* もとの「日付」は消します */
-	unset( $cols['date'] );
+	/* 列のならび（2026/09/24 ユーザー指示
+	     「一覧の確認チェック欄、一番左に持ってきて」
+	     「その次にタイトル　商品カテゴリ　投稿者　状態　掲載日時」）
+
+	     ☑ ／ 確認 ／ タイトル ／ 商品カテゴリ ／ 執筆者 ／ 状態 ／ 掲載日時
+
+	   ※「確認」は inc/functions-check.php があとの順番で先頭に置きなおします。 */
+
+	unset( $cols['date'] );   /* もとの「日付」は使いません */
 
 	$new = array();
+	if ( isset( $cols['cb'] ) ) $new['cb'] = $cols['cb'];
+	if ( isset( $cols['title'] ) ) $new['title'] = $cols['title'];
+
+	/* 商品カテゴリ（ワードプレスが作る列をそのまま使います） */
+	if ( isset( $cols['taxonomy-ymkrf_product_cat'] ) ) {
+		$new['taxonomy-ymkrf_product_cat'] = '商品カテゴリ';
+	}
+
+	$new['ymkrf_writer'] = '執筆者';
+	$new['ymkrf_status'] = '状態';
+	$new['ymkrf_pub']    = '掲載日時';
+
+	/* 上でならべていない列（ほかのプラグインが足したものなど）は、うしろに付けます */
 	foreach ( $cols as $key => $label ) {
-		$new[ $key ] = $label;
-		/* チェックらんのすぐ後ろ＝題名の前にならべます */
-		if ( $key === 'cb' ) {
-			$new['ymkrf_pub']    = '掲載日時';
-			$new['ymkrf_status'] = '状態';
-			$new['ymkrf_writer'] = '執筆者';
-		}
+		if ( ! isset( $new[ $key ] ) ) $new[ $key ] = $label;
 	}
-	/* チェックらんが無いときは、いちばん前に足します */
-	if ( ! isset( $new['ymkrf_pub'] ) ) {
-		$new = array(
-			'ymkrf_pub'    => '掲載日時',
-			'ymkrf_status' => '状態',
-			'ymkrf_writer' => '執筆者',
-		) + $new;
-	}
+
 	return $new;
 } );
 

@@ -61,15 +61,25 @@ function ymkrf_ok_counts( $type ) {
 
 foreach ( ymkrf_ok_types() as $ymkrf_ok_t ) {
 
+	/* 「確認」は、いちばん左（チェックボックスのすぐ右）に置きます。
+	   ほかの列の指定より あとの順番（99）で動かしているので、
+	   投稿の種類ごとに列を組みなおしていても、かならず左に来ます
+	   （2026/09/24 ユーザー指示「一覧の確認チェック欄、一番左に持ってきて」）。 */
 	add_filter( "manage_{$ymkrf_ok_t}_posts_columns", function ( $cols ) {
+
+		unset( $cols['ymkrf_ok'] );   /* いったん外して、置きなおします */
+
 		$new = array();
-		foreach ( $cols as $k => $v ) {
-			$new[ $k ] = $v;
-			if ( $k === 'cb' ) $new['ymkrf_ok'] = '確認';
+		if ( isset( $cols['cb'] ) ) {
+			$new['cb'] = $cols['cb'];
+			unset( $cols['cb'] );
 		}
-		if ( ! isset( $new['ymkrf_ok'] ) ) $new['ymkrf_ok'] = '確認';
+		$new['ymkrf_ok'] = '確認';
+
+		foreach ( $cols as $k => $v ) $new[ $k ] = $v;
+
 		return $new;
-	} );
+	}, 99 );
 
 	add_action( "manage_{$ymkrf_ok_t}_posts_custom_column", function ( $col, $post_id ) {
 

@@ -107,7 +107,10 @@ function ymkrf_works_parts_master() {
 		'boiler'     => array( '給湯器',              '給湯器交換の事例' ),
 		'oiltank'    => array( 'オイルタンク',        'オイルタンク工事の事例' ),
 		'ecocute'    => array( 'エコキュート',        'エコキュート交換の事例' ),
-		'ih'         => array( 'IH・ガスコンロ',       'IH・ガスコンロ交換の事例' ),
+		/* 商品カテゴリと同じ英字（cooktop）にそろえました。
+		   そろえると、商品と施工事例が自動でつながります
+		   （2026/09/24 ユーザー指示「cooktopに統一してほしい」） */
+		'cooktop'    => array( 'IH・ガスコンロ',       'IH・ガスコンロ交換の事例' ),
 		/* もとは「レンジフード」でしたが、言い方を「換気扇」にそろえました
 		   （2026/09/08 ユーザー指示） */
 		'ventilation'=> array( '換気扇・レンジフード','換気扇・レンジフード交換の事例' ),
@@ -233,7 +236,7 @@ function ymkrf_works_prod_groups_master() {
 		'boiler'         => '給湯器',
 		'oiltank'        => 'オイルタンク',
 		'ecocute'        => 'エコキュート',
-		'ih'             => 'IH・ガスコンロ',
+		'cooktop'        => 'IH・ガスコンロ',
 		'ventilation'    => '換気扇・レンジフード',
 		'interior'       => 'クロス・床',
 		'renovation'     => '内装・改装',
@@ -1798,7 +1801,7 @@ function ymkrf_works_cat_groups() {
 	return array(
 		'水まわり' => array(
 			'kitchen', 'bathroom', 'toilet', 'lavatory',
-			'boiler', 'oiltank', 'ecocute', 'ih', 'ventilation',
+			'boiler', 'oiltank', 'ecocute', 'cooktop', 'ventilation',
 		),
 		'家まわり・外まわり' => array(
 			'interior', 'renovation', 'window', 'door',
@@ -4821,3 +4824,48 @@ add_action( 'transition_post_status', function ( $new, $old, $post ) {
 		ymkrf_works_sync_oldpack( $w );
 	}
 }, 10, 3 );
+
+
+/* ============================================================
+   部位「IH・ガスコンロ」の英字を ih → cooktop にそろえます（1回だけ）
+   ------------------------------------------------------------
+   （2026/09/24 ユーザー指示「cooktopに統一してほしい」）
+
+   商品カテゴリ（cooktop）と英字がちがっていたため、
+   コンロ・IHの商品ページ／一覧に施工事例がつながっていませんでした。
+   本番に出したあとは、この節ごと消してかまいません。
+   ============================================================ */
+add_action( 'init', function () {
+
+	if ( get_option( 'ymkrf_works_cooktop_slug_ver' ) === '1' ) return;
+	if ( ! taxonomy_exists( 'ymkrf_works_cat' ) ) return;
+
+	$old = get_term_by( 'slug', 'ih', 'ymkrf_works_cat' );
+	if ( $old && ! is_wp_error( $old ) ) {
+
+		$new = get_term_by( 'slug', 'cooktop', 'ymkrf_works_cat' );
+
+		if ( $new && ! is_wp_error( $new ) && (int) $new->term_id !== (int) $old->term_id ) {
+			/* すでに cooktop があるときは、中身を移してから古いほうを消します */
+			$ids = get_posts( array(
+				'post_type'      => 'ymkrf_works',
+				'post_status'    => 'any',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+				'no_found_rows'  => true,
+				'tax_query'      => array( array(
+					'taxonomy' => 'ymkrf_works_cat', 'field' => 'term_id', 'terms' => $old->term_id,
+				) ),
+			) );
+			foreach ( (array) $ids as $one ) {
+				wp_set_object_terms( $one, array( (int) $new->term_id ), 'ymkrf_works_cat', true );
+				wp_remove_object_terms( $one, array( (int) $old->term_id ), 'ymkrf_works_cat' );
+			}
+			wp_delete_term( (int) $old->term_id, 'ymkrf_works_cat' );
+		} else {
+			wp_update_term( (int) $old->term_id, 'ymkrf_works_cat', array( 'slug' => 'cooktop' ) );
+		}
+	}
+
+	update_option( 'ymkrf_works_cooktop_slug_ver', '1', false );
+}, 25 );

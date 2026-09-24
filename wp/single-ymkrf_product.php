@@ -666,13 +666,41 @@ if ( ! empty( $pn['items'] ) ) :
 <?php endif; ?>
 
 <!-- =========== 施工事例 ===========
-     ★商品詳細ページには施工事例を出しません（ご指示により削除）。
-       施工事例は、商品一覧ページ（/products/<分類>/）と
-       トップページに出しています。
-       もし戻したくなったときは、ここに
-       ymkrf_works_section( $cat->slug, ymkrf_cat_label( $cat->slug, $cat->name ), 3 );
-       をPHPタグで囲んで書けば復活します。
+     その商品の施工事例を3件出します。
+     「使った商品」でえらばれているもの → 商品名・型番が文字で入っているもの
+     → 同じ部位のもの、の順にならびます
+     （2026/09/24 ユーザー指示
+       「まず商品名や型番が一致するものを上位にみせるようにできない？」）
 -->
+<?php
+$wk_ids = function_exists( 'ymkrf_works_for_product' )
+	? ymkrf_works_for_product( get_the_ID(), 3 ) : array();
+if ( $wk_ids ) :
+	$wk_cat  = ( ! empty( $d['cats'] ) && ! is_wp_error( $d['cats'] ) ) ? $d['cats'][0] : null;
+	$wk_term = $wk_cat ? get_term_by( 'slug', $wk_cat->slug, 'ymkrf_works_cat' ) : null;
+	$wk_more = ( $wk_term && ! is_wp_error( $wk_term ) )
+		? get_term_link( $wk_term ) : get_post_type_archive_link( 'ymkrf_works' );
+	if ( is_wp_error( $wk_more ) ) $wk_more = get_post_type_archive_link( 'ymkrf_works' );
+?>
+<section class="l-section" id="works">
+  <div class="l-wrap">
+    <div class="c-head">
+      <span class="c-head__en">WORKS</span>
+      <h2 class="c-head__title"><?php echo esc_html( $d['name'] ); ?>の施工事例</h2>
+      <p class="c-head__lead">石川・福井の実際のお宅で、どう変わったか。金額も公開しています。</p>
+    </div>
+    <div class="p-works__grid">
+      <?php foreach ( $wk_ids as $wid ) :
+        $GLOBALS['post'] = get_post( $wid ); setup_postdata( $GLOBALS['post'] );
+        if ( function_exists( 'ymkrf_works_card' ) ) ymkrf_works_card();
+      endforeach; wp_reset_postdata(); ?>
+    </div>
+    <?php if ( $wk_more ) : ?>
+      <a class="c-more" href="<?php echo esc_url( $wk_more ); ?>">施工事例をもっと見る</a>
+    <?php endif; ?>
+  </div>
+</section>
+<?php endif; ?>
 
 <!-- =========== お役立ち情報（コラム） ===========
      この商品に紐づけたコラムを出します。

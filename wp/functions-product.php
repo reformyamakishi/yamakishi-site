@@ -5358,3 +5358,108 @@ add_action( 'admin_footer', function () {
 	</script>
 	<?php
 } );
+
+
+/* ============================================================
+   その商品の施工事例（商品名・型番が合うものを上位に）
+   ------------------------------------------------------------
+   （2026/09/24 ユーザー指示
+     「キッチン、バスルーム、トイレ、洗面化粧台、エコキュートに関しては、
+       まず商品名や型番が一致するものを上位にみせるようにできない？」
+     「4点セットは該当する商品名のものが上位に来るように」）
+
+   つぎの順に集めます。ダブったものは、先に見つかったほうを残します。
+
+     ① 施工事例の「使った商品」に、その商品がえらばれているもの（いちばん確か）
+     ② 施工事例の題名・本文・「商品名（文字）」に、商品名か型番が入っているもの
+     ③ 同じ部位の施工事例（新しい順）
+
+   ★①②で足りればそこで止まります。③はうめ合わせです。
+   ============================================================ */
+if ( ! function_exists( 'ymkrf_works_for_product' ) ) :
+function ymkrf_works_for_product( $product_id, $n = 3 ) {
+
+	$product_id = (int) $product_id;
+	if ( ! $product_id ) return array();
+
+	$out = array();
+	$add = function ( $ids ) use ( &$out, $n ) {
+		foreach ( (array) $ids as $one ) {
+			$one = (int) $one;
+			if ( $one && ! in_array( $one, $out, true ) ) $out[] = $one;
+			if ( count( $out ) >= $n ) return;
+		}
+	};
+
+	/* ---- ① 「使った商品」でえらばれているもの ---- */
+	$byid = get_posts( array(
+		'post_type'      => 'ymkrf_works',
+		'post_status'    => 'publish',
+		'posts_per_page' => (int) $n * 3,
+		'fields'         => 'ids',
+		'no_found_rows'  => true,
+		'meta_query'     => array( array(
+			'key' => '_ymkrf_products', 'value' => (string) $product_id, 'compare' => 'LIKE',
+		) ),
+	) );
+	/* 「1」と「12」を取りちがえないよう、1件ずつ確かめます */
+	$ok = array();
+	foreach ( (array) $byid as $w ) {
+		$v = (string) get_post_meta( $w, '_ymkrf_products', true );
+		$list = array_filter( array_map( 'intval', explode( ',', $v ) ) );
+		if ( in_array( $product_id, $list, true ) ) $ok[] = $w;
+	}
+	$add( $ok );
+	if ( count( $out ) >= $n ) return $out;
+
+	/* ---- ② 商品名・型番が文字として入っているもの ---- */
+	$words = array();
+	$nm = trim( (string) get_post_meta( $product_id, '_ymkrf_name', true ) );
+	if ( $nm === '' ) $nm = (string) get_the_title( $product_id );
+	$mo = trim( (string) get_post_meta( $product_id, '_ymkrf_model', true ) );
+
+	/* みじかい言葉は、関係ない事例まで当たってしまうので使いません */
+	if ( mb_strlen( $nm, 'UTF-8' ) >= 3 ) $words[] = $nm;
+	if ( strlen( $mo ) >= 4 )             $words[] = $mo;
+
+	if ( $words ) {
+		global $wpdb;
+		$like = array();
+		$vals = array();
+		foreach ( $words as $w ) {
+			$l = '%' . $wpdb->esc_like( $w ) . '%';
+			$like[] = "( p.post_title LIKE %s OR p.post_content LIKE %s OR m.meta_value LIKE %s )";
+			$vals[] = $l; $vals[] = $l; $vals[] = $l;
+		}
+		$sql = "SELECT DISTINCT p.ID FROM {$wpdb->posts} p
+		          LEFT JOIN {$wpdb->postmeta} m
+		            ON ( m.post_id = p.ID AND m.meta_key = '_ymkrf_product_text' )
+		         WHERE p.post_type = 'ymkrf_works' AND p.post_status = 'publish'
+		           AND ( " . implode( ' OR ', $like ) . " )
+		         ORDER BY p.post_date DESC LIMIT " . ( (int) $n * 3 );
+
+		$hit = $wpdb->get_col( $wpdb->prepare( $sql, $vals ) );   /* phpcs:ignore */
+		$add( $hit );
+		if ( count( $out ) >= $n ) return $out;
+	}
+
+	/* ---- ③ 同じ部位の施工事例でうめます ---- */
+	$cat = function_exists( 'ymkrf_product_current_cat' ) ? ymkrf_product_current_cat( $product_id ) : '';
+	if ( $cat === '' ) return $out;
+
+	$more = get_posts( array(
+		'post_type'      => 'ymkrf_works',
+		'post_status'    => 'publish',
+		'posts_per_page' => (int) $n - count( $out ),
+		'fields'         => 'ids',
+		'no_found_rows'  => true,
+		'post__not_in'   => $out ? $out : array( 0 ),
+		'tax_query'      => array( array(
+			'taxonomy' => 'ymkrf_works_cat', 'field' => 'slug', 'terms' => $cat,
+		) ),
+	) );
+	$add( $more );
+
+	return $out;
+}
+endif;
