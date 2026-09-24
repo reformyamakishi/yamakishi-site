@@ -1031,7 +1031,19 @@ if ( ! empty( $pn['items'] ) ) :
           $mt = ! empty( $d['makers'] ) ? $d['makers'][0] : null;
         ?>
           <a class="p-cat__card" href="<?php the_permalink(); ?>">
-            <div class="p-cat__cardph">
+            <?php
+            /* コンロ・IHの写真は、メーカーによって形がまちまちです。
+               枠（よこ7：たて5）より縦長の写真（正方形など）は、そのまま入れると
+               商品が小さく見えてしまうので、枠いっぱいに広げます
+               （2026/09/24 ユーザー指示「IHの…写真、他のガスのやつと同じ大きさにして」）。 */
+            $ph_fill = '';
+            if ( $slug === 'cooktop' && has_post_thumbnail() ) {
+              $ph_src = wp_get_attachment_image_src( get_post_thumbnail_id(), 'medium_large' );
+              if ( $ph_src && ! empty( $ph_src[1] ) && ! empty( $ph_src[2] )
+                && ( $ph_src[1] / $ph_src[2] ) < 1.4 ) $ph_fill = ' is-fill';
+            }
+            ?>
+            <div class="p-cat__cardph<?php echo $ph_fill; ?>">
               <?php /* 写真がまだ入っていない商品は、札の高さがつぶれてしまうので
                        同じ大きさの仮の枠を出します。写真を入れれば自動で消えます。 */ ?>
               <?php if ( has_post_thumbnail() ) :
@@ -1042,13 +1054,45 @@ if ( ! empty( $pn['items'] ) ) :
               <?php if ( $d['grade'] ) : ?>
                 <span class="p-cat__cardgrade"><?php echo esc_html( $d['grade'] ); ?></span>
               <?php endif; ?>
+              <?php /* IH・コンロは、写真の右上に、ガスかIHかの丸い印を置きます
+                       （2026/09/24 ユーザー指示「なんか斜めいやだなー 丸に小さく」。
+                         はじめは斜めのリボンでしたが、丸に変えました） */ ?>
+              <?php if ( $slug === 'cooktop' && ! empty( $d['ihtype'] ) ) :
+                $is_ih = ( strpos( $d['ihtype'], 'IH' ) !== false ); ?>
+                <?php /* ガスは炎の形の中に「ガス」、IHは赤い線の四角の中に「IH」
+                         （2026/09/24 ユーザー指示
+                           「火のマークはできる？」
+                           「IHは四角の赤線で囲んでIH」
+                           「ガスのマークの中に、ガスってテキスト入れて」） */ ?>
+                <span class="p-cat__kindmark p-cat__kindmark--<?php echo $is_ih ? 'ih' : 'gas'; ?>">
+                  <?php if ( ! $is_ih ) : ?>
+                    <svg class="p-cat__kindmark__ico" viewBox="0 0 24 24" fill="currentColor"
+                         aria-hidden="true" focusable="false">
+                      <path d="M12 1.6c3 3.7 6.4 6 6.4 10.3a6.4 6.4 0 0 1-12.8 0c0-2.4 1.2-4.1 2.6-5.5.3 1.4 1.1 2.4 2.2 2.8C10 7.1 10.8 4.2 12 1.6z"/>
+                    </svg>
+                  <?php endif; ?>
+                  <b><?php echo $is_ih ? 'IH' : 'ガス'; ?></b>
+                </span>
+              <?php endif; ?>
             </div>
             <div class="p-cat__cardbody">
+              <?php /* IH・コンロは、メーカーのロゴを「ガスコンロ」の上に置きます
+                       （2026/09/24 ユーザー指示
+                         「メーカーのロゴマークをガスコンロの上にもってきて」） */ ?>
+              <?php $maker_up = ( $slug === 'cooktop' && $mt ); ?>
+              <?php if ( $maker_up ) : ?>
+                <p class="p-cat__cardmaker"><?php echo ymkrf_maker_logo( $mt, 'p-maker' ); /* phpcs:ignore */ ?></p>
+              <?php endif; ?>
+              <?php /* 種類は、商品名の上に小さく出します
+                       （2026/09/24 ユーザー指示「種類を商品名の上に小さく載せて」） */ ?>
+              <?php if ( $slug === 'cooktop' && ! empty( $d['ihtype'] ) ) : ?>
+                <p class="p-cat__cardkind"><?php echo esc_html( $d['ihtype'] ); ?></p>
+              <?php endif; ?>
               <h3 class="p-cat__cardname"><?php echo esc_html( $d['name'] ); ?><?php
                 if ( $d['sub'] ) echo '<span class="p-cat__cardsub">' . esc_html( $d['sub'] ) . '</span>'; ?></h3>
               <?php /* 1行目：メーカーと工期。工期はどの商品でも右端にそろえます */ ?>
               <p class="p-cat__cardmeta">
-                <?php if ( $mt ) echo ymkrf_maker_logo( $mt, 'p-maker' ); /* phpcs:ignore */ ?>
+                <?php if ( $mt && ! $maker_up ) echo ymkrf_maker_logo( $mt, 'p-maker' ); /* phpcs:ignore */ ?>
                 <?php if ( $d['daystext'] ) : ?><span class="p-cat__carddays">工期<?php echo esc_html( $d['daystext'] ); ?></span>
                 <?php elseif ( $d['days'] ) : ?><span class="p-cat__carddays">工期<?php echo esc_html( $d['days'] ); ?>日</span><?php endif; ?>
               </p>

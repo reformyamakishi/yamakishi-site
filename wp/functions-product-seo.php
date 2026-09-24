@@ -153,14 +153,11 @@ add_action( 'wp_head', function () {
 
 		$b = ymkrf_seo_bits( get_the_ID() );
 
-		/* 手で書いた商品説明があれば、それを先に置きます */
-		$own = trim( (string) get_post_meta( get_the_ID(), '_ymkrf_desc', true ) );
-		if ( $own !== '' ) {
-			echo '<meta name="description" content="'
-			   . esc_attr( mb_strimwidth( $own, 0, 240, '…', 'UTF-8' ) ) . '">' . "\n";
-			return;
-		}
-
+		/* 検索結果に出る説明文は、いつもこの自動の文を使います。
+		   手書きの「商品説明」はサイズ・質量などを書く欄になったので、
+		   検索結果の文には向かないためです
+		   （2026/09/24 ユーザー指示「SEO的には、自動で作ってくれている文の方が
+		     必要でしょうから。それはそれでいる」）。 */
 		$desc = trim( $b['maker'] . ' ' . $b['name'] );
 		if ( $b['model'] !== '' ) $desc .= '（' . $b['model'] . '）';
 		$desc .= 'の' . $b['word'] . 'なら、';
@@ -205,10 +202,15 @@ function ymkrf_seo_lead( $post_id = 0 ) {
 
 	$post_id = $post_id ? $post_id : get_the_ID();
 
-	/* 手で「商品説明」を書いてあれば、そちらを使います
-	   （2026/09/23 ユーザー指示） */
-	$own = trim( (string) get_post_meta( $post_id, '_ymkrf_desc', true ) );
-	if ( $own !== '' ) return $own;
+	/* 2026/09/24 ユーザー指示
+	     「商品説明ですが、こちらで入力したい。自動で作られるものは、つくってほしい。
+	       それはきっとSEO的に必要でしょう？分けて考えようかと」
+	       「例えば、サイズや質量などの説明を入れたい」
+
+	   前は、手で「商品説明」を書くと、この自動の一文が消えていました。
+	   いまは 2つを分けています。
+	     ・この自動の一文 … 商品名のすぐ下。いつも出ます（検索で打たれる言葉を入れるため）
+	     ・手書きの商品説明 … 商品写真の下。サイズ・質量など、自由に書けます */
 
 	$b = ymkrf_seo_bits( $post_id );
 

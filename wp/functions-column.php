@@ -38,12 +38,21 @@ add_action( 'init', function () {
 		'show_in_rest'  => true,
 	) );
 
-	/* 商品と同じカテゴリ（キッチン／お風呂／トイレ …）を使えるようにします。
-	   新しく分類を作らないのは、増やすほど managing がややこしくなるためです。 */
-	if ( taxonomy_exists( 'ymkrf_product_cat' ) ) {
+}, 5 );
+
+/* 商品と同じカテゴリ（キッチン／お風呂／トイレ …）を、コラムでも使えるようにします。
+   新しく分類を作らないのは、増やすほど管理がややこしくなるためです。
+
+   ★ここは あとの順番（20）で動かします。
+     商品カテゴリそのものが作られるのが、この下の順番だからです。
+     前は 5 の中に書いていて、まだ分類が無いうちに動いていたため、
+     コラムの編集画面に「商品カテゴリ」の枠が出ていませんでした
+     （2026/09/24 ユーザー指摘「コラムに商品カテゴリで『IH・コンロ』がない」）。 */
+add_action( 'init', function () {
+	if ( taxonomy_exists( 'ymkrf_product_cat' ) && post_type_exists( 'ymkrf_column' ) ) {
 		register_taxonomy_for_object_type( 'ymkrf_product_cat', 'ymkrf_column' );
 	}
-}, 5 );
+}, 20 );
 
 
 /* 投稿タイプを足したあと、一度だけURLの設定を作り直します */
@@ -1065,3 +1074,288 @@ add_action( 'admin_init', function () {
 		ymkrf_column_fill_thumb( $id );
 	}
 }, 20 );
+
+
+/* ============================================================
+   コラムと商品・エリアの紐づけ
+   ------------------------------------------------------------
+   （2026/09/24 ユーザー指示
+     「コラムですが、商品と紐づけるの？コラム登録ぺージに
+       商品や場所を選択できるものが必要じゃないかな？」
+     「複数該当することがあればさせたい」）
+
+   ・コラムの編集画面で、関係する商品を いくつでも えらべます
+   ・コラムの編集画面で、関係するエリアも えらべます（任意。ふつうは空のまま）
+   ・商品ページの下に、その商品のコラムが出ます
+     （紐づけが無いときは、同じ分類のコラムが出ます）
+   ・コラムの記事の下に、紐づけた商品のカードが出ます
+
+   ★エリアは「本当にその地域だけの話」のときだけ付けてください。
+     同じ内容を地域名だけ変えて増やすのは、検索エンジンに嫌われます。
+   ============================================================ */
+
+/** このコラムに紐づいている商品のID（並び順そのまま） */
+if ( ! function_exists( 'ymkrf_col_products' ) ) :
+function ymkrf_col_products( $post_id = 0 ) {
+	$post_id = $post_id ? (int) $post_id : (int) get_the_ID();
+	if ( ! $post_id ) return array();
+
+	$ids = get_post_meta( $post_id, '_ymkrf_col_product' );
+	$out = array();
+	foreach ( (array) $ids as $one ) {
+		$one = (int) $one;
+		if ( $one && get_post_status( $one ) && ! in_array( $one, $out, true ) ) $out[] = $one;
+	}
+	return $out;
+}
+endif;
+
+/* エリアも、コラムで使えるようにします（任意） */
+add_action( 'init', function () {
+	if ( taxonomy_exists( 'ymkrf_works_area' ) && post_type_exists( 'ymkrf_column' ) ) {
+		register_taxonomy_for_object_type( 'ymkrf_works_area', 'ymkrf_column' );
+	}
+}, 11 );
+
+
+/* ------------------------------------------------------------
+   コラムの編集画面「関係する商品」
+   ------------------------------------------------------------ */
+add_action( 'add_meta_boxes', function () {
+	add_meta_box(
+		'ymkrf_col_products', '関係する商品',
+		'ymkrf_col_products_box', 'ymkrf_column', 'normal', 'default'
+	);
+} );
+
+function ymkrf_col_products_box( $post ) {
+
+	wp_nonce_field( 'ymkrf_col_products', 'ymkrf_col_products_nonce' );
+
+	$now = ymkrf_col_products( $post->ID );
+
+	/* 商品を、分類ごとにまとめて出します */
+	$cats = get_terms( array(
+		'taxonomy'   => 'ymkrf_product_cat',
+		'hide_empty' => false,
+	) );
+	if ( is_wp_error( $cats ) ) $cats = array();
+
+	/* 商品一覧の並び順に合わせます */
+	if ( function_exists( 'ymkrf_product_cat_sort' ) ) $cats = ymkrf_product_cat_sort( $cats );
+	?>
+	<p class="ymkrf-note">
+	  この記事に関係する商品をえらんでください。いくつでもえらべます。<br>
+	  えらぶと、その商品のページに この記事が出るようになり、
+	  この記事の下には えらんだ商品が出ます。
+	</p>
+
+	<p class="ymkrf-colp__find">
+	  <input type="search" id="ymkrf-colp-find" placeholder="商品名・型番でしぼりこむ" style="width:280px">
+	  <span class="ymkrf-colp__count"></span>
+	</p>
+
+	<div class="ymkrf-colp">
+	  <?php foreach ( $cats as $c ) :
+	    $posts = get_posts( array(
+	      'post_type'      => 'ymkrf_product',
+	      'posts_per_page' => -1,
+	      'post_status'    => array( 'publish', 'draft', 'pending', 'private' ),
+	      'orderby'        => 'menu_order title',
+	      'order'          => 'ASC',
+	      'tax_query'      => array( array(
+	        'taxonomy' => 'ymkrf_product_cat', 'field' => 'term_id', 'terms' => $c->term_id,
+	      ) ),
+	    ) );
+	    if ( ! $posts ) continue; ?>
+	    <div class="ymkrf-colp__cat">
+	      <h4><?php echo esc_html( $c->name ); ?></h4>
+	      <ul>
+	        <?php foreach ( $posts as $p ) :
+	          $nm = trim( (string) get_post_meta( $p->ID, '_ymkrf_name', true ) );
+	          if ( $nm === '' ) $nm = $p->post_title;
+	          $mo = trim( (string) get_post_meta( $p->ID, '_ymkrf_model', true ) );
+	          $on = in_array( (int) $p->ID, $now, true ); ?>
+	          <li<?php echo $on ? ' class="is-on"' : ''; ?>
+	              data-find="<?php echo esc_attr( mb_strtolower( $nm . ' ' . $mo, 'UTF-8' ) ); ?>">
+	            <label>
+	              <input type="checkbox" name="ymkrf_col_product[]"
+	                     value="<?php echo (int) $p->ID; ?>"<?php checked( $on ); ?>>
+	              <span><?php echo esc_html( $nm ); ?></span>
+	              <?php if ( $mo ) : ?><em><?php echo esc_html( $mo ); ?></em><?php endif; ?>
+	              <?php if ( $p->post_status !== 'publish' ) : ?><b>下書き</b><?php endif; ?>
+	            </label>
+	          </li>
+	        <?php endforeach; ?>
+	      </ul>
+	    </div>
+	  <?php endforeach; ?>
+	</div>
+
+	<style>
+	  .ymkrf-colp__find{margin:6px 0 10px}
+	  .ymkrf-colp__count{margin-left:10px;font-size:12px;color:#787c82}
+	  .ymkrf-colp{
+	    display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
+	    max-height:420px;overflow:auto;padding:4px;border:1px solid #dcdcde;border-radius:6px;
+	    background:#fff}
+	  .ymkrf-colp__cat h4{
+	    margin:0 0 6px;padding:6px 9px;border-radius:5px;
+	    background:#fdece6;border-bottom:2px solid #fe3301;font-size:12.5px}
+	  .ymkrf-colp__cat ul{margin:0;padding:0;list-style:none}
+	  .ymkrf-colp__cat li{margin:0;padding:3px 6px;border-radius:4px;font-size:13px}
+	  .ymkrf-colp__cat li:nth-child(odd){background:#fafafa}
+	  .ymkrf-colp__cat li.is-on{background:#fff4f0}
+	  .ymkrf-colp__cat label{display:flex;align-items:center;gap:6px;cursor:pointer}
+	  .ymkrf-colp__cat em{font-style:normal;font-size:11px;color:#787c82}
+	  .ymkrf-colp__cat b{font-size:10.5px;color:#b32d2e;font-weight:700}
+	</style>
+	<script>
+	jQuery(function ($) {
+
+	  function count() {
+	    var n = $('.ymkrf-colp input:checked').length;
+	    $('.ymkrf-colp__count').text(n ? n + '件えらんでいます' : 'まだえらんでいません');
+	  }
+	  count();
+
+	  $(document).on('change', '.ymkrf-colp input', function () {
+	    $(this).closest('li').toggleClass('is-on', this.checked);
+	    count();
+	  });
+
+	  /* 名前・型番でしぼりこみます */
+	  $('#ymkrf-colp-find').on('input', function () {
+	    var q = $.trim(this.value).toLowerCase();
+	    $('.ymkrf-colp li').each(function () {
+	      $(this).toggle(q === '' || ($(this).data('find') + '').indexOf(q) >= 0);
+	    });
+	    $('.ymkrf-colp__cat').each(function () {
+	      $(this).toggle($(this).find('li:visible').length > 0);
+	    });
+	  });
+	});
+	</script>
+	<?php
+}
+
+add_action( 'save_post_ymkrf_column', function ( $post_id ) {
+
+	if ( ! isset( $_POST['ymkrf_col_products_nonce'] ) ||
+	     ! wp_verify_nonce( sanitize_key( $_POST['ymkrf_col_products_nonce'] ), 'ymkrf_col_products' ) ) return;
+	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
+	if ( ! current_user_can( 'edit_post', $post_id ) ) return;
+
+	delete_post_meta( $post_id, '_ymkrf_col_product' );
+
+	$ids = isset( $_POST['ymkrf_col_product'] ) ? (array) wp_unslash( $_POST['ymkrf_col_product'] ) : array();
+	$put = array();
+	foreach ( $ids as $one ) {
+		$one = (int) $one;
+		if ( $one && ! in_array( $one, $put, true ) ) {
+			add_post_meta( $post_id, '_ymkrf_col_product', $one );
+			$put[] = $one;
+		}
+	}
+} );
+
+
+/* ------------------------------------------------------------
+   商品ページに出すコラム
+   ------------------------------------------------------------ */
+
+/** その商品のコラム。紐づけが無ければ、同じ分類のコラムを返します */
+if ( ! function_exists( 'ymkrf_columns_for_product' ) ) :
+function ymkrf_columns_for_product( $product_id, $n = 3 ) {
+
+	$product_id = (int) $product_id;
+	if ( ! $product_id ) return array();
+
+	/* ① この商品に紐づけたコラム */
+	$own = get_posts( array(
+		'post_type'      => 'ymkrf_column',
+		'posts_per_page' => (int) $n,
+		'fields'         => 'ids',
+		'no_found_rows'  => true,
+		'meta_query'     => array( array(
+			'key'   => '_ymkrf_col_product',
+			'value' => $product_id,
+		) ),
+	) );
+
+	if ( count( $own ) >= $n ) return $own;
+
+	/* ② 足りないぶんは、同じ分類のコラムでうめます */
+	$cat = function_exists( 'ymkrf_product_current_cat' ) ? ymkrf_product_current_cat( $product_id ) : '';
+	if ( $cat === '' ) return $own;
+
+	$more = get_posts( array(
+		'post_type'      => 'ymkrf_column',
+		'posts_per_page' => (int) $n - count( $own ),
+		'fields'         => 'ids',
+		'no_found_rows'  => true,
+		'post__not_in'   => $own ? $own : array( 0 ),
+		'tax_query'      => array( array(
+			'taxonomy' => 'ymkrf_product_cat', 'field' => 'slug', 'terms' => $cat,
+		) ),
+	) );
+
+	return array_merge( $own, $more );
+}
+endif;
+
+
+/* ------------------------------------------------------------
+   コラムの記事の下に出す「この記事で紹介した商品」
+   ------------------------------------------------------------ */
+if ( ! function_exists( 'ymkrf_column_product_cards' ) ) :
+function ymkrf_column_product_cards( $post_id = 0 ) {
+
+	$ids = ymkrf_col_products( $post_id );
+
+	/* 公開している商品だけ出します */
+	$ids = array_values( array_filter( $ids, function ( $one ) {
+		return get_post_status( $one ) === 'publish';
+	} ) );
+	if ( ! $ids ) return;
+	?>
+	<section class="l-section">
+	  <div class="l-wrap">
+	    <h2 class="p-prd__bar">この記事で紹介した商品</h2>
+	    <div class="p-colprd">
+	      <?php foreach ( $ids as $pid ) :
+
+	        $nm = trim( (string) get_post_meta( $pid, '_ymkrf_name', true ) );
+	        if ( $nm === '' ) $nm = get_the_title( $pid );
+
+	        $mk    = wp_get_object_terms( $pid, 'ymkrf_maker' );
+	        $mkt   = ( ! is_wp_error( $mk ) && $mk ) ? $mk[0] : null;
+	        $total = (int) get_post_meta( $pid, '_ymkrf_total', true );
+	        ?>
+	        <a class="p-colprd__card" href="<?php echo esc_url( get_permalink( $pid ) ); ?>">
+	          <span class="p-colprd__ph"><?php
+	            echo has_post_thumbnail( $pid )
+	              ? get_the_post_thumbnail( $pid, 'medium', array( 'loading' => 'lazy', 'alt' => '' ) )
+	              : '<span class="p-colprd__noph">写真は準備中です</span>';
+	          ?></span>
+	          <span class="p-colprd__body">
+	            <?php if ( $mkt && function_exists( 'ymkrf_maker_logo' ) ) : ?>
+	              <span class="p-colprd__maker"><?php
+	                echo ymkrf_maker_logo( $mkt, 'p-maker' ); /* phpcs:ignore */ ?></span>
+	            <?php endif; ?>
+	            <span class="p-colprd__name"><?php echo esc_html( $nm ); ?></span>
+	            <?php if ( $total ) : ?>
+	              <span class="p-colprd__price">
+	                <b><?php echo esc_html( number_format( $total ) ); ?></b>円（税込）
+	              </span>
+	            <?php endif; ?>
+	            <span class="p-colprd__go">くわしく見る</span>
+	          </span>
+	        </a>
+	      <?php endforeach; ?>
+	    </div>
+	  </div>
+	</section>
+	<?php
+}
+endif;

@@ -62,6 +62,12 @@ if ( function_exists( 'ymkrf_crumb_ld' ) ) {
 </article>
 
 <?php
+/* この記事で紹介した商品（2026/09/24 ユーザー指示）。
+   コラムの編集画面で「関係する商品」にえらんだものが出ます。 */
+if ( function_exists( 'ymkrf_column_product_cards' ) ) {
+	ymkrf_column_product_cards( get_the_ID() );
+}
+
 if ( function_exists( 'ymkrf_product_cta' ) ) {
 	echo '<section class="l-section"><div class="l-wrap l-wrap--narrow">';
 	ymkrf_product_cta( 'column-single', true );

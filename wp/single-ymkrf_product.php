@@ -103,6 +103,14 @@ if ( $cat && $cat->slug === 'pack4' ) {
       <p class="p-prd__catch"><?php echo esc_html( $d['catch'] ); ?></p>
     <?php endif; ?>
 
+    <?php /* 種類（ガスコンロ／IHクッキングヒーター）を、商品名の上に小さく出します
+             （2026/09/24 ユーザー指示「種類を商品名の上に小さく載せて」） */ ?>
+    <?php
+    $cat_now1 = ( ! empty( $d['cats'] ) && ! is_wp_error( $d['cats'] ) ) ? $d['cats'][0]->slug : '';
+    if ( $cat_now1 === 'cooktop' && ! empty( $d['ihtype'] ) ) : ?>
+      <p class="p-prd__kind"><?php echo esc_html( $d['ihtype'] ); ?></p>
+    <?php endif; ?>
+
     <h1 class="p-prd__title">
       <?php if ( $d['grade'] ) : ?><span class="p-prd__grade">【<?php echo esc_html( $d['grade'] ); ?>】</span><?php endif; ?>
       <?php echo esc_html( $d['name'] ); ?>
@@ -240,6 +248,20 @@ if ( $cat && $cat->slug === 'pack4' ) {
 
     <?php if ( $d['caution'] ) : ?>
       <p class="p-prd__caution"><?php echo esc_html( $d['caution'] ); ?></p>
+    <?php endif; ?>
+
+    <?php /* ---------- 商品説明（手書き） ----------
+             サイズ・質量など、お客様に伝えたいことを書く場所です。
+             商品名のすぐ下の一文（自動）とは別ものです
+             （2026/09/24 ユーザー指示
+               「商品説明ですが、こちらで入力したい。
+                 自動で作られるものは、つくってほしい」
+               「例えば、サイズや質量などの説明を入れたい」）。 */ ?>
+    <?php if ( ! empty( $d['desc'] ) ) : ?>
+      <section class="p-prd__about" aria-labelledby="p-prd-about">
+        <h2 class="p-prd__about__ttl" id="p-prd-about">この商品について</h2>
+        <p class="p-prd__about__text"><?php echo nl2br( esc_html( $d['desc'] ) ); ?></p>
+      </section>
     <?php endif; ?>
 
     <?php
@@ -651,6 +673,35 @@ if ( ! empty( $pn['items'] ) ) :
        ymkrf_works_section( $cat->slug, ymkrf_cat_label( $cat->slug, $cat->name ), 3 );
        をPHPタグで囲んで書けば復活します。
 -->
+
+<!-- =========== お役立ち情報（コラム） ===========
+     この商品に紐づけたコラムを出します。
+     紐づけが無いときは、同じ分類のコラムでうめます
+     （2026/09/24 ユーザー指示
+       「コラム登録ぺージに商品や場所を選択できるものが必要じゃないかな？」）
+-->
+<?php
+$col_ids = function_exists( 'ymkrf_columns_for_product' )
+	? ymkrf_columns_for_product( get_the_ID(), 3 ) : array();
+if ( $col_ids ) :
+	$col_name = ( ! empty( $d['cats'] ) && ! is_wp_error( $d['cats'] ) ) ? $d['cats'][0]->name : '';
+?>
+<section class="l-section l-section--soft" id="column">
+  <div class="l-wrap">
+    <div class="c-head">
+      <span class="c-head__en">COLUMN</span>
+      <h2 class="c-head__title"><?php
+        echo esc_html( $col_name !== '' ? $col_name . 'を選ぶ前に' : 'リフォームお役立ち情報' ); ?></h2>
+    </div>
+    <div class="p-col__cards">
+      <?php foreach ( $col_ids as $cid ) :
+        $GLOBALS['post'] = get_post( $cid ); setup_postdata( $GLOBALS['post'] );
+        if ( function_exists( 'ymkrf_column_card' ) ) ymkrf_column_card();
+      endforeach; wp_reset_postdata(); ?>
+    </div>
+  </div>
+</section>
+<?php endif; ?>
 
 <!-- =========== 最後のご案内 =========== -->
 <section class="l-section">

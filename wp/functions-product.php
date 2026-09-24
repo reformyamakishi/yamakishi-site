@@ -362,9 +362,14 @@ function ymkrf_product_fields() {
 		/* 商品説明（2026/09/23 ユーザー指示
 		   「注意書きの下に、商品説明の欄を作って」）。
 		   空のままなら、これまでどおり自動の一文が出ます。 */
+		/* 2026/09/24 ユーザー指示
+		   「商品説明ですが、こちらで入力したい。自動で作られるものは、つくってほしい」
+		   「例えば、サイズや質量などの説明を入れたい」
+		   → 自動の一文（商品名のすぐ下）とは別ものになりました。 */
 		'_ymkrf_desc'    => array( '商品説明', 'area', '',
-			'商品名の下に出る文です。空のままなら自動で作ります（メーカー・分類・金額・工期・エリア）。'
-			. '書くと、そちらが使われます',
+			'サイズ・質量など、お客様に伝えたいことを自由に書いてください。'
+			. '商品写真の下に出ます。空のままなら、見出しごと出ません。'
+			. '※商品名のすぐ下の一文は、これとは別に自動で作られます',
 			array(), array( 'cooktop' ) ),
 		'_ymkrf_list'    => array( 'メーカー定価', 'yen', '例：249,370',
 			'入れると「定価249,370円の品」と出ます。無ければ空のままでOK',
@@ -2348,7 +2353,9 @@ add_filter( 'manage_ymkrf_product_posts_columns', function ( $cols ) {
 		$out['ymkrf_model']           = '型番';
 		$out['ymkrf_thumb']           = '写真';
 		$out['taxonomy-ymkrf_maker']  = 'メーカー';
-		$out['ymkrf_price']           = '入替工事込の価格';
+		/* 見出しは「価格」だけにしました（2026/09/24 ユーザー指示
+		   「入替工事込の価格 を価格に」）。中身はこれまでどおり込み価格です。 */
+		$out['ymkrf_price']           = '価格';
 		$out['ymkrf_state']           = '公開';
 		$out['taxonomy-ymkrf_shop']   = '展示店舗';
 		$out['date']                  = '日付';
@@ -3260,6 +3267,13 @@ function ymkrf_product_data( $post_id = null ) {
 		'size'     => $m( '_ymkrf_size' ),
 		/* IH・コンロで使います（2026/09/22 追加） */
 		'model'    => $m( '_ymkrf_model' ),
+		/* 種類（ガスコンロ／IHクッキングヒーター）。
+		   商品名の上に小さく出します（2026/09/24 ユーザー指示
+		   「種類を商品名の上に小さく載せて」） */
+		'ihtype'   => $m( '_ymkrf_ihtype' ),
+		/* 手で書く商品説明（サイズ・質量など）。商品写真の下に出ます
+		   （2026/09/24 ユーザー指示） */
+		'desc'     => $m( '_ymkrf_desc' ),
 		'list'     => (int) $m( '_ymkrf_list' ),
 		'sub'      => $m( '_ymkrf_sub' ),
 		'work'     => $work,
@@ -4489,7 +4503,14 @@ function ymkrf_maker_logo( $term, $class = 'p-maker', $withname = false ) {
 	$txt = $withname
 		? '<span class="' . esc_attr( $class ) . '__name">' . esc_html( $name ) . '</span>' : '';
 
-	return '<span class="' . esc_attr( $class ) . '"><picture>' . $webp
+	/* メーカーごとの目印を付けます（例：p-maker--mitsubishi）。
+	   ロゴの形はメーカーによってまちまちで、高さをそろえても
+	   大きさがそろって見えないものがあります。
+	   そういうメーカーだけ、CSSで大きさを直せるようにしています
+	   （2026/09/24 ユーザー指示「三菱のマークだけ少し小さく見える」）。 */
+	$mod = ' ' . esc_attr( $class . '--' . $slug );
+
+	return '<span class="' . esc_attr( $class ) . $mod . '"><picture>' . $webp
 	     . '<img class="' . esc_attr( $class ) . '__img" src="' . esc_url( $uri . '.png' ) . '"'
 	     . $wh
 	     . ' alt="' . esc_attr( $name ) . '"'
@@ -5292,4 +5313,48 @@ add_filter( 'get_user_option_meta-box-order_ymkrf_product', function ( $order ) 
 	$order['normal'] = implode( ',', $ids );
 
 	return $order;
+} );
+
+
+/* ============================================================
+   ダッシュボードの商品一覧で、商品名の上に「種類」を出します
+   （2026/09/24 ユーザー指示
+     「ダッシュボードの一覧の商品名の上にガスコンロかIHを表示してほしい」）
+
+   ワードプレスの一覧の「商品名」は、そのままでは前に何も足せないので、
+   画面ができあがったあとに、商品名の上へ1行差しこんでいます。
+   ============================================================ */
+add_action( 'admin_footer', function () {
+
+	$sc = get_current_screen();
+	if ( ! $sc || $sc->id !== 'edit-ymkrf_product' ) return;
+
+	global $wp_query;
+	$map = array();
+	foreach ( (array) $wp_query->posts as $p ) {
+		$k = trim( (string) get_post_meta( $p->ID, '_ymkrf_ihtype', true ) );
+		if ( $k !== '' ) $map[ (int) $p->ID ] = $k;
+	}
+	if ( ! $map ) return;
+	?>
+	<style>
+	  .ymkrf-kindline{
+	    display:block; margin:0 0 1px;
+	    font-size:11px; font-weight:700; color:#787c82; letter-spacing:.02em;
+	  }
+	</style>
+	<script>
+	jQuery(function ($) {
+	  var K = <?php echo wp_json_encode( $map ); ?>;
+	  $.each(K, function (id, name) {
+	    var $ttl = $('#post-' + id).find('.row-title').first();
+	    if (!$ttl.length) return;
+	    var $box = $ttl.closest('strong');
+	    if (!$box.length) $box = $ttl;
+	    if ($box.prev('.ymkrf-kindline').length) return;   /* 二重に出しません */
+	    $('<span class="ymkrf-kindline"></span>').text(name).insertBefore($box);
+	  });
+	});
+	</script>
+	<?php
 } );
