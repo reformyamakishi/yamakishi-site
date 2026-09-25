@@ -55,11 +55,144 @@ add_action( 'init', function () {
 }, 20 );
 
 
-/* 投稿タイプを足したあと、一度だけURLの設定を作り直します */
+/* ------------------------------------------------------------
+   カテゴリごとのコラム一覧（2026/09/25 ユーザー指摘で作りました）
+
+   「ユニットバスリフォームコラム一覧へ」のリンク先が、
+   商品・価格一覧のページに飛んでいました。
+   /column/?ymkrf_product_cat=bathroom という形にしていたのですが、
+   ymkrf_product_cat は 商品の分類ページを出すための合図なので、
+   ワードプレスが商品のページだと判断してしまっていたためです。
+
+   そこで、コラム専用の住所をつくりました。
+     /column/cat/bathroom/  … お風呂のコラムだけの一覧
+
+   住所がきちんと分かれるので、検索エンジンにも
+   「お風呂のコラムを集めたページ」として拾ってもらえます。
+   （？付きの住所は、検索エンジンに同じページと見なされがちです）
+   ------------------------------------------------------------ */
+add_filter( 'query_vars', function ( $v ) { $v[] = 'ymkrf_colcat'; return $v; } );
+
 add_action( 'init', function () {
-	if ( get_option( 'ymkrf_column_rewrite_ver' ) === '1' ) return;
+	add_rewrite_rule(
+		'^column/cat/([^/]+)/page/([0-9]{1,})/?$',
+		'index.php?post_type=ymkrf_column&ymkrf_colcat=$matches[1]&paged=$matches[2]',
+		'top'
+	);
+	add_rewrite_rule(
+		'^column/cat/([^/]+)/?$',
+		'index.php?post_type=ymkrf_column&ymkrf_colcat=$matches[1]',
+		'top'
+	);
+}, 21 );
+
+/** カテゴリごとのコラム一覧のURLを返します（スラッグが空なら、ぜんぶの一覧） */
+if ( ! function_exists( 'ymkrf_column_cat_link' ) ) :
+function ymkrf_column_cat_link( $slug = '' ) {
+
+	$base = get_post_type_archive_link( 'ymkrf_column' );
+	if ( ! $base ) return '';
+
+	$slug = sanitize_title( (string) $slug );
+	if ( $slug === '' ) return $base;
+
+	if ( get_option( 'permalink_structure' ) ) {
+		return trailingslashit( $base ) . 'cat/' . $slug . '/';
+	}
+	return add_query_arg( 'ymkrf_colcat', $slug, $base );
+}
+endif;
+
+/** いま見ているコラム一覧が、どのカテゴリでしぼられているか */
+if ( ! function_exists( 'ymkrf_column_cat_now' ) ) :
+function ymkrf_column_cat_now() {
+
+	$s = (string) get_query_var( 'ymkrf_colcat' );
+
+	/* 古いリンク（？付き）から来た人も、そのまま見られるようにします */
+	if ( $s === '' && isset( $_GET['ymkrf_colcat'] ) ) {
+		$s = (string) wp_unslash( $_GET['ymkrf_colcat'] );
+	}
+	if ( $s === '' && isset( $_GET['ymkrf_product_cat'] ) ) {
+		$s = (string) wp_unslash( $_GET['ymkrf_product_cat'] );
+	}
+	return sanitize_title( $s );
+}
+endif;
+
+add_action( 'pre_get_posts', function ( $q ) {
+
+	if ( is_admin() || ! $q->is_main_query() ) return;
+	if ( ! $q->is_post_type_archive( 'ymkrf_column' ) ) return;
+
+	$slug = sanitize_title( (string) $q->get( 'ymkrf_colcat' ) );
+	if ( $slug === '' ) return;
+
+	$q->set( 'tax_query', array( array(
+		'taxonomy' => 'ymkrf_product_cat',
+		'field'    => 'slug',
+		'terms'    => $slug,
+	) ) );
+} );
+
+
+/* カテゴリでしぼったコラム一覧の、ブラウザのタブに出る題名と説明文。
+   「お風呂のコラム一覧」だと検索エンジンに伝わるようにします。 */
+add_filter( 'document_title_parts', function ( $parts ) {
+
+	if ( ! is_post_type_archive( 'ymkrf_column' ) ) return $parts;
+
+	$slug = function_exists( 'ymkrf_column_cat_now' ) ? ymkrf_column_cat_now() : '';
+	if ( $slug === '' ) return $parts;
+
+	$t = get_term_by( 'slug', $slug, 'ymkrf_product_cat' );
+	if ( ! $t || is_wp_error( $t ) ) return $parts;
+
+	$parts['title'] = $t->name . 'リフォームのお役立ち情報・コラム';
+	return $parts;
+}, 99 );
+
+/* SEO PACK など、ほかの仕組みが題名を作り直すことがあるので、
+   最後にもう一度だけ書きかえます */
+add_filter( 'pre_get_document_title', function ( $title ) {
+
+	if ( ! is_post_type_archive( 'ymkrf_column' ) ) return $title;
+
+	$slug = function_exists( 'ymkrf_column_cat_now' ) ? ymkrf_column_cat_now() : '';
+	if ( $slug === '' ) return $title;
+
+	$t = get_term_by( 'slug', $slug, 'ymkrf_product_cat' );
+	if ( ! $t || is_wp_error( $t ) ) return $title;
+
+	return $t->name . 'リフォームのお役立ち情報・コラム | '
+	     . wp_strip_all_tags( get_bloginfo( 'name' ) );
+}, 99 );
+
+add_action( 'wp_head', function () {
+
+	if ( ! is_post_type_archive( 'ymkrf_column' ) ) return;
+
+	$slug = function_exists( 'ymkrf_column_cat_now' ) ? ymkrf_column_cat_now() : '';
+	if ( $slug === '' ) return;
+
+	$t = get_term_by( 'slug', $slug, 'ymkrf_product_cat' );
+	if ( ! $t || is_wp_error( $t ) ) return;
+
+	/* 同じ中身のページが2つあると思われないように、住所を1つに決めます */
+	echo "\n" . '<link rel="canonical" href="'
+	   . esc_url( ymkrf_column_cat_link( $slug ) ) . '">' . "\n";
+	echo '<meta name="description" content="'
+	   . esc_attr( $t->name . 'のリフォームで迷いやすいところを、ヤマキシのスタッフがかみくだいてご説明します。' )
+	   . '">' . "\n";
+}, 1 );
+
+
+/* 投稿タイプを足したあと、一度だけURLの設定を作り直します
+   （/column/cat/... を足したので '2' にしました） */
+add_action( 'init', function () {
+	if ( get_option( 'ymkrf_column_rewrite_ver' ) === '2' ) return;
 	flush_rewrite_rules( false );
-	update_option( 'ymkrf_column_rewrite_ver', '1' );
+	update_option( 'ymkrf_column_rewrite_ver', '2' );
 }, 100 );
 
 
@@ -320,8 +453,9 @@ function ymkrf_column_section( $slug, $catname, $number = 3 ) {
 		return;
 	}
 
-	$more = get_post_type_archive_link( 'ymkrf_column' );
-	if ( $slug && $more ) $more = add_query_arg( 'ymkrf_product_cat', $slug, $more );
+	$more = function_exists( 'ymkrf_column_cat_link' )
+		? ymkrf_column_cat_link( $slug )
+		: get_post_type_archive_link( 'ymkrf_column' );
 	?>
 	<section class="l-section l-section--soft" id="column">
 		<div class="l-wrap">
@@ -775,7 +909,13 @@ add_action( 'admin_head-edit.php', function () {
 	echo '<style>
 	.column-ymkrf_pub{width:7.5em}
 	.column-ymkrf_status{width:6.5em}
+	.column-ymkrf_upd{width:7.5em}
+	.column-ymkrf_writer{width:9em}
 	.column-title{width:auto}
+	/* 題名と商品カテゴリが くっついて見えたので、あいだをあけます
+	   （2026/09/25 ユーザー指示） */
+	.wp-list-table .column-title{padding-right:28px}
+	.wp-list-table .column-taxonomy-ymkrf_product_cat{width:11em;padding-left:18px}
 	</style>';
 } );
 
@@ -1469,6 +1609,25 @@ add_action( 'post_updated', function ( $post_id, $after, $before ) {
 	/* 公開中 → 公開中 のときだけ。下書きを直しているあいだは動きません */
 	if ( $before->post_status !== 'publish' || $after->post_status !== 'publish' ) return;
 
+	/* 編集画面で選んだ「保存したら、この記事を…」を先に見ます
+	   （2026/09/25 ユーザー相談
+	     「昔の記事をちょっと直しただけで、いちばん上に出したくない」）。
+	     up    … 上に出す（更新日を今日に）※何も選ばなかったときもこれ
+	     keep  … 出さない（更新日はそのまま）
+	     clear … 出さない（更新日を消す） */
+	if ( isset( $_POST['ymkrf_updbox_nonce'] )
+	  && wp_verify_nonce( sanitize_key( wp_unslash( $_POST['ymkrf_updbox_nonce'] ) ), 'ymkrf_updbox' ) ) {
+
+		$mode = isset( $_POST['ymkrf_upd_mode'] )
+			? sanitize_key( wp_unslash( $_POST['ymkrf_upd_mode'] ) ) : 'up';
+
+		if ( $mode === 'clear' ) {
+			delete_post_meta( $post_id, '_ymkrf_col_updated' );
+			return;
+		}
+		if ( $mode === 'keep' ) return;
+	}
+
 	$changed = ( $before->post_content !== $after->post_content )
 	        || ( $before->post_title   !== $after->post_title );
 	if ( ! $changed ) return;
@@ -1579,19 +1738,48 @@ add_filter( 'manage_edit-ymkrf_column_sortable_columns', function ( $cols ) {
 	return $cols;
 } );
 
-add_action( 'pre_get_posts', function ( $q ) {
-	if ( ! is_admin() || ! $q->is_main_query() ) return;
-	if ( $q->get( 'post_type' ) !== 'ymkrf_column' ) return;
-	if ( $q->get( 'orderby' ) !== 'ymkrf_upd' ) return;
+/* ダッシュボードのコラム一覧の並び（2026/09/25 ユーザー指示で作り直しました）
 
-	/* まだ直していない記事も消えないように、「無いもの」も入れて並べます */
-	$q->set( 'meta_query', array(
-		'relation' => 'OR',
-		'has'      => array( 'key' => '_ymkrf_col_updated', 'compare' => 'EXISTS' ),
-		'none'     => array( 'key' => '_ymkrf_col_updated', 'compare' => 'NOT EXISTS' ),
-	) );
-	$q->set( 'orderby', array( 'has' => 'DESC', 'date' => 'DESC' ) );
-} );
+   ・ふつうに開いたとき … 更新日が新しい順（更新日が無い記事は掲載日）。
+     ホームページに出ている順番と、同じ並びになります。
+   ・「更新日」を押したとき … 更新日だけでならべます。
+     まだ直していない「—」の記事は、押しても いつも下にまとめます。
+   ・「掲載日時」を押したとき … これまでどおり、掲載日時でならべます。 */
+add_filter( 'posts_clauses', function ( $clauses, $q ) {
+
+	if ( ! is_admin() || ! $q->is_main_query() ) return $clauses;
+	if ( $q->get( 'post_type' ) !== 'ymkrf_column' ) return $clauses;
+
+	$ob = isset( $_GET['orderby'] ) ? sanitize_key( wp_unslash( $_GET['orderby'] ) ) : '';
+
+	/* 題名順・執筆者順など、ほかの並べかえには手を出しません */
+	if ( ! in_array( $ob, array( '', 'ymkrf_upd' ), true ) ) return $clauses;
+
+	global $wpdb;
+
+	if ( strpos( $clauses['join'], 'ymkrf_upd' ) === false ) {
+		$clauses['join'] .= " LEFT JOIN {$wpdb->postmeta} AS ymkrf_upd"
+			. " ON ( ymkrf_upd.post_id = {$wpdb->posts}.ID"
+			. " AND ymkrf_upd.meta_key = '_ymkrf_col_updated' ) ";
+	}
+
+	$order = ( isset( $_GET['order'] ) && strtoupper( sanitize_key( wp_unslash( $_GET['order'] ) ) ) === 'ASC' )
+		? 'ASC' : 'DESC';
+
+	if ( $ob === 'ymkrf_upd' ) {
+		$clauses['orderby'] =
+			"( ymkrf_upd.meta_value IS NULL OR ymkrf_upd.meta_value = '' ) ASC,"
+			. " ymkrf_upd.meta_value {$order},"
+			. " {$wpdb->posts}.post_date DESC";
+	} else {
+		$clauses['orderby'] =
+			"GREATEST( {$wpdb->posts}.post_date,"
+			. " COALESCE( NULLIF( ymkrf_upd.meta_value, '' ), {$wpdb->posts}.post_date ) ) DESC,"
+			. " {$wpdb->posts}.post_date DESC";
+	}
+
+	return $clauses;
+}, 10, 2 );
 
 
 /* ------------------------------------------------------------
@@ -1620,10 +1808,51 @@ add_action( 'post_submitbox_misc_actions', function ( $post ) {
 	  <?php else : ?>
 	    <b class="ymkrf-updrow__none">—</b>
 	  <?php endif; ?>
+
 	</div>
+
+	<?php /* 「更新するとどうなるか」を、ひとつの質問で選べるようにしました
+	         （2026/09/25 ユーザー指摘「この2つのチェック分かりにくいな」）。
+	         チェック2つだと、組み合わせを考えないといけないためです。 */ ?>
+	<?php if ( $post->post_status === 'publish' ) : ?>
+	<div class="misc-pub-section ymkrf-updpick">
+	  <?php wp_nonce_field( 'ymkrf_updbox', 'ymkrf_updbox_nonce' ); ?>
+
+	  <p class="ymkrf-updpick__q">更新したら、この記事を</p>
+
+	  <label class="ymkrf-updpick__opt">
+	    <input type="radio" name="ymkrf_upd_mode" value="up" checked>
+	    <b>一覧のいちばん上に出す</b>
+	    <span>更新日が今日になります。書き直したときは、こちら。</span>
+	  </label>
+
+	  <label class="ymkrf-updpick__opt">
+	    <input type="radio" name="ymkrf_upd_mode" value="keep">
+	    <b>上に出さない（いまの順番のまま）</b>
+	    <span>誤字やリンクの直しなど。更新日は<?php
+	      echo $upd !== '' ? '、いまのままです' : '付きません'; ?>。</span>
+	  </label>
+
+	  <?php if ( $upd !== '' ) : ?>
+	    <label class="ymkrf-updpick__opt">
+	      <input type="radio" name="ymkrf_upd_mode" value="clear">
+	      <b>上に出さない＋更新日を消す</b>
+	      <span>まちがえて更新日が付いたときに。公開日の位置に戻ります。</span>
+	    </label>
+	  <?php endif; ?>
+	</div>
+	<?php endif; ?>
+
 	<style>
 	  .ymkrf-updrow__day{ color:#b32d2e; }
 	  .ymkrf-updrow__none{ color:#a7aaad; font-weight:400; }
+	  .ymkrf-updpick__q{ margin:0 0 6px; font-weight:700; color:#1d2327; }
+	  .ymkrf-updpick__opt{ display:block; margin:0 0 7px; cursor:pointer; }
+	  .ymkrf-updpick__opt b{ font-weight:600; }
+	  .ymkrf-updpick__opt span{
+	    display:block; margin:1px 0 0 24px; color:#646970; font-size:11.5px; line-height:1.5;
+	  }
+	  .ymkrf-updpick__opt:has(input:checked) b{ color:#b32d2e; }
 	</style>
 	<?php
 } );

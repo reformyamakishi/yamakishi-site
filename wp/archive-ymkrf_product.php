@@ -23,7 +23,9 @@ $asset = get_stylesheet_directory_uri();
    写真は トップページのパック価格と同じものを使っています。 */
 $cards = array(
 	'kitchen'    => array( 'ttl' => 'キッチン',            'photo' => 'price-kitchen',    'desc' => 'クリナップ・LIXIL・TOTOなど主要メーカーを、標準工事費込みで。' ),
-	'bathroom'   => array( 'ttl' => 'お風呂（ユニットバス）', 'photo' => 'price-bath',      'desc' => '断熱浴槽で冬もあたたか。工期は3〜5日が目安です。' ),
+	/* 売っているのはユニットバスなので、商品側は「ユニットバス」で呼びます
+	   （2026/09/25 ユーザー指示）。説明文に「お風呂」を残しています。 */
+	'bathroom'   => array( 'ttl' => 'ユニットバス',         'photo' => 'price-bath',      'desc' => 'お風呂まるごと交換。断熱浴槽で冬もあたたか。工期は3〜5日が目安です。' ),
 	'toilet'     => array( 'ttl' => 'トイレ',              'photo' => 'price-toilet',     'desc' => '最短半日で交換完了。お掃除がラクな最新モデルにも対応します。' ),
 	'lavatory'   => array( 'ttl' => '洗面化粧台',           'photo' => 'price-washstand',  'desc' => '朝の身支度がしやすく。収納が増えて、掃除もラクになります。' ),
 	/* 給湯器は、背景をぬいた画像（PNG）を使います。'cut' => true が目じるしです */

@@ -101,7 +101,7 @@ if ( $out ) :
 
     <?php if ( $catslug ) : ?>
       <p class="p-col__allwrap">
-        <a class="p-col__all" href="<?php echo esc_url( add_query_arg( 'ymkrf_product_cat', $catslug, get_post_type_archive_link( 'ymkrf_column' ) ) ); ?>">
+        <a class="p-col__all" href="<?php echo esc_url( ymkrf_column_cat_link( $catslug ) ); ?>">
           <?php echo esc_html( $catname ); ?>リフォームコラム一覧へ
         </a>
       </p>

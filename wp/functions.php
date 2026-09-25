@@ -33,6 +33,8 @@ require_once get_stylesheet_directory() . '/inc/functions-slug.php';
 require_once get_stylesheet_directory() . '/inc/functions-product-seo.php';
 require_once get_stylesheet_directory() . '/inc/functions-check.php';
 require_once get_stylesheet_directory() . '/inc/functions-column.php';
+/* コラムの本文に入っているリンクの点検（見るだけの画面です） */
+require_once get_stylesheet_directory() . '/inc/functions-column-links.php';
 /* ↓ 旧ブログ（コラム）の取り込み。終わったらこの行とファイルを消してください */
 require_once get_stylesheet_directory() . '/inc/functions-column-import.php';
 require_once get_stylesheet_directory() . '/inc/functions-news.php';

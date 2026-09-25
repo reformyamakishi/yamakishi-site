@@ -7,9 +7,12 @@
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-$catslug = isset( $_GET['ymkrf_product_cat'] ) ? sanitize_title( wp_unslash( $_GET['ymkrf_product_cat'] ) ) : '';
+/* どのカテゴリでしぼっているか（/column/cat/bathroom/ の bathroom の部分）
+   2026/09/25 ユーザー指摘で、？付きの住所から作りかえました */
+$catslug = function_exists( 'ymkrf_column_cat_now' ) ? ymkrf_column_cat_now() : '';
 $catterm = $catslug ? get_term_by( 'slug', $catslug, 'ymkrf_product_cat' ) : null;
 $catname = ( $catterm && ! is_wp_error( $catterm ) ) ? $catterm->name : '';
+if ( ! $catterm ) $catslug = '';
 
 get_header();
 ?>
@@ -52,6 +55,17 @@ get_header();
 
     <?php else : ?>
       <p class="p-col__empty">記事はまだありません。準備ができ次第、順に公開していきます。</p>
+    <?php endif; ?>
+
+    <?php /* しぼり込んで見ているときは、ぜんぶの一覧に戻る道をつくります
+             （2026/09/25 ユーザー指示「ページ送りの下あたりに小さく」）。
+             行き止まりにしないので、ほかのカテゴリの記事も読んでもらえます。 */ ?>
+    <?php if ( $catslug ) : ?>
+      <p class="p-col__backall">
+        <a href="<?php echo esc_url( get_post_type_archive_link( 'ymkrf_column' ) ); ?>">
+          すべてのコラム一覧へ
+        </a>
+      </p>
     <?php endif; ?>
 
   </div>

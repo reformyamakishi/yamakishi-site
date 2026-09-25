@@ -21,7 +21,15 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
 $term = get_queried_object();
 $slug = ( $term && ! is_wp_error( $term ) ) ? $term->slug : '';
-$name = ( $term && ! is_wp_error( $term ) ) ? $term->name : '商品';
+
+/* 登録してある名まえ（お風呂 など）。
+   施工事例・お客様の声など、商品に限らないところで使います。 */
+$rawname = ( $term && ! is_wp_error( $term ) ) ? $term->name : '商品';
+
+/* 商品まわりで見せる呼び名（お風呂 → ユニットバス）。
+   売っているのはユニットバスなので、商品のページではこちらで呼びます
+   （2026/09/25 ユーザー指示）。 */
+$name = function_exists( 'ymkrf_cat_label' ) ? ymkrf_cat_label( $slug, $rawname ) : $rawname;
 
 /* ============================================================
    カテゴリごとの紹介文
@@ -118,7 +126,10 @@ $intro = array(
 	'bathroom' => array(
 
 		'en'    => 'BATHROOM',
-		'title' => 'お風呂リフォーム',
+		/* 売っているのはユニットバスなので、商品ページはこの呼び方にそろえます
+		   （2026/09/25 ユーザー指示）。
+		   「お風呂」で探す人も多いので、下の説明文には残してあります。 */
+		'title' => 'ユニットバスリフォーム',
 		/* 見出しの写真。あたたかい床と足もとの写真です。
 		   横長の帯に敷くため、写真の上（壁・ドアの部分）を落として、
 		   左右は床の柄をのばして幅いっぱいにしてあります。 */
@@ -1177,7 +1188,9 @@ if ( ! empty( $pn['items'] ) ) :
      1件も無いときは、このかたまりごと出ません。 -->
 <?php
 if ( function_exists( 'ymkrf_column_section' ) ) {
-	ymkrf_column_section( $slug, ymkrf_cat_label( $slug, $name ), 3 );
+	/* ここは商品に限らない読みものなので、「お風呂」のまま出します
+	   （2026/09/25 ユーザー指示） */
+	ymkrf_column_section( $slug, $rawname, 3 );
 }
 ?>
 
@@ -1186,7 +1199,9 @@ if ( function_exists( 'ymkrf_column_section' ) ) {
      ここに新しい順で3件出ます。1件も無いときは出ません。 -->
 <?php
 if ( function_exists( 'ymkrf_works_section' ) ) {
-	ymkrf_works_section( $slug, ymkrf_cat_label( $slug, $name ), 3 );
+	/* 施工事例は、ユニットバス以外（在来浴室など）も入るので「お風呂」のまま
+	   （2026/09/25 ユーザー指示） */
+	ymkrf_works_section( $slug, $rawname, 3 );
 }
 ?>
 

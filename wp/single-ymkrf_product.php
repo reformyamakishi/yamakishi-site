@@ -72,6 +72,14 @@ $sib   = ymkrf_product_siblings();
 $cat   = ! empty( $d['cats'] ) ? $d['cats'][0] : null;
 $maker = ! empty( $d['makers'] ) ? $d['makers'][0] : null;
 
+/* 商品のページで見せるカテゴリの呼び名（お風呂 → ユニットバス）。
+   売っているのはユニットバスなので、商品まわりはこの呼び方にそろえます
+   （2026/09/25 ユーザー指示）。
+   施工事例・お客様の声は「お風呂」のままです。 */
+$catname = $cat
+	? ( function_exists( 'ymkrf_cat_label' ) ? ymkrf_cat_label( $cat->slug, $cat->name ) : $cat->name )
+	: '';
+
 /* 水まわり4点セットのプランは、中身がまったくちがうので専用のページにします
    （2026/09/22 ユーザー指示「選択した4点の情報を引っ張ってきて構成して」）。
    ファイルは ymkrf-pack4-plan.php です。 */
@@ -88,7 +96,7 @@ if ( $cat && $cat->slug === 'pack4' ) {
     <li><a href="<?php echo esc_url( home_url( '/' ) ); ?>">ホーム</a></li>
     <li><a href="<?php echo esc_url( ymkrf_products_url() ); ?>">商品・価格</a></li>
     <?php if ( $cat ) : ?>
-      <li><a href="<?php echo esc_url( get_term_link( $cat ) ); ?>"><?php echo esc_html( $cat->name ); ?></a></li>
+      <li><a href="<?php echo esc_url( get_term_link( $cat ) ); ?>"><?php echo esc_html( $catname ); ?></a></li>
     <?php endif; ?>
     <li><?php echo esc_html( ( $d['grade'] ? '【' . $d['grade'] . '】' : '' ) . $d['name'] ); ?></li>
   </ol>
@@ -568,7 +576,7 @@ if ( $d['specs'] || $d['speclist'] || $basic ) : ?>
 <?php
 $pn = $cat ? ymkrf_pointnote( $cat->slug ) : array();
 if ( ! empty( $pn['items'] ) ) :
-	$cname = $cat ? $cat->name : '';
+	$cname = $catname;
 	if ( empty( $pn['note'] ) )     $pn['note']     = $cname . 'の標準工事費は、どの機種も一律同価格です。';
 	if ( empty( $pn['itemsttl'] ) ) $pn['itemsttl'] = 'リフォームヤマキシの|標準工事費にふくまれる工事';
 ?>
@@ -622,7 +630,7 @@ if ( ! empty( $pn['items'] ) ) :
         array_unshift( $slots, array(
           'id'    => 0,
           'label' => '',
-          'name'  => '他のグレードの' . $cat->name . 'を見る',
+          'name'  => '他のグレードの' . $catname . 'を見る',
           'url'   => get_term_link( $cat ),
         ) );
       } else {
@@ -631,7 +639,7 @@ if ( ! empty( $pn['items'] ) ) :
         $slots[] = array(
           'id'    => 0,
           'label' => '',
-          'name'  => '他のグレードの' . $cat->name . 'を見る',
+          'name'  => '他のグレードの' . $catname . 'を見る',
           'url'   => get_term_link( $cat ),
         );
       }
@@ -755,7 +763,7 @@ $ld = array(
 	'@context' => 'https://schema.org',
 	'@type'    => 'Product',
 	'name'     => ( $d['grade'] ? '【' . $d['grade'] . '】' : '' ) . $d['name'] . ( $d['size'] ? ' ' . $d['size'] : '' ),
-	'category' => $cat ? $cat->name . 'リフォーム' : 'リフォーム',
+	'category' => $catname !== '' ? $catname . 'リフォーム' : 'リフォーム',
 	'url'      => get_permalink(),
 );
 if ( $maker )            $ld['brand'] = array( '@type' => 'Brand', 'name' => $maker->name );
@@ -781,7 +789,7 @@ $crumbs = array(
 	array( 'ホーム', home_url( '/' ) ),
 	array( '商品・価格', ymkrf_products_url() ),
 );
-if ( $cat ) $crumbs[] = array( $cat->name, get_term_link( $cat ) );
+if ( $cat ) $crumbs[] = array( $catname, get_term_link( $cat ) );
 $crumbs[] = array( ( $d['grade'] ? '【' . $d['grade'] . '】' : '' ) . $d['name'], get_permalink() );
 
 $items = array();

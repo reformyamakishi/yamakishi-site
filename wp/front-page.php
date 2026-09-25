@@ -416,7 +416,11 @@ get_header();
           <span class="p-price__onphoto">外壁塗装は足場代込み！</span>
         </div>
         <div class="p-price__body">
-          <h3 class="p-price__name">外壁塗装</h3>
+          <?php /* 外壁塗装だけ、名前の横に一言そえます
+                   （2026/09/25 ユーザー指示「外壁塗装の横に、オレンジの枠で
+                     軒天・破風・雨樋もお任せ！」）。
+                   「全部コミコミ!!」より小さく、控えめにしています。 */ ?>
+          <h3 class="p-price__name">外壁・屋根塗装<span class="p-price__plus">軒天・破風・雨樋もお任せ！</span></h3>
           <p class="p-price__yen"><span class="p-price__amount"><span class="lbl lbl--in">100㎡<br>あたり</span><span class="num">49<span class="dec">.8</span></span><span class="unit">万円〜<small class="tax">（税込）</small></span></span></p>
         </div>
       </div>
