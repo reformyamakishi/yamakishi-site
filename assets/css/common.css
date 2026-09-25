@@ -689,6 +689,26 @@ address{ font-style:normal; }
 }
 .p-price__body{ display:flex; flex-direction:column; flex:1; padding:18px; }
 .p-price__name{ font-size:19px; font-weight:900; }
+/* 名前の横にそえる一言（外壁塗装の「軒天・破風・雨樋もお任せ！」）。
+   「全部コミコミ!!」と同じオレンジの枠ですが、
+   売り文句はあちらが主役なので、こちらは小さく控えめにしています。
+   （2026/09/25 ユーザー指示） */
+/* 名前と一言は、かならず横ならびにします（2026/09/25 ユーザー指示）。
+   一言のほうが文字数が多いので、名前を少しだけ小さくして場所をゆずります。 */
+.p-price__name:has(.p-price__plus){
+  display:flex; align-items:center; flex-wrap:nowrap; gap:6px; white-space:nowrap;
+  font-size:17px;
+}
+/* 読みやすさのために、背景は濃いめのオレンジにしています
+   （2026/09/25 ユーザー指摘「字が見にくい」）。
+   明るいオレンジに白い文字だと、小さい字がにじんで見えるためです。 */
+.p-price__plus{
+  display:inline-block;
+  background:var(--brand-dark); color:#fff;
+  font-size:clamp(12.5px,3.4vw,14px);
+  font-weight:800; letter-spacing:0; line-height:1.4;
+  padding:4px 11px 5px; border-radius:999px; white-space:nowrap;
+}
 .p-price__desc{ font-size:14px; color:var(--ink-sub); margin:8px 0 14px; flex:1; }
 /* 金額はカードの中央にそろえます（いちばん見せたいところなので） */
 .p-price__yen{
