@@ -65,7 +65,7 @@ function ymkrf_crumb_ld( $crumbs ) {
 }
 endif;
 
-if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '4.9.3' );   // ファイル更新時はここを上げるとキャッシュが切れます
+if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '4.9.4' );   // ファイル更新時はここを上げるとキャッシュが切れます
 
 /* ============================================================
    1. CSS / JS の読み込み
@@ -172,6 +172,14 @@ add_action( 'wp_enqueue_scripts', function () {
 	if ( is_singular( 'ymkrf_works' ) || is_post_type_archive( 'ymkrf_works' )
 	  || is_tax( array( 'ymkrf_works_cat', 'ymkrf_works_area' ) ) ) {
 		wp_enqueue_style( 'ymkrf-works', $dir . '/assets/css/works.css', array( 'ymkrf-page' ), YMKRF_VER );
+	}
+
+	/* 施工事例の記事ページは「参考になる読みもの」でコラムのカードを使うので、
+	   product.css も読みます（コラムのカードの見た目が入っています）
+	   （2026/09/25 ユーザー指示「施工事例にも参考コラムを」） */
+	if ( is_singular( 'ymkrf_works' ) ) {
+		wp_enqueue_style( 'ymkrf-product', $dir . '/assets/css/product.css',
+			array( 'ymkrf-page' ), YMKRF_VER );
 	}
 
 	/* スタッフのページ（施工事例のカードも使うので works.css も読みます） */

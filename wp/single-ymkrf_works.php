@@ -333,7 +333,15 @@ if ( function_exists( 'ymkrf_crumb_ld' ) ) {
 </section>
 <?php endif; ?>
 
-<section class="l-section l-section--soft">
+<?php
+/* 参考になる読みもの（2026/09/25 ユーザー指示
+     「施工事例にも『参考コラム』をつくったほうがよいよね？」）。
+   使った商品にひもづくコラム → 同じ部位のコラム、の順に3本。
+   1つも無いときは、見出しごと出ません。 */
+if ( function_exists( 'ymkrf_works_column_section' ) ) ymkrf_works_column_section( get_the_ID(), 3 );
+?>
+
+<section class="l-section">
   <div class="l-wrap">
     <div class="p-pagecta">
       <img class="p-pagecta__chara" src="<?php echo esc_url( $asset . '/assets/img/character/char-search-fly.webp' ); ?>"

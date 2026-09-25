@@ -112,6 +112,47 @@ endif;
 
 
 /* ============================================================
+   4-2. 新着の並びは「更新日が新しい順」にします
+        （2026/09/25 ユーザー指示）
+
+        直した記事を、また新しい記事として読んでもらうためです。
+        更新日が入っていない記事は、これまでどおり公開日でならびます。
+        トップページ・コラム一覧・記事下の「ほかのお役立ち情報」など、
+        コラムを出しているところは、まとめてこの並びになります。
+        （管理画面の一覧は、これまでどおりです）
+   ============================================================ */
+add_filter( 'posts_clauses', function ( $clauses, $q ) {
+
+	if ( is_admin() ) return $clauses;
+
+	$pt = $q->get( 'post_type' );
+	if ( is_array( $pt ) ) $pt = ( count( $pt ) === 1 ) ? reset( $pt ) : '';
+	if ( $pt !== 'ymkrf_column' ) return $clauses;
+
+	/* 並びかたを指定してある検索（人気順など）には、手を出しません */
+	$ob = $q->get( 'orderby' );
+	if ( ! in_array( $ob, array( '', 'date', 'post_date' ), true ) ) return $clauses;
+
+	global $wpdb;
+
+	if ( strpos( $clauses['join'], 'ymkrf_upd' ) === false ) {
+		$clauses['join'] .= " LEFT JOIN {$wpdb->postmeta} AS ymkrf_upd"
+			. " ON ( ymkrf_upd.post_id = {$wpdb->posts}.ID"
+			. " AND ymkrf_upd.meta_key = '_ymkrf_col_updated' ) ";
+	}
+
+	$order = ( strtoupper( (string) $q->get( 'order' ) ) === 'ASC' ) ? 'ASC' : 'DESC';
+
+	$clauses['orderby'] =
+		"GREATEST( {$wpdb->posts}.post_date,"
+		. " COALESCE( NULLIF( ymkrf_upd.meta_value, '' ), {$wpdb->posts}.post_date ) ) {$order},"
+		. " {$wpdb->posts}.post_date {$order}";
+
+	return $clauses;
+}, 10, 2 );
+
+
+/* ============================================================
    5. コラムのカード1枚分を出力します
       一覧ページ・カテゴリページの両方から使います。
    ============================================================ */
@@ -1586,3 +1627,102 @@ add_action( 'post_submitbox_misc_actions', function ( $post ) {
 	</style>
 	<?php
 } );
+
+
+/* ============================================================
+   施工事例のページに出す「参考になる読みもの」
+   ------------------------------------------------------------
+   （2026/09/25 ユーザー指示
+     「施工事例にも『参考コラム』をつくったほうがよいよね？」）
+
+   つぎの順に集めます。ダブったものは、先に見つかったほうを残します。
+
+     ① その施工事例で使った商品に、ひもづけてあるコラム
+     ② 施工事例の部位と同じ 商品カテゴリ のコラム
+        （部位と商品カテゴリは、同じ英字でそろえてあります）
+
+   ★どちらも無いときは、見出しごと出しません。
+   ============================================================ */
+if ( ! function_exists( 'ymkrf_columns_for_works' ) ) :
+function ymkrf_columns_for_works( $works_id, $n = 3 ) {
+
+	$works_id = (int) $works_id;
+	if ( ! $works_id ) return array();
+
+	$out = array();
+	$add = function ( $ids ) use ( &$out, $n ) {
+		foreach ( (array) $ids as $one ) {
+			$one = (int) $one;
+			if ( $one && ! in_array( $one, $out, true ) ) $out[] = $one;
+			if ( count( $out ) >= $n ) return;
+		}
+	};
+
+	/* ---- ① 使った商品にひもづくコラム ---- */
+	$v   = (string) get_post_meta( $works_id, '_ymkrf_products', true );
+	$pid = array_values( array_filter( array_map( 'intval', explode( ',', $v ) ) ) );
+
+	if ( $pid ) {
+		$byp = get_posts( array(
+			'post_type'      => 'ymkrf_column',
+			'post_status'    => 'publish',
+			'posts_per_page' => (int) $n,
+			'fields'         => 'ids',
+			'no_found_rows'  => true,
+			'meta_query'     => array_merge(
+				array( 'relation' => 'OR' ),
+				array_map( function ( $one ) {
+					return array( 'key' => '_ymkrf_col_product', 'value' => (string) $one );
+				}, $pid )
+			),
+		) );
+		$add( $byp );
+		if ( count( $out ) >= $n ) return $out;
+	}
+
+	/* ---- ② 同じ部位のコラム ---- */
+	$parts = wp_get_object_terms( $works_id, 'ymkrf_works_cat', array( 'fields' => 'slugs' ) );
+	if ( is_wp_error( $parts ) || ! $parts ) return $out;
+
+	$more = get_posts( array(
+		'post_type'      => 'ymkrf_column',
+		'post_status'    => 'publish',
+		'posts_per_page' => (int) $n - count( $out ),
+		'fields'         => 'ids',
+		'no_found_rows'  => true,
+		'post__not_in'   => $out ? $out : array( 0 ),
+		'tax_query'      => array( array(
+			'taxonomy' => 'ymkrf_product_cat', 'field' => 'slug', 'terms' => $parts,
+		) ),
+	) );
+	$add( $more );
+
+	return $out;
+}
+endif;
+
+/** 施工事例のページで呼びます。1つも無ければ、何も出しません */
+if ( ! function_exists( 'ymkrf_works_column_section' ) ) :
+function ymkrf_works_column_section( $works_id = 0, $n = 3 ) {
+
+	$works_id = $works_id ? (int) $works_id : (int) get_the_ID();
+	$ids      = ymkrf_columns_for_works( $works_id, $n );
+	if ( ! $ids ) return;
+	?>
+	<section class="l-section l-section--soft" id="column">
+	  <div class="l-wrap">
+	    <div class="c-head">
+	      <span class="c-head__en">COLUMN</span>
+	      <h2 class="c-head__title">このリフォームの参考になる読みもの</h2>
+	    </div>
+	    <div class="p-col__cards">
+	      <?php foreach ( $ids as $cid ) :
+	        $GLOBALS['post'] = get_post( $cid ); setup_postdata( $GLOBALS['post'] );
+	        ymkrf_column_card();
+	      endforeach; wp_reset_postdata(); ?>
+	    </div>
+	  </div>
+	</section>
+	<?php
+}
+endif;
