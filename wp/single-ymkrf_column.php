@@ -42,7 +42,11 @@ if ( function_exists( 'ymkrf_crumb_ld' ) ) {
     <div class="l-wrap l-wrap--narrow">
       <p class="p-colart__meta">
         <?php if ( $catname ) : ?><span class="p-col__tag p-col__tag--solid"><?php echo esc_html( $catname ); ?></span><?php endif; ?>
-        <time datetime="<?php echo esc_attr( get_the_date( 'c' ) ); ?>"><?php echo esc_html( get_the_date( 'Y.m.d' ) ); ?></time>
+        <?php /* 公開日と、直したときは更新日（2026/09/25 ユーザー指示）。
+                 公開日は書きかえません。積み重ねが消えてしまうためです。 */ ?>
+        <?php if ( function_exists( 'ymkrf_column_dateline' ) ) : ymkrf_column_dateline(); else : ?>
+          <time datetime="<?php echo esc_attr( get_the_date( 'c' ) ); ?>"><?php echo esc_html( get_the_date( 'Y.m.d' ) ); ?></time>
+        <?php endif; ?>
       </p>
       <h1 class="p-colart__title"><?php the_title(); ?></h1>
     </div>

@@ -128,8 +128,17 @@ function ymkrf_column_card() {
 			<?php if ( $tag ) : ?><span class="p-col__tag"><?php echo esc_html( $tag ); ?></span><?php endif; ?>
 		</div>
 		<div class="p-col__body">
-			<time class="p-col__date" datetime="<?php echo esc_attr( get_the_date( 'c' ) ); ?>">
-				<?php echo esc_html( get_the_date( 'Y.m.d' ) ); ?>
+			<?php
+			/* 一覧のカードは、直した記事なら更新日を見せます
+			   （2026/09/25 ユーザー指示。新しい記事として気づいてもらうため） */
+			$ymkrf_cd  = function_exists( 'ymkrf_column_dates' ) ? ymkrf_column_dates() : array( 'pub' => get_the_date( 'Y-m-d H:i:s' ), 'upd' => '' );
+			$ymkrf_ct  = strtotime( $ymkrf_cd['upd'] !== '' ? $ymkrf_cd['upd'] : $ymkrf_cd['pub'] );
+			$ymkrf_cis = ( $ymkrf_cd['upd'] !== '' );
+			?>
+			<time class="p-col__date<?php echo $ymkrf_cis ? ' p-col__date--upd' : ''; ?>"
+			      datetime="<?php echo esc_attr( date_i18n( 'c', $ymkrf_ct ) ); ?>">
+				<?php echo esc_html( date_i18n( 'Y.m.d', $ymkrf_ct ) ); ?><?php
+				if ( $ymkrf_cis ) echo '<small>更新</small>'; ?>
 			</time>
 			<h3 class="p-col__title"><?php the_title(); ?></h3>
 			<p class="p-col__excerpt"><?php echo esc_html( wp_trim_words( get_the_excerpt(), 60, '…' ) ); ?></p>
@@ -601,6 +610,10 @@ add_filter( 'manage_ymkrf_column_posts_columns', function ( $cols ) {
 	$new['ymkrf_writer'] = '執筆者';
 	$new['ymkrf_status'] = '状態';
 	$new['ymkrf_pub']    = '掲載日時';
+	/* 更新日（2026/09/25 ユーザー指示
+	   「ダッシュボードの一覧にも、更新日を掲載日時の横に入れて」）。
+	   リライトしたものだけ日付が入り、まだの記事は「—」です。 */
+	$new['ymkrf_upd']    = '更新日';
 
 	/* 上でならべていない列（ほかのプラグインが足したものなど）は、うしろに付けます */
 	foreach ( $cols as $key => $label ) {
@@ -624,6 +637,25 @@ add_action( 'manage_ymkrf_column_posts_custom_column', function ( $col, $post_id
 		   . esc_html( date_i18n( 'Y/m/d', $t ) ) . '</span>';
 		echo '<span style="color:#3c434a;font-size:13px">'
 		   . esc_html( date_i18n( 'H:i', $t ) ) . '</span>';
+		return;
+	}
+
+	/* ---- 更新日（リライトした日）----
+	   （2026/09/25 ユーザー指示「更新日を掲載日時の横に入れて」）
+	   公開中のコラムの 題名か本文が変わって保存されたときだけ入ります。 */
+	if ( $col === 'ymkrf_upd' ) {
+		$d = function_exists( 'ymkrf_column_dates' )
+			? ymkrf_column_dates( $post_id ) : array( 'upd' => '' );
+		if ( empty( $d['upd'] ) ) {
+			echo '<span style="color:#a7aaad">—</span>';
+			return;
+		}
+		$u = strtotime( $d['upd'] );
+		echo '<span style="display:block;color:#b32d2e;font-weight:700;'
+		   . 'font-size:14px;line-height:1.35">'
+		   . esc_html( date_i18n( 'Y/m/d', $u ) ) . '</span>';
+		echo '<span style="color:#3c434a;font-size:13px">'
+		   . esc_html( date_i18n( 'H:i', $u ) ) . '</span>';
 		return;
 	}
 
@@ -1366,3 +1398,191 @@ function ymkrf_column_product_cards( $post_id = 0 ) {
 	<?php
 }
 endif;
+
+
+/* ============================================================
+   コラムの「公開日」と「更新日」
+   ------------------------------------------------------------
+   （2026/09/25 ユーザー指示「コラム、そのように構成して」
+     ＝ リライトしたときは 公開日は そのまま、更新日を足す）
+
+   ■ なぜ公開日を書きかえないか
+     公開日を新しくすると、これまで書いてきた積み重ねが消えてしまいます。
+     古い記事ほど「長く書いている会社だ」という裏づけになるので、
+     公開日はそのまま、直した日は「更新日」として別に出します。
+     中身を直さずに日付だけ新しくするのは、逆に信用を落とします。
+
+   ■ 更新日はどうやって決まるか
+     公開中のコラムの 題名か本文が変わって保存されたときだけ、
+     その日を _ymkrf_col_updated に控えます。
+     ＝ 旧ブログの取り込みや、ちょっとした設定の直しでは動きません。
+     手で消したいときは、カスタムフィールドから消してください。
+   ============================================================ */
+
+/** 公開中のコラムの中身が変わったら、更新日を控えます */
+add_action( 'post_updated', function ( $post_id, $after, $before ) {
+
+	if ( ! $after || $after->post_type !== 'ymkrf_column' ) return;
+	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
+
+	/* 公開中 → 公開中 のときだけ。下書きを直しているあいだは動きません */
+	if ( $before->post_status !== 'publish' || $after->post_status !== 'publish' ) return;
+
+	$changed = ( $before->post_content !== $after->post_content )
+	        || ( $before->post_title   !== $after->post_title );
+	if ( ! $changed ) return;
+
+	update_post_meta( $post_id, '_ymkrf_col_updated', current_time( 'Y-m-d H:i:s' ) );
+}, 10, 3 );
+
+/**
+ * そのコラムの日付。
+ * 戻り値： array( 'pub' => 'Y-m-d H:i:s', 'upd' => 'Y-m-d H:i:s' または '' )
+ * 更新日は、公開日と同じ日のときは出しません（同じ日付が2つ並ばないように）。
+ */
+if ( ! function_exists( 'ymkrf_column_dates' ) ) :
+function ymkrf_column_dates( $post_id = 0 ) {
+
+	$post_id = $post_id ? (int) $post_id : (int) get_the_ID();
+	$p       = get_post( $post_id );
+	if ( ! $p ) return array( 'pub' => '', 'upd' => '' );
+
+	$pub = (string) $p->post_date;
+	$upd = trim( (string) get_post_meta( $post_id, '_ymkrf_col_updated', true ) );
+
+	if ( $upd !== '' && substr( $upd, 0, 10 ) <= substr( $pub, 0, 10 ) ) $upd = '';
+
+	return array( 'pub' => $pub, 'upd' => $upd );
+}
+endif;
+
+/** 一覧のカードなどで使う「見せる日付」。更新日があればそちら */
+if ( ! function_exists( 'ymkrf_column_shown_date' ) ) :
+function ymkrf_column_shown_date( $post_id = 0 ) {
+	$d = ymkrf_column_dates( $post_id );
+	return $d['upd'] !== '' ? $d['upd'] : $d['pub'];
+}
+endif;
+
+/** 記事の頭に出す「◯年◯月◯日 公開 ／ ◯年◯月◯日 更新」 */
+if ( ! function_exists( 'ymkrf_column_dateline' ) ) :
+function ymkrf_column_dateline( $post_id = 0 ) {
+
+	$d = ymkrf_column_dates( $post_id );
+	if ( $d['pub'] === '' ) return;
+
+	$pt = strtotime( $d['pub'] );
+	printf(
+		'<time class="p-colart__date" datetime="%s">%s<small>公開</small></time>',
+		esc_attr( date_i18n( 'c', $pt ) ),
+		esc_html( date_i18n( 'Y.m.d', $pt ) )
+	);
+
+	if ( $d['upd'] === '' ) return;
+
+	$ut = strtotime( $d['upd'] );
+	printf(
+		'<time class="p-colart__date p-colart__date--upd" datetime="%s">%s<small>更新</small></time>',
+		esc_attr( date_i18n( 'c', $ut ) ),
+		esc_html( date_i18n( 'Y.m.d', $ut ) )
+	);
+}
+endif;
+
+/* 検索エンジンに、公開日と更新日を伝えます（Article の構造化データ） */
+add_action( 'wp_head', function () {
+
+	if ( ! is_singular( 'ymkrf_column' ) ) return;
+
+	$id = get_the_ID();
+	$d  = ymkrf_column_dates( $id );
+	if ( $d['pub'] === '' ) return;
+
+	$ld = array(
+		'@context'      => 'https://schema.org',
+		'@type'         => 'Article',
+		'headline'      => wp_strip_all_tags( get_the_title( $id ) ),
+		'mainEntityOfPage' => get_permalink( $id ),
+		'datePublished' => date_i18n( 'c', strtotime( $d['pub'] ) ),
+		'dateModified'  => date_i18n( 'c', strtotime( $d['upd'] !== '' ? $d['upd'] : $d['pub'] ) ),
+		'publisher'     => array(
+			'@type' => 'Organization',
+			'name'  => '株式会社山岸（リフォームヤマキシ）',
+			'url'   => home_url( '/' ),
+		),
+	);
+
+	if ( has_post_thumbnail( $id ) ) {
+		$img = get_the_post_thumbnail_url( $id, 'large' );
+		if ( $img ) $ld['image'] = $img;
+	}
+
+	/* 執筆者がえらばれていれば、書いた人も伝えます */
+	if ( function_exists( 'ymkrf_column_writer_name' ) ) {
+		$who = trim( wp_strip_all_tags( (string) ymkrf_column_writer_name( $id, false ) ) );
+		if ( $who !== '' && $who !== '—' ) {
+			$ld['author'] = array( '@type' => 'Person', 'name' => $who );
+		}
+	}
+
+	echo '<script type="application/ld+json">'
+	   . wp_json_encode( $ld, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE )
+	   . '</script>' . "\n";
+}, 5 );
+
+
+/* 「更新日」の見出しを押すと、直した順にならべ替えられます
+   （2026/09/25 ユーザー指示で足した列です） */
+add_filter( 'manage_edit-ymkrf_column_sortable_columns', function ( $cols ) {
+	$cols['ymkrf_upd'] = 'ymkrf_upd';
+	return $cols;
+} );
+
+add_action( 'pre_get_posts', function ( $q ) {
+	if ( ! is_admin() || ! $q->is_main_query() ) return;
+	if ( $q->get( 'post_type' ) !== 'ymkrf_column' ) return;
+	if ( $q->get( 'orderby' ) !== 'ymkrf_upd' ) return;
+
+	/* まだ直していない記事も消えないように、「無いもの」も入れて並べます */
+	$q->set( 'meta_query', array(
+		'relation' => 'OR',
+		'has'      => array( 'key' => '_ymkrf_col_updated', 'compare' => 'EXISTS' ),
+		'none'     => array( 'key' => '_ymkrf_col_updated', 'compare' => 'NOT EXISTS' ),
+	) );
+	$q->set( 'orderby', array( 'has' => 'DESC', 'date' => 'DESC' ) );
+} );
+
+
+/* ------------------------------------------------------------
+   コラムの編集画面「公開」の枠に、投稿日の下へ最終更新日を出します
+   （2026/09/25 ユーザー指示
+     「コラム投稿ぺージにも、投稿日の下に更新日が見えるようにしてほしい」
+     「最終更新日だけで良いから」）
+
+   一覧の「更新日」の列、記事の「更新」と同じ日付です。
+   公開したあとに 題名か本文を直して更新すると入ります。
+   ------------------------------------------------------------ */
+add_action( 'post_submitbox_misc_actions', function ( $post ) {
+
+	if ( ! $post || $post->post_type !== 'ymkrf_column' ) return;
+
+	$d   = function_exists( 'ymkrf_column_dates' )
+		? ymkrf_column_dates( $post->ID ) : array( 'upd' => '' );
+	$upd = isset( $d['upd'] ) ? $d['upd'] : '';
+	?>
+	<div class="misc-pub-section ymkrf-updrow">
+	  <span class="dashicons dashicons-update" style="color:#8c8f94;vertical-align:-3px"></span>
+	  最終更新日:
+	  <?php if ( $upd !== '' ) : ?>
+	    <b class="ymkrf-updrow__day"><?php
+	      echo esc_html( date_i18n( 'Y年n月j日 H:i', strtotime( $upd ) ) ); ?></b>
+	  <?php else : ?>
+	    <b class="ymkrf-updrow__none">—</b>
+	  <?php endif; ?>
+	</div>
+	<style>
+	  .ymkrf-updrow__day{ color:#b32d2e; }
+	  .ymkrf-updrow__none{ color:#a7aaad; font-weight:400; }
+	</style>
+	<?php
+} );
