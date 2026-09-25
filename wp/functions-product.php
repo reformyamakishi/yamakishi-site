@@ -2363,6 +2363,30 @@ add_filter( 'manage_ymkrf_product_posts_columns', function ( $cols ) {
 		return $out;
 	}
 
+	/* 水まわり4点セットの一覧（2026/09/25 ユーザー指示
+	   「グレードとメーカー、展示店舗不要。キッチン、バス、トイレ、洗面台の
+	     それぞれの商品名出して。あと総額と、値引き値段と、パックにした値段だして」）
+
+	   プラン1件＝4点の組み合わせなので、ふつうの商品の列では中身が見えません。
+	   えらんである4つの商品名と、3つの金額を並べます。 */
+	if ( $cat === YMKRF_P4_CAT ) {
+
+		$out = array();
+		if ( isset( $new['cb'] ) ) $out['cb'] = $new['cb'];
+
+		$out['title'] = 'プラン名';
+		foreach ( ymkrf_p4_parts() as $part => $p ) {
+			$out[ 'ymkrf_p4_' . $part ] = $p[0];
+		}
+		$out['ymkrf_p4_was'] = '総額';
+		$out['ymkrf_p4_off'] = '値引き';
+		$out['ymkrf_p4_now'] = 'パック価格';
+		$out['ymkrf_state']  = '公開';
+		$out['date']         = '日付';
+
+		return $out;
+	}
+
 	return $new;
 } );
 
@@ -2438,6 +2462,81 @@ add_action( 'manage_ymkrf_product_posts_custom_column', function ( $col, $post_i
 	if ( $col === 'ymkrf_price' ) {
 		$t = (int) get_post_meta( $post_id, '_ymkrf_total', true );
 		echo $t ? esc_html( number_format( $t ) ) . ' 円' : '—';
+	}
+
+	/* ---- 水まわり4点セット（2026/09/25 ユーザー指示）---- */
+	if ( strpos( $col, 'ymkrf_p4_' ) === 0 ) {
+
+		$key = substr( $col, 9 );   /* kitchen / bathroom / toilet / lavatory / was / off / now */
+
+		/* 3つの金額 */
+		if ( in_array( $key, array( 'was', 'off', 'now' ), true ) ) {
+
+			/* 通常価格は、そのつど4点の合計から出します
+			   （2026/09/25 ユーザー指示。商品の価格を直したら、すぐ効くように） */
+			$was = function_exists( 'ymkrf_p4_sum' ) ? (int) ymkrf_p4_sum( $post_id ) : 0;
+			if ( ! $was ) $was = (int) get_post_meta( $post_id, '_ymkrf_p4was', true );
+			$now = (int) get_post_meta( $post_id, '_ymkrf_p4now', true );
+
+			if ( $key === 'was' ) {
+				if ( ! $was ) {
+					echo '<span style="color:#a7aaad">—</span>';
+					return;
+				}
+				echo '<span style="color:#50575e">' . esc_html( number_format( $was ) ) . ' 円</span>';
+				echo '<span style="display:block;color:#8c8f94;font-size:11.5px">4点の合計</span>';
+				return;
+			}
+
+			if ( $key === 'now' ) {
+				echo $now
+					? '<b style="color:#b32d2e;font-size:14px">' . esc_html( number_format( $now ) ) . ' 円</b>'
+					: '<span style="color:#a7aaad">—</span>';
+				return;
+			}
+
+			/* 値引き＝総額 − パック価格 */
+			if ( $was && $now && $was < $now ) {
+				echo '<b style="color:#b32d2e">要確認</b>'
+				   . '<span style="display:block;color:#b32d2e;font-size:11.5px">'
+				   . 'パック価格のほうが ' . esc_html( number_format( $now - $was ) )
+				   . ' 円 高いです</span>';
+				return;
+			}
+			if ( ! $was || ! $now || $was === $now ) {
+				echo '<span style="color:#a7aaad">—</span>';
+				return;
+			}
+			$off = $was - $now;
+			echo '<b style="color:#0a6b2d">&minus;' . esc_html( number_format( $off ) ) . ' 円</b>';
+			echo '<span style="display:block;color:#50575e;font-size:11.5px">'
+			   /* 小数第1位まで出します（2026/09/25 ユーザー指示）。
+			      整数だと 1% と 1.4% の差が分からなかったためです。 */
+			   . esc_html( number_format( $off / $was * 100, 1 ) ) . '% お得</span>';
+			return;
+		}
+
+		/* 4点それぞれの商品名 */
+		$pid = (int) get_post_meta( $post_id, ymkrf_p4_key( $key ), true );
+		if ( ! $pid || get_post_status( $pid ) === false ) {
+			echo '<span style="color:#a7aaad">—</span>';
+			return;
+		}
+
+		$name = trim( (string) get_post_meta( $pid, '_ymkrf_name', true ) );
+		if ( $name === '' ) $name = get_the_title( $pid );
+
+		$edit = get_edit_post_link( $pid );
+		echo $edit
+			? '<a href="' . esc_url( $edit ) . '">' . esc_html( $name ) . '</a>'
+			: esc_html( $name );
+
+		$total = (int) get_post_meta( $pid, '_ymkrf_total', true );
+		if ( $total ) {
+			echo '<span style="display:block;color:#50575e;font-size:11.5px">'
+			   . esc_html( number_format( $total ) ) . ' 円</span>';
+		}
+		return;
 	}
 }, 10, 2 );
 
@@ -3624,6 +3723,100 @@ function ymkrf_cat_url( $slug ) {
 
 	$url = get_term_link( $term );
 	return is_wp_error( $url ) ? ymkrf_products_url() : $url;
+}
+endif;
+
+/* ------------------------------------------------------------
+   カテゴリのいちばん安い価格（トップページの「◯◯万円〜」に使います）
+
+   （2026/09/25 ユーザー指摘「4点セットの値段が旧価格のまま」
+     「商品自体はすでに更新済です」）
+
+   前はトップページに数字を直接書いていたので、商品の価格を直しても
+   古いままでした。いまは登録してある商品から、そのつど拾います。
+   商品を保存すると、控え（1時間）を捨てて数え直します。
+   ------------------------------------------------------------ */
+if ( ! function_exists( 'ymkrf_cat_min_price' ) ) :
+function ymkrf_cat_min_price( $slug ) {
+
+	$slug = sanitize_title( $slug );
+	if ( $slug === '' ) return 0;
+
+	$cache = 'ymkrf_minprice_' . $slug;
+	$hit   = get_transient( $cache );
+	if ( $hit !== false ) return (int) $hit;
+
+	$term = get_term_by( 'slug', $slug, 'ymkrf_product_cat' );
+	if ( ! $term || is_wp_error( $term ) ) return 0;
+
+	/* 4点セットは「セット価格」、ほかの商品は「込み価格」を見ます */
+	$key = ( $slug === 'pack4' ) ? '_ymkrf_p4now' : '_ymkrf_total';
+
+	global $wpdb;
+	$min = (int) $wpdb->get_var( $wpdb->prepare(
+		"SELECT MIN( CAST( pm.meta_value AS SIGNED ) )
+		   FROM {$wpdb->postmeta} AS pm
+		   INNER JOIN {$wpdb->posts} AS p ON p.ID = pm.post_id
+		   INNER JOIN {$wpdb->term_relationships} AS tr ON tr.object_id = p.ID
+		  WHERE pm.meta_key = %s
+		    AND pm.meta_value <> ''
+		    AND CAST( pm.meta_value AS SIGNED ) > 0
+		    AND p.post_type = 'ymkrf_product'
+		    AND p.post_status = 'publish'
+		    AND tr.term_taxonomy_id = %d",
+		$key, $term->term_taxonomy_id
+	) );
+
+	set_transient( $cache, $min, HOUR_IN_SECONDS );
+	return $min;
+}
+endif;
+
+/** 商品を保存したら、控えを捨てて数え直させます */
+add_action( 'save_post_ymkrf_product', function ( $post_id ) {
+
+	$terms = wp_get_object_terms( $post_id, 'ymkrf_product_cat', array( 'fields' => 'slugs' ) );
+	if ( is_wp_error( $terms ) ) return;
+	foreach ( $terms as $s ) delete_transient( 'ymkrf_minprice_' . $s );
+
+	/* 4点セットは中身の商品が変わっても金額が動くので、いつも捨てます */
+	delete_transient( 'ymkrf_minprice_pack4' );
+}, 30 );
+
+/**
+ * 「◯◯.◯万円〜」の数字を出します（トップページのカード用）。
+ *
+ * 10万円以上は小数第1位まで、それより下は第2位まで。
+ * 切り上げると実際より高く見えてしまうので、切り捨てにしています。
+ *
+ * $fallback … 商品がまだ登録されていないときに出す数字（例 '59.8'）
+ */
+if ( ! function_exists( 'ymkrf_price_man' ) ) :
+function ymkrf_price_man( $slug, $fallback = '' ) {
+
+	$yen = ymkrf_cat_min_price( $slug );
+	if ( ! $yen ) return $fallback;
+
+	$man = $yen / 10000;
+	$dp  = ( $man >= 10 ) ? 1 : 2;
+	$cut = floor( $man * pow( 10, $dp ) ) / pow( 10, $dp );
+
+	/* うしろの 0 は消します（62.80 → 62.8、85.00 → 85） */
+	return rtrim( rtrim( number_format( $cut, $dp, '.', '' ), '0' ), '.' );
+}
+endif;
+
+/** 上の数字を、整数のところと小数のところに分けて出します */
+if ( ! function_exists( 'ymkrf_price_man_html' ) ) :
+function ymkrf_price_man_html( $slug, $fallback = '' ) {
+
+	$s = ymkrf_price_man( $slug, $fallback );
+	if ( $s === '' ) return;
+
+	$p = explode( '.', $s );
+	echo '<span class="num">' . esc_html( $p[0] );
+	if ( isset( $p[1] ) ) echo '<span class="dec">.' . esc_html( $p[1] ) . '</span>';
+	echo '</span>';
 }
 endif;
 
@@ -5234,6 +5427,23 @@ add_action( 'admin_head-edit.php', function () {
 	$s = get_current_screen();
 	if ( ! $s || $s->post_type !== 'ymkrf_product' ) return;
 	echo '<style>.post-type-ymkrf_product .subsubsub{display:none !important}</style>' . "\n";
+
+	/* 水まわり4点セットの一覧は、列のはばをそろえます
+	   （2026/09/25 ユーザー指示で列を入れかえたため） */
+	$cat = isset( $_GET['ymkrf_product_cat'] )
+		? sanitize_title( wp_unslash( $_GET['ymkrf_product_cat'] ) ) : '';
+	if ( $cat !== YMKRF_P4_CAT ) return;
+
+	echo '<style>
+	/* プラン名がせまいと、下の「編集｜クイック編集…」がたてに折り返して
+	   行がむだに高くなるので、ここは広めに取ります */
+	.post-type-ymkrf_product .column-title{width:auto;min-width:15em}
+	.column-ymkrf_p4_kitchen,.column-ymkrf_p4_bathroom,
+	.column-ymkrf_p4_toilet,.column-ymkrf_p4_lavatory{width:10.5em}
+	.column-ymkrf_p4_was,.column-ymkrf_p4_off,.column-ymkrf_p4_now{width:7.5em}
+	.column-ymkrf_state{width:5em}
+	.column-date{width:8.5em}
+	</style>' . "\n";
 } );
 
 

@@ -24,6 +24,8 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
 require_once get_stylesheet_directory() . '/inc/functions-snippet.php';
 require_once get_stylesheet_directory() . '/inc/functions-product.php';
+/* 商品一覧を、行をつかんで並べかえられるようにします */
+require_once get_stylesheet_directory() . '/inc/functions-product-sort.php';
 require_once get_stylesheet_directory() . '/inc/functions-product-koji.php';
 require_once get_stylesheet_directory() . '/inc/functions-outerwall.php';
 require_once get_stylesheet_directory() . '/inc/functions-pack4.php';

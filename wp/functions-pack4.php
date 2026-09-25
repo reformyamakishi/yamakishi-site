@@ -560,6 +560,43 @@ add_action( 'save_post_ymkrf_product', function ( $post_id ) {
    5. ほかから使うための取り出し口
    ============================================================ */
 
+/* ------------------------------------------------------------
+   商品の価格を直したら、その商品を使っているプランの
+   「通常価格」の控えも、いっしょに書きかえます。
+
+   （2026/09/25 ユーザー指示「商品パックの値段、修正しました。
+     4点セットにも反映して」）
+
+   画面に出る金額は、そのつど数え直すので、この控えが無くても
+   正しく出ます。それでも合わせておくのは、あとから見たときに
+   数字が食いちがっていると、まぎらわしいためです。
+   ------------------------------------------------------------ */
+add_action( 'save_post_ymkrf_product', function ( $post_id, $post ) {
+
+	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
+	if ( wp_is_post_revision( $post_id ) ) return;
+	if ( ! $post || $post->post_type !== 'ymkrf_product' ) return;
+
+	/* プランそのものを保存したときは、もとから書きかえています */
+	if ( has_term( YMKRF_P4_CAT, 'ymkrf_product_cat', $post_id ) ) return;
+
+	$keys = array();
+	foreach ( array_keys( ymkrf_p4_parts() ) as $part ) $keys[] = ymkrf_p4_key( $part );
+
+	global $wpdb;
+	$in  = "'" . implode( "','", array_map( 'esc_sql', $keys ) ) . "'";
+	$ids = $wpdb->get_col( $wpdb->prepare(
+		"SELECT DISTINCT post_id FROM {$wpdb->postmeta}
+		 WHERE meta_key IN ( {$in} ) AND meta_value = %s",
+		(string) $post_id
+	) );
+
+	foreach ( $ids as $plan_id ) {
+		update_post_meta( (int) $plan_id, '_ymkrf_p4was', ymkrf_p4_sum( (int) $plan_id ) );
+	}
+}, 20, 2 );
+
+
 /** 登録されているプランを、並び順で返します */
 function ymkrf_p4_plans() {
 
@@ -596,20 +633,20 @@ function ymkrf_p4_best() {
  */
 function ymkrf_p4_prices( $plan_id ) {
 
-	$was = (int) get_post_meta( $plan_id, '_ymkrf_p4was', true );
 	$now = (int) get_post_meta( $plan_id, '_ymkrf_p4now', true );
 
-	/* 通常価格が入っていないときは、4点の合計から出します */
-	if ( ! $was ) {
-		foreach ( ymkrf_p4_items( $plan_id ) as $one ) {
-			$t = (int) get_post_meta( $one[2], '_ymkrf_total', true );
-			if ( ! $t ) {
-				$t = (int) get_post_meta( $one[2], '_ymkrf_work', true )
-				   + (int) get_post_meta( $one[2], '_ymkrf_item', true );
-			}
-			$was += $t;
-		}
-	}
+	/* 通常価格は、そのつど4点の合計から出します
+	   （2026/09/25 ユーザー指示「商品パックの値段、修正しました。
+	     4点セットにも反映して」）。
+
+	   前は、プランを保存したときの合計を控えておいて、それを使っていました。
+	   そのため、あとから商品の価格を直しても、4点セットの通常価格は
+	   古いままになっていました。いまはそのつど数えるので、
+	   商品の価格を直せば、4点セットにもすぐ反映されます。 */
+	$was = ymkrf_p4_sum( $plan_id );
+
+	/* 数えられなかったとき（商品が消えたときなど）は、控えのほうを使います */
+	if ( ! $was ) $was = (int) get_post_meta( $plan_id, '_ymkrf_p4was', true );
 
 	return array(
 		'was' => $was,

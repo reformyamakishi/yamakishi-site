@@ -21,21 +21,21 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 $plan_id = get_the_ID();
 $items   = function_exists( 'ymkrf_p4_items' ) ? ymkrf_p4_items( $plan_id ) : array();
 
-$was = (int) get_post_meta( $plan_id, '_ymkrf_p4was', true );
-$now = (int) get_post_meta( $plan_id, '_ymkrf_p4now', true );
+/* 通常価格は、そのつど4点の合計から出します
+   （2026/09/25 ユーザー指示「商品パックの値段、修正しました。
+     4点セットにも反映して」）。
+   商品の価格を直せば、このページにもすぐ反映されます。 */
+$ymkrf_p4p = function_exists( 'ymkrf_p4_prices' )
+	? ymkrf_p4_prices( $plan_id )
+	: array(
+		'was' => (int) get_post_meta( $plan_id, '_ymkrf_p4was', true ),
+		'now' => (int) get_post_meta( $plan_id, '_ymkrf_p4now', true ),
+		'off' => 0,
+	);
 
-/* 通常価格が入っていないときは、4点の合計から出します */
-if ( ! $was ) {
-	foreach ( $items as $one ) {
-		$t = (int) get_post_meta( $one[2], '_ymkrf_total', true );
-		if ( ! $t ) {
-			$t = (int) get_post_meta( $one[2], '_ymkrf_work', true )
-			   + (int) get_post_meta( $one[2], '_ymkrf_item', true );
-		}
-		$was += $t;
-	}
-}
-$off = ( $was && $now && $was > $now ) ? $was - $now : 0;
+$was = (int) $ymkrf_p4p['was'];
+$now = (int) $ymkrf_p4p['now'];
+$off = (int) $ymkrf_p4p['off'];
 
 /* ほかのプラン */
 $others = get_posts( array(
