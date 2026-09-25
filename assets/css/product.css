@@ -2388,3 +2388,21 @@ body.term-pack4 .p-cat__card:hover .p-cat__cardlink{
   font-size:13.5px; font-weight:800; color:var(--brand); background:#fff;
 }
 .p-colprd__card:hover .p-colprd__go{ background:var(--brand); color:#fff; }
+
+/* ==========================================================================
+   コラムの「公開日 ／ 更新日」
+   （2026/09/25 ユーザー指示。公開日はそのまま、直した日を別に出します）
+   ========================================================================== */
+.p-colart__meta{ flex-wrap:wrap; gap:8px 12px; }
+.p-colart__date small{
+  margin-left:4px; font-size:10.5px; font-weight:700; letter-spacing:.04em;
+  color:var(--ink-light);
+}
+/* 更新日は、少し目立たせます（新しく直した記事だと分かるように） */
+.p-colart__date--upd{ color:var(--brand); }
+.p-colart__date--upd small{ color:var(--brand); }
+/* 一覧カードの日付。更新日のときだけ「更新」と添えます */
+.p-col__date small{
+  margin-left:3px; font-size:10px; font-weight:700; letter-spacing:.04em;
+}
+.p-col__date--upd{ color:var(--brand); }
