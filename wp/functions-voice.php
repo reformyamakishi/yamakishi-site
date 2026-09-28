@@ -1021,6 +1021,40 @@ function ymkrf_voice_illust_unique( $file ) {
 }
 
 /* お客様イメージのイラスト（無ければ空） */
+/**
+ * イラストを、えらんでいないお客様にも出します。
+ *
+ * （2026/09/28 ユーザー指示
+ *   「フロントで同じような工事の、ほかのお客様の声 で4つ出ていますが、
+ *     お客様のイラストを左端に入れて」）
+ *
+ * 古いお客様の声（取り込んだぶん）は、イラストをえらんでいません。
+ * そのままだと、カードの左はしがぽっかり空いてしまいます。
+ * ここでは、工事の中身に合うものを1つ選んで、そのお客様に覚えさせます。
+ * 一度決まれば、次からも同じ絵になります。
+ */
+function ymkrf_voice_illust_img_any( $post_id, $size = 96 ) {
+
+	$html = ymkrf_voice_illust_img( $post_id, $size );
+	if ( $html !== '' ) return $html;
+
+	$dir  = ymkrf_voice_illust_dir();
+	$pick = trim( (string) get_post_meta( $post_id, '_ymkrf_illust_pick', true ) );
+
+	if ( $pick === '' || ! file_exists( $dir . '/' . $pick ) ) {
+		$pick = ymkrf_voice_illust_choose( $post_id );
+		if ( $pick !== '' ) update_post_meta( $post_id, '_ymkrf_illust_pick', $pick );
+	}
+	if ( $pick === '' || ! file_exists( $dir . '/' . $pick ) ) return '';
+
+	/* 同じページの中で同じ絵が並ばないように、少しずらします */
+	$pick = ymkrf_voice_illust_unique( $pick );
+
+	return '<img class="p-voice__illust" src="' . esc_url( ymkrf_voice_illust_url() . '/' . $pick ) . '"'
+	     . ' width="' . (int) $size . '" height="' . (int) $size . '"'
+	     . ' alt="" loading="lazy" decoding="async">';
+}
+
 function ymkrf_voice_illust_img( $post_id, $size = 96 ) {
 
 	$f = ymkrf_voice_illust_file( $post_id );

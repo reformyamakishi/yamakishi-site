@@ -326,3 +326,115 @@ function ymkrf_ok_page() {
 	</div>
 	<?php
 }
+
+
+/* ============================================================
+   6. 編集画面にも「確認」のチェック欄を出します
+   ------------------------------------------------------------
+   （2026/09/28 ユーザー指示
+     「確認作業が終わるまで一旦、お客様の声の編集ぺージにも、
+       各人✓欄が欲しい」）
+
+   1件ずつ開いて中身を見たあと、そのまま「更新」を押せば
+   チェックが入ります。一覧に戻る必要はありません。
+
+   一覧の「確認」の列と、同じ印（_ymkrf_ok）です。
+   どちらで入れても、もう片方にも出ます。
+   ============================================================ */
+add_action( 'post_submitbox_misc_actions', function ( $post ) {
+
+	if ( ! $post || ! in_array( $post->post_type, ymkrf_ok_types(), true ) ) return;
+	if ( ! current_user_can( 'edit_post', $post->ID ) ) return;
+
+	$on = get_post_meta( $post->ID, '_ymkrf_ok', true ) === '1';
+	$by = (string) get_post_meta( $post->ID, '_ymkrf_ok_by', true );
+	$at = (string) get_post_meta( $post->ID, '_ymkrf_ok_at', true );
+
+	wp_nonce_field( 'ymkrf_okbox', 'ymkrf_okbox_nonce' );
+	?>
+	<div class="misc-pub-section ymkrf-okbox">
+	  <label>
+	    <input type="checkbox" name="ymkrf_ok_box" value="1" <?php checked( $on ); ?>>
+	    <b>このページは確認しました</b>
+	  </label>
+	  <span class="ymkrf-okbox__help">
+	    <?php if ( $on && $at !== '' ) : ?>
+	      <?php echo esc_html( $at ); ?>
+	      <?php echo $by !== '' ? esc_html( '（' . $by . '）' ) : ''; ?>
+	    <?php else : ?>
+	      中身を見たら、チェックを入れて「更新」を押してください。
+	    <?php endif; ?>
+	  </span>
+	</div>
+	<style>
+	  .ymkrf-okbox label{ font-weight:600; }
+	  .ymkrf-okbox__help{
+	    display:block; margin:1px 0 0 22px; color:#646970; font-size:11.5px; line-height:1.5;
+	  }
+	</style>
+	<?php
+}, 5 );
+
+add_action( 'save_post', function ( $post_id, $post ) {
+
+	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
+	if ( wp_is_post_revision( $post_id ) ) return;
+	if ( ! $post || ! in_array( $post->post_type, ymkrf_ok_types(), true ) ) return;
+
+	/* クイック編集や一括編集のときは、この欄が無いのでさわりません */
+	if ( ! isset( $_POST['ymkrf_okbox_nonce'] ) ) return;
+	if ( ! wp_verify_nonce( sanitize_key( wp_unslash( $_POST['ymkrf_okbox_nonce'] ) ), 'ymkrf_okbox' ) ) return;
+	if ( ! current_user_can( 'edit_post', $post_id ) ) return;
+
+	$on  = ! empty( $_POST['ymkrf_ok_box'] );
+	$was = get_post_meta( $post_id, '_ymkrf_ok', true ) === '1';
+
+	if ( $on === $was ) return;   /* 変わっていなければ、日付も名前もそのまま */
+
+	if ( $on ) {
+		$u = wp_get_current_user();
+		update_post_meta( $post_id, '_ymkrf_ok', '1' );
+		update_post_meta( $post_id, '_ymkrf_ok_by', ( $u && $u->display_name ) ? $u->display_name : '' );
+		update_post_meta( $post_id, '_ymkrf_ok_at', wp_date( 'Y/m/d' ) );
+	} else {
+		delete_post_meta( $post_id, '_ymkrf_ok' );
+		delete_post_meta( $post_id, '_ymkrf_ok_by' );
+		delete_post_meta( $post_id, '_ymkrf_ok_at' );
+	}
+}, 20, 2 );
+
+
+/* ============================================================
+   7. 編集画面のパーマリンクは、新しいタブで開きます
+   ------------------------------------------------------------
+   （2026/09/28 ユーザー指示
+     「パーマリンクをクリックしたら新しいウィンドウで開くようにして」）
+
+   1件ずつ見ていくとき、同じタブで開くと編集画面が消えてしまい、
+   いちいち「戻る」を押すことになります。別のタブで開けば、
+   見おわったら閉じるだけで、編集画面にそのまま戻れます。
+
+   題名の下の「パーマリンク」と、上の「投稿を表示」の両方です。
+   ============================================================ */
+add_action( 'admin_footer-post.php', 'ymkrf_permalink_blank' );
+add_action( 'admin_footer-post-new.php', 'ymkrf_permalink_blank' );
+
+function ymkrf_permalink_blank() {
+	?>
+	<script>
+	jQuery(function ($) {
+	  function mark() {
+	    $('#sample-permalink a, #view-post-btn a, #wp-admin-bar-view a')
+	      .attr('target', '_blank')
+	      .attr('rel', 'noopener');
+	  }
+	  mark();
+	  /* URLを直したあとに作り直されるので、そのときも付けなおします */
+	  $(document).on('click', '#edit-slug-buttons .save, #editable-post-name-full', function () {
+	    setTimeout(mark, 300);
+	  });
+	  setTimeout(mark, 1200);
+	});
+	</script>
+	<?php
+}

@@ -68,6 +68,14 @@ if ( function_exists( 'ymkrf_crumb_ld' ) ) {
       <div class="p-voice__headtxt">
         <h1 class="p-pagehead__title"><?php the_title(); ?></h1>
         <div class="p-voice__headstars"><?php echo ymkrf_stars( $score ); ?></div>
+        <?php
+        /* アンケートに点数のご記入がなかったときは、そのことをおことわりします
+           （2026/09/28 ユーザー指示「点数の下に小さく」）。
+           点数を書いてくださったお客様のページには出しません。 */
+        $ymkrf_raw = get_post_meta( $id, '_ymkrf_score', true );
+        if ( $score && ( $ymkrf_raw === '' || $ymkrf_raw === null ) ) : ?>
+          <p class="p-voice__headnote">※ アンケートに点数のご記入がなかったため、各項目のご評価から算出しています。</p>
+        <?php endif; ?>
         <?php if ( $shop ) : ?>
           <p class="p-voice__headshop">施工店舗：<?php echo esc_html( $shop ); ?></p>
         <?php endif; ?>
@@ -237,14 +245,26 @@ if ( function_exists( 'ymkrf_crumb_ld' ) ) {
     <div class="p-voice__rel">
       <?php foreach ( $rel as $r ) :
         $rp = ymkrf_voice_meta_array( $r->ID, '_ymkrf_parts' );
-        $rc = ymkrf_voice_customer_label( $r->ID ); ?>
+        $rc = ymkrf_voice_customer_label( $r->ID );
+        $rs = ymkrf_voice_score( $r->ID );
+        /* ご感想をひと言だけ（2026/09/28 ユーザー指示
+           「文章も少しだけでよいので表示できない？」）。
+           カードの高さは変えたくないので、1行に収めて、
+           入りきらないぶんは「…」で切ります（CSSで切っています）。 */
+        $re = function_exists( 'ymkrf_voice_excerpt' ) ? ymkrf_voice_excerpt( $r->ID, 60 ) : ''; ?>
         <a class="p-voice__relcard" href="<?php echo esc_url( get_permalink( $r ) ); ?>">
-          <?php echo ymkrf_voice_illust_img( $r->ID, 56 ); ?>
+          <?php /* イラストをえらんでいないお客様にも出します
+                   （2026/09/28 ユーザー指示） */ ?>
+          <?php echo ymkrf_voice_illust_img_any( $r->ID, 56 ); ?>
           <span class="p-voice__reltxt">
             <span class="p-voice__relttl"><?php echo esc_html( $rp ? implode( '・', $rp ) : ymkrf_voice_short_title( $r ) ); ?></span>
             <?php if ( $rc ) : ?><span class="p-voice__relsub"><?php echo esc_html( $rc ); ?></span><?php endif; ?>
+            <?php if ( $re !== '' ) : ?><span class="p-voice__relcmt"><?php echo esc_html( $re ); ?></span><?php endif; ?>
           </span>
-          <?php echo ymkrf_stars( ymkrf_voice_score( $r->ID ), false ); ?>
+          <?php /* 点数が無いお客様は、からっぽの星を並べても
+                   「0点」に見えてしまうので、星ごと出しません
+                   （2026/09/28 ユーザー指示「★の色も同期して」） */ ?>
+          <?php if ( $rs ) echo ymkrf_stars( $rs, false ); ?>
         </a>
       <?php endforeach; ?>
     </div>

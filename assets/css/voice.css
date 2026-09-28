@@ -38,6 +38,14 @@
 
 /* 詳細 */
 .p-voice__headstars{ margin-top:10px; }
+/* 点数の下のおことわり（2026/09/28 ユーザー指示）。
+   売り文句ではないので、小さく・うすい色で控えめに置きます。 */
+.p-voice__headnote{
+  margin:8px 0 0; font-size:12px; line-height:1.7; color:var(--ink-sub);
+}
+@media (min-width:768px){
+  .p-voice__headnote{ font-size:12.5px; }
+}
 /* 見出しの星と点数。パソコンでは点数を大きく出します */
 .p-voice__headstars .c-stars{ font-size:22px; letter-spacing:3px; }
 .p-voice__headstars .c-stars__score{
@@ -335,6 +343,12 @@
 .p-voice__reltxt{ flex:1 1 auto; min-width:0; }
 .p-voice__relttl{ display:block; font-size:15px; font-weight:900; }
 .p-voice__relsub{ display:block; margin-top:2px; font-size:12.5px; color:var(--ink-sub); }
+/* ご感想をひと言だけ（2026/09/28 ユーザー指示）。
+   カードの高さを変えないよう、1行に収めて、あふれたぶんは「…」にします。 */
+.p-voice__relcmt{
+  display:block; margin-top:3px; font-size:12px; line-height:1.5; color:var(--ink-sub);
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
 .p-voice__relcard .c-starsrow{ flex:0 0 auto; }
 .p-voice__relcard .c-stars{ font-size:14px; }
 

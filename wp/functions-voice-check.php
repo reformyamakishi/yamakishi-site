@@ -533,15 +533,17 @@ add_action( 'manage_ymkrf_voice_posts_custom_column', function ( $col, $post_id 
 	$w   = ! empty( $m['width'] ) ? (int) $m['width'] : 0;
 	$low = ymkrf_vchk_lowres( $post_id );
 
+	/* 写真は出しません（2026/09/28 ユーザー指示「アンケート画像不要です」）。
+	   一覧が重くなるうえ、小さすぎて中身は読めないためです。
+	   見たいときは「画像を見る」から開けます。 */
 	echo '<div style="display:flex;gap:8px;align-items:flex-start">';
+	echo '<span style="font-size:12px;line-height:1.6">';
 	if ( $url ) {
 		printf(
-			'<a href="%s" target="_blank" rel="noopener"><img src="%s" width="60" height="42" '
-			. 'style="width:60px;height:auto;border:1px solid #dcdcde;border-radius:3px" alt=""></a>',
-			esc_url( wp_get_attachment_url( $att ) ), esc_url( $url )
+			'<a href="%s" target="_blank" rel="noopener">画像を見る</a><br>',
+			esc_url( wp_get_attachment_url( $att ) )
 		);
 	}
-	echo '<span style="font-size:12px;line-height:1.6">';
 	if ( $low ) {
 		echo '<b style="color:#b32d2e">解像度が低い</b><br>'
 		   . '<span style="color:#b32d2e">' . (int) $low . 'px<br>スキャンし直し</span>';
