@@ -40,6 +40,8 @@ require_once get_stylesheet_directory() . '/inc/functions-column-links.php';
 /* ↓ 旧ブログ（コラム）の取り込み。終わったらこの行とファイルを消してください */
 require_once get_stylesheet_directory() . '/inc/functions-column-import.php';
 require_once get_stylesheet_directory() . '/inc/functions-news.php';
+/* 案件番号（お客様の声と施工事例をつなぐ番号）。カンマ区切りに対応します */
+require_once get_stylesheet_directory() . '/inc/functions-case-no.php';
 require_once get_stylesheet_directory() . '/inc/functions-voice.php';
 /* ↓ 本番サイトからのお客様の声の取り込み。
       制作中はいまのサイトにも登録されるので、

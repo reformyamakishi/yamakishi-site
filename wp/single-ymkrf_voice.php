@@ -257,14 +257,20 @@ if ( function_exists( 'ymkrf_crumb_ld' ) ) {
                    （2026/09/28 ユーザー指示） */ ?>
           <?php echo ymkrf_voice_illust_img_any( $r->ID, 56 ); ?>
           <span class="p-voice__reltxt">
-            <span class="p-voice__relttl"><?php echo esc_html( $rp ? implode( '・', $rp ) : ymkrf_voice_short_title( $r ) ); ?></span>
+            <?php /* ★は、いちばん上の行の左はしに置きます
+                     （2026/09/29 ユーザー指示「★の評価も左上に出してほしい
+                       枠の大きさは変更しないで」）。
+                     行を増やすとカードが高くなるので、工事箇所と同じ行に
+                     並べています。
+                     点数が無いお客様は、からっぽの星が「0点」に見えるので
+                     星ごと出しません。 */ ?>
+            <span class="p-voice__reltop">
+              <?php if ( $rs ) echo ymkrf_stars( $rs, false ); ?>
+              <span class="p-voice__relttl"><?php echo esc_html( $rp ? implode( '・', $rp ) : ymkrf_voice_short_title( $r ) ); ?></span>
+            </span>
             <?php if ( $rc ) : ?><span class="p-voice__relsub"><?php echo esc_html( $rc ); ?></span><?php endif; ?>
             <?php if ( $re !== '' ) : ?><span class="p-voice__relcmt"><?php echo esc_html( $re ); ?></span><?php endif; ?>
           </span>
-          <?php /* 点数が無いお客様は、からっぽの星を並べても
-                   「0点」に見えてしまうので、星ごと出しません
-                   （2026/09/28 ユーザー指示「★の色も同期して」） */ ?>
-          <?php if ( $rs ) echo ymkrf_stars( $rs, false ); ?>
         </a>
       <?php endforeach; ?>
     </div>

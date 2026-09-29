@@ -282,7 +282,10 @@ function ymkrf_voice_metabox( $post ) {
 	             value="<?php echo esc_attr( $get( '_ymkrf_case_no' ) ); ?>"
 	             placeholder="例：2604-0180"></label>
 	    <span class="description">
-	      画像のファイル名から自動で入ります。同じ番号の施工事例を登録すると、自動でリンクします。
+	      画像のファイル名から自動で入ります。同じ番号の施工事例を登録すると、自動でリンクします。<br>
+	      <?php /* 2026/09/29 ユーザー指示 */ ?>
+	      1枚のアンケートに工事が2つ以上あるときは、<b>カンマで区切って</b>入れてください
+	      （例：2604-0365,2605-0083）。どちらの施工事例にもつながります。
 	    </span>
 	  </p>
 
@@ -1087,6 +1090,22 @@ function ymkrf_voice_shop_name( $post_id ) {
  *   見つからないときは何も出しません）
  */
 function ymkrf_voice_linked_works( $post_id ) {
+
+	/* カンマ区切りで2つ以上の案件番号が入っていても、
+	   1つでも重なっている施工事例をぜんぶ出します
+	   （2026/09/29 ユーザー指示） */
+	if ( function_exists( 'ymkrf_case_linked' ) ) {
+		$ids = ymkrf_case_linked( $post_id, 'ymkrf_works', 5 );
+		if ( ! $ids ) return array();
+		return get_posts( array(
+			'post_type'      => 'ymkrf_works',
+			'post__in'       => $ids,
+			'orderby'        => 'post__in',
+			'posts_per_page' => 5,
+			'post_status'    => 'publish',
+		) );
+	}
+
 	$no = trim( (string) get_post_meta( $post_id, '_ymkrf_case_no', true ) );
 	if ( $no === '' ) return array();
 	return get_posts( array(
@@ -1144,6 +1163,11 @@ add_action( 'save_post_ymkrf_voice', function ( $post_id ) {
  * 下書きのものも数えます（一覧で「もう入れたかどうか」を見たいので）。
  */
 function ymkrf_linked_by_case_no( $case_no, $post_type ) {
+	/* カンマ区切りで2つ以上入っていても、1つでも重なればつながります
+	   （2026/09/29 ユーザー指示。中身は inc/functions-case-no.php） */
+	if ( function_exists( 'ymkrf_case_find' ) ) {
+		return ymkrf_case_find( $case_no, $post_type, 5 );
+	}
 	$no = trim( (string) $case_no );
 	if ( $no === '' ) return array();
 	return get_posts( array(
@@ -1162,7 +1186,9 @@ function ymkrf_linked_by_case_no( $case_no, $post_type ) {
  *   —  ……… 案件番号が入っていないので、つなげられません
  */
 function ymkrf_case_link_cell( $post_id, $target_type ) {
-	$no = trim( (string) get_post_meta( $post_id, '_ymkrf_case_no', true ) );
+	$no = function_exists( 'ymkrf_case_no_list' )
+		? implode( ',', ymkrf_case_no_list( $post_id ) )
+		: trim( (string) get_post_meta( $post_id, '_ymkrf_case_no', true ) );
 	if ( $no === '' ) {
 		return '<span style="color:#a7aaad" title="案件番号が入っていないので、つなげられません">—</span>';
 	}

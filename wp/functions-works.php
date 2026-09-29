@@ -2204,7 +2204,11 @@ function ymkrf_works_metabox( $post ) {
 	        <input type="text" name="_ymkrf_case_no" value="<?php echo esc_attr( $get( '_ymkrf_case_no' ) ); ?>" class="regular-text">
 	        <p class="description">
 	          URLの後半になります（例：/works/kitchen/2604-0180/）。<br>
-	          <b>お客様の声と同じ番号を入れると、おたがいに自動でリンクします。</b>
+	          <b>お客様の声と同じ番号を入れると、おたがいに自動でリンクします。</b><br>
+	          <?php /* 2026/09/29 ユーザー指示 */ ?>
+	          1つの工事に番号が2つ以上あるときは、
+	          <b>カンマで区切って</b>入れてください（例：2604-0365,2605-0083）。<br>
+	          URLには、いちばん最初の番号を使います。
 	        </p>
 	      </td>
 	    </tr>
@@ -3508,8 +3512,14 @@ add_action( 'admin_init', function () {
 
 /** URLの後半（＝案件番号）。番号が無いときは w-123 のようにします */
 function ymkrf_works_make_slug( $post_id ) {
-	$no = strtolower( preg_replace( '/[^0-9A-Za-z-]/', '',
-		(string) get_post_meta( $post_id, '_ymkrf_case_no', true ) ) );
+
+	/* 番号が2つ以上（カンマ区切り）のときは、いちばん最初の番号を使います。
+	   URLは1つに決まっていないと、あとから変えられなくなるためです
+	   （2026/09/29 ユーザー指示） */
+	$nos = function_exists( 'ymkrf_case_no_list' ) ? ymkrf_case_no_list( $post_id ) : array();
+	$raw = $nos ? $nos[0] : (string) get_post_meta( $post_id, '_ymkrf_case_no', true );
+
+	$no = strtolower( preg_replace( '/[^0-9A-Za-z-]/', '', $raw ) );
 	return $no !== '' ? $no : 'w-' . (int) $post_id;
 }
 
@@ -3993,6 +4003,22 @@ add_action( 'wp_head', function () {
 
 /** 同じ案件番号のお客様の声（公開ぶんだけ） */
 function ymkrf_works_linked_voices( $post_id ) {
+
+	/* カンマ区切りで2つ以上の案件番号が入っていても、
+	   1つでも重なっているお客様の声をぜんぶ出します
+	   （2026/09/29 ユーザー指示。中身は inc/functions-case-no.php） */
+	if ( function_exists( 'ymkrf_case_linked' ) ) {
+		$ids = ymkrf_case_linked( $post_id, 'ymkrf_voice', 5 );
+		if ( ! $ids ) return array();
+		return get_posts( array(
+			'post_type'      => 'ymkrf_voice',
+			'post__in'       => $ids,
+			'orderby'        => 'post__in',
+			'posts_per_page' => 5,
+			'post_status'    => 'publish',
+		) );
+	}
+
 	$no = trim( (string) get_post_meta( $post_id, '_ymkrf_case_no', true ) );
 	if ( $no === '' ) return array();
 	return get_posts( array(
@@ -4108,7 +4134,9 @@ add_action( 'admin_footer-edit.php', function () {
 	</style>
 	<script>
 	(function () {
-	  var ok = /^[0-9]{4}-[0-9]{4}$/;
+	  /* カンマ区切りで2つ以上の番号が入っていてもよいことにしました
+	     （2026/09/29 ユーザー指示。例：2604-0365,2605-0083） */
+	  var ok = /^[0-9]{4}-[0-9]{4}(,[0-9]{4}-[0-9]{4})*$/;
 	  var rows = document.querySelectorAll('#the-list .row-title');
 	  for (var i = 0; i < rows.length; i++) {
 	    var el = rows[i];

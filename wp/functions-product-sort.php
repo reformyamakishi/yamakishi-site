@@ -199,3 +199,107 @@ add_action( 'wp_ajax_ymkrf_product_sort', function () {
 
 	wp_send_json_success( array( 'changed' => $n ) );
 } );
+
+
+/* ============================================================
+   新しく登録した商品は、一覧のいちばん上に置きます
+   ------------------------------------------------------------
+   （2026/09/29 ユーザー指示
+     「ダッシュボードの一覧ですが、新規登録したら自動で一番上に
+       来るようにして。編集の場合は順列変更しなくてOK」）
+
+   これまでは、並び順の数字が入っていない商品はいちばん下
+   （999あつかい）になっていました。登録したばかりの商品ほど
+   見つけにくい、という逆さまの状態でした。
+
+   ★動くのは「はじめて保存したとき」だけです。
+     あとから直して「更新」を押しても、順番は動きません。
+   ============================================================ */
+
+/** その商品を、同じ分類のいちばん上に持っていきます */
+function ymkrf_product_put_top( $post_id ) {
+
+	$post_id = (int) $post_id;
+	if ( ! $post_id ) return;
+
+	$cats = wp_get_object_terms( $post_id, 'ymkrf_product_cat', array( 'fields' => 'ids' ) );
+	if ( is_wp_error( $cats ) || ! $cats ) return;
+
+	/* 同じ分類の商品を、いまの並び順のままぜんぶ取ります */
+	$ids = get_posts( array(
+		'post_type'      => 'ymkrf_product',
+		'post_status'    => array( 'publish', 'draft', 'pending', 'future', 'private' ),
+		'posts_per_page' => -1,
+		'fields'         => 'ids',
+		'no_found_rows'  => true,
+		'tax_query'      => array( array(
+			'taxonomy' => 'ymkrf_product_cat',
+			'field'    => 'term_id',
+			'terms'    => array( (int) $cats[0] ),
+		) ),
+	) );
+	if ( ! $ids ) return;
+
+	/* いまの並び順（商品ページと同じ決めかた）で ならべます */
+	$rank = array();
+	foreach ( $ids as $id ) {
+		$p = get_post( $id );
+		$n = $p ? (int) $p->menu_order : 0;
+		if ( ! $n ) $n = (int) get_post_meta( $id, '_ymkrf_order', true );
+		if ( ! $n ) $n = (int) get_post_meta( $id, '_ymkrf_gsort', true );
+		if ( ! $n ) $n = 999;
+		$rank[ (int) $id ] = $n;
+	}
+	asort( $rank );
+
+	$order = array_keys( $rank );
+
+	/* 新しい商品を、いちばん前に出します */
+	$order = array_values( array_diff( $order, array( $post_id ) ) );
+	array_unshift( $order, $post_id );
+
+	global $wpdb;
+	foreach ( $order as $i => $id ) {
+		$want = $i + 1;
+		$p    = get_post( $id );
+		if ( ! $p || (int) $p->menu_order === $want ) continue;
+		$wpdb->update( $wpdb->posts, array( 'menu_order' => $want ), array( 'ID' => (int) $id ) );
+		clean_post_cache( (int) $id );
+		update_post_meta( (int) $id, '_ymkrf_order', $want );
+	}
+}
+
+add_action( 'save_post_ymkrf_product', function ( $post_id, $post ) {
+
+	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
+	if ( wp_is_post_revision( $post_id ) ) return;
+	if ( ! $post || $post->post_status === 'auto-draft' ) return;
+
+	/* 一度でも置きどころを決めた商品は、もうさわりません
+	   （＝「更新」を押しても順番は動きません） */
+	if ( get_post_meta( $post_id, '_ymkrf_placed', true ) === '1' ) return;
+	update_post_meta( $post_id, '_ymkrf_placed', '1' );
+
+	ymkrf_product_put_top( $post_id );
+}, 40, 2 );
+
+/* いまある商品には「置きどころは決まっている」という印を付けておきます。
+   これをしないと、古い商品を1つ直しただけで上に飛んでしまいます。
+   1回だけ動きます。 */
+add_action( 'admin_init', function () {
+
+	$ver = '2026-09-29-1';
+	if ( get_option( 'ymkrf_product_placed_ver' ) === $ver ) return;
+	if ( ! current_user_can( 'edit_posts' ) ) return;
+
+	$ids = get_posts( array(
+		'post_type'      => 'ymkrf_product',
+		'post_status'    => 'any',
+		'posts_per_page' => -1,
+		'fields'         => 'ids',
+		'no_found_rows'  => true,
+	) );
+	foreach ( $ids as $id ) update_post_meta( (int) $id, '_ymkrf_placed', '1' );
+
+	update_option( 'ymkrf_product_placed_ver', $ver, false );
+}, 11 );
