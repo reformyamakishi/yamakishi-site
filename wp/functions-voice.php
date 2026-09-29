@@ -1388,7 +1388,8 @@ add_action( 'manage_ymkrf_voice_posts_custom_column', function ( $col, $post_id 
 			echo $v ? esc_html( $v ) : '<span style="color:#a7aaad">—</span>';
 			break;
 		case 'ymkrf_vstaff':
-			echo ymkrf_staff_admin_cell( (int) get_post_meta( $post_id, '_ymkrf_staff', true ) );
+			/* 顔写真は出しません（2026/09/29 ユーザー指示） */
+			echo ymkrf_staff_admin_cell( (int) get_post_meta( $post_id, '_ymkrf_staff', true ), false );
 			break;
 		case 'ymkrf_cust':
 			$v = ymkrf_voice_customer_label( $post_id );
@@ -1486,20 +1487,40 @@ add_filter( 'posts_clauses', function ( $c, $q ) {
 		                      AND ymkscan.meta_key = '_ymkrf_scan_date' ";
 	}
 
+	/* 取り込んだぶんかどうかの印（_ymkrf_old_voice）。
+	   これから手で登録するぶんには、この印が付きません。 */
+	if ( strpos( $c['join'], 'ymkold' ) === false ) {
+		$c['join'] .= " LEFT JOIN {$wpdb->postmeta} ymkold
+		                       ON ymkold.post_id = {$wpdb->posts}.ID
+		                      AND ymkold.meta_key = '_ymkrf_old_voice' ";
+	}
+
 	/* 3つの段に分けます。
-	     1段目 … 2502-0029 の形（8桁）　→ 大きい順
-	     2段目 … 0029 のような4桁だけ　　→ 大きい順
-	     3段目 … 案件番号なし　　　　　　→ スキャン日の新しい順 */
+	     1段目 … 案件番号が 2502-0029 の形（8桁）　→ 大きい順
+	     2段目 … 0029 のような4桁だけ　　　　　　　→ 大きい順
+	     3段目 … 案件番号なし　　　　　　　　　　　→ スキャン日の新しい順 */
 	$tier = "CASE
 	           WHEN ymkcase.meta_value REGEXP '^[0-9]{4}-[0-9]{4}$' THEN 0
 	           WHEN COALESCE( ymkcase.meta_value, '' ) <> ''        THEN 1
 	           ELSE 2
 	         END";
 
-	$c['orderby'] = "{$tier} ASC,
+	/* ★これから手で登録したぶんは、いちばん上に出します
+	     （2026/09/29 ユーザー指示「新規登録したら自動で一番上に来るようにして。
+	       編集の場合は順列変更しなくてOK」）。
+
+	     並びのもとは「登録した日時」なので、あとから直して「更新」を
+	     押しても、順番は動きません。
+
+	     取り込んだ 1,600件ぶんは、これまでどおり案件番号の大きい順です。
+	     新しく登録したものが、古い番号でも上に出ます。 */
+	$isnew = "CASE WHEN COALESCE( ymkold.meta_value, '' ) = '1' THEN 1 ELSE 0 END";
+
+	$c['orderby'] = "{$isnew} ASC,
+	                 {$wpdb->posts}.post_date DESC,
+	                 {$tier} ASC,
 	                 ymkcase.meta_value DESC,
-	                 ymkscan.meta_value DESC,
-	                 {$wpdb->posts}.post_date DESC";
+	                 ymkscan.meta_value DESC";
 
 	return $c;
 }, 20, 2 );
@@ -2409,10 +2430,32 @@ function ymkrf_voice_related( $post_id, $num = 4 ) {
 	);
 	$out = array();
 
+	/* ★満足度が入っているお客様を、先にさがします
+	   （2026/09/29 ユーザー指示「★の評価表示できない？」）
+
+	   古い取り込みぶんには、満足度が1つも入っていない方がいます。
+	   その方を出すと、カードに★が出せません。
+	   まず満足度のある方からさがし、足りないぶんだけ、
+	   これまでどおりのさがし方でおぎないます。 */
+	$scored = array( 'key' => '_ymkrf_score', 'value' => 0, 'compare' => '>', 'type' => 'NUMERIC' );
+
 	if ( $parts ) {
 		$a = $args;
-		$a['meta_query'] = array( array( 'key' => '_ymkrf_parts', 'value' => $parts[0], 'compare' => 'LIKE' ) );
+		$a['meta_query'] = array(
+			'relation' => 'AND',
+			array( 'key' => '_ymkrf_parts', 'value' => $parts[0], 'compare' => 'LIKE' ),
+			$scored,
+		);
 		$out = get_posts( $a );
+	}
+
+	/* 満足度のある方だけでは足りないときは、これまでどおり */
+	if ( $parts && count( $out ) < $num ) {
+		$a = $args;
+		$a['posts_per_page'] = $num - count( $out );
+		$a['post__not_in']   = array_merge( array( $post_id ), wp_list_pluck( $out, 'ID' ) );
+		$a['meta_query'] = array( array( 'key' => '_ymkrf_parts', 'value' => $parts[0], 'compare' => 'LIKE' ) );
+		$out = array_merge( $out, get_posts( $a ) );
 	}
 	if ( count( $out ) < $num && $shop !== '' ) {
 		$a = $args;

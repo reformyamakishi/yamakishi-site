@@ -690,10 +690,14 @@ add_action( 'pre_get_posts', function ( $q ) {
 
 /* ============================================================
    管理画面の一覧に出す「担当」のマス
-   施工事例・お客様の声の一覧で使います（顔写真＋名前）。
+   施工事例・お客様の声の一覧で使います。
+
+   $photo に false を渡すと、顔写真を出しません
+   （2026/09/29 ユーザー指示「お客様の声の一覧の担当者のところ、
+     顔写真は不要です」）。
    ============================================================ */
 if ( ! function_exists( 'ymkrf_staff_admin_cell' ) ) :
-function ymkrf_staff_admin_cell( $staff_id ) {
+function ymkrf_staff_admin_cell( $staff_id, $photo = true ) {
 	$none = '<span style="color:#a7aaad">—</span>';
 
 	/* お店そのものが担当のとき */
@@ -720,7 +724,7 @@ function ymkrf_staff_admin_cell( $staff_id ) {
 	if ( $name === '' ) return $none;
 
 	$out = '';
-	$thumb = get_the_post_thumbnail_url( $staff_id, 'thumbnail' );
+	$thumb = $photo ? get_the_post_thumbnail_url( $staff_id, 'thumbnail' ) : '';
 	if ( $thumb ) {
 		$out .= '<img src="' . esc_url( $thumb ) . '" alt=""'
 		     . ' style="width:26px;height:26px;border-radius:50%;object-fit:cover;'

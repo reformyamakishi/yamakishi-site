@@ -67,7 +67,12 @@ if ( function_exists( 'ymkrf_crumb_ld' ) ) {
       <?php endif; ?>
       <div class="p-voice__headtxt">
         <h1 class="p-pagehead__title"><?php the_title(); ?></h1>
-        <div class="p-voice__headstars"><?php echo ymkrf_stars( $score ); ?></div>
+        <?php /* 満足度が入っていないお客様は、★も点数も出しません。
+                 からっぽの★と「0点」が並ぶと、低い評価に見えてしまうためです
+                 （2026/09/29）。 */ ?>
+        <?php if ( $score ) : ?>
+          <div class="p-voice__headstars"><?php echo ymkrf_stars( $score ); ?></div>
+        <?php endif; ?>
         <?php
         /* アンケートに点数のご記入がなかったときは、そのことをおことわりします
            （2026/09/28 ユーザー指示「点数の下に小さく」）。
