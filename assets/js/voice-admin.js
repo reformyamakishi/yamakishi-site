@@ -42,6 +42,58 @@ var Q2_LABELS = [
   ['営業担当の対応','専門性','以前工事を選んだ会社だから'],
   ['サービス内容','価格','その他']
 ];
+/* アンケート用紙の言葉と、登録画面のチェック欄の言葉がちがうので、
+   読み取ったあとに言いかえます（2026/09/29 ユーザー指示
+   「浴室にチェックがあればお風呂にチェックして。洗面室も洗面化粧台、
+     換気扇もレンジフード。窓という文字にチェックがあれば窓・サッシへ」）。
+
+   ここに書いていない言葉は、そのまま使います。
+   それでも見つからないときは、下の findPart() が近いものをさがします。 */
+var Q1_MAP = {
+  '浴室':         'お風呂',
+  '洗面室':       '洗面化粧台',
+  'レンジフード': '換気扇・レンジフード',
+  '換気扇':       '換気扇・レンジフード',
+  '窓・サッシ':   '窓・断熱',
+  '窓':           '窓・断熱',
+  'サッシ':       '窓・断熱',
+  '外壁':         '外壁・屋根',
+  '屋根':         '外壁・屋根',
+  '改装・内装':   '内装・改装',
+  '内装':         '内装・改装',
+  '改装':         '内装・改装',
+  /* 登録画面にない工事は、「その他」にまとめます */
+  '蓄電池':       'その他',
+  '太陽光発電':   'その他'
+};
+
+/* 用紙の言葉から、登録画面のチェック欄の言葉をさがします */
+function findPart(label) {
+
+  var list = (window.YMKRF_VOICE && YMKRF_VOICE.parts) ? YMKRF_VOICE.parts : [];
+
+  /* ① 言いかえの表にあれば、それ */
+  if (Q1_MAP[label]) label = Q1_MAP[label];
+
+  /* ② そのままある */
+  if (list.indexOf(label) >= 0) return label;
+
+  /* ③ どちらかが、もう一方をふくんでいる（レンジフード ⊂ 換気扇・レンジフード） */
+  for (var i = 0; i < list.length; i++) {
+    if (list[i].indexOf(label) >= 0 || label.indexOf(list[i]) >= 0) return list[i];
+  }
+
+  /* ④ 「・」で分けて、どれかが合う（窓・サッシ の「窓」で 窓・断熱 をさがす） */
+  var ps = label.split('・');
+  for (var k = 0; k < ps.length; k++) {
+    if (!ps[k]) continue;
+    for (var j = 0; j < list.length; j++) {
+      if (list[j].split('・').indexOf(ps[k]) >= 0) return list[j];
+    }
+  }
+  return '';
+}
+
 var RATING4 = ['大変良かった','満足','普通','よくなかった'];
 var Q9_LABELS = ['勧める','勧めても良い','わからない','勧められない'];
 
@@ -400,7 +452,12 @@ function solve4(A, b) {
 function toAnswers(R) {
   var a = { parts: [], reasons: [], ratings: {}, q9: 0, q9label: '' };
   Q1_LABELS.forEach(function (row, ri) {
-    row.forEach(function (lb, ci) { if (R.on('q1_' + ri + '_' + ci)) a.parts.push(lb); });
+    row.forEach(function (lb, ci) {
+      if (!R.on('q1_' + ri + '_' + ci)) return;
+      /* 用紙の言葉 → 登録画面のチェック欄の言葉（2026/09/29 ユーザー指示） */
+      var v = findPart(lb);
+      if (v && a.parts.indexOf(v) < 0) a.parts.push(v);
+    });
   });
   Q2_LABELS.forEach(function (row, ri) {
     row.forEach(function (lb, ci) { if (R.on('q2_' + ri + '_' + ci)) a.reasons.push(lb); });

@@ -341,7 +341,17 @@
   background:var(--brand-tint); object-fit:contain;
 }
 .p-voice__reltxt{ flex:1 1 auto; min-width:0; }
-.p-voice__relttl{ display:block; font-size:15px; font-weight:900; }
+/* ★と工事箇所を、同じ行に（2026/09/29 ユーザー指示）。
+   行を増やさないので、カードの高さは変わりません。 */
+.p-voice__reltop{
+  display:flex; align-items:center; gap:8px; min-width:0;
+}
+.p-voice__reltop .c-starsrow{ flex:0 0 auto; }
+.p-voice__reltop .c-stars{ font-size:13px; letter-spacing:1px; }
+.p-voice__relttl{
+  display:block; font-size:15px; font-weight:900;
+  min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
 .p-voice__relsub{ display:block; margin-top:2px; font-size:12.5px; color:var(--ink-sub); }
 /* ご感想をひと言だけ（2026/09/28 ユーザー指示）。
    カードの高さを変えないよう、1行に収めて、あふれたぶんは「…」にします。 */
