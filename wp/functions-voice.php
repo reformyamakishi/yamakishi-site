@@ -684,17 +684,39 @@ add_action( 'wp_ajax_ymkrf_voice_pub_image', function () {
 	$bin = base64_decode( substr( $data, strlen( 'data:image/jpeg;base64,' ) ) );
 	if ( ! $bin ) wp_send_json_error( '画像を読み取れませんでした' );
 
-	/* ファイル名は案件番号ではなく通し番号にします（番号が外に出ないように） */
-	$seq  = (int) get_option( 'ymkrf_voice_seq', 0 ) + 1;
-	update_option( 'ymkrf_voice_seq', $seq );
-	$name = sprintf( 'voice-%04d.jpg', $seq );
+	/* ファイル名は案件番号にそろえます
+	   （2026/10/12 ユーザー指示「統一してほしいな。案件番号でよくない？
+	     それによってお客様が特定できるわけじゃないし」）。
+
+	   お客様の声のページの住所じたいが /voice/toilet/2609-0296/ なので、
+	   もともと案件番号は外から見えています。画像だけ通し番号にしても
+	   かくしたことにならず、どの画像がどの工事のものか分からなくなる
+	   ぶんだけ、さがすのが大変でした。
+
+	   原本と同じ名前にはできないので、うしろに -voice を付けます。
+	     原本     … 2609-0296.jpg
+	     公開用   … 2609-0296-voice.jpg
+	   案件番号が入っていないときだけ、これまでどおり通し番号にします。 */
+	$case = isset( $_POST['caseno'] ) ? (string) wp_unslash( $_POST['caseno'] ) : '';
+	$case = function_exists( 'ymkrf_case_no_split' ) ? implode( '_', ymkrf_case_no_split( $case ) ) : '';
+	$case = preg_replace( '/[^0-9A-Za-z_-]/', '', $case );
+
+	if ( $case !== '' ) {
+		$name  = $case . '-voice.jpg';
+		$title = 'お客様アンケート ' . $case;
+	} else {
+		$seq = (int) get_option( 'ymkrf_voice_seq', 0 ) + 1;
+		update_option( 'ymkrf_voice_seq', $seq );
+		$name  = sprintf( 'voice-%04d.jpg', $seq );
+		$title = 'お客様アンケート ' . sprintf( '%04d', $seq );
+	}
 
 	$up = wp_upload_bits( $name, null, $bin );
 	if ( ! empty( $up['error'] ) ) wp_send_json_error( $up['error'] );
 
 	$att = array(
 		'post_mime_type' => 'image/jpeg',
-		'post_title'     => 'お客様アンケート ' . sprintf( '%04d', $seq ),
+		'post_title'     => $title,
 		'post_content'   => '',
 		'post_status'    => 'inherit',
 	);
@@ -2889,3 +2911,88 @@ add_filter( 'document_title_parts', function ( $parts ) {
 	if ( $label !== '' ) $parts['title'] = $label . 'のお客様の声・口コミ';
 	return $parts;
 }, 20 );
+
+
+/* ============================================================
+   公開用のアンケート画像の名前を、案件番号にそろえます（1回だけ）
+   ------------------------------------------------------------
+   （2026/10/12 ユーザー指示「統一してほしいな。案件番号でよくない？」）
+
+     これまで … voice-0066.jpg（通し番号）
+     これから … 2609-0454-voice.jpg（案件番号）
+
+   原本（2609-0454.jpg）とは名前がぶつかるので、うしろに -voice を
+   付けています。原本のほうは、さわりません。
+
+   管理画面を開くたびに20件ずつ進み、終わったら止まります。
+   まだ公開していないので、住所が変わっても影響はありません。
+   ============================================================ */
+add_action( 'admin_init', function () {
+
+	if ( get_option( 'ymkrf_voice_pubname_ver' ) === '1' ) return;
+	if ( ! current_user_can( 'upload_files' ) ) return;
+
+	$ids = get_posts( array(
+		'post_type'      => 'ymkrf_voice',
+		'post_status'    => 'any',
+		'posts_per_page' => 20,
+		'fields'         => 'ids',
+		'no_found_rows'  => true,
+		'meta_query'     => array(
+			array( 'key' => '_ymkrf_survey_pub_id', 'compare' => 'EXISTS' ),
+			array( 'key' => '_ymkrf_pubname_done',  'compare' => 'NOT EXISTS' ),
+		),
+	) );
+
+	if ( ! $ids ) { update_option( 'ymkrf_voice_pubname_ver', '1', false ); return; }
+
+	require_once ABSPATH . 'wp-admin/includes/image.php';
+
+	foreach ( $ids as $vid ) {
+
+		update_post_meta( $vid, '_ymkrf_pubname_done', '1' );   /* 失敗しても、くり返しません */
+
+		$att = (int) get_post_meta( $vid, '_ymkrf_survey_pub_id', true );
+		if ( ! $att || get_post_type( $att ) !== 'attachment' ) continue;
+
+		$nos = function_exists( 'ymkrf_case_no_list' ) ? ymkrf_case_no_list( $vid ) : array();
+		if ( ! $nos ) continue;                                  /* 案件番号なしは、そのまま */
+
+		$base = preg_replace( '/[^0-9A-Za-z_-]/', '', implode( '_', $nos ) );
+		if ( $base === '' ) continue;
+
+		$old = get_attached_file( $att );
+		if ( ! $old || ! file_exists( $old ) ) continue;
+
+		$dir = dirname( $old );
+		$ext = pathinfo( $old, PATHINFO_EXTENSION );
+		$want = $base . '-voice.' . $ext;
+
+		if ( basename( $old ) === $want ) continue;              /* もう直っています */
+
+		$want = wp_unique_filename( $dir, $want );
+		$new  = $dir . '/' . $want;
+
+		/* 古い寸法ちがいの画像（-1024x726 など）は、先に片づけます */
+		$meta = wp_get_attachment_metadata( $att );
+		if ( ! empty( $meta['sizes'] ) && is_array( $meta['sizes'] ) ) {
+			foreach ( $meta['sizes'] as $sz ) {
+				if ( empty( $sz['file'] ) ) continue;
+				$f = $dir . '/' . $sz['file'];
+				if ( file_exists( $f ) ) @unlink( $f );
+			}
+		}
+
+		if ( ! @rename( $old, $new ) ) continue;
+
+		update_attached_file( $att, $new );
+		wp_update_post( array(
+			'ID'   => $att,
+			'guid' => trailingslashit( dirname( wp_get_attachment_url( $att ) ) ) . $want,
+		) );
+		wp_update_attachment_metadata( $att, wp_generate_attachment_metadata( $att, $new ) );
+
+		/* メディアの題名も、案件番号にそろえます */
+		wp_update_post( array( 'ID' => $att, 'post_title' => 'お客様アンケート ' . implode( '／', $nos ) ) );
+	}
+}, 35 );

@@ -657,6 +657,9 @@ window.YmkrfSurvey = {
         var pub = window.YmkrfSurvey.publicImage(R, 2400);
         $.post(YMKRF_VOICE.ajax, {
           action: 'ymkrf_voice_pub_image', nonce: YMKRF_VOICE.nonce,
+          /* ファイル名を案件番号にするため、いま入っている番号もいっしょに送ります
+             （2026/10/12 ユーザー指示「統一してほしいな。案件番号でよくない？」） */
+          caseno: $('input[name="_ymkrf_case_no"]').val() || '',
           data: pub.toDataURL('image/jpeg', 0.86)
         }).done(function (res) {
           if (!res || !res.success) return;
