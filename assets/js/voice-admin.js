@@ -180,9 +180,18 @@ function findSkew(img) {
 }
 
 /* かたむきを直した灰色画像を作り直します */
-function rotateGray(img, maxW, angle) {
+function rotateGray(img, maxW, angle, minW) {
   var w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
   var s = Math.min(1, maxW / w);
+
+  /* 小さく取り込まれたアンケートは、読み取りのあいだだけ引きのばします。
+     （2026/10/12 ユーザー指示「1200px以上でOKとしてください」）
+     横1200pxのままだと、チェック枠が13pxほどしかなく、枠さがしが外れます。
+     横2000pxまで広げれば枠が22pxほどになり、これまでと同じ手順で見つかります。
+     画素がふえるわけではないので、公開用の画像はもとの大きさのままにします
+     （makePublicImage で srcW を上限にしています）。 */
+  if ( minW && w * s < minW ) s = Math.min( minW / w, 2.6 );
+
   var w2 = Math.round(w * s), h2 = Math.round(h * s);
 
   /* かたむきを直すと、用紙の四すみが外にはみ出します。
@@ -207,7 +216,7 @@ function rotateGray(img, maxW, angle) {
   var g = new Uint8ClampedArray(W * H);
   for (var i = 0, j = 0; i < d.length; i += 4, j++)
     g[j] = (d[i] * 299 + d[i + 1] * 587 + d[i + 2] * 114) / 1000;
-  return { g: g, W: W, H: H, canvas: cv, ctx: cx, scaleFromOriginal: s, angle: angle };
+  return { g: g, W: W, H: H, canvas: cv, ctx: cx, scaleFromOriginal: s, srcW: w, angle: angle };
 }
 
 /* 積分画像（四角の合計をすぐ出すための下ごしらえ） */
@@ -286,22 +295,61 @@ function voteFit(P, sc0, W, H) {
   return { n: bestN, sc: bestSc, t: bestT };
 }
 
+/* 古い様式の「仕事の通信簿」かどうかを見ます。
+   （2026/10/12 ユーザー「2609-0280はなぜ画像、アンケートとして認識してくれないの？」）
+
+   古い様式は、①が「弊社を選んで頂いた理由」から始まり、質問が⑧までしかありません。
+   いまの様式（①工事した箇所〜⑨お勧め）とはチェック欄の並びがまったくちがうので、
+   自動では読み取れません。見分け方は用紙の上のほう・左から34〜50％のところです。
+   　古い様式 … リフォームヤマキシのロゴが入っている（黒い点が8％以上）
+   　いまの様式 … 何も印刷されていない（0％）
+   手もとの24枚で試したところ、きれいに分かれました。 */
+function isOldForm(gr) {
+  var x0 = Math.round(gr.W * 0.34), x1 = Math.round(gr.W * 0.50);
+  var y0 = Math.round(gr.H * 0.015), y1 = Math.round(gr.H * 0.085);
+  if (x1 <= x0 || y1 <= y0) return false;
+  var dark = 0, all = 0;
+  for (var y = y0; y < y1; y++) {
+    var row = y * gr.W;
+    for (var x = x0; x < x1; x++) { all++; if (gr.g[row + x] < 170) dark++; }
+  }
+  return all > 0 && (dark / all) > 0.02;
+}
+
 /* ===== 読み取り本体 ===== */
 function readSurvey(img) {
   var MAXW = 2500;
+
+  /* 横2000pxに足りないアンケートは、読み取りのあいだだけ2000pxまで引きのばします。
+     （2026/10/12 ユーザー指示「1200px以上でOKとしてください」） */
+  var MINW  = 2000;
+  var srcW  = img.naturalWidth || img.width || 0;
+  var small = srcW > 0 && srcW < MINW;
+
   var ang = findSkew(img);
-  var gr = Math.abs(ang) < 0.05 ? rotateGray(img, MAXW, 0) : rotateGray(img, MAXW, ang);
+  var gr = Math.abs(ang) < 0.05
+    ? rotateGray(img, MAXW, 0, MINW)
+    : rotateGray(img, MAXW, ang, MINW);
+  /* 古い様式は、まちがった場所を読んでしまうことがあるので、
+     枠さがしをする前に止めます（2026/10/12）。 */
+  if ( isOldForm(gr) ) throw new Error('これは古い様式の「仕事の通信簿」です（①に「工事した箇所」の欄がなく、質問が⑧までのもの）。自動では読み取れませんので、チェック欄は手で入力してください。画像の登録と切り出しは、そのままお使いいただけます。');
+
   var it = integral(gr);
 
   var sc0 = gr.W / REF.W;
   var b0 = Math.max(6, Math.round(REF.BOX * sc0));
   var P = [];
-  [0.90, 1.0, 1.10].forEach(function (f) {
+  /* 引きのばした画像は枠の線がぼやけます。
+     そこで枠の大きさの候補をふやし、ひとまわりごとに拾う数も多くします。 */
+  var FS  = small ? [0.78, 0.86, 0.94, 1.0, 1.08, 1.16, 1.25] : [0.90, 1.0, 1.10];
+  var CAP = small ? 360 : 200;
+  FS.forEach(function (f) {
     var b = Math.max(6, Math.round(b0 * f));
-    findBoxes(it, b, 200).forEach(function (p) { P.push(p); });
+    findBoxes(it, b, CAP).forEach(function (p) { P.push(p); });
   });
   var fit = voteFit(P, sc0, gr.W, gr.H);
-  if (!fit.t || fit.n < 10) throw new Error('アンケート用紙として認識できませんでした。用紙全体が写っているか、解像度が足りているか（横2000px以上）をご確認ください。');
+  var need = small ? 8 : 10;
+  if (!fit.t || fit.n < need) throw new Error('アンケート用紙として認識できませんでした。用紙全体が写っているか、解像度が足りているか（横1200px以上）をご確認ください。');
 
   var sc = fit.sc, dx = fit.t[0], dy = fit.t[1], rot = 0;
   var box = Math.max(6, Math.round(REF.BOX * sc));
@@ -357,7 +405,96 @@ function readSurvey(img) {
      そこで、この2行だけは4つの枠をひとまとめにして動かし、
      いちばん枠らしく見える位置と幅にそろえ直します。
      （1つずつ動かすと順番が入れかわることがあるので、行ごとにまとめて動かします）
+
+     ★2026/10/12 追加★
+     まず「実際に見つかった四角」に合わせにいきます（snapRowCand）。
+     用紙をなでるように少しずつ動かしてさがす方法（snapRow）は、
+     枠ではなく質問文の文字にぴたりと合ってしまうことがあり、
+     ⑨がいつも「勧められない」になる原因になっていました。
+     見つかった四角に合わせるほうが確実なので、そちらを先に試します。
      ------------------------------------------------------------------ */
+
+  /* 画面から拾った四角（P）のうち、予想した場所の近くにあるものに合わせます。
+     4つのうち3つ以上が見つかったときだけ、その並びを信じて4つとも引き直します。 */
+  function snapRowCand(prefix) {
+    var keys = [], i, j;
+    for (i = 0; i < 4; i++) keys.push(prefix + '_' + i);
+
+    var refX = (prefix === 'q8') ? Q8_X : Q9_X;
+    /* 近いものをさがす範囲。
+       実際にためすと、⑧⑨の行はまるごと枠1個ぶん以上ずれていることがあります
+       （2505-0127：左へ35px・下へ35px、枠は28px）。
+       枠と枠の間は、せまいところでも枠5個ぶんあるので、
+       ±枠2.2個ぶんまで広げても、となりの枠とまちがえることはありません。 */
+    var tolX = box * 2.2, tolY = box * 2.6;
+    var hit = [];
+
+    for (i = 0; i < 4; i++) {
+      var px = found[keys[i]].x, py = found[keys[i]].y, bc = null, bd = 1e18;
+      for (j = 0; j < P.length; j++) {
+        var ddx = P[j][0] - px, ddy = P[j][1] - py;
+        if (Math.abs(ddx) > tolX || Math.abs(ddy) > tolY) continue;
+        var d = ddx * ddx + ddy * ddy * 0.5;
+        if (d < bd) { bd = d; bc = P[j]; }
+      }
+      hit.push(bc);
+    }
+
+    /* 見つかった四角が3つ未満、または左から順に並んでいないときは、やめておきます */
+    var n = 0, prev = -1e9, ok = true, ys = [];
+    for (i = 0; i < 4; i++) {
+      if (!hit[i]) continue;
+      n++;
+      if (hit[i][0] <= prev) ok = false;
+      prev = hit[i][0];
+      ys.push(hit[i][1]);
+    }
+    if (n < 3 || !ok) return false;
+
+    /* 横は「基準の座標 → 見つかった座標」を直線にあてはめます（最小二乗） */
+    var sx = 0, sy = 0, sxx = 0, sxy = 0;
+    for (i = 0; i < 4; i++) {
+      if (!hit[i]) continue;
+      sx += refX[i]; sy += hit[i][0]; sxx += refX[i] * refX[i]; sxy += refX[i] * hit[i][0];
+    }
+    var den = n * sxx - sx * sx;
+    if (!den) return false;
+    var a = (n * sxy - sx * sy) / den, c = (sy - a * sx) / n;
+    /* 倍率がかけ離れていたら、見まちがいとみなしてやめます。
+       用紙によっては⑧の4つの枠が2割ほど広くならんでいるので、
+       1.3倍までは認めます（2505-0127 で 1.20 倍でした）。
+       そのかわり、見つけた枠が直線にきちんとのっているかを確かめます。 */
+    if (a / sc < 0.82 || a / sc > 1.30) return false;
+    for (i = 0; i < 4; i++) {
+      if (!hit[i]) continue;
+      if (Math.abs(a * refX[i] + c - hit[i][0]) > box * 0.6) return false;
+    }
+
+    ys.sort(function (p, q) { return p - q; });
+    var my = ys[(ys.length - 1) >> 1];   /* まん中の値（ひとつだけ外れていても引きずられません） */
+
+    for (i = 0; i < 4; i++) {
+      found[keys[i]].x = hit[i] ? hit[i][0] : Math.round(a * refX[i] + c);
+      found[keys[i]].y = my;
+    }
+
+    /* 仕上げに、1つずつ枠の上へぴたりと寄せます
+       （見つからなかった枠は直線で置いただけなので、半マスほどずれます） */
+    for (i = 0; i < 4; i++) {
+      /* 見つかった枠は少しだけ、直線で置いただけの枠は広めにさがします */
+      var rr = Math.max(2, Math.round(box * 0.90));
+      var k = keys[i], bx = found[k].x, by = found[k].y, bs = -1e18, nx = bx, ny = by, u, v;
+      for (v = -rr; v <= rr; v++) {
+        for (u = -rr; u <= rr; u++) {
+          var s2 = frameScore(it, bx + u, by + v, box);
+          if (s2 > bs) { bs = s2; nx = bx + u; ny = by + v; }
+        }
+      }
+      found[k].x = nx; found[k].y = ny;
+    }
+    return true;
+  }
+
   function snapRow(prefix) {
     var keys = [], i;
     for (i = 0; i < 4; i++) keys.push(prefix + '_' + i);
@@ -367,23 +504,49 @@ function readSurvey(img) {
     for (i = 0; i < 4; i++) before += frameScore(it, base[i].x, base[i].y, box);
 
     var cx = (base[0].x + base[3].x) / 2;
-    var R = Math.max(6, Math.round(box * 0.9));
+
+    /* さがす範囲を広げました（2026/10/12）。
+       用紙によって、⑧⑨の行が1行ぶん（枠の高さくらい）下にあったり、
+       4つの枠の間かくが少し広かったりします。
+       これまでの ±枠0.9個ぶん・倍率0.94〜1.06では届かず、
+       枠ではなく質問文の文字を読んで、いつも一番右（勧められない）に
+       なっていました。
+       （2026/10/12 ユーザー「項目✓の一番下がいつも間違っている」
+         2505-0127 ⑨は「勧めても良い」、2602-0162 ⑨は「勧める」が正解）
+
+       ⑧と⑨は295px（枠5個ぶん）はなれているので、
+       上下 ±枠2個ぶんまでならとなりの行とまちがえません。
+
+       数がふえるので、まず3pxとびで大まかにさがし、
+       そのあと1pxきざみで仕上げます（ブラウザでも待たされません）。 */
+    var RX = Math.max(8, Math.round(box * 2.4));
+    var RY = Math.max(8, Math.round(box * 2.0));
     var best = null;
 
-    [0.94, 0.96, 0.98, 1.00, 1.02, 1.04, 1.06].forEach(function (f) {
-      for (var oy = -R; oy <= R; oy++) {
-        for (var ox = -R; ox <= R; ox++) {
-          var sum = 0, pos = [];
-          for (var j = 0; j < 4; j++) {
-            var px = Math.round(cx + (base[j].x - cx) * f + ox);
-            var py = base[j].y + oy;
-            sum += frameScore(it, px, py, box);
-            pos.push([px, py]);
+    function sweep(fs, ox0, ox1, oy0, oy1, step) {
+      fs.forEach(function (f) {
+        for (var oy = oy0; oy <= oy1; oy += step) {
+          for (var ox = ox0; ox <= ox1; ox += step) {
+            var sum = 0, pos = [];
+            for (var j = 0; j < 4; j++) {
+              var px = Math.round(cx + (base[j].x - cx) * f + ox);
+              var py = base[j].y + oy;
+              sum += frameScore(it, px, py, box);
+              pos.push([px, py]);
+            }
+            if (!best || sum > best.sum) best = { sum: sum, pos: pos, f: f, ox: ox, oy: oy };
           }
-          if (!best || sum > best.sum) best = { sum: sum, pos: pos };
         }
-      }
-    });
+      });
+    }
+
+    var coarse = [0.88, 0.91, 0.94, 0.97, 1.00, 1.03, 1.06, 1.09, 1.12];
+    sweep(coarse, -RX, RX, -RY, RY, 3);
+
+    if (best) {
+      var f0 = best.f, x0 = best.ox, y0 = best.oy;
+      sweep([f0 - 0.02, f0 - 0.01, f0, f0 + 0.01, f0 + 0.02], x0 - 3, x0 + 3, y0 - 3, y0 + 3, 1);
+    }
 
     /* はっきり良くなったときだけ入れかえます（用紙が汚れていて枠が見えないときは、そのまま） */
     if (best && best.sum > before + Math.abs(before) * 0.05 + 1) {
@@ -393,8 +556,8 @@ function readSurvey(img) {
       }
     }
   }
-  snapRow('q8');
-  snapRow('q9');
+  if ( ! snapRowCand('q8') ) snapRow('q8');
+  if ( ! snapRowCand('q9') ) snapRow('q9');
 
   /* インク量は「紙の白さ」を基準にした割合で見ます（うすいスキャンでも読めるように） */
   var hist = new Uint32Array(256), n = 0, i2;
@@ -463,11 +626,59 @@ function toAnswers(R) {
     row.forEach(function (lb, ci) { if (R.on('q2_' + ri + '_' + ci)) a.reasons.push(lb); });
   });
   if (R.on('q2_shokai')) a.reasons.push('ご紹介');
+  /* ③〜⑨は「どれか1つ」をえらぶ設問です。
+     前は、4つの枠をひとつずつ見て「濃ければチェックあり」としていました。
+     そのため、紙の汚れやにじみで2つ以上が濃いと、
+     ★あとに見たほう（右側＝わるい評価）が勝ってしまいました。
+     ⑨は用紙のいちばん右上にあって位置合わせが弱いので、
+     これがいつも起きていました（2026/10/12 ユーザー指摘）。
+
+     いまは「いちばん濃い枠」をえらびます。
+     2番目とくらべてはっきり濃いときだけ決め、
+     迷うときは何もえらばず、あとで「確認してください」と出します。 */
+  a.unsure = [];
   ['q3','q4','q5','q6','q7','q8'].forEach(function (q) {
-    for (var ci = 0; ci < 4; ci++) if (R.on(q + '_' + ci)) a.ratings[q] = 4 - ci;   /* 大変良かった=4 */
+    var i = pickOne(R, q);
+    if (i >= 0) a.ratings[q] = 4 - i;        /* 大変良かった=4 */
+    else if (rowHasInk(R, q)) a.unsure.push(q);
   });
-  for (var ci = 0; ci < 4; ci++) if (R.on('q9_' + ci)) { a.q9 = 4 - ci; a.q9label = Q9_LABELS[ci]; }
+
+  var i9 = pickOne(R, 'q9');
+  if (i9 >= 0) { a.q9 = 4 - i9; a.q9label = Q9_LABELS[i9]; }
+  else if (rowHasInk(R, 'q9')) a.unsure.push('q9');
+
   return a;
+}
+
+/* その行のうち、いちばん濃い枠をえらびます。えらべないときは -1 */
+function pickOne(R, prefix) {
+
+  var best = -1, b1 = 0, b2 = 0, i, v;
+
+  for (i = 0; i < 4; i++) {
+    v = (R.ink && R.ink[prefix + '_' + i]) || 0;
+    if (v > b1) { b2 = b1; b1 = v; best = i; }
+    else if (v > b2) { b2 = v; }
+  }
+
+  if (best < 0)        return -1;
+  if (b1 <= 0.020)     return -1;      /* ぜんぶうすい ＝ 書かれていない
+                                          （2026/10/12 0.030→0.020。えんぴつの
+                                            うすいチェックを拾えるように） */
+  if (b1 < b2 * 1.35)  return -1;      /* 1番目と2番目が近い ＝ 決めつけない */
+  return best;
+}
+
+/* その行に、なにか書かれている気配があるか（うすい印も見ます） */
+function rowHasInk(R, prefix) {
+  for (var i = 0; i < 4; i++) {
+    /* 2026/10/12 0.018→0.006。
+       2505-0127 の⑦は、枠からはみ出した細いチェックで 0.008 しかなく、
+       「気配なし」として見のがしていました。これくらいうすいものは
+       自動では決めず、「ご確認ください」に出します。 */
+    if (((R.ink && R.ink[prefix + '_' + i]) || 0) > 0.006) return true;
+  }
+  return false;
 }
 
 /* 手書き部分を切り出して、小さな画像にします */
@@ -500,7 +711,11 @@ function cropArea(R, key, maxW) {
  */
 function makePublicImage(R, width) {
   width = width || 1600;
-  var s = Math.min(1, width / R.gr.W);
+  /* 読み取りのために引きのばした画像から作るときは、もとの大きさを上限にします。
+     引きのばしても画素はふえないので、大きいだけでぼやけた画像にしないためです。
+     （2026/10/12 「1200px以上でOK」の対応） */
+  var lim = Math.min( width, R.gr.srcW || R.gr.W );
+  var s = Math.min(1, lim / R.gr.W);
   var cv = document.createElement('canvas');
   cv.width = Math.round(R.gr.W * s); cv.height = Math.round(R.gr.H * s);
   var cx = cv.getContext('2d');
@@ -630,6 +845,27 @@ window.YmkrfSurvey = {
       });
 
       $('#ymkrf-read-info').val('かたむき' + R.angle.toFixed(1) + '度 / 一致' + R.votes + '個');
+
+      /* 決めきれなかった設問を知らせます（2026/10/12 ユーザー指示
+         「最後の✓項目の内容がいつも違っている。必ず間違わないように」）。
+         まちがったまま入れてしまうより、空にして確かめていただくほうが
+         たしかなので、迷ったときは入れずに、ここに出します。 */
+      var QNAME = { q3:'③営業担当の対応', q4:'④プラン内容', q5:'⑤職人の対応',
+                    q6:'⑥工事の進みかた', q7:'⑦現場のようす', q8:'⑧工事の仕上がり',
+                    q9:'⑨お知り合いへのおすすめ' };
+      var $un = $('#ymkrf-unsure');
+      if (!$un.length) {
+        $un = $('<p id="ymkrf-unsure" class="ymkrf-voice__need"></p>')
+                .insertAfter($('#ymkrf-read-info').closest('p,tr,div').first());
+      }
+      if (A.unsure && A.unsure.length) {
+        $un.html('この設問は、どれにチェックがあるか決めきれませんでした。'
+               + '<b>切り抜き画像を見て、手でえらんでください。</b><br>'
+               + A.unsure.map(function (q) { return QNAME[q] || q; }).join('／'))
+           .addClass('is-on');
+      } else {
+        $un.removeClass('is-on').empty();
+      }
 
       /* 題名がまだ空なら、工事箇所から自動でつけます。
          （WordPressは題名も本文も空だと投稿を保存してくれません）
