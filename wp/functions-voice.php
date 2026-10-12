@@ -752,6 +752,12 @@ function ymkrf_voice_meta_array( $post_id, $key ) {
  * 管理画面の「満足度」欄が空のときだけ 2 になります。
  */
 function ymkrf_voice_score( $post_id ) {
+
+	/* 旧型（A4たて）のアンケートには点数欄がありません。
+	   いま入っている数字は旧サイトから引き継いだものなので、★も点数も出しません。
+	   （2026/10/12 ユーザー指示「旧型では★を出さない」） */
+	if ( function_exists( 'ymkrf_is_oldform' ) && ymkrf_is_oldform( $post_id ) ) return 0;
+
 	$s = get_post_meta( $post_id, '_ymkrf_score', true );
 	if ( $s !== '' && $s !== null ) return (int) $s;
 	$r = array();
@@ -1856,8 +1862,15 @@ add_filter( 'post_type_link', function ( $link, $post ) {
 /** この投稿にふさわしいURLの後半（＝案件番号） */
 function ymkrf_voice_make_slug( $post_id ) {
 
-	$no = strtolower( preg_replace( '/[^0-9A-Za-z-]/', '',
-		(string) get_post_meta( $post_id, '_ymkrf_case_no', true ) ) );
+	/* 案件番号が2つ以上あるとき（「2606-0457,2609-0227」）は、
+	   いちばん最初のものだけをURLに使います。
+	   これまでは記号を消すだけだったので、
+	   /voice/bathroom/2606-04572609-0227/ という読めないURLになっていました。
+	   （2026/10/12 修正。施工事例のほうは、もともと最初の1つを使っています） */
+	$list = function_exists( 'ymkrf_case_no_list' ) ? ymkrf_case_no_list( $post_id ) : array();
+	$raw  = $list ? $list[0] : (string) get_post_meta( $post_id, '_ymkrf_case_no', true );
+
+	$no = strtolower( preg_replace( '/[^0-9A-Za-z-]/', '', (string) $raw ) );
 	if ( $no !== '' ) return $no;
 
 	/* 案件番号が無いものは、通し番号（001、002 …）を使います。
@@ -2077,7 +2090,12 @@ add_action( 'admin_init', function () {
  * （数字を上げると、もう一度だけ実行されます）
  */
 add_action( 'admin_init', function () {
-	if ( get_option( 'ymkrf_voice_url_ver' ) === '2' ) return;
+	/* '2' → '3'（2026/10/12）
+	   案件番号を2つ入れたページのURLが
+	   /voice/bathroom/2606-04572609-0227/ のようにつながっていたので、
+	   もう一度だけ付け直します。前のURLは控えが残り、
+	   古いリンクからでも新しいページへご案内できます。 */
+	if ( get_option( 'ymkrf_voice_url_ver' ) === '3' ) return;
 
 	$ids = get_posts( array(
 		'post_type' => 'ymkrf_voice', 'posts_per_page' => -1,
@@ -2095,7 +2113,7 @@ add_action( 'admin_init', function () {
 			'post_name' => wp_unique_post_slug( $want, $id, $p->post_status, $p->post_type, 0 ),
 		) );
 	}
-	update_option( 'ymkrf_voice_url_ver', '2' );
+	update_option( 'ymkrf_voice_url_ver', '3' );
 }, 20 );
 
 
@@ -2996,3 +3014,181 @@ add_action( 'admin_init', function () {
 		wp_update_post( array( 'ID' => $att, 'post_title' => 'お客様アンケート ' . implode( '／', $nos ) ) );
 	}
 }, 35 );
+
+
+/* ============================================================
+   アンケート画像は「公開用」の1枚だけにします
+   ------------------------------------------------------------
+   （2026/10/12 ユーザー指示
+     「ファイル名、すべてお客様アンケート＋案件番号にして」
+     「URLも別にscaledじゃなくて全てvoiceでよくない？」
+     → えらんだ答え：原本はいらない（voice 1枚だけ））
+
+   これまでは1件につき2枚ありました。
+     原本    … 2609-0454-scaled.jpg（ページには出ません）
+     公開用  … 2609-0454-voice.jpg （ページに出ます）
+
+   公開用は 2400px で文字が読めるので、あとで読み取り直すときも
+   こちらで足ります。原本はゴミ箱に移して、1件1枚にそろえます。
+
+   ★消してはいません。ゴミ箱に移すだけです。
+     もどしたいときは「お客様の声 ＞ 原本をもどす」から戻せます。
+   ============================================================ */
+
+/** その原本を、ほかのお客様の声も使っていないか */
+function ymkrf_voice_org_used_elsewhere( $att_id, $except_vid ) {
+
+	global $wpdb;
+	$n = (int) $wpdb->get_var( $wpdb->prepare(
+		"SELECT COUNT(*) FROM {$wpdb->postmeta}
+		  WHERE meta_key IN ( '_ymkrf_survey_id', '_ymkrf_survey_pub_id' )
+		    AND meta_value = %s AND post_id <> %d",
+		(string) (int) $att_id, (int) $except_vid
+	) );
+	return $n > 0;
+}
+
+/**
+ * 1件ぶんの原本を、ゴミ箱に移します。
+ * 公開用が無いとき・原本と公開用が同じときは、何もしません。
+ */
+function ymkrf_voice_drop_original( $vid ) {
+
+	$pub = (int) get_post_meta( $vid, '_ymkrf_survey_pub_id', true );
+	$org = (int) get_post_meta( $vid, '_ymkrf_survey_id', true );
+
+	if ( ! $pub || ! $org || $pub === $org ) return false;
+	if ( get_post_type( $org ) !== 'attachment' ) return false;
+	if ( get_post_status( $org ) === 'trash' )    return false;
+	if ( ymkrf_voice_org_used_elsewhere( $org, $vid ) ) return false;
+
+	/* 読み取り用の行き先も、公開用に向けかえます */
+	update_post_meta( $vid, '_ymkrf_survey_id', $pub );
+
+	/* もどせるように、どのお客様の声のものかを控えてからゴミ箱へ */
+	update_post_meta( $org, '_ymkrf_was_voice_org', (int) $vid );
+	wp_update_post( array( 'ID' => $org, 'post_status' => 'trash' ) );
+
+	return true;
+}
+
+/** 保存のたびに、1件1枚にそろえます */
+add_action( 'save_post_ymkrf_voice', function ( $post_id ) {
+	if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) return;
+	ymkrf_voice_drop_original( $post_id );
+}, 60 );
+
+/** いまある分も、1回だけそろえます（50件ずつ進みます） */
+add_action( 'admin_init', function () {
+
+	if ( get_option( 'ymkrf_voice_onefile_ver' ) === '1' ) return;
+	if ( ! current_user_can( 'upload_files' ) ) return;
+
+	$ids = get_posts( array(
+		'post_type'      => 'ymkrf_voice',
+		'post_status'    => 'any',
+		'posts_per_page' => 50,
+		'fields'         => 'ids',
+		'no_found_rows'  => true,
+		'meta_query'     => array(
+			array( 'key' => '_ymkrf_survey_pub_id', 'compare' => 'EXISTS' ),
+			array( 'key' => '_ymkrf_onefile_done',  'compare' => 'NOT EXISTS' ),
+		),
+	) );
+
+	if ( ! $ids ) { update_option( 'ymkrf_voice_onefile_ver', '1', false ); return; }
+
+	$n = (int) get_transient( 'ymkrf_voice_onefile_n' );
+	foreach ( $ids as $vid ) {
+		update_post_meta( $vid, '_ymkrf_onefile_done', '1' );
+		if ( ymkrf_voice_drop_original( $vid ) ) $n++;
+	}
+	if ( $n ) set_transient( 'ymkrf_voice_onefile_n', $n, DAY_IN_SECONDS );
+}, 36 );
+
+add_action( 'admin_notices', function () {
+
+	if ( get_option( 'ymkrf_voice_onefile_ver' ) !== '1' ) return;
+	$n = (int) get_transient( 'ymkrf_voice_onefile_n' );
+	if ( ! $n ) return;
+	delete_transient( 'ymkrf_voice_onefile_n' );
+
+	echo '<div class="notice notice-success is-dismissible"><p>'
+	   . 'アンケート画像を1件1枚にそろえました。原本 ' . number_format( $n ) . ' 枚をゴミ箱に移しています。'
+	   . '<br>消してはいません。もどしたいときは'
+	   . ' <a href="' . esc_url( admin_url( 'edit.php?post_type=ymkrf_voice&page=ymkrf-voice-org' ) ) . '">'
+	   . 'お客様の声 ＞ 原本をもどす</a> から戻せます。'
+	   . '</p></div>';
+} );
+
+
+/* ------------------------------------------------------------
+   ゴミ箱に移した原本を、もどすための画面
+   ------------------------------------------------------------ */
+add_action( 'admin_menu', function () {
+	add_submenu_page(
+		'edit.php?post_type=ymkrf_voice',
+		'原本をもどす', '原本をもどす', 'upload_files',
+		'ymkrf-voice-org', 'ymkrf_voice_org_page'
+	);
+}, 40 );
+
+function ymkrf_voice_org_page() {
+
+	if ( ! current_user_can( 'upload_files' ) ) return;
+
+	global $wpdb;
+
+	if ( isset( $_POST['ymkrf_org_back'] ) && check_admin_referer( 'ymkrf_org_back' ) ) {
+
+		$ids = $wpdb->get_col(
+			"SELECT p.ID FROM {$wpdb->posts} p
+			   INNER JOIN {$wpdb->postmeta} m ON m.post_id = p.ID AND m.meta_key = '_ymkrf_was_voice_org'
+			  WHERE p.post_type = 'attachment' AND p.post_status = 'trash'" );
+
+		foreach ( $ids as $att ) {
+			$vid = (int) get_post_meta( (int) $att, '_ymkrf_was_voice_org', true );
+			wp_update_post( array( 'ID' => (int) $att, 'post_status' => 'inherit' ) );
+			delete_post_meta( (int) $att, '_ymkrf_was_voice_org' );
+			if ( $vid ) update_post_meta( $vid, '_ymkrf_survey_id', (int) $att );
+		}
+
+		/* もう一度そろえ直さないように、印をはずします */
+		$wpdb->query( "DELETE FROM {$wpdb->postmeta} WHERE meta_key = '_ymkrf_onefile_done'" );
+		update_option( 'ymkrf_voice_onefile_ver', 'off', false );
+
+		echo '<div class="notice notice-success"><p>'
+		   . number_format( count( $ids ) ) . ' 枚の原本をもどしました。</p></div>';
+	}
+
+	$n = (int) $wpdb->get_var(
+		"SELECT COUNT(*) FROM {$wpdb->posts} p
+		   INNER JOIN {$wpdb->postmeta} m ON m.post_id = p.ID AND m.meta_key = '_ymkrf_was_voice_org'
+		  WHERE p.post_type = 'attachment' AND p.post_status = 'trash'" );
+	?>
+	<div class="wrap">
+		<h1>原本をもどす</h1>
+		<p style="max-width:46em;line-height:1.9">
+			アンケート画像は、1件につき「原本」と「公開用」の2枚ありました。
+			いまは<b>公開用の1枚だけ</b>にそろえ、原本はゴミ箱に移しています。
+			<br>公開用は 2400px で文字が読めるので、あとで読み取り直すときも、こちらで足ります。
+		</p>
+		<p style="font-size:15px">
+			ゴミ箱にある原本：<b><?php echo number_format( $n ); ?></b> 枚
+		</p>
+		<?php if ( $n ) : ?>
+			<form method="post" onsubmit="return confirm('原本をぜんぶもどします。よろしいですか？');">
+				<?php wp_nonce_field( 'ymkrf_org_back' ); ?>
+				<button type="submit" name="ymkrf_org_back" value="1" class="button button-primary">
+					原本をぜんぶもどす
+				</button>
+			</form>
+			<p class="description" style="margin-top:10px">
+				もどすと、1件につき2枚にもどります。そろえ直しも止めます。
+			</p>
+		<?php else : ?>
+			<p style="color:#50575e">もどせる原本はありません。</p>
+		<?php endif; ?>
+	</div>
+	<?php
+}

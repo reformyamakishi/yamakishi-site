@@ -329,6 +329,11 @@
   margin-top:20px; font-size:16px; line-height:2; color:var(--ink-sub);
   background:var(--bg-soft); border-radius:var(--radius); padding:20px 18px;
 }
+/* 「担当者のコメント」と見まちがえられたので、だれが書いたものかを小さく書きます
+   （2026/10/12 ユーザー「これは担当者のコメントかな？」） */
+.p-voice__summarynote{
+  margin-top:6px; font-size:12.5px; line-height:1.7; color:var(--ink-sub);
+}
 .p-voice__rel{ display:grid; gap:12px; }
 .p-voice__relcard{
   display:flex; align-items:center; gap:12px; text-decoration:none;
@@ -362,7 +367,28 @@
 .p-voice__relcard .c-starsrow{ flex:0 0 auto; }
 .p-voice__relcard .c-stars{ font-size:14px; }
 
-@media (min-width:768px){ .p-voice__rel{ grid-template-columns:repeat(2,1fr); } }
+/* 4つのカードは、2列2行・おなじ大きさでならべます
+   （2026/10/12 ユーザー指示「横のサイズ4つとも同じにして」
+     → 同日「よこながすぎ。２列2行にしてほしい。同じ大きさで」）。
+
+   ★順番にご注意★
+   「パソコンでは2列」の指定を先に書いて、そのあとに
+   「1列」と書いてしまうと、あとの1列が勝ってしまいます
+   （メディアクエリは強さを足さないため）。
+   そのため、まず1列（スマホ）を書いて、そのあとに2列を書きます。
+
+   1fr だけだと、中身（長い工事箇所名など）に押されてはばが変わるので、
+   minmax(0,1fr) で止めます。高さは align-items:stretch でそろえます。 */
+.p-voice__rel{ grid-template-columns:minmax(0,1fr); }
+.p-voice__relcard{ width:100%; min-width:0; }
+@media (min-width:768px){
+  .p-voice__rel{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    grid-auto-rows:1fr;            /* 2行とも同じ高さに */
+    align-items:stretch;
+  }
+  .p-voice__relcard{ height:100%; }
+}
 
 /* --------------------------------------------------------------------------
    工事箇所でさがす（/voice/oiltank/ などへのボタン）

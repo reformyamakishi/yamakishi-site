@@ -66,6 +66,10 @@ require_once get_stylesheet_directory() . '/inc/functions-voice-status.php';
    wp-content/ymkrf-debug.txt も消してかまいません。 */
 require_once get_stylesheet_directory() . '/inc/functions-voice-alt.php';
 require_once get_stylesheet_directory() . '/inc/functions-voice-check.php';
+/* 登録しなおしたときに残る、古いアンケート画像のおそうじ（2026/10/12） */
+require_once get_stylesheet_directory() . '/inc/functions-voice-clean.php';
+/* 旧型（A4たて）のアンケート169件だけ、Q＆Aを手打ちする形にします（2026/10/12） */
+require_once get_stylesheet_directory() . '/inc/functions-voice-oldform.php';
 /* ↓ お客様の声の✓の見直し（作業用）。終わったらこの行とファイルを消してください */
 require_once get_stylesheet_directory() . '/inc/functions-voice-fix.php';
 require_once get_stylesheet_directory() . '/inc/functions-voice-mail.php';

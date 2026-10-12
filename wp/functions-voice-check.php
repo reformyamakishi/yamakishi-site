@@ -119,6 +119,16 @@ add_action( 'admin_notices', function () {
 	if ( empty( $GLOBALS['post'] ) ) return;
 
 	$id = (int) $GLOBALS['post']->ID;
+
+	/* 新規追加の画面では出しません（2026/10/12 ユーザー指摘
+	   「新規で投稿しようとしたら一番上に要確認…があるのはおかしい。
+	     登録後におかしい箇所があるのであればよいが」）。
+
+	   まだ何も入れていないのに「案件番号が入っていません」と赤く出るのは、
+	   おどろかせるだけです。一度保存してから見ます。 */
+	if ( get_post_status( $id ) === 'auto-draft' ) return;
+	if ( isset( $GLOBALS['pagenow'] ) && $GLOBALS['pagenow'] === 'post-new.php' ) return;
+
 	$r  = get_post_meta( $id, YMKRF_VCHK_META, true );
 
 	/* 「確認しました」にしたものは、灰色の小さな案内だけにします */

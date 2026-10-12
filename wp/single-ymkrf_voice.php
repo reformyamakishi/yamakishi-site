@@ -96,9 +96,23 @@ if ( function_exists( 'ymkrf_crumb_ld' ) ) {
     /* とんとこトンが質問して、お客様が答える形にしています。
        アンケートに記入があるものだけ出します。 */
     $talk = array();
-    if ( $trouble ) $talk[] = array( 'リフォームする前は、どんなことでお困りでしたか？', $trouble );
-    if ( $after )   $talk[] = array( 'リフォームしてみて、いかがでしたか？',           $after );
-    if ( $comment ) $talk[] = array( '工事について感じたことを教えてください',         $comment );
+
+    /* 旧型（A4たて）のアンケートは、用紙に書かれたQ＆Aをそのまま出します。
+       （2026/10/12 ユーザー指示。打ち込みがまだのページは、これまでどおりの3つを出します） */
+    $ymkrf_qa = function_exists( 'ymkrf_voice_qa_rows' ) ? ymkrf_voice_qa_rows( $id ) : array();
+
+    if ( $ymkrf_qa ) {
+      foreach ( $ymkrf_qa as $qa ) $talk[] = array( $qa['q'], $qa['a'] );
+    } else {
+      if ( $trouble ) $talk[] = array( 'リフォームする前は、どんなことでお困りでしたか？', $trouble );
+      if ( $after )   $talk[] = array( 'リフォームしてみて、いかがでしたか？',           $after );
+      if ( $comment ) $talk[] = array( '工事について感じたことを教えてください',         $comment );
+    }
+
+    /* 旧型には、選択式の欄（②選んだ理由・③〜⑨の評価）がありません。
+       旧サイトから引き継いだ数字が残っていても、ページには出しません。 */
+    $ymkrf_old = function_exists( 'ymkrf_is_oldform' ) && ymkrf_is_oldform( $id );
+    if ( $ymkrf_old ) $reasons = array();
     ?>
 
     <?php if ( $parts ) : ?>
@@ -133,6 +147,8 @@ if ( function_exists( 'ymkrf_crumb_ld' ) ) {
     </div>
     <?php endif; ?>
 
+    <?php /* 旧型（A4たて）には評価欄がないので、この表はまるごと出しません（2026/10/12） */ ?>
+    <?php if ( ! $ymkrf_old ) : ?>
     <h2 class="p-voice__h2">いただいた評価</h2>
     <table class="p-voice__ratings">
       <tbody>
@@ -152,6 +168,7 @@ if ( function_exists( 'ymkrf_crumb_ld' ) ) {
       <?php endif; ?>
       </tbody>
     </table>
+    <?php endif; ?>
 
     <?php if ( $reasons ) : ?>
       <h2 class="p-voice__h2">ヤマキシをお選びいただいた理由</h2>
@@ -172,9 +189,18 @@ if ( function_exists( 'ymkrf_crumb_ld' ) ) {
     <?php endif; ?>
 
     <?php /* 手書きの感想がないときは、チェック内容から作った紹介文を出します。
-             ページごとに言い回しを変えて、似たページにならないようにしています。 */ ?>
+             ページごとに言い回しを変えて、似たページにならないようにしています。
+
+             2026/10/12 ユーザー「アンケート画像の下に、コメントがあるものとないものがある」
+             → 担当者のコメントとまちがえられたので、見出しをつけました。
+               見出しには工事箇所の名前を入れて、ページごとにちがう見出しにします
+               （検索で「エコキュート　お客様の声」のように探されたときの手がかり）。 */ ?>
     <?php if ( ! $comment ) : $sum = ymkrf_voice_summary( $id ); if ( $sum ) : ?>
+      <h2 class="p-voice__h2"><?php
+        echo esc_html( $parts ? $parts[0] . 'リフォームのご回答から' : 'アンケートのご回答から' );
+      ?></h2>
       <p class="p-voice__summary"><?php echo esc_html( $sum ); ?></p>
+      <p class="p-voice__summarynote">※ いただいたアンケートのチェック内容をもとに、ヤマキシがまとめています。</p>
     <?php endif; endif; ?>
 
     <?php if ( $works ) : ?>

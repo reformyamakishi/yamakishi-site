@@ -270,3 +270,316 @@ add_action( 'admin_notices', function () {
 	   . 'お客様の声と施工事例がつながるようになりました。'
 	   . '</p></div>';
 } );
+
+
+/* ============================================================
+   5. 案件番号のダブりを知らせます
+   ------------------------------------------------------------
+   （2026/10/12 ユーザー指示
+     「お客様の声、施工事例、同じ案件番号で重複できない様に
+       登録の際にもし重複であれば、コメントで教えてほしい」）
+
+   ★保存じたいは止めません。
+     1つの工事をわざと2件に分けたいこともあり得るので、
+     こちらで勝手に消したり、保存を拒んだりはしません。
+     「同じ番号のものが、もうありますよ」とお知らせするだけです。
+
+   お客様の声どうし・施工事例どうしで見ます。
+   お客様の声と施工事例のあいだは、つながるのが正しいので見ません。
+   ============================================================ */
+
+/** 同じ種類の中で、番号がぶつかっている相手をさがします */
+function ymkrf_case_dupes( $post_id ) {
+
+	$post_id = (int) $post_id;
+	$type    = get_post_type( $post_id );
+	if ( ! in_array( $type, ymkrf_case_types(), true ) ) return array();
+
+	$nos = ymkrf_case_no_list( $post_id );
+	if ( ! $nos ) return array();
+
+	$out = array();
+	foreach ( $nos as $no ) {
+		foreach ( ymkrf_case_find( array( $no ), $type, 20 ) as $id ) {
+			$id = (int) $id;
+			if ( $id === $post_id ) continue;
+			if ( get_post_status( $id ) === 'trash' ) continue;
+			if ( ! isset( $out[ $id ] ) ) $out[ $id ] = array();
+			if ( ! in_array( $no, $out[ $id ], true ) ) $out[ $id ][] = $no;
+		}
+	}
+	return $out;
+}
+
+/* 保存のたびに、ぶつかっていないか見ます */
+foreach ( ymkrf_case_types() as $ymkrf_dup_t ) {
+	add_action( "save_post_{$ymkrf_dup_t}", function ( $post_id, $post ) {
+
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
+		if ( wp_is_post_revision( $post_id ) ) return;
+		if ( ! $post || $post->post_status === 'auto-draft' ) return;
+
+		$d = ymkrf_case_dupes( $post_id );
+
+		if ( $d ) set_transient( 'ymkrf_case_dupe_' . $post_id, $d, 120 );
+		else      delete_transient( 'ymkrf_case_dupe_' . $post_id );
+
+	}, 40, 2 );
+}
+unset( $ymkrf_dup_t );
+
+/* 編集画面のいちばん上に、赤いお知らせを出します */
+add_action( 'admin_notices', function () {
+
+	$s = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+	if ( ! $s || $s->base !== 'post' ) return;
+	if ( ! in_array( $s->post_type, ymkrf_case_types(), true ) ) return;
+
+	$id = isset( $GLOBALS['post'] ) ? (int) $GLOBALS['post']->ID : 0;
+	if ( ! $id ) return;
+
+	/* 保存した直後は控えを使い、ふだんはその場で数えます */
+	$d = get_transient( 'ymkrf_case_dupe_' . $id );
+	if ( $d === false ) $d = ymkrf_case_dupes( $id );
+	if ( ! $d ) return;
+
+	$label = ( $s->post_type === 'ymkrf_voice' ) ? 'お客様の声' : '施工事例';
+
+	echo '<div class="notice notice-error"><p><b>'
+	   . '同じ案件番号の' . esc_html( $label ) . 'が、すでに登録されています。</b></p>'
+	   . '<ul style="margin:0 0 10px 1.4em;list-style:disc">';
+
+	foreach ( $d as $other => $nos ) {
+		$t = trim( (string) get_the_title( $other ) );
+		if ( $t === '' ) $t = '（題名なし）';
+		echo '<li><b>' . esc_html( implode( '／', $nos ) ) . '</b>　'
+		   . '<a href="' . esc_url( (string) get_edit_post_link( $other ) ) . '" target="_blank" rel="noopener">'
+		   . esc_html( wp_trim_words( $t, 18, '…' ) ) . '</a>'
+		   . '（' . esc_html( get_post_status( $other ) === 'publish' ? '公開済み' : '下書きなど' ) . '）</li>';
+	}
+
+	echo '</ul><p>二重登録でしたら、どちらかをゴミ箱に入れてください。'
+	   . 'わざと2件に分けている場合は、このままで大丈夫です。</p></div>';
+} );
+
+/* 一覧でも、ダブっている行に印を付けます */
+add_action( 'admin_footer-edit.php', function () {
+
+	$s = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+	if ( ! $s || ! in_array( $s->post_type, ymkrf_case_types(), true ) ) return;
+	if ( empty( $GLOBALS['wp_query']->posts ) ) return;
+
+	$hit = array();
+	foreach ( $GLOBALS['wp_query']->posts as $p ) {
+		if ( ymkrf_case_dupes( $p->ID ) ) $hit[] = (int) $p->ID;
+	}
+	if ( ! $hit ) return;
+
+	echo '<style>.ymkrf-dupe{color:#d63638;font-weight:700;margin-left:6px;white-space:nowrap}</style>';
+	echo '<script>(function(){var ids=' . wp_json_encode( $hit ) . ';'
+	   . 'ids.forEach(function(id){var tr=document.getElementById("post-"+id);if(!tr)return;'
+	   . 'var a=tr.querySelector(".row-title");if(!a||a.parentNode.querySelector(".ymkrf-dupe"))return;'
+	   . 'var s=document.createElement("span");s.className="ymkrf-dupe";'
+	   . 's.textContent="⚠ 番号ダブり";'
+	   . 'a.parentNode.insertBefore(s,a.nextSibling);});})();</script>';
+} );
+
+
+/* ============================================================
+   6. ダブった案件番号では登録できないようにします
+   ------------------------------------------------------------
+   （2026/10/12 ユーザー指示
+     「お客様の声と施工事例は絶対に重複しないので、登録できないように
+       してほしい。案件番号入れた時点で重複していたら、入力する前に
+       すぐ教えてほしい」）
+
+   ■ 2段がまえです
+     ① 打った瞬間に知らせる
+        案件番号の欄から手をはなした時点でしらべ、ダブっていたら
+        欄の下に赤く出し、「公開」「更新」のボタンを押せなくします。
+     ② 保存しようとしても止める
+        もしボタンをすり抜けても、公開にはなりません。
+        下書きのまま止めて、赤いお知らせを出します。
+
+   お客様の声どうし・施工事例どうしで見ます。
+   お客様の声と施工事例のあいだは、つながるのが正しいので見ません。
+   ============================================================ */
+
+/* ---- ① 打った瞬間にしらべる ---- */
+add_action( 'wp_ajax_ymkrf_case_check', function () {
+
+	check_ajax_referer( 'ymkrf_case_check', 'nonce' );
+	if ( ! current_user_can( 'edit_posts' ) ) wp_send_json_error();
+
+	$type = isset( $_POST['ptype'] ) ? sanitize_key( wp_unslash( $_POST['ptype'] ) ) : '';
+	$self = isset( $_POST['post'] )  ? (int) $_POST['post'] : 0;
+	$text = isset( $_POST['caseno'] ) ? (string) wp_unslash( $_POST['caseno'] ) : '';
+
+	if ( ! in_array( $type, ymkrf_case_types(), true ) ) wp_send_json_error();
+
+	$nos = ymkrf_case_no_split( $text );
+	if ( ! $nos ) wp_send_json_success( array( 'dupe' => array(), 'nos' => array() ) );
+
+	$out = array();
+	foreach ( $nos as $no ) {
+		foreach ( ymkrf_case_find( array( $no ), $type, 10 ) as $id ) {
+			$id = (int) $id;
+			if ( $id === $self ) continue;
+			if ( get_post_status( $id ) === 'trash' ) continue;
+			$t = trim( (string) get_the_title( $id ) );
+			$out[] = array(
+				'no'    => $no,
+				'title' => ( $t !== '' ? wp_trim_words( $t, 16, '…' ) : '（題名なし）' ),
+				'url'   => (string) get_edit_post_link( $id, 'raw' ),
+				'state' => ( get_post_status( $id ) === 'publish' ? '公開済み' : '下書きなど' ),
+			);
+		}
+	}
+	wp_send_json_success( array( 'dupe' => $out, 'nos' => $nos ) );
+} );
+
+add_action( 'admin_footer-post.php', 'ymkrf_case_check_js' );
+add_action( 'admin_footer-post-new.php', 'ymkrf_case_check_js' );
+
+function ymkrf_case_check_js() {
+
+	$s = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+	if ( ! $s || ! in_array( $s->post_type, ymkrf_case_types(), true ) ) return;
+
+	$label = ( $s->post_type === 'ymkrf_voice' ) ? 'お客様の声' : '施工事例';
+	$pid   = isset( $GLOBALS['post'] ) ? (int) $GLOBALS['post']->ID : 0;
+	?>
+	<style>
+	  .ymkrf-caseng-box{
+	    margin:8px 0 0; padding:10px 12px; border-radius:6px;
+	    background:#fcf0f1; border:2px solid #d63638; color:#8a1f21;
+	    font-size:13px; line-height:1.8; display:none;
+	  }
+	  .ymkrf-caseng-box.is-on{ display:block; }
+	  .ymkrf-caseng-box a{ color:#8a1f21; font-weight:700; }
+	  input[name="_ymkrf_case_no"].is-ng{
+	    border-color:#d63638 !important; box-shadow:0 0 0 1px #d63638 inset;
+	    background:#fff6f6;
+	  }
+	  .ymkrf-casewait{ margin-left:10px; color:#646970; font-size:12px; }
+	</style>
+	<script>
+	jQuery(function ($) {
+
+	  var $in = $('input[name="_ymkrf_case_no"]');
+	  if (!$in.length) return;
+
+	  var $box = $('<p class="ymkrf-caseng-box"></p>').insertAfter($in.closest('label').length ? $in.closest('label') : $in);
+	  var timer = null, lastNg = false;
+
+	  function buttons(off) {
+	    $('#publish, #save-post, .editor-post-publish-button').prop('disabled', !!off)
+	      .css('opacity', off ? 0.5 : '').css('pointer-events', off ? 'none' : '');
+	  }
+
+	  function check() {
+	    var v = $.trim($in.val() || '');
+	    if (!v) { $box.removeClass('is-on').empty(); $in.removeClass('is-ng'); if (lastNg) { buttons(false); lastNg = false; } return; }
+
+	    $.post(ajaxurl, {
+	      action: 'ymkrf_case_check',
+	      nonce:  '<?php echo esc_js( wp_create_nonce( 'ymkrf_case_check' ) ); ?>',
+	      ptype:  '<?php echo esc_js( $s->post_type ); ?>',
+	      post:   <?php echo (int) $pid; ?>,
+	      caseno: v
+	    }).done(function (res) {
+
+	      if (!res || !res.success) return;
+	      var d = res.data.dupe || [];
+
+	      if (!d.length) {
+	        $box.removeClass('is-on').empty();
+	        $in.removeClass('is-ng');
+	        if (lastNg) { buttons(false); lastNg = false; }
+	        return;
+	      }
+
+	      var html = '<b>この案件番号の<?php echo esc_js( $label ); ?>は、すでに登録されています。</b>'
+	               + '<br>番号を直すか、先に登録してあるほうを開いてください。'
+	               + '（このままでは登録できません）<ul style="margin:6px 0 0 1.4em;list-style:disc">';
+	      d.forEach(function (o) {
+	        html += '<li>' + o.no + '　<a href="' + o.url + '" target="_blank" rel="noopener">'
+	              + o.title + '</a>（' + o.state + '）</li>';
+	      });
+	      html += '</ul>';
+
+	      $box.html(html).addClass('is-on');
+	      $in.addClass('is-ng');
+	      buttons(true); lastNg = true;
+	    });
+	  }
+
+	  $in.on('input', function () {
+	    clearTimeout(timer);
+	    timer = setTimeout(check, 500);
+	  }).on('blur', check);
+
+	  check();   /* 開いたときにも、いちど見ます */
+	});
+	</script>
+	<?php
+}
+
+/* ---- ② 保存しようとしても、公開にはしません ---- */
+add_filter( 'wp_insert_post_data', function ( $data, $postarr ) {
+
+	if ( empty( $data['post_type'] ) ) return $data;
+	if ( ! in_array( $data['post_type'], ymkrf_case_types(), true ) ) return $data;
+	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return $data;
+	if ( ! isset( $_POST['_ymkrf_case_no'] ) ) return $data;   /* クイック編集などは、そのまま */
+
+	$self = ! empty( $postarr['ID'] ) ? (int) $postarr['ID'] : 0;
+	$nos  = ymkrf_case_no_split( (string) wp_unslash( $_POST['_ymkrf_case_no'] ) );
+	if ( ! $nos ) return $data;
+
+	$hit = array();
+	foreach ( $nos as $no ) {
+		foreach ( ymkrf_case_find( array( $no ), $data['post_type'], 10 ) as $id ) {
+			$id = (int) $id;
+			if ( $id === $self ) continue;
+			if ( get_post_status( $id ) === 'trash' ) continue;
+			$hit[ $id ] = $no;
+		}
+	}
+	if ( ! $hit ) return $data;
+
+	/* 公開しようとしていたら、下書きで止めます */
+	if ( in_array( $data['post_status'], array( 'publish', 'future', 'private' ), true ) ) {
+		$data['post_status'] = 'draft';
+	}
+	set_transient( 'ymkrf_case_block_' . get_current_user_id(), $hit, 120 );
+
+	return $data;
+}, 20, 2 );
+
+add_action( 'admin_notices', function () {
+
+	$s = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+	if ( ! $s || $s->base !== 'post' ) return;
+	if ( ! in_array( $s->post_type, ymkrf_case_types(), true ) ) return;
+
+	$hit = get_transient( 'ymkrf_case_block_' . get_current_user_id() );
+	if ( ! $hit ) return;
+	delete_transient( 'ymkrf_case_block_' . get_current_user_id() );
+
+	$label = ( $s->post_type === 'ymkrf_voice' ) ? 'お客様の声' : '施工事例';
+
+	echo '<div class="notice notice-error"><p><b>'
+	   . '案件番号がダブっているので、公開しませんでした（下書きのままです）。</b></p>'
+	   . '<p>同じ番号の' . esc_html( $label ) . 'が、すでに登録されています。'
+	   . '番号を直すか、先に登録してあるほうを開いてください。</p>'
+	   . '<ul style="margin:0 0 10px 1.4em;list-style:disc">';
+
+	foreach ( $hit as $id => $no ) {
+		$t = trim( (string) get_the_title( $id ) );
+		echo '<li><b>' . esc_html( $no ) . '</b>　'
+		   . '<a href="' . esc_url( (string) get_edit_post_link( $id ) ) . '" target="_blank" rel="noopener">'
+		   . esc_html( $t !== '' ? wp_trim_words( $t, 16, '…' ) : '（題名なし）' ) . '</a></li>';
+	}
+	echo '</ul></div>';
+} );
