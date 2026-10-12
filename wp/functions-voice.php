@@ -778,7 +778,6 @@ function ymkrf_voice_score( $post_id ) {
 function ymkrf_voice_summary( $post_id ) {
 	$parts   = ymkrf_voice_meta_array( $post_id, '_ymkrf_parts' );
 	$reasons = ymkrf_voice_meta_array( $post_id, '_ymkrf_reasons' );
-	$cust    = ymkrf_voice_customer_label( $post_id );
 	$shop    = ymkrf_voice_shop_name( $post_id );
 	$out     = array();
 
@@ -789,9 +788,12 @@ function ymkrf_voice_summary( $post_id ) {
 
 	if ( $parts ) {
 		$pl = implode( '・', $parts );
+		/* お客様のイニシャル（◯◯市 Y様）は、ここには入れません。
+		   ページの上のほうにもう出ていますし、紹介文に重ねて出す必要はありません。
+		   （2026/10/12 ユーザー指示「お客様のイニシャルはそこは不要です」） */
 		$out[] = $pick( array(
-			( $cust ? $cust . 'より、' : '' ) . $pl . 'の工事をご用命いただきました。',
-			$pl . 'のリフォームをお手伝いさせていただきました' . ( $cust ? '（' . $cust . '）' : '' ) . '。',
+			$pl . 'の工事をご用命いただきました。',
+			$pl . 'のリフォームをお手伝いさせていただきました。',
 			( $shop ? $shop . 'が担当し、' : '' ) . $pl . 'の工事をさせていただきました。',
 		) );
 	}
@@ -806,7 +808,16 @@ function ymkrf_voice_summary( $post_id ) {
 
 	$good = array();
 	foreach ( ymkrf_voice_rating_fields() as $k => $label ) {
-		if ( (int) get_post_meta( $post_id, $k, true ) >= 3 ) $good[] = trim( $label, '「」' );
+		/* ★ここは trim( $label, '「」' ) ではいけません（2026/10/12 不具合を修正）★
+		   trim の第2引数は「文字」ではなく「バイト」で消します。
+		   「 は E3 80 8C、」 は E3 80 8D なので、E3・80・8C・8D の4バイトが
+		   消す対象になり、「ご提案した「プラン内容」」の先頭「ご」(E3 81 94) の
+		   E3 まで削られて、こわれた文字になっていました。
+		   こわれた文字が混じると esc_html() が文字列ごと空にするので、
+		   アンケート画像の下の紹介文が、まるごと出ていませんでした。 */
+		if ( (int) get_post_meta( $post_id, $k, true ) >= 3 ) {
+			$good[] = str_replace( array( '「', '」' ), '', $label );
+		}
 	}
 	if ( $good ) {
 		$gl = implode( '・', $good );
