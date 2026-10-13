@@ -189,8 +189,14 @@ if ( $cat && $cat->slug === 'pack4' ) {
     <?php /* 書き出しの一文（2026/09/22 ユーザー承認）。
              「コンロ 交換 金沢」のように、人が打つ言葉をページの中に入れます。
              文は inc/functions-product-seo.php で自動で組み立てています。 */ ?>
+    <?php /* 2026/10/13 ユーザー指示「この文章のある個所の左がわに、とんとこトンほしいな」 */ ?>
     <?php if ( function_exists( 'ymkrf_seo_lead' ) ) : ?>
-      <p class="p-prd__lead"><?php echo esc_html( ymkrf_seo_lead() ); ?></p>
+      <div class="p-prd__leadrow">
+        <img class="p-prd__leadton"
+             src="<?php echo esc_url( get_stylesheet_directory_uri() . '/assets/img/character/char-hello.webp' ); ?>"
+             width="120" height="120" alt="とんとこトン" loading="lazy" decoding="async">
+        <p class="p-prd__lead"><?php echo esc_html( ymkrf_seo_lead() ); ?></p>
+      </div>
     <?php endif; ?>
 
   </div>
@@ -540,34 +546,6 @@ if ( $d['specs'] || $d['speclist'] || $basic ) : ?>
 </section>
 <?php endif; ?>
 
-<?php if ( $d['options'] ) : ?>
-<!-- =========== おすすめオプション =========== -->
-<section class="l-section">
-  <div class="l-wrap">
-    <h2 class="p-prd__bar">おすすめオプション</h2>
-    <p class="p-prd__packnote">※現時点での参考価格となります。</p>
-    <div class="p-prd__opts">
-      <?php foreach ( $d['options'] as $r ) : ?>
-        <article class="p-prd__opt">
-          <div class="ph"><?php echo ymkrf_img( $r['img'], 'medium',
-            ymkrf_alt( $altb, ( ! empty( $r['alt'] ) ? $r['alt'] : $r['name'] ) ) ); ?></div>
-          <div>
-            <h3><?php echo esc_html( $r['name'] ); ?></h3>
-            <?php if ( $r['text'] ) : ?><p><?php echo nl2br( esc_html( $r['text'] ) ); ?></p><?php endif; ?>
-            <?php if ( $r['price'] ) : ?>
-              <?php /* マイナスの金額（値引き）も入れられるようにしています */
-                $op = (int) $r['price']; ?>
-              <p class="p-prd__optprice"><?php echo $op < 0 ? '−' : '+'; ?><?php echo esc_html( number_format( abs( $op ) ) ); ?>円<small>（税込）</small><?php
-                if ( $r['note'] ) echo '<em>' . esc_html( $r['note'] ) . '</em>';
-              ?></p>
-            <?php endif; ?>
-          </div>
-        </article>
-      <?php endforeach; ?>
-    </div>
-  </div>
-</section>
-<?php endif; ?>
 
 <!-- =========== 標準工事費込み ===========
      一覧ページと同じ「標準工事費にふくまれる工事」のカードを出します。
@@ -613,6 +591,38 @@ if ( ! empty( $pn['items'] ) ) :
 <?php endif; ?>
 
 <?php if ( $sib['prev'] || $sib['next'] ) : ?>
+<?php /* 2026/10/13 ユーザー指示「オプションの部分、一番下にして」。
+         商品そのものの情報としては、これがいちばん下です
+         （標準工事費込みのあと、ほかのグレードの前）。 */ ?>
+<?php if ( $d['options'] ) : ?>
+<!-- =========== おすすめオプション =========== -->
+<section class="l-section">
+  <div class="l-wrap">
+    <h2 class="p-prd__bar">おすすめオプション</h2>
+    <p class="p-prd__packnote">※現時点での参考価格となります。</p>
+    <div class="p-prd__opts">
+      <?php foreach ( $d['options'] as $r ) : ?>
+        <article class="p-prd__opt">
+          <div class="ph"><?php echo ymkrf_img( $r['img'], 'medium',
+            ymkrf_alt( $altb, ( ! empty( $r['alt'] ) ? $r['alt'] : $r['name'] ) ) ); ?></div>
+          <div>
+            <h3><?php echo esc_html( $r['name'] ); ?></h3>
+            <?php if ( $r['text'] ) : ?><p><?php echo nl2br( esc_html( $r['text'] ) ); ?></p><?php endif; ?>
+            <?php if ( $r['price'] ) : ?>
+              <?php /* マイナスの金額（値引き）も入れられるようにしています */
+                $op = (int) $r['price']; ?>
+              <p class="p-prd__optprice"><?php echo $op < 0 ? '−' : '+'; ?><?php echo esc_html( number_format( abs( $op ) ) ); ?>円<small>（税込）</small><?php
+                if ( $r['note'] ) echo '<em>' . esc_html( $r['note'] ) . '</em>';
+              ?></p>
+            <?php endif; ?>
+          </div>
+        </article>
+      <?php endforeach; ?>
+    </div>
+  </div>
+</section>
+<?php endif; ?>
+
 <!-- =========== 前後の商品（グレード） =========== -->
 <section class="l-section">
   <div class="l-wrap">

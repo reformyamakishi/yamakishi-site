@@ -1698,7 +1698,7 @@ function ymkrf_product_row_option( $key, $n, $row ) {
 	$price   = $v( 'price' );
 	?>
 	<div class="ymkrf-row ymkrf-point ymkrf-opt">
-		<span class="ymkrf-row__handle" title="ドラッグで並べ替え">≡</span>
+		<?php echo ymkrf_product_row_move(); ?>
 		<button type="button" class="button-link ymkrf-row__del" title="このオプションを消す">×</button>
 
 		<div class="ymkrf-point__body">
@@ -1893,7 +1893,7 @@ function ymkrf_product_point_html( $key, $n, $row, $no = 1, $is_first = false ) 
 	};
 	?>
 	<div class="ymkrf-row ymkrf-point" data-idx="<?php echo esc_attr( $n ); ?>">
-		<span class="ymkrf-row__handle" title="ドラッグで並べ替え">≡</span>
+		<?php echo ymkrf_product_row_move(); ?>
 		<span class="ymkrf-point__no">Point <?php echo (int) $no; ?></span>
 		<button type="button" class="button-link ymkrf-row__del" title="このポイントを消す">×</button>
 
@@ -1927,9 +1927,33 @@ function ymkrf_product_point_html( $key, $n, $row, $no = 1, $is_first = false ) 
 	<?php
 }
 
+/**
+ * 並べ替えの持ち手（≡）と、ひとつ上・ひとつ下に動かすボタン。
+ *
+ * 2026/10/13 ユーザー
+ *   「カラー・取っ手の中でも色の順番を変えたい。取っ手も中で順番を変えたい。
+ *     商品ぺージ全体をそういう風に順番換えられるようにして」
+ *
+ * ドラッグ（≡）はもともと使えましたが、見つけにくく、
+ * 色見本のように横にならぶものは、つかみ直すのも大変でした。
+ * そこで「↑ ↓」のボタンを足しました。押すだけで、ひとつずつ入れかわります。
+ * 商品ページの入力欄は、どれも同じ「行」でできているので、
+ * カラーも取っ手も、仕様もポイントも、これひとつで全部に付きます。
+ *
+ * ★並び順は、画面の見た目のとおりに保存されます
+ *   （保存のときは、送られてきた順にそのまま入れ直しています）。
+ */
+function ymkrf_product_row_move() {
+	return '<span class="ymkrf-row__move">'
+	     . '<span class="ymkrf-row__handle" title="ドラッグで並べ替え">≡</span>'
+	     . '<button type="button" class="ymkrf-row__up" title="ひとつ前に動かす">↑</button>'
+	     . '<button type="button" class="ymkrf-row__dn" title="ひとつ後ろに動かす">↓</button>'
+	     . '</span>';
+}
+
 function ymkrf_product_row_html( $key, $cols, $n, $row, $card = false ) {
 	echo '<div class="ymkrf-row">';
-	echo '<span class="ymkrf-row__handle" title="ドラッグで並べ替え">≡</span>';
+	echo ymkrf_product_row_move();
 	echo '<div class="ymkrf-row__body">';
 	foreach ( $cols as $ck => $c ) {
 		$name = sprintf( '%s[%s][%s]', $key, $n, $ck );
@@ -4053,6 +4077,21 @@ function ymkrf_product_admin_assets() {
 .ymkrf-row{display:flex;align-items:flex-start;gap:8px;background:#fafafa;border:1px solid #e0e0e0;
            border-radius:6px;padding:12px;margin-bottom:8px}
 .ymkrf-row__handle{cursor:grab;color:#999;font-size:18px;line-height:1;padding:6px 2px;user-select:none}
+/* 枠のどこをつかんでも動かせます（2026/10/13）。
+   入力欄の上では、ふつうの文字カーソルにもどします。 */
+.ymkrf-rep__rows > .ymkrf-row{cursor:grab}
+.ymkrf-rep__rows > .ymkrf-row:active{cursor:grabbing}
+.ymkrf-row input,.ymkrf-row textarea,.ymkrf-row select,.ymkrf-row button,.ymkrf-row a{cursor:auto}
+.ymkrf-row button,.ymkrf-row a,.ymkrf-row .ymkrf-img__prev{cursor:pointer}
+/* 並べ替え（2026/10/13）。ドラッグが苦手でも「↑ ↓」で入れかえられます */
+.ymkrf-row__move{display:flex;align-items:center;gap:2px;flex:0 0 auto}
+.ymkrf-row__up,.ymkrf-row__dn{
+  cursor:pointer;border:1px solid #c9c9c9;background:#fff;color:#555;border-radius:4px;
+  width:22px;height:22px;line-height:1;font-size:13px;padding:0;
+}
+.ymkrf-row__up:hover,.ymkrf-row__dn:hover{border-color:#fe3301;color:#fe3301;background:#fff6f3}
+.ymkrf-row__up:disabled,.ymkrf-row__dn:disabled{opacity:.3;cursor:default;border-color:#e0e0e0}
+.ymkrf-rep--card .ymkrf-row__move{justify-content:center;margin-bottom:4px}
 .ymkrf-row__body{flex:1;display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
 .ymkrf-row__del{color:#b32d2e;font-size:18px;line-height:1;padding:4px 6px;text-decoration:none}
 .ymkrf-f{display:block;font-size:12px}
@@ -4080,6 +4119,10 @@ function ymkrf_product_admin_assets() {
   background:#fff;border:1px dashed #c3c4c7;
 }
 .ymkrf-rep--card .ymkrf-img__prev:hover{border-color:#fe3301;border-style:solid}
+/* 取っ手は、写真が枠いっぱいだと窮屈なので、内側に余白をとって中央に置きます
+   （2026/10/13 ユーザー指示「商品が背景目いっぱいなのなんかださい。少しパディングして中央に配置して」） */
+.ymkrf-rep[data-key="_ymkrf_handles"] .ymkrf-img__prev{box-sizing:border-box;padding:14%}
+.ymkrf-rep[data-key="_ymkrf_handles"] .ymkrf-img__prev img{width:100%;height:100%;object-fit:contain}
 .ymkrf-rep--card .ymkrf-img__prev img{max-width:100%;max-height:100%;object-fit:contain}
 .ymkrf-rep--card .ymkrf-img__prev:empty::before{
   content:"＋ 写真";color:#a7aaad;font-size:13px;font-weight:700;
@@ -4451,13 +4494,47 @@ jQuery(function($){
     $box.find('.ymkrf-img__prev').empty();
   });
 
-  /* ドラッグで並べ替え */
+  /* 「↑ ↓」で、ひとつずつ入れかえます（2026/10/13 ユーザー指示）。
+     送られる順＝画面の順なので、保存すればそのままの並びになります。 */
+  function ymkrfMove($row, dir){
+    var $rows = $row.parent().children('.ymkrf-row');
+    var i = $rows.index($row);
+    if (dir < 0 && i > 0)                 $row.insertBefore($rows.eq(i - 1));
+    if (dir > 0 && i < $rows.length - 1)  $row.insertAfter($rows.eq(i + 1));
+    ymkrfMoveBtns($row.parent());
+    $row.css('background', '#fff6f3');
+    setTimeout(function(){ $row.css('background', ''); }, 400);
+  }
+  function ymkrfMoveBtns($wrap){
+    var $rows = $wrap.children('.ymkrf-row');
+    $rows.each(function(i){
+      $(this).find('> .ymkrf-row__move .ymkrf-row__up').prop('disabled', i === 0);
+      $(this).find('> .ymkrf-row__move .ymkrf-row__dn').prop('disabled', i === $rows.length - 1);
+    });
+  }
+  $(document).on('click', '.ymkrf-row__up', function(){ ymkrfMove($(this).closest('.ymkrf-row'), -1); });
+  $(document).on('click', '.ymkrf-row__dn', function(){ ymkrfMove($(this).closest('.ymkrf-row'),  1); });
+  $('.ymkrf-rep__rows').each(function(){ ymkrfMoveBtns($(this)); });
+
+  /* ドラッグで並べ替え。
+     ≡ の持ち手だけでなく、<b>枠のどこをつかんでも動かせます</b>
+     （2026/10/13 ユーザー「要素をクリックしてスライドさせれば移動できなかった?」）。
+
+     ・入力欄・ボタン・リンクの上では始まりません（文字を選べなくなるため）。
+     ・6px動かしてはじめてドラッグ開始。写真を「ただ押しただけ」のときは、
+       これまでどおり写真をえらぶ画面がひらきます。 */
+  var YMKRF_NODRAG = 'input,textarea,select,option,button,a,label span';
+
   if ($.fn.sortable) {
     $('.ymkrf-rep__rows').not('.ymkrf-rep--card .ymkrf-rep__rows')
-      .sortable({ handle:'.ymkrf-row__handle', axis:'y', cursor:'grabbing', items:'.ymkrf-row' });
+      .sortable({ axis:'y', cursor:'grabbing', items:'.ymkrf-row',
+                  distance:6, cancel:YMKRF_NODRAG, tolerance:'pointer',
+                  stop:function(){ ymkrfMoveBtns($(this)); } });
     /* カードは横にもならぶので、たて方向だけに固定しません */
     $('.ymkrf-rep--card .ymkrf-rep__rows')
-      .sortable({ handle:'.ymkrf-row__handle', cursor:'grabbing', items:'.ymkrf-row' });
+      .sortable({ cursor:'grabbing', items:'.ymkrf-row',
+                  distance:6, cancel:YMKRF_NODRAG, tolerance:'pointer',
+                  stop:function(){ ymkrfMoveBtns($(this)); } });
   }
 });
 </script>
