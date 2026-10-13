@@ -60,6 +60,8 @@ require_once get_stylesheet_directory() . '/inc/functions-area.php';
 require_once get_stylesheet_directory() . '/inc/functions-staff.php';
 require_once get_stylesheet_directory() . '/inc/functions-flyer.php';
 require_once get_stylesheet_directory() . '/inc/functions-media.php';
+/* メディアのキーワード検索（ALTでも見つかる）・期間でしぼる欄をなくす（2026/10/13） */
+require_once get_stylesheet_directory() . '/inc/functions-media-search.php';
 require_once get_stylesheet_directory() . '/inc/functions-voice-status.php';
 /* 「勝手に非公開になる」原因がわかったので、調べもの用の読み込みはやめました
    （2026/09/17）。inc/functions-voice-debug.php は、もう使いません。消してかまいません。
