@@ -301,6 +301,13 @@
   font-size:12px; font-weight:800;
 }
 .p-prd__handles .ph img{ width:100%; height:100%; object-fit:contain; }
+/* 取っ手の写真が枠いっぱいだと窮屈に見えるので、白い台紙の上に
+   余白をとって中央に置きます（2026/10/13 ユーザー指示
+   「商品が背景目いっぱいなのなんかださいな。少しパディングして中央に配置して」） */
+.p-prd__handles .ph{
+  box-sizing:border-box; padding:12% 14%;
+  background:#fff; border-radius:10px;
+}
 .p-prd__colors .p-prd__swatch{ overflow:hidden; }
 .p-prd__colors .p-prd__swatch img{ width:100%; height:100%; object-fit:cover; display:block; }
 /* 枠を外したので、写真と名前を区切る点線もやめました */
@@ -574,12 +581,19 @@
   .p-prd__head{ padding:30px 0 34px; }
   .p-prd__pricebox{ padding:26px 30px; }
   .p-prd__colors > figure{ width:calc(25% - 10.5px); }
-  /* 取っ手は扉カラーと同じ大きさ（3列）に。
-     カードが広くなるぶん、写真の高さも上げないと横に間延びして見えます。 */
+  /* 取っ手は「扉カラーとまったく同じ大きさ」で、よこ3つずつ
+     （2026/10/13 ユーザー指示「ハンドルの写真が大きすぎる。
+       扉カラーと同じサイズにして、並びは上３の下２でOK」）。
+
+     しくみ：入れ物を扉カラー3つぶんのはばにして、その中で3等分します。
+     3つぶんのはば ＝ 25%×3 ＋ すき間14px×2 なので、
+     1枚あたりは扉カラー（25%）と同じ大きさになります。
+     5つなら「上3・下2」、どちらの行もまん中にそろいます。 */
+  .p-prd__handles{ max-width:calc(75% + 28px); margin-left:auto; margin-right:auto; }
   .p-prd__handles > figure{ width:calc(33.333% - 9.34px); }
-  /* 高さを決め打ちにすると、取っ手が横長なので上下に大きな空きが出ます。
-     取っ手写真の平均的な縦横比（およそ2.4:1）で枠を取ります。 */
-  .p-prd__handles .ph{ height:auto; aspect-ratio:2.4/1; }
+  /* 写真の枠も扉カラー（よこ3：たて2）と同じに。
+     取っ手はよこ長なので、枠の中に収めて（contain）上下に余白を取ります。 */
+  .p-prd__handles .ph{ height:auto; aspect-ratio:3/2; }
   /* 5色・6色のときだけ3列に。4列だと「4＋1」になって収まりが悪いためです */
   .p-prd__colors:has(> figure:nth-child(5)):not(:has(> figure:nth-child(7))) > figure{
     width:calc(33.333% - 9.34px);
@@ -2060,6 +2074,20 @@ a.p-pack__item:hover{ border-color:var(--brand); transform:translateY(-4px); box
 .p-prd__lead{
   margin-top:14px; max-width:760px;
   font-size:14px; line-height:1.9; color:var(--ink-sub);
+}
+/* 書き出しの一文の左に、とんとこトン
+   （2026/10/13 ユーザー指示「この文章のある個所の左がわに、とんとこトンほしいな」）
+   スマホでは、小さくして文章の横にならべます。 */
+.p-prd__leadrow{
+  display:flex; align-items:center; gap:12px; margin-top:14px; max-width:860px;
+}
+.p-prd__leadrow .p-prd__lead{ margin-top:0; min-width:0; }
+.p-prd__leadton{
+  flex:0 0 auto; width:64px; height:auto; align-self:flex-start;
+}
+@media (min-width:900px){
+  .p-prd__leadrow{ gap:16px; }
+  .p-prd__leadton{ width:96px; align-self:center; }
 }
 @media (min-width:900px){ .p-prd__lead{ font-size:14.5px; } }
 
