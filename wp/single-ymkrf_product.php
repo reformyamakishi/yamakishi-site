@@ -591,6 +591,16 @@ if ( ! empty( $pn['items'] ) ) :
 <?php endif; ?>
 
 <?php if ( $sib['prev'] || $sib['next'] ) : ?>
+<?php
+/* メーカーのデジタルカタログ（2026/10/13）。URLが入っている商品だけ出ます。
+   おすすめオプションの直前に置きます（ユーザー指示「おすすめオプションの前とかのほうがよくない？」）。
+   先にヤマキシのおすすめポイントと工事費込みの説明を読んでもらってから、カタログへ。 */
+if ( function_exists( 'ymkrf_catalog_card' ) ) {
+	$ymkrf_mk = $maker ? ( is_object( $maker ) && isset( $maker->name ) ? $maker->name : (string) $maker ) : '';
+	ymkrf_catalog_card( get_the_ID(), $ymkrf_mk, get_the_title() );
+}
+?>
+
 <?php /* 2026/10/13 ユーザー指示「オプションの部分、一番下にして」。
          商品そのものの情報としては、これがいちばん下です
          （標準工事費込みのあと、ほかのグレードの前）。 */ ?>

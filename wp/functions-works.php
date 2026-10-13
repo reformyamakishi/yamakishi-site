@@ -2250,9 +2250,14 @@ function ymkrf_works_metabox( $post ) {
 	          foreach ( ymkrf_works_area_choices() as $pref => $cities ) : ?>
 	            <optgroup label="<?php echo esc_attr( $pref ); ?>">
 	              <?php foreach ( $cities as $city ) :
-	                $sel = ( $city === $areacur );
-	                if ( $sel ) $hit = true; ?>
-	                <option value="<?php echo esc_attr( $city ); ?>" <?php selected( $sel ); ?>>
+	                /* ★ここは $sel という名前を使わないでください（2026/10/13 不具合を修正）★
+	                   $sel は上で「えらんである商品の一覧（配列）」として使っています。
+	                   ここで true/false を入れて上書きしていたため、下の商品の欄で
+	                   in_array() がこわれ、施工事例 2201-0321 などの編集画面が
+	                   「重大なエラー」で開けなくなっていました。 */
+	                $area_on = ( $city === $areacur );
+	                if ( $area_on ) $hit = true; ?>
+	                <option value="<?php echo esc_attr( $city ); ?>" <?php selected( $area_on ); ?>>
 	                  <?php echo esc_html( $city ); ?></option>
 	              <?php endforeach; ?>
 	            </optgroup>

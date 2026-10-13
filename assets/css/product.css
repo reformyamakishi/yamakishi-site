@@ -2444,3 +2444,42 @@ body.term-pack4 .p-cat__card:hover .p-cat__cardlink{
   margin-left:3px; font-size:10px; font-weight:700; letter-spacing:.04em;
 }
 .p-col__date--upd{ color:var(--brand); }
+
+
+/* --------------------------------------------------------------------------
+   メーカーのデジタルカタログ（2026/10/13）
+   押すと新しいタブでカタログが開きます。下にLINEのひとこと。
+   -------------------------------------------------------------------------- */
+.p-prd__catalog{ max-width:760px; margin:0 auto; }
+.p-prd__catcard{
+  display:flex; align-items:center; gap:16px;
+  padding:16px 18px; border-radius:14px;
+  background:#fff; border:2px solid var(--border);
+  color:inherit; text-decoration:none;
+  transition:border-color .2s, box-shadow .2s, transform .2s;
+}
+.p-prd__catcard:hover{
+  border-color:var(--brand); box-shadow:0 6px 18px rgba(254,51,1,.12); transform:translateY(-2px);
+}
+.p-prd__catpic{ flex:0 0 auto; width:76px; display:grid; place-items:center; }
+.p-prd__catimg{ width:100%; height:auto; border-radius:6px; }
+.p-prd__catimg--ton{ border-radius:0; }
+.p-prd__cattxt{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:3px; }
+.p-prd__catttl{ font-size:16px; font-weight:900; color:var(--ink); }
+.p-prd__catsub{ font-size:13px; font-weight:700; color:var(--ink-sub); }
+.p-prd__catpage{
+  display:inline-block; padding:1px 8px; border-radius:999px;
+  background:var(--brand-tint); color:var(--brand-dark); font-size:11.5px;
+}
+.p-prd__catnote{ font-size:11.5px; color:var(--ink-light, #8a8580); }
+.p-prd__catarrow{
+  flex:0 0 auto; width:34px; height:34px; border-radius:50%;
+  display:grid; place-items:center; background:var(--brand); color:#fff;
+  font-size:16px; font-weight:900;
+}
+.p-prd__catline{ margin-top:10px; text-align:center; font-size:13.5px; color:var(--ink-sub); }
+.p-prd__catline a{ color:#06c755; font-weight:900; text-decoration:underline; }
+@media (min-width:768px){
+  .p-prd__catpic{ width:96px; }
+  .p-prd__catttl{ font-size:17px; }
+}

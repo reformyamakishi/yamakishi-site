@@ -24,6 +24,8 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
 require_once get_stylesheet_directory() . '/inc/functions-snippet.php';
 require_once get_stylesheet_directory() . '/inc/functions-product.php';
+/* メーカーのデジタルカタログへのリンク（2026/10/13） */
+require_once get_stylesheet_directory() . '/inc/functions-product-catalog.php';
 /* 商品一覧を、行をつかんで並べかえられるようにします */
 require_once get_stylesheet_directory() . '/inc/functions-product-sort.php';
 require_once get_stylesheet_directory() . '/inc/functions-product-koji.php';

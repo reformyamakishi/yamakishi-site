@@ -280,6 +280,14 @@ add_action( 'save_post_ymkrf_product', function ( $post_id ) {
 		$typed = isset( $_POST['ymkrf_slug'] ) ? sanitize_title( wp_unslash( $_POST['ymkrf_slug'] ) ) : '';
 		$auto  = ! empty( $_POST['ymkrf_slug_auto'] );
 
+		/* URLの欄を手で書きかえたときは、「自動でつくる」にチェックが残っていても、
+		   書きかえたほうを使います（2026/10/13 ユーザー
+		   「シエラSの -s を削除して更新しても戻ってしまいます」）。
+		   これまでは、チェックが入っていると書きかえが無視され、
+		   自動のURL（kitchen-sierra-s）にもどっていました。 */
+		$before = (string) get_post_field( 'post_name', $post_id );
+		if ( $typed !== '' && $typed !== rawurldecode( $before ) ) $auto = false;
+
 		if ( ! $auto && $typed !== '' ) {
 			update_post_meta( $post_id, '_ymkrf_slug_auto', '0' );
 			delete_post_meta( $post_id, '_ymkrf_slug_check' );
@@ -360,6 +368,12 @@ add_action( 'admin_footer', function () {
 	  if (!$box.length || !$ttl.length) return;
 	  /* 題名の欄のすぐ下へ動かします（中身はそのままなので、保存に影響はありません） */
 	  $ttl.after($box);
+
+	  /* URLを書きかえたら、「自動でつくる」のチェックを自動で外します
+	     （2026/10/13。チェックを外し忘れて、書きかえが戻ってしまうのを防ぎます） */
+	  $box.on('input', 'input[name="ymkrf_slug"]', function(){
+	    $box.find('input[name="ymkrf_slug_auto"]').prop('checked', false);
+	  });
 	});
 	</script>
 	<?php
