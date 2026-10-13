@@ -92,6 +92,74 @@ add_action( 'admin_init', function () {
 }, 22 );
 
 
+/**
+ * 旧型ぜんぶを「イラストはランダム」「解像度はこのままでよい」「公開」にします。1回だけ動きます。
+ * （2026/10/13 ユーザー指示「お客様イメージのイラストを全てランダムにして公開にして下さい」
+ *   「解像度もそのままでOKです」）
+ *
+ * ・イラストは、いま選ばれているものも含めて選び直します（使われている回数が
+ *   かたよらないよう、ymkrf_voice_illust_choose() で少ないものから選びます）。
+ * ・公開にするときは、保存のしかけ（要確認なら下書きにもどす）を通さず、
+ *   状態だけを書きかえます。案件番号のない8件が下書きにもどされないようにするためです。
+ */
+add_action( 'admin_init', function () {
+
+	if ( get_option( 'ymkrf_oldform_pub_ver' ) === '1' ) return;
+	if ( get_option( 'ymkrf_voice_oldform_ver' ) !== '1' ) return;   /* 旧型の印つけが終わってから */
+	if ( ! current_user_can( 'edit_posts' ) ) return;
+
+	global $wpdb;
+
+	$ids = get_posts( array(
+		'post_type'      => 'ymkrf_voice',
+		'post_status'    => 'any',
+		'posts_per_page' => -1,
+		'fields'         => 'ids',
+		'no_found_rows'  => true,
+		'meta_query'     => array( array( 'key' => '_ymkrf_oldform', 'value' => '1' ) ),
+	) );
+
+	$lowok = defined( 'YMKRF_VCHK_LOWOK' ) ? YMKRF_VCHK_LOWOK : '_ymkrf_lowres_ok';
+	$pub   = 0;
+
+	foreach ( (array) $ids as $id ) {
+
+		/* イラストはランダム */
+		update_post_meta( $id, '_ymkrf_illust', 'random' );
+		delete_post_meta( $id, '_ymkrf_illust_pick' );
+		if ( function_exists( 'ymkrf_voice_illust_choose' ) ) {
+			$pick = ymkrf_voice_illust_choose( $id );
+			if ( $pick !== '' ) update_post_meta( $id, '_ymkrf_illust_pick', $pick );
+		}
+
+		/* 解像度はこのままでよい */
+		update_post_meta( $id, $lowok, '1' );
+
+		/* 公開に */
+		$st = get_post_status( $id );
+		if ( $st && $st !== 'publish' && $st !== 'trash' ) {
+			$wpdb->update( $wpdb->posts, array( 'post_status' => 'publish' ), array( 'ID' => $id ) );
+			clean_post_cache( $id );
+			$pub++;
+		}
+	}
+
+	update_option( 'ymkrf_oldform_pub_ver', '1', false );
+	set_transient( 'ymkrf_oldform_pub_msg', array( count( (array) $ids ), $pub ), 600 );
+}, 23 );
+
+add_action( 'admin_notices', function () {
+	$m = get_transient( 'ymkrf_oldform_pub_msg' );
+	if ( ! $m ) return;
+	delete_transient( 'ymkrf_oldform_pub_msg' );
+	printf(
+		'<div class="notice notice-success is-dismissible"><p>旧型 %d件を「イラストはランダム・解像度はこのままでよい」にしました。'
+		. '公開にしたもの：%d件（ほかは、もともと公開でした）。</p></div>',
+		(int) $m[0], (int) $m[1]
+	);
+} );
+
+
 /* ============================================================
    2. Q＆A（手打ち）
    ============================================================ */
@@ -146,15 +214,19 @@ function ymkrf_voice_qa_box( $post ) {
 	$hints = ymkrf_voice_qa_hints();
 
 	/* 空の行を足して、いつでも書き足せるようにします */
+	/* 空き行には質問文を入れず、うすい字の見本だけ出します。
+	   （2026/10/13 ユーザー「質問に対してなにも書かれていない場合は、質問ごと
+	     ぺージに反映させないで」。答えが空の行はもともとページに出しませんが、
+	     編集画面に質問だけ入っていると、出るように見えて紛らわしいため） */
 	$show = $rows;
 	for ( $i = count( $show ); $i < max( 5, count( $rows ) + 2 ); $i++ ) {
-		$show[] = array( 'q' => isset( $hints[ $i ] ) ? $hints[ $i ] : '', 'a' => '' );
+		$show[] = array( 'q' => '', 'a' => '', 'hint' => isset( $hints[ $i ] ) ? $hints[ $i ] : '' );
 	}
 	?>
 	<div class="ymkrf-qa">
 		<p class="description" style="font-size:14px;line-height:1.9">
 			用紙に書かれている<b>質問（Q）</b>と、お客様の<b>手書きの答え（A）</b>を、そのまま打ち込んでください。<br>
-			質問と答えの<b>両方が入っている行だけ</b>ページに出ます。空の行は出ません。<br>
+			<b>答えが空の質問は、ページに出ません</b>（質問ごと出ません）。<br>
 			答えは長くてかまいません。改行もそのまま出ます。
 		</p>
 
@@ -165,7 +237,7 @@ function ymkrf_voice_qa_box( $post ) {
 					<label style="display:block;font-weight:700;margin-bottom:4px">質問（Q<?php echo (int) $i + 1; ?>）</label>
 					<input type="text" class="large-text" name="ymkrf_qa[<?php echo (int) $i; ?>][q]"
 					       value="<?php echo esc_attr( $r['q'] ); ?>"
-					       placeholder="例：給湯器を購入する前どのようなことで悩んでいましたか？">
+					       placeholder="<?php echo esc_attr( ! empty( $r['hint'] ) ? '例：' . $r['hint'] : '例：給湯器を購入する前どのようなことで悩んでいましたか？' ); ?>">
 				</p>
 				<p style="margin:0">
 					<label style="display:block;font-weight:700;margin-bottom:4px">お客様の答え（A<?php echo (int) $i + 1; ?>）</label>

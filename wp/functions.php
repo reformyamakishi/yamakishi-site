@@ -70,6 +70,9 @@ require_once get_stylesheet_directory() . '/inc/functions-voice-check.php';
 require_once get_stylesheet_directory() . '/inc/functions-voice-clean.php';
 /* 旧型（A4たて）のアンケート169件だけ、Q＆Aを手打ちする形にします（2026/10/12） */
 require_once get_stylesheet_directory() . '/inc/functions-voice-oldform.php';
+/* ↓ 旧型アンケートのQ＆Aを1回だけ流し込む画面（2026/10/13）。
+     終わったらこの行と inc/functions-voice-qa-import.php、wp-content/ymkrf-qa.json を消してください */
+require_once get_stylesheet_directory() . '/inc/functions-voice-qa-import.php';
 /* ↓ お客様の声の✓の見直し（作業用）。終わったらこの行とファイルを消してください */
 require_once get_stylesheet_directory() . '/inc/functions-voice-fix.php';
 require_once get_stylesheet_directory() . '/inc/functions-voice-mail.php';

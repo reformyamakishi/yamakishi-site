@@ -1104,10 +1104,15 @@ add_action( 'add_meta_boxes', function () {
 			          . esc_html( $r['size'] ) . '</span>';
 		}
 
+		/* オプションは、登録ページのいちばん下に置きます
+		   （2026/10/13 ユーザー指示「登録ぺージですが、オプションを入力する箇所は一番下にして」）。
+		   advanced の箱は normal の箱より後ろに出ます。 */
+		$ymkrf_ctx = ( $key === '_ymkrf_options' ) ? 'advanced' : 'normal';
+
 		add_meta_box(
 			'ymkrf_box' . $key, $box_ttl,
 			function ( $post ) use ( $key ) { ymkrf_product_box_repeater( $post, $key ); },
-			'ymkrf_product', 'normal', 'default'
+			'ymkrf_product', $ymkrf_ctx, ( $key === '_ymkrf_options' ) ? 'low' : 'default'
 		);
 	}
 
@@ -4493,6 +4498,21 @@ jQuery(function($){
     $box.find('input[type=hidden]').val('');
     $box.find('.ymkrf-img__prev').empty();
   });
+
+  /* オプションの箱は、いつでもいちばん下へ（2026/10/13 ユーザー指示）。
+     以前に箱をドラッグして並べかえたことがあると、WordPress はその順番を
+     覚えているので、画面をひらいたときに念のため一番下へ動かします。 */
+  (function(){
+    var $opt = $('#ymkrf_box_ymkrf_options');
+    var $end = $('#advanced-sortables');
+    if ($opt.length && $end.length) $opt.appendTo($end);
+
+    /* 「カラー・取っ手」の箱は、「おすすめポイント」の前へ
+       （2026/10/13 ユーザー指示「カラーうんぬんのところは、オススメポイントの前にして」） */
+    var $col = $('#ymkrf_product_colors');
+    var $pt  = $('#ymkrf_box_ymkrf_features');
+    if ($col.length && $pt.length) $col.insertBefore($pt);
+  })();
 
   /* 「↑ ↓」で、ひとつずつ入れかえます（2026/10/13 ユーザー指示）。
      送られる順＝画面の順なので、保存すればそのままの並びになります。 */
