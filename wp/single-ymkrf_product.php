@@ -373,7 +373,22 @@ if ( $csets || ! empty( $d['handles'] ) ) :
     <?php endforeach; ?>
 
     <?php if ( $d['handles'] ) : ?>
-      <p class="p-prd__sub" style="margin-top:26px">取っ手（全<?php echo count( $d['handles'] ); ?>種）</p>
+      <?php
+      /* 見出しは登録画面で書きかえられます。空なら「取っ手」（2026/10/14）。
+         「（全3種）」はここで自動で付けるので、入力に入っていたら外します */
+      $ymkrf_hlbl = trim( (string) get_post_meta( get_the_ID(), '_ymkrf_lbl_handles', true ) );
+      $ymkrf_hlbl = preg_replace( '/[（(]\s*全?\s*[0-9０-９]+\s*種\s*[）)]\s*$/u', '', $ymkrf_hlbl );
+      if ( $ymkrf_hlbl === '' ) $ymkrf_hlbl = '取っ手';
+      ?>
+      <?php
+      /* 見出しの下の注意書き（登録画面で入れたときだけ。カラーと同じ出し方。2026/10/14） */
+      $ymkrf_hnote = trim( (string) get_post_meta( get_the_ID(), '_ymkrf_note_handles', true ) );
+      if ( $ymkrf_hnote === 'none' ) $ymkrf_hnote = '';
+      ?>
+      <p class="p-prd__sub" style="margin-top:26px">
+        <?php echo esc_html( $ymkrf_hlbl ); ?>（全<?php echo count( $d['handles'] ); ?>種）
+        <?php if ( $ymkrf_hnote !== '' ) : ?><small class="p-prd__note"><?php echo esc_html( $ymkrf_hnote ); ?></small><?php endif; ?>
+      </p>
       <div class="p-prd__handles">
         <?php foreach ( $d['handles'] as $r ) : ?>
           <figure>
@@ -547,6 +562,39 @@ if ( $d['specs'] || $d['speclist'] || $basic ) : ?>
 <?php endif; ?>
 
 
+<?php /* 2026/10/14 ユーザー指示「オススメオプションをリフォームヤマキシの
+         標準工事費にふくまれる工事の前に持ってきて」。
+         並び：おすすめポイント → おすすめオプション → 標準工事費込み → カタログ → 他のグレード */ ?>
+<?php if ( $d['options'] ) : ?>
+<!-- =========== おすすめオプション =========== -->
+<section class="l-section">
+  <div class="l-wrap">
+    <h2 class="p-prd__bar">おすすめオプション</h2>
+    <p class="p-prd__packnote">※現時点での参考価格となります。</p>
+    <div class="p-prd__opts">
+      <?php foreach ( $d['options'] as $r ) : ?>
+        <article class="p-prd__opt">
+          <div class="ph"><?php echo ymkrf_img( $r['img'], 'medium',
+            ymkrf_alt( $altb, ( ! empty( $r['alt'] ) ? $r['alt'] : $r['name'] ) ) ); ?></div>
+          <div>
+            <h3><?php echo esc_html( $r['name'] ); ?></h3>
+            <?php if ( $r['text'] ) : ?><p><?php echo nl2br( esc_html( $r['text'] ) ); ?></p><?php endif; ?>
+            <?php if ( $r['price'] ) : ?>
+              <?php /* マイナスの金額（値引き）も入れられるようにしています */
+                $op = (int) $r['price']; ?>
+              <p class="p-prd__optprice"><?php echo $op < 0 ? '−' : '+'; ?><?php echo esc_html( number_format( abs( $op ) ) ); ?>円<small>（税込）</small><?php
+                if ( $r['note'] ) echo '<em>' . esc_html( $r['note'] ) . '</em>';
+              ?></p>
+            <?php endif; ?>
+          </div>
+        </article>
+      <?php endforeach; ?>
+    </div>
+  </div>
+</section>
+<?php endif; ?>
+
+
 <!-- =========== 標準工事費込み ===========
      一覧ページと同じ「標準工事費にふくまれる工事」のカードを出します。
      中身は inc/functions-product.php の ymkrf_pointnote() にあるので、
@@ -590,49 +638,19 @@ if ( ! empty( $pn['items'] ) ) :
 </section>
 <?php endif; ?>
 
-<?php if ( $sib['prev'] || $sib['next'] ) : ?>
 <?php
 /* メーカーのデジタルカタログ（2026/10/13）。URLが入っている商品だけ出ます。
-   おすすめオプションの直前に置きます（ユーザー指示「おすすめオプションの前とかのほうがよくない？」）。
-   先にヤマキシのおすすめポイントと工事費込みの説明を読んでもらってから、カタログへ。 */
+   他のグレードのすぐ上に置きます（2026/10/14 ユーザー指示
+   「メーカーのデジタルカタログをキッチンマルシェ（他のグレード）の上にもってきて」）。
+   ※前は「他のグレードがあるとき」の中に入っていて、他のグレードが無い商品では
+     カタログもオプションも出ていませんでした。いまはいつも出ます。 */
 if ( function_exists( 'ymkrf_catalog_card' ) ) {
 	$ymkrf_mk = $maker ? ( is_object( $maker ) && isset( $maker->name ) ? $maker->name : (string) $maker ) : '';
 	ymkrf_catalog_card( get_the_ID(), $ymkrf_mk, get_the_title() );
 }
 ?>
 
-<?php /* 2026/10/13 ユーザー指示「オプションの部分、一番下にして」。
-         商品そのものの情報としては、これがいちばん下です
-         （標準工事費込みのあと、ほかのグレードの前）。 */ ?>
-<?php if ( $d['options'] ) : ?>
-<!-- =========== おすすめオプション =========== -->
-<section class="l-section">
-  <div class="l-wrap">
-    <h2 class="p-prd__bar">おすすめオプション</h2>
-    <p class="p-prd__packnote">※現時点での参考価格となります。</p>
-    <div class="p-prd__opts">
-      <?php foreach ( $d['options'] as $r ) : ?>
-        <article class="p-prd__opt">
-          <div class="ph"><?php echo ymkrf_img( $r['img'], 'medium',
-            ymkrf_alt( $altb, ( ! empty( $r['alt'] ) ? $r['alt'] : $r['name'] ) ) ); ?></div>
-          <div>
-            <h3><?php echo esc_html( $r['name'] ); ?></h3>
-            <?php if ( $r['text'] ) : ?><p><?php echo nl2br( esc_html( $r['text'] ) ); ?></p><?php endif; ?>
-            <?php if ( $r['price'] ) : ?>
-              <?php /* マイナスの金額（値引き）も入れられるようにしています */
-                $op = (int) $r['price']; ?>
-              <p class="p-prd__optprice"><?php echo $op < 0 ? '−' : '+'; ?><?php echo esc_html( number_format( abs( $op ) ) ); ?>円<small>（税込）</small><?php
-                if ( $r['note'] ) echo '<em>' . esc_html( $r['note'] ) . '</em>';
-              ?></p>
-            <?php endif; ?>
-          </div>
-        </article>
-      <?php endforeach; ?>
-    </div>
-  </div>
-</section>
-<?php endif; ?>
-
+<?php if ( $sib['prev'] || $sib['next'] ) : ?>
 <!-- =========== 前後の商品（グレード） =========== -->
 <section class="l-section">
   <div class="l-wrap">

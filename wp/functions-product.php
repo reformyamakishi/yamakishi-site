@@ -906,7 +906,7 @@ function ymkrf_product_repeaters() {
 			'incolor' => true,
 			'label' => '取っ手',
 			'size'  => '写真は 960×400px くらい（よこ長・2.4：1）',
-			'note'  => 'キッチン以外で使わない場合は、空のままでOK。見出しごと出なくなります。',
+			'note'  => '',   /* 説明文は消しました（2026/10/14 ユーザー指示） */
 			'cols'  => array(
 				'img'  => array( '写真', 'image' ),
 				'name' => array( '名称', 'text', '例：ハンドル取手' ),
@@ -1002,6 +1002,10 @@ function ymkrf_product_repeaters() {
 		'_ymkrf_options' => array(
 			'label' => 'おすすめオプション',
 			'kind'  => 'option',   /* 専用の見た目で出します（2026/09/18 ユーザー指示） */
+			/* はじめから4つの空き枠を出しておきます。5つ目からは「＋ オプションを1つ足す」で
+			   （2026/10/14 ユーザー指示「オプションは基本４つです。４つだけデフォルトで出して、
+			     あとは追加という形にしてください」）。空のままの枠は保存されません */
+			'slots' => 4,
 			/* ページでは小さな正方形で出るので、大きな写真は要りません
 			   （2026/09/18 ユーザー指示「たぶん200px正方形かと」） */
 			'size'  => '写真は 200×200px くらい（正方形）',
@@ -1107,12 +1111,13 @@ add_action( 'add_meta_boxes', function () {
 		/* オプションは、登録ページのいちばん下に置きます
 		   （2026/10/13 ユーザー指示「登録ぺージですが、オプションを入力する箇所は一番下にして」）。
 		   advanced の箱は normal の箱より後ろに出ます。 */
-		$ymkrf_ctx = ( $key === '_ymkrf_options' ) ? 'advanced' : 'normal';
+		/* 2026/10/14 から、商品ページと同じ順番（おすすめポイントの次）に並べます */
+		$ymkrf_ctx = 'normal';
 
 		add_meta_box(
 			'ymkrf_box' . $key, $box_ttl,
 			function ( $post ) use ( $key ) { ymkrf_product_box_repeater( $post, $key ); },
-			'ymkrf_product', $ymkrf_ctx, ( $key === '_ymkrf_options' ) ? 'low' : 'default'
+			'ymkrf_product', $ymkrf_ctx, 'default'
 		);
 	}
 
@@ -1139,6 +1144,37 @@ add_action( 'add_meta_boxes', function () {
  * ※ 保存さきは、これまでと同じ（_ymkrf_colors／_ymkrf_tops／_ymkrf_sinks／_ymkrf_c4…）です。
  *    画面に出ていない枠には、消す印（ymkrf_delbox）を付けて送っています。
  */
+/**
+ * カラー・取っ手の枠の「見出しの下の注意書き」の入力欄
+ * （2026/10/14 ユーザー指示「扉カラ－（全10色 Class5シリーズ）の下に
+ *   ※下記カラー以外選択の場合はオプションとなります。のようなテキストを入れられる箇所を作って」
+ *   「カラー・取っ手の箇所全て」）
+ *
+ * 保存先は _ymkrf_note_<枠>（例：_ymkrf_note_colors）。ページの見出しのすぐ下に小さい字で出ます。
+ * 扉カラーだけは、何も入れていない商品でも決まりの一文が出ていたので、その一文を最初から入れておきます。
+ * 欄を空にして保存すると、その枠には何も出なくなります。
+ */
+function ymkrf_product_cnote_input( $post_id, $short ) {
+	$v = (string) get_post_meta( $post_id, '_ymkrf_note_' . $short, true );
+	if ( $v === 'none' ) {
+		$v = '';
+	} elseif ( $v === '' && $short === 'colors' ) {
+		$v = ymkrf_product_cnote_default();
+	}
+	return sprintf(
+		/* 「見出しの下の注意書き」は、欄の中のうすい字（プレースホルダー）で見せます
+		   （2026/10/14 ユーザー指示「入力欄にプレイスホルダー的な感じでグレー文字でいれて」） */
+		'<p class="ymkrf-cnote"><label>'
+		. '<input type="text" name="ymkrf_cnote[%s]" value="%s" placeholder="見出しの下の注意書き（例：※下記カラー以外選択の場合はオプションとなります）"'
+		. ' aria-label="見出しの下の注意書き"></label>'
+		. '<span class="ymkrf-note" style="display:inline">ページの見出しのすぐ下に小さい字で出ます。いらなければ空のままでOK</span></p>',
+		esc_attr( $short ), esc_attr( $v )
+	);
+}
+function ymkrf_product_cnote_default() {
+	return '※下記カラー以外選択の場合はオプションとなります';
+}
+
 function ymkrf_product_box_colors( $post ) {
 
 	$reps = ymkrf_product_repeaters();
@@ -1150,6 +1186,15 @@ function ymkrf_product_box_colors( $post ) {
 	$open_num = 4;
 	$no       = 0;
 	$after    = array();   /* 色見本のあとに出すもの（取っ手） */
+
+	/* キッチンは、扉カラー・天板カラー・シンクカラーの3つだけをいつも出します（空でも出します）。
+	   4つ目からの枠は、見出しか中身が入っているときだけ出します。足すときは「＋」で
+	   （2026/10/14 ユーザー指示「取っ手の前にあるカテゴリが空白…空白であれば削除」
+	     「キッチンに関しては、基本不要です。追加があれば手動で追加します」
+	     「シンクカラーは残しておいて 空白でも」） */
+	$is_kitchen = has_term( 'kitchen', 'ymkrf_product_cat', $post )
+		|| ( isset( $_GET['ymkrf_product_cat'] ) && sanitize_title( wp_unslash( $_GET['ymkrf_product_cat'] ) ) === 'kitchen' );
+	if ( $is_kitchen ) $open_num = 3;
 
 	foreach ( $reps as $key => $def ) {
 
@@ -1194,6 +1239,7 @@ function ymkrf_product_box_colors( $post ) {
 		   . '空のままなら「' . esc_html( $def['label'] ) . '」と出ます</span>';
 		echo '<button type="button" class="ymkrf-cframe__x" title="この枠を消す">× この枠を消す</button>';
 		echo '</div>';
+		echo ymkrf_product_cnote_input( $post->ID, $short );   /* 見出しの下の注意書き（2026/10/14） */
 
 		ymkrf_product_box_repeater( $post, $key );
 
@@ -1208,12 +1254,23 @@ function ymkrf_product_box_colors( $post ) {
 			esc_attr( $key )
 		);
 		echo '<div class="ymkrf-cframe__head">';
-		echo '<b class="ymkrf-cframe__name">' . esc_html( $def['label'] ) . '</b>';
+		/* 見出しは書きかえられます。空のままなら「取っ手」と出ます
+		   （2026/10/14 ユーザー指示「キッチンの取ってだけ、タイトルが変更できないので、
+		     一応変更できる仕様にしてほしい」） */
+		$short = substr( $key, 7 );                       /* _ymkrf_handles → handles */
+		printf(
+			'<span class="ymkrf-hlbl"><input type="text" name="ymkrf_lbl[%s]" value="%s" placeholder="%s"></span>',
+			esc_attr( $short ),
+			esc_attr( (string) get_post_meta( $post->ID, '_ymkrf_lbl_' . $short, true ) ),
+			esc_attr( $def['label'] )
+		);
 		if ( ! empty( $def['size'] ) ) {
-			echo '<span class="ymkrf-note" style="display:inline">' . esc_html( $def['size'] ) . '</span>';
+			echo '<span class="ymkrf-note" style="display:inline">' . esc_html( $def['size'] ) . '。'
+			   . '空のままなら「' . esc_html( $def['label'] ) . '」と出ます</span>';
 		}
 		echo '<button type="button" class="ymkrf-cframe__x" title="この枠を消す">× この枠を消す</button>';
 		echo '</div>';
+		echo ymkrf_product_cnote_input( $post->ID, $short );   /* 見出しの下の注意書き（2026/10/14） */
 		ymkrf_product_box_repeater( $post, $key );
 		echo '</div>';
 	}
@@ -2050,6 +2107,22 @@ add_action( 'save_post_ymkrf_product', function ( $post_id ) {
 		}
 	}
 
+	/* カラー・取っ手の枠の注意書き（2026/10/14）。
+	   扉カラーは空にすると決まりの一文も出さないよう「none」で残します */
+	if ( isset( $_POST['ymkrf_cnote'] ) && is_array( $_POST['ymkrf_cnote'] ) ) {
+		foreach ( wp_unslash( $_POST['ymkrf_cnote'] ) as $k => $v ) {
+			$k = preg_replace( '/[^a-z0-9_]/', '', (string) $k );
+			if ( $k === '' ) continue;
+			$v = trim( sanitize_text_field( $v ) );
+			if ( $v === '' ) {
+				if ( $k === 'colors' ) update_post_meta( $post_id, '_ymkrf_note_' . $k, 'none' );
+				else                   delete_post_meta( $post_id, '_ymkrf_note_' . $k );
+			} else {
+				update_post_meta( $post_id, '_ymkrf_note_' . $k, $v );
+			}
+		}
+	}
+
 	/* メーカー。ここでえらんだものだけにします */
 	if ( isset( $_POST['ymkrf_makerpick'] ) ) {
 		$mk = (int) $_POST['ymkrf_makerpick'];
@@ -2121,6 +2194,7 @@ add_action( 'save_post_ymkrf_product', function ( $post_id ) {
 			  && empty( $ymkrf_reps[ $ymkrf_dk ]['incolor'] ) ) continue;
 			delete_post_meta( $post_id, $ymkrf_dk );
 			delete_post_meta( $post_id, '_ymkrf_lbl_' . substr( $ymkrf_dk, 7 ) );
+			delete_post_meta( $post_id, '_ymkrf_note_' . substr( $ymkrf_dk, 7 ) );
 		}
 	}
 
@@ -2200,6 +2274,9 @@ function ymkrf_alt_fill_product( $post_id ) {
 		if ( ! empty( $def['color'] ) ) {
 			$lbl = (string) get_post_meta( $post_id, '_ymkrf_lbl_' . substr( $key, 7 ), true );
 			if ( $lbl === '' ) $lbl = $def['label'];
+		} elseif ( ! empty( $def['incolor'] ) ) {
+			/* 取っ手は、見出しを書きかえたときだけ ALT に足します（2026/10/14） */
+			$lbl = (string) get_post_meta( $post_id, '_ymkrf_lbl_' . substr( $key, 7 ), true );
 		}
 
 		foreach ( $rows as $row ) {
@@ -2417,6 +2494,231 @@ add_filter( 'manage_ymkrf_product_posts_columns', function ( $cols ) {
 	}
 
 	return $new;
+} );
+
+/* 商品一覧の左から「順序 → グレード → 商品名」の順にします
+   （2026/10/14 ユーザー指示「タイトルの前にグレードを。グレードの前に、順序番号追加して」）。
+   順序は、ドラッグで並べかえたときの番号（menu_order）です。
+   上の列づくりが終わったあとで、並びだけを入れかえています。 */
+add_filter( 'manage_ymkrf_product_posts_columns', function ( $cols ) {
+
+	$out = array();
+	if ( isset( $cols['cb'] ) ) $out['cb'] = $cols['cb'];
+	$out['ymkrf_order'] = '順序';
+
+	/* 並び：順序 → 商品名 → 写真 → メーカー → グレード → …
+	   （2026/10/14 ユーザー指示「タイトルの次にメーカー」「タイトルをグレードの前に」
+	     「写真をタイトルの後ろに」） */
+	foreach ( $cols as $k => $v ) {
+		if ( $k === 'cb' || $k === 'ymkrf_grade' || $k === 'taxonomy-ymkrf_maker' || $k === 'ymkrf_thumb' ) continue;
+		$out[ $k ] = $v;
+
+		if ( $k === 'title' ) {
+			if ( isset( $cols['ymkrf_thumb'] ) )          $out['ymkrf_thumb']          = $cols['ymkrf_thumb'];
+			if ( isset( $cols['taxonomy-ymkrf_maker'] ) ) $out['taxonomy-ymkrf_maker'] = $cols['taxonomy-ymkrf_maker'];
+			if ( isset( $cols['ymkrf_grade'] ) )          $out['ymkrf_grade']          = $cols['ymkrf_grade'];
+		}
+	}
+	/* 商品名の列がないとき（念のため）はグレードを最後に */
+	foreach ( array( 'ymkrf_thumb', 'taxonomy-ymkrf_maker', 'ymkrf_grade' ) as $k ) {
+		if ( isset( $cols[ $k ] ) && ! isset( $out[ $k ] ) ) $out[ $k ] = $cols[ $k ];
+	}
+	return $out;
+}, 50 );
+
+/* 「順序」の見出しを押すと、順序の番号で並べかえられるようにします
+   （2026/10/14 ユーザー指示「順序も順番換えられるようにして」） */
+add_filter( 'manage_edit-ymkrf_product_sortable_columns', function ( $cols ) {
+	$cols['ymkrf_order'] = array( 'ymkrf_order', false );   /* はじめは小さい順 */
+	return $cols;
+}, 50 );
+
+/* 一覧の上に「メーカーでしぼる」選択を出します
+   （2026/10/14 ユーザー指示「メーカーで選択できるようにして」） */
+add_action( 'restrict_manage_posts', function ( $post_type ) {
+	if ( $post_type !== 'ymkrf_product' ) return;
+	if ( ! taxonomy_exists( 'ymkrf_maker' ) ) return;
+	$now = isset( $_GET['ymkrf_maker'] ) ? sanitize_title( wp_unslash( $_GET['ymkrf_maker'] ) ) : '';
+	wp_dropdown_categories( array(
+		'taxonomy'        => 'ymkrf_maker',
+		'name'            => 'ymkrf_maker',
+		'value_field'     => 'slug',
+		'selected'        => $now,
+		'show_option_all' => 'すべてのメーカー',
+		'hide_empty'      => true,
+		'hierarchical'    => true,
+		'orderby'         => 'name',
+	) );
+}, 20 );
+
+/* キッチンの全商品の「取っ手」の見出しに、「取っ手」と入れておきます（1回だけ）
+   （2026/10/14 ユーザー指示「キッチン、取っ手の箇所、空白になっているので、
+     全てのキッチンの商品、取っ手と入れて」）
+   ・すでに何か入っている商品は、そのままにします
+   ・下書き・非公開の商品にも入れます */
+add_action( 'init', function () {
+	if ( get_option( 'ymkrf_hlbl_ver' ) === '1' ) return;
+	if ( ! taxonomy_exists( 'ymkrf_product_cat' ) ) return;
+
+	$ids = get_posts( array(
+		'post_type'      => 'ymkrf_product',
+		'post_status'    => array( 'publish', 'draft', 'pending', 'private', 'future' ),
+		'posts_per_page' => -1,
+		'fields'         => 'ids',
+		'no_found_rows'  => true,
+		'tax_query'      => array( array(
+			'taxonomy' => 'ymkrf_product_cat',
+			'field'    => 'slug',
+			'terms'    => 'kitchen',
+		) ),
+	) );
+	$n = 0;
+	foreach ( (array) $ids as $id ) {
+		if ( trim( (string) get_post_meta( $id, '_ymkrf_lbl_handles', true ) ) !== '' ) continue;
+		update_post_meta( $id, '_ymkrf_lbl_handles', '取っ手' );
+		$n++;
+	}
+	update_option( 'ymkrf_hlbl_ver', '1', false );
+	update_option( 'ymkrf_hlbl_n', count( (array) $ids ) . '件中 ' . $n . '件に入れました', false );
+}, 30 );
+
+/* 2026/10/14 の調べもので書き出した一時ファイルを消します（1回だけ） */
+add_action( 'init', function () {
+	if ( get_option( 'ymkrf_kcolor_report' ) === '2' ) return;
+	$f = WP_CONTENT_DIR . '/ymkrf-kitchen-colors.json';
+	if ( file_exists( $f ) ) @unlink( $f );
+	update_option( 'ymkrf_kcolor_report', '2', false );
+}, 31 );
+
+/* 一覧の検索で、メーカー名・グレードでも見つかるようにします
+   （2026/10/14 ユーザー指示「商品を検索の場所、メーカー名やグレードでも検索できるようにしておいて」）
+
+   ・言葉をスペースで区切ると、すべてに当てはまるものだけが出ます
+     （例：「LIXIL Fグレード」「パナソニック S」）
+   ・言葉ごとに、商品名（題名）・本文・メーカー名・グレード・商品名の欄 のどれかに入っていれば当たりです
+   ・メーカーはカタカナでも英字でも見つかります（パナソニック／Panasonic など）
+   ・グレードは「F」「Fグレード」「ｆ」どれでも同じです（このときはグレードだけを見ます）。
+     1文字・記号だけのときは、ぴったり同じものだけにします（S で SS が出ないように） */
+function ymkrf_product_search_maker_alias() {
+	return array(
+		'パナソニック' => 'panasonic', 'ぱなそにっく' => 'panasonic',
+		'リクシル'     => 'lixil',     'りくしる'     => 'lixil',
+		'トートー'     => 'toto',      'とーとー'     => 'toto', 'トート' => 'toto',
+		'クリナップ'   => 'cleanup',   'くりなっぷ'   => 'cleanup',
+		'タカラ'       => 'takara',    'たから'       => 'takara',
+		'ノーリツ'     => 'noritz',    'のーりつ'     => 'noritz',
+		'リンナイ'     => 'rinnai',    'りんない'     => 'rinnai',
+		'三菱'         => 'mitsubishi', 'みつびし'    => 'mitsubishi', 'ミツビシ' => 'mitsubishi',
+		'トクラス'     => 'toclas',    'ハウステック' => 'housetec',
+		'イトーキ'     => 'itoki',     'ダイキン'     => 'daikin', '日立' => 'hitachi',
+	);
+}
+
+add_filter( 'posts_search', function ( $search, $q ) {
+
+	if ( ! is_admin() || ! $q->is_main_query() ) return $search;
+	if ( $search === '' || $q->get( 'post_type' ) !== 'ymkrf_product' ) return $search;
+
+	$s = trim( (string) $q->get( 's' ) );
+	if ( $s === '' ) return $search;
+
+	global $wpdb;
+
+	/* メーカーの一覧（名前とスラッグ）を先に取っておきます */
+	$makers = get_terms( array( 'taxonomy' => 'ymkrf_maker', 'hide_empty' => false ) );
+	if ( is_wp_error( $makers ) ) $makers = array();
+	$alias  = ymkrf_product_search_maker_alias();
+
+	$words = preg_split( '/[\s　]+/u', $s, -1, PREG_SPLIT_NO_EMPTY );
+	$and   = array();
+
+	foreach ( $words as $w ) {
+
+		$like = '%' . $wpdb->esc_like( $w ) . '%';
+		$or   = array();
+
+		/* 題名・本文・抜粋・商品名の欄（型番が題名の分類があるため） */
+		$or[] = $wpdb->prepare(
+			"{$wpdb->posts}.post_title LIKE %s OR {$wpdb->posts}.post_content LIKE %s OR {$wpdb->posts}.post_excerpt LIKE %s
+			 OR EXISTS ( SELECT 1 FROM {$wpdb->postmeta} ymkps WHERE ymkps.post_id = {$wpdb->posts}.ID
+			             AND ymkps.meta_key = '_ymkrf_name' AND ymkps.meta_value LIKE %s )",
+			$like, $like, $like, $like );
+
+		/* メーカー名（大文字・小文字、全角・半角、カタカナ読みをそろえて見ます） */
+		$wn  = function_exists( 'mb_convert_kana' ) ? mb_convert_kana( $w, 'as', 'UTF-8' ) : $w;
+		$wl  = mb_strtolower( $wn, 'UTF-8' );
+		$tts = array();
+		foreach ( $makers as $t ) {
+			$hit = ( mb_stripos( $t->name, $wn, 0, 'UTF-8' ) !== false )
+			    || ( stripos( $t->slug, $wl ) !== false );
+			if ( ! $hit ) {
+				foreach ( $alias as $kana => $slug ) {
+					if ( mb_strpos( $kana, $wn, 0, 'UTF-8' ) === 0 && mb_strlen( $wn, 'UTF-8' ) >= 2
+					     && stripos( $t->slug, $slug ) !== false ) { $hit = true; break; }
+				}
+			}
+			if ( $hit ) $tts[] = (int) $t->term_taxonomy_id;
+		}
+		if ( $tts ) {
+			$or[] = "EXISTS ( SELECT 1 FROM {$wpdb->term_relationships} ymkpt
+			                  WHERE ymkpt.object_id = {$wpdb->posts}.ID
+			                    AND ymkpt.term_taxonomy_id IN ( " . implode( ',', $tts ) . " ) )";
+		}
+
+		/* グレード */
+		$g = preg_replace( '/(グレード|ぐれーど|タイプ)$/u', '', $wn );
+		$g = trim( $g );
+		if ( $g !== '' ) {
+			if ( preg_match( '/^(SSS|SS|S|A|B|C|D|E|F|G|H|I|J)$/i', $g ) ) {
+				$G = strtoupper( $g );
+				/* 「F」「SS」だけのときはグレードとしてだけ見ます
+				   （題名の英字に当たって、関係ない商品がたくさん出てしまうため） */
+				$or = array();
+				$or[] = $wpdb->prepare(
+					"EXISTS ( SELECT 1 FROM {$wpdb->postmeta} ymkpg WHERE ymkpg.post_id = {$wpdb->posts}.ID
+					          AND ymkpg.meta_key = '_ymkrf_grade'
+					          AND UPPER( TRIM( ymkpg.meta_value ) ) IN ( %s, %s ) )",
+					$G, $G . 'グレード' );
+			} else {
+				$or[] = $wpdb->prepare(
+					"EXISTS ( SELECT 1 FROM {$wpdb->postmeta} ymkpg WHERE ymkpg.post_id = {$wpdb->posts}.ID
+					          AND ymkpg.meta_key = '_ymkrf_grade' AND ymkpg.meta_value LIKE %s )",
+					'%' . $wpdb->esc_like( $g ) . '%' );
+			}
+		}
+
+		$and[] = '( ' . implode( ' OR ', $or ) . ' )';
+	}
+
+	if ( ! $and ) return $search;
+
+	/* 下書き・非公開も一覧の検索では出すのが WordPress のふつうなので、状態の条件はそのままです */
+	return ' AND ( ' . implode( ' AND ', $and ) . ' ) ';
+}, 20, 2 );
+
+/* 選択欄の「すべてのメーカー」は値が 0 になるので、そのときはしぼりません */
+add_action( 'pre_get_posts', function ( $q ) {
+	if ( ! is_admin() || ! $q->is_main_query() ) return;
+	if ( $q->get( 'post_type' ) !== 'ymkrf_product' ) return;
+	if ( isset( $_GET['ymkrf_maker'] ) && (string) $_GET['ymkrf_maker'] === '0' ) {
+		$q->set( 'ymkrf_maker', '' );
+	}
+} );
+
+add_action( 'manage_ymkrf_product_posts_custom_column', function ( $col, $post_id ) {
+	if ( $col !== 'ymkrf_order' ) return;
+	$n = (int) get_post_field( 'menu_order', $post_id );
+	echo $n ? '<b>' . (int) $n . '</b>' : '<span style="color:#a7aaad">—</span>';
+}, 10, 2 );
+
+add_action( 'admin_head-edit.php', function () {
+	$s = get_current_screen();
+	if ( ! $s || $s->post_type !== 'ymkrf_product' ) return;
+	echo '<style>
+	  .wp-list-table .column-ymkrf_order{width:3.6em;text-align:center}
+	  .wp-list-table td.column-ymkrf_order{font-size:14px}
+	  .wp-list-table .column-ymkrf_grade{width:7em}
+	</style>';
 } );
 
 add_action( 'manage_ymkrf_product_posts_custom_column', function ( $col, $post_id ) {
@@ -2660,7 +2962,7 @@ add_filter( 'posts_clauses', function ( $clauses, $q ) {
 	} elseif ( ! $by ) {
 		$by = 'ymkrf_grade';   // 見出しを押していないときの既定
 		$order = 'ASC';
-	} elseif ( ! in_array( $by, array( 'ymkrf_price', 'ymkrf_grade' ), true ) ) {
+	} elseif ( ! in_array( $by, array( 'ymkrf_price', 'ymkrf_grade', 'ymkrf_order' ), true ) ) {
 		return $clauses;       // 日付順・タイトル順などは、そのまま
 	}
 
@@ -2732,7 +3034,12 @@ add_filter( 'posts_clauses', function ( $clauses, $q ) {
 		return $clauses;
 	}
 
-	if ( $by === 'ymkrf_price' ) {
+	if ( $by === 'ymkrf_order' ) {
+		/* 「順序」の見出しを押したとき（2026/10/14）。
+		   番号の入っていない商品（0）は、どちらの向きでもいちばん下にします */
+		$mo = "{$wpdb->posts}.menu_order";
+		$clauses['orderby'] = "CASE WHEN {$mo} = 0 THEN 1 ELSE 0 END ASC, {$mo} {$order}, {$gs} ASC, {$pr} ASC, {$wpdb->posts}.post_title ASC";
+	} elseif ( $by === 'ymkrf_price' ) {
 		/* 「込み価格」の見出しを押したとき */
 		$clauses['orderby'] = "{$pr} {$order}, {$gs} ASC, {$wpdb->posts}.post_title ASC";
 	} else {
@@ -3431,6 +3738,13 @@ function ymkrf_product_data( $post_id = null ) {
 		'c4'       => $rep( '_ymkrf_c4' ),
 		'c5'       => $rep( '_ymkrf_c5' ),
 		'c6'       => $rep( '_ymkrf_c6' ),
+		/* 7〜12枠目も、ページに出るようにしました（2026/10/14） */
+		'c7'       => $rep( '_ymkrf_c7' ),
+		'c8'       => $rep( '_ymkrf_c8' ),
+		'c9'       => $rep( '_ymkrf_c9' ),
+		'c10'      => $rep( '_ymkrf_c10' ),
+		'c11'      => $rep( '_ymkrf_c11' ),
+		'c12'      => $rep( '_ymkrf_c12' ),
 		'handles'  => $rep( '_ymkrf_handles' ),
 		'specs'    => $rep( '_ymkrf_specs' ),
 		'speclist' => $rep( '_ymkrf_speclist' ),
@@ -4287,6 +4601,12 @@ function ymkrf_product_admin_assets() {
   padding:14px 16px 10px;margin-bottom:14px;
 }
 .ymkrf-cframe__head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+/* 見出しの下の注意書き（2026/10/14） */
+.ymkrf-cnote{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:-2px 0 12px}
+.ymkrf-cnote label{display:flex;align-items:center;gap:8px;flex:1 1 420px}
+.ymkrf-cnote label span{font-size:12px;font-weight:700;color:#50575e;white-space:nowrap}
+.ymkrf-cnote input{flex:1;min-width:240px;font-size:13px;padding:3px 8px}
+.ymkrf-cnote input::placeholder{color:#9aa0a6;opacity:1}
 .ymkrf-cframe__name{font-size:15px;font-weight:700;color:#1d2327}
 .ymkrf-cframe__x{
   margin-left:auto;background:none;border:0;cursor:pointer;
@@ -4499,19 +4819,31 @@ jQuery(function($){
     $box.find('.ymkrf-img__prev').empty();
   });
 
-  /* オプションの箱は、いつでもいちばん下へ（2026/10/13 ユーザー指示）。
+  /* 箱の並びを、商品ページ（フロント）と同じ順番にそろえます
+     （2026/10/14 ユーザー指示「登録ぺージも同じフロントと同じ順番でとうろくできるようにして」）
+       組み合わせイメージ → カラー・取っ手 → 標準仕様 → おすすめポイント
+       → おすすめオプション → メーカーのカタログ
+     ※「標準工事費にふくまれる工事」はカテゴリごとの設定なので、ここには箱がありません。
      以前に箱をドラッグして並べかえたことがあると、WordPress はその順番を
-     覚えているので、画面をひらいたときに念のため一番下へ動かします。 */
+     覚えているので、画面をひらいたときにいつもこの順番に並べなおします。
+     ここに書いていない箱（基本・SEO など）は、もとの場所のままです。 */
   (function(){
-    var $opt = $('#ymkrf_box_ymkrf_options');
-    var $end = $('#advanced-sortables');
-    if ($opt.length && $end.length) $opt.appendTo($end);
-
-    /* 「カラー・取っ手」の箱は、「おすすめポイント」の前へ
-       （2026/10/13 ユーザー指示「カラーうんぬんのところは、オススメポイントの前にして」） */
-    var $col = $('#ymkrf_product_colors');
-    var $pt  = $('#ymkrf_box_ymkrf_features');
-    if ($col.length && $pt.length) $col.insertBefore($pt);
+    var ids = ['ymkrf_box_ymkrf_images', 'ymkrf_product_colors',
+               'ymkrf_box_ymkrf_specs', 'ymkrf_box_ymkrf_speclist',
+               'ymkrf_box_ymkrf_features', 'ymkrf_box_ymkrf_options',
+               'ymkrf_product_catalog'];
+    var $boxes = [];
+    $.each(ids, function(i, id){ var $b = $('#' + id); if ($b.length) $boxes.push($b); });
+    if (!$boxes.length) return;
+    /* いちばん上にある箱の場所を起点に、順番に並べます */
+    var $first = null;
+    $.each($boxes, function(i, $b){
+      if ($b.closest('#normal-sortables').length && (!$first || $b.index() < $first.index())) $first = $b;
+    });
+    var $anchor = $('<div></div>');
+    if ($first) $anchor.insertBefore($first); else $anchor.appendTo('#normal-sortables');
+    $.each($boxes, function(i, $b){ $b.insertBefore($anchor); });
+    $anchor.remove();
   })();
 
   /* 「↑ ↓」で、ひとつずつ入れかえます（2026/10/13 ユーザー指示）。
@@ -4948,6 +5280,12 @@ function ymkrf_colorsets( $d, $post_id = 0 ) {
 		'c4'     => '',
 		'c5'     => '',
 		'c6'     => '',
+		'c7'     => '',
+		'c8'     => '',
+		'c9'     => '',
+		'c10'    => '',
+		'c11'    => '',
+		'c12'    => '',
 	);
 
 	$out = array();
@@ -4967,7 +5305,7 @@ function ymkrf_colorsets( $d, $post_id = 0 ) {
 			$cnote = '';
 		} elseif ( $cnote === '' && $key === 'colors' ) {
 			/* 1つめの枠にだけ、オプション扱いの但し書きを出します */
-			$cnote = '※下記カラー以外選択の場合はオプションとなります';
+			$cnote = ymkrf_product_cnote_default();
 		}
 
 		$out[] = array(

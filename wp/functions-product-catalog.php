@@ -27,7 +27,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 add_action( 'add_meta_boxes', function () {
 	add_meta_box(
 		'ymkrf_product_catalog',
-		'メーカーのカタログ <span style="font-weight:400;font-size:12px;color:#787c82">入れると、商品ページの「おすすめオプション」の前にカタログのカードが出ます</span>',
+		'メーカーのカタログ <span style="font-weight:400;font-size:12px;color:#787c82">入れると、商品ページの「他のグレード」の上にカタログのカードが出ます</span>',
 		'ymkrf_catalog_box',
 		'ymkrf_product', 'normal', 'low'
 	);
@@ -74,8 +74,7 @@ function ymkrf_catalog_box( $post ) {
 					<input type="hidden" name="_ymkrf_cat_img" value="<?php echo (int) $img; ?>">
 					<button type="button" class="button-link ymkrf-catimg__clear"<?php if ( ! $img ) echo ' style="display:none"'; ?>>画像を外す</button>
 				</span>
-				<p class="description">空のときは、とんとこトン（虫めがね）が出ます。
-					カタログの表紙を使うときは、メーカーの決まりで使ってよいか確かめてください。</p>
+				<?php /* 説明文は消しました（2026/10/14 ユーザー指示） */ ?>
 			</td>
 		</tr>
 	</table>
@@ -162,7 +161,10 @@ function ymkrf_catalog_card( $post_id, $maker = '', $name = '' ) {
 	            echo esc_html( trim( $maker . ' ' . $name ) );
 	            if ( $page !== '' ) echo '　<span class="p-prd__catpage">' . esc_html( $page ) . '</span>';
 	          ?></span>
-	          <span class="p-prd__catnote">メーカーのサイトが新しいタブで開きます</span>
+	          <?php /* 2026/10/14 ユーザー指示で「メーカーのサイトが新しいタブで開きます」から差しかえ */ ?>
+	          <span class="p-prd__catnote">※表紙はイメージです。</span>
+	          <span class="p-prd__catnote">※最新のカタログを掲載するまで、旧カタログの場合があります。</span>
+	          <span class="p-prd__catnote">※メーカーのカタログには工事費は含まれておりませんのでご注意ください。</span>
 	        </span>
 	        <span class="p-prd__catarrow" aria-hidden="true">↗</span>
 	      </a>

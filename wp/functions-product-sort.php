@@ -120,7 +120,13 @@ jQuery(function ($) {
         nonce: '{$nonce}',
         ids: ids
       }).done(function (res) {
-        if (res && res.success) say('並び順を保存しました。', true);
+        if (res && res.success) {
+          say('並び順を保存しました。', true);
+          /* 左の「順序」の番号も、並べかえた順に付け直します（2026/10/14） */
+          \$list.find('> tr').each(function (i) {
+            \$(this).find('td.column-ymkrf_order').html('<b>' + (i + 1) + '</b>');
+          });
+        }
         else say('保存できませんでした。画面を読み込み直してください。', false);
       }).fail(function () {
         say('保存できませんでした。画面を読み込み直してください。', false);
