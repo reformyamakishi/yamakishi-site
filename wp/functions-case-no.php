@@ -583,3 +583,51 @@ add_action( 'admin_notices', function () {
 	}
 	echo '</ul></div>';
 } );
+
+
+/* ============================================================
+   6. 一覧の検索で、案件番号でも見つかるように
+   ------------------------------------------------------------
+   （2026/10/13 ユーザー「22090179、2209-0179で検索してもでてこないが」）
+
+   WordPress の一覧の検索は、題名と本文しか見ません。
+   お客様の声・施工事例の題名は「小松市｜カーポートリフォーム…」なので、
+   案件番号では見つかりませんでした。
+
+   ・案件番号（_ymkrf_case_no）と、整えた番号（_ymkrf_case_any）と、URLの末尾を見ます
+   ・「22090179」と打っても「2209-0179」と打っても、同じものが出ます
+   ・数字の一部（「2209」「0179」だけ）でも見つかります
+   ・これまでどおり、題名や本文に入っている言葉でも見つかります
+   ============================================================ */
+add_filter( 'posts_search', function ( $search, $q ) {
+
+	if ( $search === '' ) return $search;
+	if ( ! is_admin() || ! $q->is_main_query() ) return $search;
+	if ( ! in_array( $q->get( 'post_type' ), ymkrf_case_types(), true ) ) return $search;
+
+	$s = trim( (string) $q->get( 's' ) );
+	if ( $s === '' ) return $search;
+
+	/* 数字が3つ以上入っているときだけ、番号でもさがします */
+	if ( strlen( preg_replace( '/\D/', '', $s ) ) < 3 ) return $search;
+
+	global $wpdb;
+
+	$keys = array_unique( array_filter( array( $s, ymkrf_case_no_norm( $s ) ) ) );
+	$or   = array();
+	foreach ( $keys as $k ) {
+		$like = '%' . $wpdb->esc_like( $k ) . '%';
+		$or[] = $wpdb->prepare(
+			"EXISTS ( SELECT 1 FROM {$wpdb->postmeta} ymkcs
+			           WHERE ymkcs.post_id = {$wpdb->posts}.ID
+			             AND ymkcs.meta_key IN ( '_ymkrf_case_no', '_ymkrf_case_any' )
+			             AND ymkcs.meta_value LIKE %s )",
+			$like
+		);
+		$or[] = $wpdb->prepare( "{$wpdb->posts}.post_name LIKE %s", '%' . $wpdb->esc_like( strtolower( $k ) ) . '%' );
+	}
+
+	/* もとの検索（題名・本文）か、番号のどちらかに当たればよい */
+	$inner = preg_replace( '/^\s*AND\s*/i', '', $search );
+	return ' AND ( ' . $inner . ' OR ' . implode( ' OR ', $or ) . ' ) ';
+}, 20, 2 );
