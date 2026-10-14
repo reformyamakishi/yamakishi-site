@@ -326,13 +326,21 @@
 /* --------------------------------------------------------------------------
    5. 標準仕様
    -------------------------------------------------------------------------- */
-.p-prd__specs{ display:grid; grid-template-columns:repeat(2,1fr); gap:14px; }
+/* 名前がどの写真のものか、ひと目でわかるように
+   （2026/10/14 ユーザー「テキストが上か下かどちらの写真を表示するものか分かりにくい」）
+   ・行と行のあいだを広くとり、名前は自分の写真のすぐ下に寄せます
+   ・写真と名前を、うすい線で1つのまとまりに見せます */
+.p-prd__specs{ display:grid; grid-template-columns:repeat(2,1fr); gap:28px 14px; }
 /* ★白い下じきと外線は付けません。写真と名前だけで見せます。
       写真の背景は商品ごとにまちまち（白・グレー・実景）なので、
       枠を付けるとかえって不ぞろいに見えてしまうためです。 */
 .p-prd__spec{
   background:none; border:0; border-radius:var(--radius);
+  /* 型番の行がない項目でも、下の線の高さを横とそろえます
+     （2026/10/14 ユーザー「セントロはセラミックワークトップの高さがそろってないな」） */
+  display:flex; flex-direction:column;
 }
+.p-prd__spec figcaption{ flex:1 1 auto; }
 /* 写真を絶対配置にしているのは、縦に細長い写真が入ったときに
    枠（4:3）が伸びてしまい、行ごとに高さがバラバラになるのを防ぐためです。 */
 .p-prd__spec .ph{
@@ -343,11 +351,20 @@
 .p-prd__spec .ph img{
   position:absolute; inset:0;
   width:100%; height:100%;
-  object-fit:contain;
+  /* 写真を枠いっぱいに（2026/10/14 ユーザー指示「写真のおおきさ同じにして、
+     テキストの位置、横と揃えたい」）。
+     contain だと、正方形・横長などで見える大きさがまちまちになり、
+     左に寄せた名前と写真の左はしもずれていました。
+     cover にすると、どの写真も同じ大きさになり、名前の左はしとそろいます
+     （写真のはしが少し切れることがあります） */
+  object-fit:cover; object-position:center;
 }
 /* 写真が入ったら、下じきの色は付けません */
 .p-prd__spec .ph:has(img){ background:none; }
-.p-prd__spec figcaption{ padding:10px 2px 0; font-size:13.5px; font-weight:800; line-height:1.6; }
+.p-prd__spec figcaption{
+  padding:6px 2px 8px; font-size:13.5px; font-weight:800; line-height:1.55;
+  border-bottom:1px solid var(--line, #e6e2df);
+}
 .p-prd__spec small{ display:block; margin-top:3px; color:var(--ink-light); font-weight:700; font-size:12px; }
 
 /* 標準仕様を、写真ではなく文字だけで並べるとき（トイレなど）。
@@ -598,7 +615,7 @@
   .p-prd__colors:has(> figure:nth-child(5)):not(:has(> figure:nth-child(7))) > figure{
     width:calc(33.333% - 9.34px);
   }
-  .p-prd__specs{ grid-template-columns:repeat(3,1fr); }
+  .p-prd__specs{ grid-template-columns:repeat(3,1fr); gap:34px 20px; }
   .p-prd__opts{ grid-template-columns:repeat(2,1fr); gap:12px; }
   .p-prd__opt{ grid-template-columns:92px minmax(0,1fr); }
   .p-prd__nav{ gap:14px; }
@@ -2471,7 +2488,9 @@ body.term-pack4 .p-cat__card:hover .p-cat__cardlink{
   display:inline-block; padding:1px 8px; border-radius:999px;
   background:var(--brand-tint); color:var(--brand-dark); font-size:11.5px;
 }
-.p-prd__catnote{ font-size:11.5px; color:var(--ink-light, #8a8580); }
+.p-prd__catnote{ font-size:11.5px; line-height:1.45; color:var(--ink-light, #8a8580); }
+/* 注意書きが2行続くときは、行と行のあいだを詰めます（2026/10/14 ユーザー指示「もっと行間縮めて」） */
+.p-prd__catnote + .p-prd__catnote{ margin-top:-3px; }
 .p-prd__catarrow{
   flex:0 0 auto; width:34px; height:34px; border-radius:50%;
   display:grid; place-items:center; background:var(--brand); color:#fff;
