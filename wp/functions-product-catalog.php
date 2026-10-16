@@ -41,7 +41,27 @@ function ymkrf_catalog_box( $post ) {
 	$page = (string) get_post_meta( $post->ID, '_ymkrf_cat_page', true );
 	$img  = (int) get_post_meta( $post->ID, '_ymkrf_cat_img', true );
 	$src  = $img ? wp_get_attachment_image_url( $img, 'medium' ) : '';
+	$hide = ( get_post_meta( $post->ID, '_ymkrf_cat_hide', true ) === '1' );
 	?>
+	<?php /* 「非表示」と「×」（2026/10/16 ユーザー指示「メーカーのカタログも非表示と×の機能つけて」）。
+	         ほかの欄と同じく、右上に「☐ 非表示 ×」の順で置きます。
+	         ・非表示 … 入れた URL などは残したまま、商品ページにカードを出しません
+	         ・×     … URL・ページのメモ・画像を空にします（「更新」を押すと消えます） */ ?>
+	<div class="ymkrf-cattools">
+		<label class="ymkrf-fhide" title="チェックすると、入れた内容は残したまま、商品ページにカタログのカードを出しません">
+			<input type="hidden" name="_ymkrf_cat_hide" value="0">
+			<input type="checkbox" class="ymkrf-cat-hide" name="_ymkrf_cat_hide" value="1"<?php checked( $hide ); ?>> 非表示</label>
+		<button type="button" class="ymkrf-cframe__x ymkrf-cat__x" title="URL・ページのメモ・画像を空にします（「更新」を押すと消えます）">×</button>
+	</div>
+	<style>
+	.ymkrf-cattools{display:flex;justify-content:flex-end;align-items:center;gap:6px;margin:-4px 0 4px}
+	#ymkrf_product_catalog:has(.ymkrf-cat-hide:checked) .inside{
+	  background-image:repeating-linear-gradient(135deg,rgba(0,0,0,.04) 0 12px,transparent 12px 24px);
+	}
+	#ymkrf_product_catalog:has(.ymkrf-cat-hide:checked) .form-table{opacity:.5}
+	#ymkrf_product_catalog:has(.ymkrf-cat-hide:checked) .ymkrf-fhide{background:#50575e;color:#fff;border-color:#50575e}
+	#ymkrf_product_catalog:has(.ymkrf-cat-hide:checked) .ymkrf-fhide::after{content:"中";font-weight:400}
+	</style>
 	<table class="form-table" style="margin:0">
 		<tr>
 			<th style="width:150px">カタログのURL</th>
@@ -92,6 +112,11 @@ function ymkrf_catalog_box( $post ) {
 			});
 			f.open();
 		});
+		/* × … URL・ページのメモ・画像を空にします */
+		$('.ymkrf-cat__x').on('click', function () {
+			$('input[name="_ymkrf_cat_url"], input[name="_ymkrf_cat_page"]').val('');
+			$w.find('.ymkrf-catimg__clear').trigger('click');
+		});
 		$w.on('click', '.ymkrf-catimg__clear', function () {
 			$w.find('input[name="_ymkrf_cat_img"]').val('');
 			$w.find('.ymkrf-catimg__prev').html('<span style="color:#a7aaad;font-size:12px;font-weight:700">＋ 画像</span>');
@@ -114,7 +139,10 @@ add_action( 'save_post_ymkrf_product', function ( $post_id ) {
 	$pg  = isset( $_POST['_ymkrf_cat_page'] ) ? sanitize_text_field( wp_unslash( $_POST['_ymkrf_cat_page'] ) ) : '';
 	$img = isset( $_POST['_ymkrf_cat_img'] ) ? (int) $_POST['_ymkrf_cat_img'] : 0;
 
-	foreach ( array( '_ymkrf_cat_url' => $url, '_ymkrf_cat_page' => $pg, '_ymkrf_cat_img' => $img ) as $k => $v ) {
+	/* 非表示（2026/10/16） */
+	$hide = ( isset( $_POST['_ymkrf_cat_hide'] ) && (string) $_POST['_ymkrf_cat_hide'] === '1' ) ? '1' : '';
+
+	foreach ( array( '_ymkrf_cat_url' => $url, '_ymkrf_cat_page' => $pg, '_ymkrf_cat_img' => $img, '_ymkrf_cat_hide' => $hide ) as $k => $v ) {
 		if ( $v ) update_post_meta( $post_id, $k, $v );
 		else      delete_post_meta( $post_id, $k );
 	}
@@ -133,6 +161,8 @@ function ymkrf_catalog_card( $post_id, $maker = '', $name = '' ) {
 
 	$url = (string) get_post_meta( $post_id, '_ymkrf_cat_url', true );
 	if ( $url === '' ) return;
+	/* 登録画面で「非表示」にしたときは出しません（2026/10/16） */
+	if ( get_post_meta( $post_id, '_ymkrf_cat_hide', true ) === '1' ) return;
 
 	$page = (string) get_post_meta( $post_id, '_ymkrf_cat_page', true );
 	$img  = (int) get_post_meta( $post_id, '_ymkrf_cat_img', true );

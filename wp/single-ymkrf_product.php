@@ -247,6 +247,13 @@ if ( $cat && $cat->slug === 'pack4' ) {
           'alt'           => esc_attr( trim( ( $maker ? $maker->name . ' ' : '' ) . $d['name'] . ' ' . $d['size'] ) ),
           'fetchpriority' => 'high',
         ) ); ?>
+        <?php
+        /* 「※写真はイメージです。…」は、写真の枠の中、写真のすぐ下（左はし）に出します
+           （2026/10/16 ユーザー指示「一番上のイメージ画像の直下（左端）に※写真はイメージです。を移動」
+             「写真枠に入れて」） */
+        if ( $d['caution'] ) : ?>
+          <p class="p-prd__caution p-prd__caution--in"><?php echo esc_html( $d['caution'] ); ?></p>
+        <?php endif; ?>
       </div>
     <?php endif; ?>
 
@@ -260,7 +267,8 @@ if ( $cat && $cat->slug === 'pack4' ) {
       ?></p>
     <?php endif; ?>
 
-    <?php if ( $d['caution'] ) : ?>
+    <?php /* 写真がないときだけ、ここに出します（写真があるときは、上の写真の枠の中） */ ?>
+    <?php if ( $d['caution'] && ! has_post_thumbnail() ) : ?>
       <p class="p-prd__caution"><?php echo esc_html( $d['caution'] ); ?></p>
     <?php endif; ?>
 
@@ -537,6 +545,11 @@ if ( $d['specs'] || $d['speclist'] || $basic ) : ?>
             $pcaps = ( isset( $r['caps'] ) && is_array( $r['caps'] ) ) ? array_values( $r['caps'] ) : array();
             foreach ( $pics as $pi => $pid ) :
               $palt = isset( $palts[ $pi ] ) ? trim( (string) $palts[ $pi ] ) : '';
+              /* 登録画面で自動で入る ALT は「見出し（2枚目）」だけなので、
+                 商品名が入っていないときは、頭にメーカー名・カテゴリ・商品名を付けます（2026/10/16） */
+              if ( $palt !== '' && $d['name'] !== '' && mb_strpos( $palt, (string) $d['name'] ) === false ) {
+                $palt = ymkrf_alt( $altb, $palt );
+              }
               if ( $palt === '' ) {
                 $palt = $r['ttl'];
                 if ( $palt !== '' && count( $pics ) > 1 ) $palt .= '（' . ( $pi + 1 ) . '枚目）';
