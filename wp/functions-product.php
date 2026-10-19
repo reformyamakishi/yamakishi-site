@@ -917,13 +917,20 @@ function ymkrf_product_repeaters() {
 			'label' => '標準仕様',
 			/* 写真のおすすめの大きさ。見出しのよこに出ます
 			   （2026/09/18 ユーザー指示「標準仕様の写真の推奨サイズを、
-			     標準仕様の横に記載して」） */
-			'size'  => '写真は 800×600px くらい（よこ4：たて3）',
+			     標準仕様の横に記載して」）。
+			   ページでは1枚 よこ300px ほどで出るので、くっきり見せるにはその2倍あれば十分です
+			   （2026/10/19 ユーザー「WEBからだと800×600pxだと解像度が荒くなりがち」→ 目安を見直し） */
+			'size'  => '写真は 600×450px 以上（よこ4：たて3）',
 			'note'  => '標準で付いてくる設備を並べます。',
+			/* 欄が4つになってもカードで横にならべます */
+			'card'  => 1,
 			'cols'  => array(
 				'img'   => array( '写真', 'image' ),
 				'name'  => array( '品名', 'text', '例：ホーロー3口トップコンロ' ),
 				'model' => array( '型番など', 'text', '例：LEEG32T1V' ),
+				/* 水栓のように、はしが切れると困る写真は、切りとらずに全体を見せます
+				   （2026/10/19 ユーザー指示「水栓とかは全体写してほしいな」） */
+				'whole' => array( '写真を切りとらず全体を見せる', 'check' ),
 			),
 		),
 		'_ymkrf_speclist' => array(
@@ -2110,7 +2117,7 @@ function ymkrf_product_row_html( $key, $cols, $n, $row, $card = false ) {
 	foreach ( $cols as $ck => $c ) {
 		$name = sprintf( '%s[%s][%s]', $key, $n, $ck );
 		$val  = isset( $row[ $ck ] ) ? $row[ $ck ] : '';
-		$hide_label = ( $card && $c[1] === 'image' );
+		$hide_label = ( $card && $c[1] === 'image' ) || $c[1] === 'check';
 		echo '<label class="ymkrf-f">'
 		   . ( $hide_label ? '' : '<span>' . esc_html( $c[0] ) . '</span>' );
 		if ( $c[1] === 'image' && $card ) {
@@ -2142,6 +2149,10 @@ function ymkrf_product_row_html( $key, $cols, $n, $row, $card = false ) {
 				$src ? '<img src="' . esc_url( $src ) . '" alt="">' : '',
 				esc_attr( $name ), esc_attr( $val )
 			);
+		} elseif ( $c[1] === 'check' ) {
+			/* チェックの欄（2026/10/19）。見出しの文字は、チェックのとなりに出します */
+			printf( '<input type="checkbox" name="%s" value="1"%s> <span>%s</span>',
+				esc_attr( $name ), checked( (string) $val, '1', false ), esc_html( $c[0] ) );
 		} elseif ( $c[1] === 'textarea' ) {
 			printf( '<textarea name="%s" rows="2" placeholder="%s">%s</textarea>',
 				esc_attr( $name ), esc_attr( isset( $c[2] ) ? $c[2] : '' ), esc_textarea( $val ) );
@@ -2266,6 +2277,8 @@ add_action( 'save_post_ymkrf_product', function ( $post_id ) {
 						if ( $one ) $ids[] = $one;
 					}
 					$r[ $ck ] = $ids;
+				} elseif ( $c[1] === 'check' ) {
+					$r[ $ck ] = ( (string) $v === '1' ) ? '1' : '';
 				} elseif ( $c[1] === 'textarea' ) {
 					$r[ $ck ] = sanitize_textarea_field( $v );
 				} elseif ( $c[1] === 'number' ) {
@@ -2700,6 +2713,31 @@ add_action( 'init', function () {
 	$f = WP_CONTENT_DIR . '/ymkrf-kitchen-colors.json';
 	if ( file_exists( $f ) ) @unlink( $f );
 	update_option( 'ymkrf_kcolor_report', '2', false );
+}, 31 );
+
+/* 登録ずみの標準仕様のうち、名前に「水栓」が入っているものは
+   「写真を切りとらず全体を見せる」にチェックを入れておきます（1回だけ。2026/10/19 ユーザー指示「水栓とかは全体写してほしい」）。
+   ほかの写真は、登録画面で必要なものだけチェックしてください */
+add_action( 'init', function () {
+	if ( get_option( 'ymkrf_spec_whole_ver' ) === '1' ) return;
+	if ( ! post_type_exists( 'ymkrf_product' ) ) return;
+	$ids = get_posts( array( 'post_type' => 'ymkrf_product', 'post_status' => 'any', 'posts_per_page' => -1,
+	                         'fields' => 'ids', 'no_found_rows' => true ) );
+	$n = 0;
+	foreach ( (array) $ids as $id ) {
+		$rows = get_post_meta( $id, '_ymkrf_specs', true );
+		if ( ! is_array( $rows ) || ! $rows ) continue;
+		$ch = false;
+		foreach ( $rows as $i => $r ) {
+			if ( ! is_array( $r ) ) continue;
+			if ( mb_strpos( (string) ( $r['name'] ?? '' ), '水栓' ) !== false && empty( $r['whole'] ) ) {
+				$rows[ $i ]['whole'] = '1'; $ch = true; $n++;
+			}
+		}
+		if ( $ch ) update_post_meta( $id, '_ymkrf_specs', $rows );
+	}
+	update_option( 'ymkrf_spec_whole_ver', '1', false );
+	update_option( 'ymkrf_spec_whole_n', $n, false );
 }, 31 );
 
 /* 一覧の検索で、メーカー名・グレードでも見つかるようにします
@@ -4885,6 +4923,9 @@ function ymkrf_product_admin_assets() {
   position:absolute;top:6px;right:8px;z-index:3;display:flex;align-items:center;gap:6px;
 }
 .ymkrf-grp__tools .ymkrf-grp__del{position:static}
+/* チェックの欄（標準仕様の「写真を切りとらず全体を見せる」など。2026/10/19） */
+.ymkrf-f:has(> input[type=checkbox]){display:flex!important;align-items:center;gap:6px;font-size:12px;color:#50575e;cursor:pointer}
+.ymkrf-f:has(> input[type=checkbox]) > span{margin:0!important;font-weight:400!important}
 /* 「URL」「商品データ（基本）」の箱は、並べかえの▲▼を出さず、つかめる手の形にもしません（2026/10/16） */
 #ymkrf_product_basic .handle-order-higher,#ymkrf_product_basic .handle-order-lower,
 #ymkrf_product_url .handle-order-higher,#ymkrf_product_url .handle-order-lower{display:none!important}
@@ -4908,6 +4949,16 @@ function ymkrf_product_admin_assets() {
 /* 右上のチェックと、見出し・入力欄が重ならないように */
 .ymkrf-grp .ymkrf-pv-head{padding-right:84px}
 .ymkrf-point.ymkrf-opt{padding-top:34px}
+/* 写真の「← →」と、ドラッグ中の置き場所（2026/10/19） */
+.ymkrf-grp .ymkrf-pic{cursor:grab}
+.ymkrf-pic__mv{position:absolute;top:6px;left:6px;z-index:3;display:flex;gap:3px}
+.ymkrf-pic__mv button{
+  width:26px;height:24px;padding:0;line-height:22px;font-size:13px;font-weight:700;cursor:pointer;
+  background:rgba(255,255,255,.95);border:1px solid #c3c4c7;border-radius:4px;color:#1d2327;
+}
+.ymkrf-pic__mv button:hover:not(:disabled){border-color:#fe3301;color:#fe3301}
+.ymkrf-pic__mv button:disabled{opacity:.35;cursor:default}
+.ymkrf-pic--ph{border:2px dashed #fe3301;border-radius:8px;background:#fff6f3;visibility:visible!important}
 /* 自動で入れた ALT は、少しうすい字で見せます（2026/10/16） */
 .ymkrf-grp .ymkrf-pic__alt.is-auto{color:#787c82;background:#f6f7f7}
 
@@ -5243,6 +5294,59 @@ jQuery(function($){
      ・6px動かしてはじめてドラッグ開始。写真を「ただ押しただけ」のときは、
        これまでどおり写真をえらぶ画面がひらきます。 */
   var YMKRF_NODRAG = 'input,textarea,select,option,button,a,label span';
+
+  /* おすすめポイントの写真の順番を、同じ Point の中で入れかえます
+     （2026/10/19 ユーザー指示「おすすめポイントの写真を移動させたい」→「同じPointの中で順番を入れかえ」）
+     ・写真の左上の「← →」で、ひとつずつ入れかわります
+     ・写真をつかんで（6px 以上動かして）ドラッグしても入れかえられます
+       （ただ押しただけなら、これまでどおり写真をえらぶ画面がひらきます）
+     ・ALT・キャプションも、写真といっしょに動きます。自動の ALT の「（○枚目）」は、つけなおします
+     ・送られる順＝画面の順なので、「更新」を押せばそのままの並びで保存されます */
+  function ymkrfPicBtns($box){
+    var $pics = $box.children('.ymkrf-pic');
+    $pics.each(function(i){
+      var $p = $(this);
+      if (!$p.children('.ymkrf-pic__mv').length) {
+        $p.prepend('<span class="ymkrf-pic__mv">'
+          + '<button type="button" class="ymkrf-pic__l" title="ひとつ左へ">←</button>'
+          + '<button type="button" class="ymkrf-pic__r" title="ひとつ右へ">→</button></span>');
+      }
+      $p.find('> .ymkrf-pic__mv .ymkrf-pic__l').prop('disabled', i === 0);
+      $p.find('> .ymkrf-pic__mv .ymkrf-pic__r').prop('disabled', i === $pics.length - 1);
+      $p.find('> .ymkrf-pic__mv').toggle($pics.length > 1);
+    });
+  }
+  function ymkrfPicAfter($box){
+    ymkrfPicBtns($box);
+    var $pt = $box.closest('.ymkrf-point');
+    if ($pt.length && typeof ymkrfAltSync === 'function') ymkrfAltSync($pt);
+  }
+  function ymkrfPicSortable($box){
+    if (!$.fn.sortable || $box.data('ymkrfPicSort')) return;
+    $box.data('ymkrfPicSort', 1).sortable({
+      items:'> .ymkrf-pic', cursor:'grabbing', distance:6, tolerance:'pointer',
+      cancel:'input,textarea,button', placeholder:'ymkrf-pic ymkrf-pic--ph',
+      start:function(e, ui){ ui.placeholder.height(ui.item.outerHeight()).width(ui.item.outerWidth()); },
+      stop:function(){ ymkrfPicAfter($(this)); }
+    });
+  }
+  $('.ymkrf-grp .ymkrf-point__pics').each(function(){ ymkrfPicBtns($(this)); ymkrfPicSortable($(this)); });
+  /* あとから足したポイント・写真にも効くように */
+  $(document).on('mouseenter', '.ymkrf-grp .ymkrf-point__pics', function(){
+    ymkrfPicBtns($(this)); ymkrfPicSortable($(this));
+  });
+  $(document).on('click', '.ymkrf-pic__l, .ymkrf-pic__r', function(e){
+    e.preventDefault(); e.stopPropagation();
+    var $p = $(this).closest('.ymkrf-pic'), $box = $p.parent();
+    if ($(this).hasClass('ymkrf-pic__l')) { var $pv = $p.prevAll('.ymkrf-pic').first(); if ($pv.length) $p.insertBefore($pv); }
+    else                                  { var $nx = $p.nextAll('.ymkrf-pic').first(); if ($nx.length) $p.insertAfter($nx); }
+    $p.css('outline', '2px solid #fe3301'); setTimeout(function(){ $p.css('outline', ''); }, 400);
+    ymkrfPicAfter($box);
+  });
+  $(document).on('click', '.ymkrf-grp .ymkrf-pic__add, .ymkrf-grp .ymkrf-pic__del', function(){
+    var $box = $(this).closest('.ymkrf-point__pics');
+    setTimeout(function(){ ymkrfPicBtns($box); }, 10);
+  });
 
   if ($.fn.sortable) {
     $('.ymkrf-rep__rows').not('.ymkrf-rep--card .ymkrf-rep__rows')

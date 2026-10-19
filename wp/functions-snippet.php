@@ -65,7 +65,7 @@ function ymkrf_crumb_ld( $crumbs ) {
 }
 endif;
 
-if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '5.1.8' );   // ファイル更新時はここを上げるとキャッシュが切れます
+if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '5.2.0' );   // ファイル更新時はここを上げるとキャッシュが切れます
 
 /* ============================================================
    1. CSS / JS の読み込み
@@ -1628,33 +1628,34 @@ function ymkrf_group_sites( $lead = 'ヤマキシのほかのサイト', $use_lo
 
 	$sites = array(
 		array(
-			'name' => '外壁・屋根',
+			/* 名前は 2026/10/19 ユーザー指示で「〜専用サイト」「コーポレートサイト」に */
+			'name' => '屋根・外壁専用サイト',
 			'url'  => 'https://yamakishi-paint.jp/',
 			'img'  => 'paint.png',
 		),
 		array(
-			'name' => '太陽光・蓄電池',
+			'name' => '太陽光・蓄電池専用サイト',
 			'url'  => 'https://www.yamakishi-solar.biz/',
 			'img'  => 'solar.png',
 			'wide' => true,   /* 横に長いロゴなので、はばいっぱいに出します */
 		),
 		array(
-			'name' => 'トレーラーハウス',
+			'name' => 'トレーラーハウス専用サイト',
 			'url'  => 'https://www.yamakishi.co.jp/trailerhouse/',
 			'img'  => 'trailer.png',
 		),
 		array(
-			'name' => '不動産',
+			'name' => '不動産専用サイト',
 			'url'  => 'https://www.yamakishi-f.com/',
 			'img'  => 'estate.png',
 		),
 		array(
-			'name' => 'コーポレート',
+			'name' => 'コーポレートサイト',
 			'url'  => 'https://www.yamakishi.co.jp/',
 			'img'  => 'corporate.png',
 		),
 		array(
-			'name' => 'リクルート',
+			'name' => '採用情報',   /* 2026/10/19 ユーザー指示「リクルートは採用情報に変更」 */
 			'url'  => 'https://yamakishi.co.jp/recruit/',
 			'img'  => 'recruit.png',
 		),

@@ -59,11 +59,15 @@ $home  = home_url( '/' );
         <address class="p-footer__company">
           株式会社山岸（リフォームヤマキシ）<br>
           <a class="p-footer__tel" href="tel:0800-777-3331" data-cta="footer">0800-777-3331</a><br>
-          <a href="<?php echo esc_url( $home . 'shops/' ); ?>">石川県・福井県に11店舗</a>
+          <?php /* 2026/10/19 ユーザー指示「各店の情報があるぺージに誘導できるテキスト」→「店舗一覧・アクセス」 */ ?>
+          <a href="<?php echo esc_url( $home . 'shops/' ); ?>">店舗一覧・アクセス</a>
         </address>
         <ul class="p-footer__links">
-          <li><a href="<?php echo esc_url( $home . 'inquiry/webrsv/' ); ?>">ネット来店予約</a></li>
+          <?php /* 2026/10/19 ユーザー指示
+                   「ネット来店予約→WEB専用来店予約」「お見積り・お問い合わせの下に、LINEにて相談を追加」 */ ?>
+          <li><a href="<?php echo esc_url( $home . 'inquiry/webrsv/' ); ?>">WEB専用来店予約</a></li>
           <li><a href="<?php echo esc_url( $home . 'inquiry/' ); ?>">お見積り・お問い合わせ</a></li>
+          <li><a href="https://line.me/R/ti/p/@233okcdx" rel="noopener" data-cta="footer-line">LINEにて相談</a></li>
         </ul>
 
         <?php /* ヤマキシのほかのサイト。いまは文字のリンクです。

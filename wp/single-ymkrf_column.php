@@ -52,6 +52,8 @@ if ( function_exists( 'ymkrf_crumb_ld' ) ) {
     </div>
   </div>
 
+  <?php /* アイキャッチは、自分でえらんだときだけ出ます（本文と同じ写真でもそのまま出します。
+           2026/10/19 ユーザー指示「同じ写真でも、手動でアイキャッチを設定するなら別にかまいません」） */ ?>
   <?php if ( has_post_thumbnail() ) : ?>
     <div class="l-wrap l-wrap--narrow">
       <div class="p-colart__ph"><?php the_post_thumbnail( 'large', array( 'alt' => '' ) ); ?></div>

@@ -493,6 +493,17 @@ endif;
       1本化したため、記事に書いた人の顔と名前を出せるようにしています。
    ============================================================ */
 
+/* 登録画面の「アイキャッチ画像」の欄に、おすすめの大きさを小さくグレーで書いておきます
+   （2026/10/19 ユーザー指示「アイキャッチ画像設定のところに、アイキャッチのサイズをグレーで小さく書いておいてほしい」）。
+   一覧のカードは よこ16：たて10 で切りぬいて出すので、その形に合わせた大きさです。 */
+add_filter( 'admin_post_thumbnail_html', function ( $html, $post_id ) {
+	if ( get_post_type( $post_id ) !== 'ymkrf_column' ) return $html;
+	return $html
+		. '<p class="ymkrf-thumbsize" style="margin:8px 0 0;color:#8c8f94;font-size:12px;line-height:1.6">'
+		. 'よこ1200 × たて750px'   /* 2026/10/19 ユーザー指示「よこ1200 × たて750pxだけでよいです」 */
+		. '</p>';
+}, 10, 2 );
+
 /* 昔ながらの編集画面にします（右の「書いた人」が埋もれないように） */
 add_filter( 'use_block_editor_for_post_type', function ( $use, $type ) {
 	return ( $type === 'ymkrf_column' ) ? false : $use;
@@ -1214,10 +1225,37 @@ function ymkrf_column_is_banner( $att_id ) {
 	return ( $meta['width'] / $meta['height'] ) >= 1.9;
 }
 
+/**
+ * アイキャッチの写真が、本文の中にも入っているか
+ * （2026/10/19 ユーザー「メディアを1つ入れましたが、なぜかぺージを見ると2枚あります」）
+ * 入っていれば、記事ページの上のアイキャッチは出しません（同じ写真が2回出ないように）。
+ */
+function ymkrf_column_thumb_in_body( $post_id ) {
+	$tid = (int) get_post_thumbnail_id( $post_id );
+	if ( ! $tid ) return false;
+	$html = (string) get_post_field( 'post_content', $post_id );
+	if ( $html === '' ) return false;
+	if ( preg_match( '#wp-image-' . $tid . '(?!\d)#', $html ) ) return true;
+	$file = (string) get_post_meta( $tid, '_wp_attached_file', true );
+	if ( $file === '' ) return false;
+	$stem = preg_replace( '#\.[A-Za-z0-9]+$#', '', wp_basename( $file ) );
+	/* 大・中に縮めた版（…-1024x768.jpg）も同じ写真として見ます */
+	return (bool) preg_match( '#/' . preg_quote( $stem, '#' ) . '(-\d+x\d+)?(-scaled)?\.[A-Za-z0-9]+#', $html );
+}
+
 /** アイキャッチが空なら、本文の1枚目を入れます */
 function ymkrf_column_fill_thumb( $post_id ) {
 
 	if ( get_post_thumbnail_id( $post_id ) ) return false;
+
+	/* 自動で入れるのは、旧ブログから取り込んだ記事だけにします。
+	   新しく書く記事には、勝手にアイキャッチを入れません
+	   （2026/10/19 ユーザー指示「同じ写真でも、手動でアイキャッチを設定するなら別にかまいません。
+	     勝手にアイキャッチ設定されるのはちょっとやめてほしい」） */
+	if ( ! get_post_meta( $post_id, '_ymkrf_old_blog_id', true ) ) return false;
+
+	/* 編集画面でアイキャッチを自分で外した記事には、自動で入れなおしません */
+	if ( get_post_meta( $post_id, '_ymkrf_thumb_off', true ) === '1' ) return false;
 
 	$id = ymkrf_column_first_image_id( $post_id );
 	if ( ! $id ) return false;
@@ -1232,11 +1270,58 @@ function ymkrf_column_fill_thumb( $post_id ) {
 	return true;
 }
 
+/* 保存したときに自動でアイキャッチを入れるのは、やめました（2026/10/19 ユーザー指示）。
+   アイキャッチは、編集画面で自分でえらんだものだけが使われます。
 add_action( 'save_post_ymkrf_column', function ( $post_id ) {
 	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
 	if ( wp_is_post_revision( $post_id ) ) return;
 	ymkrf_column_fill_thumb( $post_id );
 }, 50 );
+*/
+
+/* 新しく書いた記事（旧ブログから取り込んだものではない記事）に、
+   自動で入ってしまったアイキャッチを外します（1回だけ。2026/10/19）。
+   ・自動で入れた印（_ymkrf_thumb_auto）があるものだけ。自分でえらんだものは、さわりません
+   ・旧ブログから取り込んだ記事は、そのままにします */
+add_action( 'init', function () {
+	if ( get_option( 'ymkrf_column_unauto' ) === '1' ) return;
+	if ( ! post_type_exists( 'ymkrf_column' ) ) return;
+	$ids = get_posts( array(
+		'post_type'      => 'ymkrf_column',
+		'post_status'    => 'any',
+		'posts_per_page' => -1,
+		'fields'         => 'ids',
+		'no_found_rows'  => true,
+		'meta_query'     => array(
+			'relation' => 'AND',
+			array( 'key' => '_ymkrf_thumb_auto', 'value' => '1' ),
+			array( 'key' => '_ymkrf_old_blog_id', 'compare' => 'NOT EXISTS' ),
+		),
+	) );
+	foreach ( (array) $ids as $id ) {
+		delete_post_meta( $id, '_thumbnail_id' );
+		delete_post_meta( $id, '_ymkrf_thumb_auto' );
+	}
+	update_option( 'ymkrf_column_unauto', '1', false );
+	update_option( 'ymkrf_column_unauto_n', count( (array) $ids ), false );
+}, 40 );
+
+/* 編集画面でアイキャッチを外したら「自動で入れない」印を付けます。
+   もう一度アイキャッチをえらんだら、印は外します（2026/10/19） */
+add_action( 'deleted_post_meta', function ( $meta_ids, $object_id, $meta_key ) {
+	if ( $meta_key !== '_thumbnail_id' ) return;
+	if ( get_post_type( $object_id ) !== 'ymkrf_column' ) return;
+	/* 人が編集画面で外したときだけ（自動の入れなおしのときは付けません） */
+	$by_person = ( defined( 'REST_REQUEST' ) && REST_REQUEST )
+	          || ( isset( $_POST['action'] ) && in_array( $_POST['action'], array( 'editpost', 'remove-post-thumbnail', 'set-post-thumbnail' ), true ) )
+	          || ( isset( $_POST['_thumbnail_id'] ) && (int) $_POST['_thumbnail_id'] <= 0 );
+	if ( $by_person ) update_post_meta( $object_id, '_ymkrf_thumb_off', '1' );
+}, 10, 3 );
+add_action( 'added_post_meta', function ( $mid, $object_id, $meta_key ) {
+	if ( $meta_key === '_thumbnail_id' && get_post_type( $object_id ) === 'ymkrf_column' ) {
+		delete_post_meta( $object_id, '_ymkrf_thumb_off' );
+	}
+}, 10, 3 );
 
 /* 自動で入れたアイキャッチが「帯」だったものを、写真に入れなおします
    （2026/09/10 ユーザー指示。手で設定したものは、さわりません） */
@@ -1330,6 +1415,14 @@ function ymkrf_col_products( $post_id = 0 ) {
 }
 endif;
 
+/** このコラムに紐づいているメーカー（term_id の一覧）（2026/10/19） */
+function ymkrf_col_makers( $post_id = 0 ) {
+	$post_id = $post_id ? (int) $post_id : (int) get_the_ID();
+	if ( ! $post_id ) return array();
+	return array_values( array_unique( array_filter( array_map( 'intval',
+		(array) get_post_meta( $post_id, '_ymkrf_col_maker' ) ) ) ) );
+}
+
 /* エリアも、コラムで使えるようにします（任意） */
 add_action( 'init', function () {
 	if ( taxonomy_exists( 'ymkrf_works_area' ) && post_type_exists( 'ymkrf_column' ) ) {
@@ -1369,6 +1462,52 @@ function ymkrf_col_products_box( $post ) {
 	  えらぶと、その商品のページに この記事が出るようになり、
 	  この記事の下には えらんだ商品が出ます。
 	</p>
+
+	<?php
+	/* メーカーごとにも✓できます（2026/10/19 ユーザー指示
+	   「コラムの登録ぺージですが、商品だけじゃなく、メーカーごとでも✓できるようにしてほしい」）。
+	   メーカーに✓を入れると、そのメーカーの商品ページ ぜんぶに この記事が出ます。
+	   あとから増えた商品にも、自動で出ます。
+	   この記事にカテゴリ（キッチン・お風呂など）を付けているときは、
+	   そのカテゴリの商品ページにだけ出します。 */
+	$mk_now = ymkrf_col_makers( $post->ID );
+	$makers = get_terms( array( 'taxonomy' => 'ymkrf_maker', 'hide_empty' => false, 'orderby' => 'name' ) );
+	if ( is_wp_error( $makers ) ) $makers = array();
+
+	/* このホームページで取り扱っているメーカーだけにします
+	   （2026/10/19 ユーザー指示「メーカーはこのホームぺージで取り扱っているメーカーだけにして。
+	     サンポットとかパーパスとかある？ニチハも」）
+	   ・「商品 ＞ メーカーの設定」で、どれかの分類にチェックが入っているメーカー
+	   ・かつ、公開している商品が1つ以上あるメーカー
+	   すでにこの記事で✓してあるメーカーは、消えないよう出したままにします。 */
+	$use_ids = array();
+	if ( function_exists( 'ymkrf_maker_cats_list' ) && function_exists( 'ymkrf_maker_choices' ) ) {
+		foreach ( array_keys( ymkrf_maker_cats_list() ) as $cslug ) {
+			$use_ids = array_merge( $use_ids, ymkrf_maker_choices( $cslug ) );
+		}
+	}
+	$use_ids = array_unique( array_map( 'intval', $use_ids ) );
+	$makers  = array_values( array_filter( $makers, function ( $mk ) use ( $use_ids, $mk_now ) {
+		if ( in_array( (int) $mk->term_id, $mk_now, true ) ) return true;
+		if ( $use_ids && ! in_array( (int) $mk->term_id, $use_ids, true ) ) return false;
+		return (int) $mk->count > 0;
+	} ) );
+	?>
+	<?php if ( $makers ) : ?>
+	<div class="ymkrf-colm">
+	  <p class="ymkrf-colm__ttl">メーカーでえらぶ <span>（✓したメーカーの商品ページ ぜんぶに、この記事が出ます）</span></p>
+	  <div class="ymkrf-colm__list">
+	    <?php foreach ( $makers as $mk ) : $on = in_array( (int) $mk->term_id, $mk_now, true ); ?>
+	      <label class="ymkrf-colm__item<?php echo $on ? ' is-on' : ''; ?>">
+	        <input type="checkbox" name="ymkrf_col_maker[]" value="<?php echo (int) $mk->term_id; ?>"<?php checked( $on ); ?>>
+	        <?php echo esc_html( $mk->name ); ?>
+	        <small><?php echo (int) $mk->count; ?></small>
+	      </label>
+	    <?php endforeach; ?>
+	  </div>
+	</div>
+	<p class="ymkrf-colm__ttl" style="margin-top:14px">商品でえらぶ</p>
+	<?php endif; ?>
 
 	<p class="ymkrf-colp__find">
 	  <input type="search" id="ymkrf-colp-find" placeholder="商品名・型番でしぼりこむ" style="width:280px">
@@ -1413,6 +1552,14 @@ function ymkrf_col_products_box( $post ) {
 	</div>
 
 	<style>
+	  .ymkrf-colm{margin:8px 0 4px}
+	  .ymkrf-colm__ttl{margin:0 0 6px;font-weight:700;font-size:13px}
+	  .ymkrf-colm__ttl span{font-weight:400;color:#787c82;font-size:12px}
+	  .ymkrf-colm__list{display:flex;flex-wrap:wrap;gap:6px}
+	  .ymkrf-colm__item{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;
+	    border:1px solid #dcdcde;border-radius:999px;background:#fff;font-size:13px;cursor:pointer}
+	  .ymkrf-colm__item small{color:#a7aaad;font-size:11px}
+	  .ymkrf-colm__item.is-on{background:#fff4f0;border-color:#fe3301;font-weight:700}
 	  .ymkrf-colp__find{margin:6px 0 10px}
 	  .ymkrf-colp__count{margin-left:10px;font-size:12px;color:#787c82}
 	  .ymkrf-colp{
@@ -1438,6 +1585,10 @@ function ymkrf_col_products_box( $post ) {
 	    $('.ymkrf-colp__count').text(n ? n + '件えらんでいます' : 'まだえらんでいません');
 	  }
 	  count();
+
+	  $(document).on('change', '.ymkrf-colm input', function () {
+	    $(this).closest('label').toggleClass('is-on', this.checked);
+	  });
 
 	  $(document).on('change', '.ymkrf-colp input', function () {
 	    $(this).closest('li').toggleClass('is-on', this.checked);
@@ -1467,6 +1618,13 @@ add_action( 'save_post_ymkrf_column', function ( $post_id ) {
 	if ( ! current_user_can( 'edit_post', $post_id ) ) return;
 
 	delete_post_meta( $post_id, '_ymkrf_col_product' );
+
+	/* メーカー（2026/10/19） */
+	delete_post_meta( $post_id, '_ymkrf_col_maker' );
+	$mks = isset( $_POST['ymkrf_col_maker'] ) ? array_unique( array_map( 'intval', (array) wp_unslash( $_POST['ymkrf_col_maker'] ) ) ) : array();
+	foreach ( $mks as $mk ) {
+		if ( $mk && term_exists( $mk, 'ymkrf_maker' ) ) add_post_meta( $post_id, '_ymkrf_col_maker', $mk );
+	}
 
 	$ids = isset( $_POST['ymkrf_col_product'] ) ? (array) wp_unslash( $_POST['ymkrf_col_product'] ) : array();
 	$put = array();
@@ -1505,8 +1663,32 @@ function ymkrf_columns_for_product( $product_id, $n = 3 ) {
 
 	if ( count( $own ) >= $n ) return $own;
 
-	/* ② 足りないぶんは、同じ分類のコラムでうめます */
 	$cat = function_exists( 'ymkrf_product_current_cat' ) ? ymkrf_product_current_cat( $product_id ) : '';
+
+	/* ①-2 この商品のメーカーに✓を入れたコラム（2026/10/19）。
+	        コラムにカテゴリが付いていれば、同じカテゴリの商品のときだけ出します */
+	$mk = wp_get_object_terms( $product_id, 'ymkrf_maker', array( 'fields' => 'ids' ) );
+	if ( ! is_wp_error( $mk ) && $mk ) {
+		$bymk = get_posts( array(
+			'post_type'      => 'ymkrf_column',
+			'posts_per_page' => 20,
+			'fields'         => 'ids',
+			'no_found_rows'  => true,
+			'post__not_in'   => $own ? $own : array( 0 ),
+			'meta_query'     => array( array(
+				'key' => '_ymkrf_col_maker', 'value' => array_map( 'strval', $mk ), 'compare' => 'IN',
+			) ),
+		) );
+		foreach ( $bymk as $cid ) {
+			if ( count( $own ) >= $n ) break;
+			$ccats = wp_get_object_terms( $cid, 'ymkrf_product_cat', array( 'fields' => 'slugs' ) );
+			if ( ! is_wp_error( $ccats ) && $ccats && $cat !== '' && ! in_array( $cat, $ccats, true ) ) continue;
+			$own[] = (int) $cid;
+		}
+		if ( count( $own ) >= $n ) return $own;
+	}
+
+	/* ② 足りないぶんは、同じ分類のコラムでうめます */
 	if ( $cat === '' ) return $own;
 
 	$more = get_posts( array(
@@ -1955,3 +2137,38 @@ function ymkrf_works_column_section( $works_id = 0, $n = 3 ) {
 	<?php
 }
 endif;
+
+/* 2026/10/19 の調べもので書き出した一時ファイルを消します（1回だけ） */
+add_action( 'init', function () {
+	if ( get_option( 'ymkrf_mkreport' ) === '2' ) return;
+	$f = WP_CONTENT_DIR . '/ymkrf-makers.json';
+	if ( file_exists( $f ) ) @unlink( $f );
+	update_option( 'ymkrf_mkreport', '2', false );
+}, 60 );
+
+/* 使わないメーカー名を消します（1回だけ）。
+   2026/10/19 ユーザー指示「サンポット・パーパス・ニチハは不要です」
+   ・商品が1つも付いていないときだけ消します（付いていたら残します）
+   ・「商品 ＞ メーカーの設定」のチェックからも外します */
+add_action( 'init', function () {
+	if ( get_option( 'ymkrf_maker_del_v1' ) === '1' ) return;
+	if ( ! taxonomy_exists( 'ymkrf_maker' ) ) return;
+	$done = array();
+	foreach ( array( 'sunpot', 'purpose', 'nichiha' ) as $slug ) {
+		$t = get_term_by( 'slug', $slug, 'ymkrf_maker' );
+		if ( ! $t || is_wp_error( $t ) ) continue;
+		$n = get_objects_in_term( (int) $t->term_id, 'ymkrf_maker' );
+		if ( ! is_wp_error( $n ) && $n ) continue;   /* 商品が付いていたら、さわりません */
+		$o = get_option( 'ymkrf_maker_cats' );
+		if ( is_array( $o ) ) {
+			foreach ( $o as $c => $ids ) {
+				if ( is_array( $ids ) ) $o[ $c ] = array_values( array_diff( array_map( 'intval', $ids ), array( (int) $t->term_id ) ) );
+			}
+			update_option( 'ymkrf_maker_cats', $o );
+		}
+		$r = wp_delete_term( (int) $t->term_id, 'ymkrf_maker' );
+		if ( $r && ! is_wp_error( $r ) ) $done[] = $t->name;
+	}
+	update_option( 'ymkrf_maker_del_v1', '1', false );
+	update_option( 'ymkrf_maker_del_v1_log', implode( '、', $done ), false );
+}, 61 );

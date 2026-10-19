@@ -367,6 +367,18 @@
 }
 /* 写真が入ったら、下じきの色は付けません */
 .p-prd__spec .ph:has(img){ background:none; }
+/* 「写真を切りとらず全体を見せる」にチェックした写真（水栓など）。
+   枠の大きさはそのまま、白い背景の中に写真の全体を出します（2026/10/19 ユーザー指示「水栓とかは全体写してほしい」） */
+.p-prd__spec.is-whole .ph{ background:#fff; border:1px solid var(--border, #e6e2df); }
+.p-prd__spec.is-whole .ph img{ object-fit:contain; padding:8px; box-sizing:border-box; }
+/* 元が小さい写真（よこ400px 未満）は引き伸ばさず、白い背景の中に元の大きさで出します
+   （2026/10/19 ユーザー「WEBからの写真だと解像度が荒くなりがち」）。枠の大きさは、ほかとそろえたままです */
+.p-prd__spec.is-small .ph{ background:#fff; border:1px solid var(--border, #e6e2df); }
+.p-prd__spec.is-small .ph img{
+  inset:auto; left:50%; top:50%; transform:translate(-50%,-50%);
+  width:auto; height:auto; max-width:calc(100% - 16px); max-height:calc(100% - 16px);
+  object-fit:contain;
+}
 .p-prd__spec figcaption{
   padding:6px 2px 8px; font-size:13.5px; font-weight:800; line-height:1.55;
   border-bottom:1px solid var(--line, #e6e2df);

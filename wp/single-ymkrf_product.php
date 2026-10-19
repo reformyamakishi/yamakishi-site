@@ -441,10 +441,22 @@ if ( $d['specs'] || $d['speclist'] || $basic ) : ?>
 
     <?php if ( $d['specs'] ) : ?>
       <div class="p-prd__specs">
-        <?php foreach ( $d['specs'] as $r ) : ?>
-          <figure class="p-prd__spec">
-            <div class="ph"><?php echo ymkrf_img( $r['img'], 'medium',
-              ymkrf_alt( $altb, $r['name'] ) ); ?></div>
+        <?php foreach ( $d['specs'] as $r ) :
+          /* 写真の荒さ対策（2026/10/19 ユーザー指示）
+             ・大きい写真を入れたときは、大きい版（よこ768px）をつかいます
+               （前は よこ300px に縮めた版を出していたので、スマホなどの細かい画面でぼやけていました）
+             ・元が小さい写真（よこ400px 未満）は、枠いっぱいに引き伸ばさず、
+               白い背景の中に元の大きさで出します（引き伸ばすと、余計にぼやけるため） */
+          /* 小さい写真も、ぜんぶ枠いっぱいに出します
+             （2026/10/19 ユーザー指示「枠めいっぱい画像の方がかっこいい」→「全部 枠いっぱい」）。
+             白い枠の中に小さく出す仕組み（is-small）は、使うときのために残してあります */
+          $sm = false;
+          ?>
+          <?php /* 登録画面で「写真を切りとらず全体を見せる」にチェックした写真（2026/10/19） */ ?>
+          <figure class="p-prd__spec<?php echo $sm ? ' is-small' : ''; echo ! empty( $r['whole'] ) ? ' is-whole' : ''; ?>">
+            <div class="ph"><?php echo ymkrf_img( $r['img'], 'medium_large',
+              ymkrf_alt( $altb, $r['name'] ),
+              array( 'sizes' => '(min-width: 768px) 340px, 50vw' ) ); ?></div>
             <figcaption><?php echo esc_html( $r['name'] );
               if ( $r['model'] ) echo '<small>' . esc_html( $r['model'] ) . '</small>';
             ?></figcaption>

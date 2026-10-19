@@ -26,6 +26,8 @@ require_once get_stylesheet_directory() . '/inc/functions-snippet.php';
 require_once get_stylesheet_directory() . '/inc/functions-product.php';
 /* メーカーのデジタルカタログへのリンク（2026/10/13） */
 require_once get_stylesheet_directory() . '/inc/functions-product-catalog.php';
+/* 商品の写真を差しかえたら、どこにも使われなくなった前の写真をゴミ箱へ（2026/10/19） */
+require_once get_stylesheet_directory() . '/inc/functions-product-mediaclean.php';
 /* 商品一覧を、行をつかんで並べかえられるようにします */
 require_once get_stylesheet_directory() . '/inc/functions-product-sort.php';
 require_once get_stylesheet_directory() . '/inc/functions-product-koji.php';
