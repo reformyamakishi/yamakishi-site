@@ -365,12 +365,16 @@
      （写真のはしが少し切れることがあります） */
   object-fit:cover; object-position:center;
 }
-/* 写真が入ったら、下じきの色は付けません */
-.p-prd__spec .ph:has(img){ background:none; }
+/* 写真が入ったら、下じきの色は付けません。
+   外枠は、枠いっぱいの写真にも全体表示の写真にも同じように付けて、並びをそろえます
+   （2026/10/19 ユーザー「このままで枠だけつけて なんでこれだけわくがないの？」） */
+.p-prd__spec .ph:has(img){ background:#fff; border:1px solid var(--border, #e6e2df); box-sizing:border-box; }
 /* 「写真を切りとらず全体を見せる」にチェックした写真（水栓など）。
    枠の大きさはそのまま、白い背景の中に写真の全体を出します（2026/10/19 ユーザー指示「水栓とかは全体写してほしい」） */
 .p-prd__spec.is-whole .ph{ background:#fff; border:1px solid var(--border, #e6e2df); }
-.p-prd__spec.is-whole .ph img{ object-fit:contain; padding:8px; box-sizing:border-box; }
+.p-prd__spec.is-whole .ph img{ object-fit:contain; padding:7% 12%; box-sizing:border-box; }
+/* ↑ 余白を広めにして、少し小さめに中央へ（2026/10/19 ユーザー「シャワーハンガー2個はもっと小さく映して」）。
+     取っ手と同じ考え方です */
 /* 元が小さい写真（よこ400px 未満）は引き伸ばさず、白い背景の中に元の大きさで出します
    （2026/10/19 ユーザー「WEBからの写真だと解像度が荒くなりがち」）。枠の大きさは、ほかとそろえたままです */
 .p-prd__spec.is-small .ph{ background:#fff; border:1px solid var(--border, #e6e2df); }
