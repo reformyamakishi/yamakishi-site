@@ -451,9 +451,18 @@ if ( $d['specs'] || $d['speclist'] || $basic ) : ?>
              （2026/10/19 ユーザー指示「枠めいっぱい画像の方がかっこいい」→「全部 枠いっぱい」）。
              白い枠の中に小さく出す仕組み（is-small）は、使うときのために残してあります */
           $sm = false;
+
+          /* 正方形やたて長の写真（シャワー・スライドバーなど）は、枠いっぱいにすると上下が大きく切れるので、
+             自動で「全体を見せる」にします（2026/10/19 ユーザー「コンフォートウエーブシャワー（メタル調）がみきれている」）。
+             よこ÷たて が 1.25 未満（＝4:3 より縦に近い）なら全体表示。登録画面のチェックがあれば、そちらも効きます */
+          $whole = ! empty( $r['whole'] );
+          if ( ! $whole && ! empty( $r['img'] ) ) {
+            $wm = wp_get_attachment_metadata( (int) $r['img'] );
+            if ( ! empty( $wm['width'] ) && ! empty( $wm['height'] ) && ( $wm['width'] / $wm['height'] ) < 1.25 ) $whole = true;   /* 1.15→1.25（2026/10/19「シャワーハンガーはもっと小さく」） */
+          }
           ?>
           <?php /* 登録画面で「写真を切りとらず全体を見せる」にチェックした写真（2026/10/19） */ ?>
-          <figure class="p-prd__spec<?php echo $sm ? ' is-small' : ''; echo ! empty( $r['whole'] ) ? ' is-whole' : ''; ?>">
+          <figure class="p-prd__spec<?php echo $sm ? ' is-small' : ''; echo $whole ? ' is-whole' : ''; ?>">
             <div class="ph"><?php echo ymkrf_img( $r['img'], 'medium_large',
               ymkrf_alt( $altb, $r['name'] ),
               array( 'sizes' => '(min-width: 768px) 340px, 50vw' ) ); ?></div>
