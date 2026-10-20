@@ -51,6 +51,8 @@ $home  = home_url( '/' );
           <li><a href="<?php echo esc_url( $home . 'flyer/' ); ?>">イベント・チラシ</a></li>
           <li><a href="<?php echo esc_url( $home . 'column/' ); ?>">コラム・お役立ち情報</a></li>
           <li><a href="<?php echo esc_url( $home . 'faq/' ); ?>">よくあるご質問</a></li>
+          <?php /* 2026/10/20 エラーコード一覧を足しました（どのページからも行けるように） */ ?>
+          <li><a href="<?php echo esc_url( $home . 'troubleshooting/' ); ?>">給湯器のエラーコード一覧</a></li>
         </ul>
       </div>
 

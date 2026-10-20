@@ -1,0 +1,138 @@
+/* ==========================================================================
+   エラーコード一覧（/troubleshooting/…）　2026/10/20
+   ユーザー指示「見やすいようにバージョンあっぷ。内容は同じで」
+               「特にエラーコードの英数字をもっとひと目でわかるように」
+   ========================================================================== */
+
+/* コードの字：数字と英字の見分けがつきやすい、幅のそろった太い字 */
+.p-ec__codeval,
+.p-ec__chips a,
+.p-ec__input{
+  font-family:"Roboto Mono","SFMono-Regular",ui-monospace,Menlo,Consolas,"Noto Sans JP",monospace;
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- 番号でさがす（画面の上に貼りつきます） ---------- */
+.p-ec__search{
+  position:sticky; top:var(--header-h, 64px); z-index:20;
+  display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:10px 14px;
+  margin:0 0 18px; padding:14px 16px;
+  background:#fff; border:2px solid var(--brand, #fe3301); border-radius:14px;
+  box-shadow:0 6px 18px rgba(0,0,0,.08);
+}
+.p-ec__searchlbl{ font-weight:900; font-size:15px; color:var(--ink, #222); white-space:nowrap; }
+.p-ec__searchbox{ position:relative; }
+.p-ec__input{
+  width:100%; box-sizing:border-box; height:52px; padding:0 44px 0 16px;
+  font-size:24px; font-weight:800; letter-spacing:.06em; color:var(--brand-dark, #c92800);
+  background:#fff8f5; border:1px solid #f3c7b8; border-radius:10px;
+}
+.p-ec__input::placeholder{ color:#d9a593; font-weight:700; letter-spacing:.02em; }
+.p-ec__input:focus{ outline:none; border-color:var(--brand, #fe3301); box-shadow:0 0 0 3px rgba(254,51,1,.18); }
+.p-ec__clear{
+  position:absolute; right:8px; top:50%; transform:translateY(-50%);
+  width:32px; height:32px; border:0; border-radius:50%; background:#eee; color:#555;
+  font-size:18px; line-height:32px; cursor:pointer;
+}
+.p-ec__hit{ margin:0; font-size:13px; font-weight:700; color:#666; white-space:nowrap; }
+@media (max-width:767px){
+  .p-ec__search{ grid-template-columns:1fr auto; padding:12px; }
+  .p-ec__searchlbl{ grid-column:1 / -1; font-size:14px; }
+  .p-ec__input{ height:48px; font-size:22px; }
+}
+
+/* ---------- コードの早見表 ---------- */
+.p-ec__index{
+  margin:0 0 26px; padding:14px 16px; background:#fafafa; border:1px solid #eee; border-radius:12px;
+}
+.p-ec__index summary{ cursor:pointer; font-weight:900; font-size:15px; color:var(--ink, #222); }
+.p-ec__index summary span{ margin-left:10px; font-weight:400; font-size:12.5px; color:#888; }
+.p-ec__chips{
+  display:flex; flex-wrap:wrap; gap:6px;
+  margin:12px 0 0; padding:0; list-style:none;
+}
+/* 「おふろの栓が抜けていませんか」のような長い表示も、1行で収まるように横にのばします */
+.p-ec__chips li{ flex:0 0 auto; }
+.p-ec__chips a{
+  display:block; min-width:58px; padding:7px 10px; text-align:center; text-decoration:none; white-space:nowrap;
+  font-size:16px; font-weight:800; color:var(--brand-dark, #c92800);
+  background:#fff; border:1px solid #f0d2c7; border-radius:8px;
+}
+.p-ec__chips a:hover{ background:var(--brand, #fe3301); border-color:var(--brand, #fe3301); color:#fff; }
+
+/* ---------- 1件ずつのカード ---------- */
+.p-ec__list{ margin:0; padding:0; list-style:none; display:grid; gap:14px; }
+.p-ec__card{
+  display:grid; grid-template-columns:150px 1fr; gap:0;
+  background:#fff; border:1px solid #e8e2df; border-radius:14px; overflow:hidden;
+  scroll-margin-top:calc(var(--header-h, 64px) + 110px);
+}
+.p-ec__card[hidden]{ display:none; }
+.p-ec__card:target,
+.p-ec__card.is-hit{ border-color:var(--brand, #fe3301); box-shadow:0 0 0 3px rgba(254,51,1,.18); }
+
+/* コード：いちばん目立つところ */
+.p-ec__code{
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+  padding:18px 8px; background:var(--brand, #fe3301); color:#fff; text-align:center;
+}
+.p-ec__codelbl{
+  font-size:11px; font-weight:900; letter-spacing:.14em;
+  padding:2px 10px; border:1px solid rgba(255,255,255,.7); border-radius:999px;
+}
+.p-ec__codeval{
+  font-size:34px; font-weight:900; line-height:1.1; letter-spacing:.04em; word-break:break-all;
+}
+
+.p-ec__body{ padding:16px 20px 18px; min-width:0; }
+.p-ec__ttl{ margin:0 0 10px; font-size:18px; font-weight:900; line-height:1.5; color:var(--ink, #222); }
+.p-ec__blk{ display:grid; grid-template-columns:76px 1fr; gap:10px; align-items:start; padding:10px 0 0; border-top:1px dashed #eee; }
+.p-ec__blk + .p-ec__blk{ margin-top:10px; }
+.p-ec__tag{
+  display:inline-block; text-align:center; padding:3px 0; border-radius:6px;
+  font-size:12px; font-weight:900; background:#f1f1f1; color:#555;
+}
+.p-ec__tag--fix{ background:#e8f4ea; color:#1f7a37; }
+.p-ec__txt{ margin:0; font-size:14.5px; line-height:1.85; color:#333; }
+.p-ec__steps{ margin:0; padding:0; list-style:none; display:grid; gap:6px; }
+.p-ec__steps li{ display:flex; gap:8px; font-size:14.5px; line-height:1.85; color:#333; }
+.p-ec__no{ flex:none; color:#1f7a37; font-weight:900; }
+
+@media (max-width:767px){
+  .p-ec__card{ grid-template-columns:1fr; }
+  .p-ec__code{ flex-direction:row; justify-content:flex-start; gap:10px; padding:10px 16px; }
+  .p-ec__codeval{ font-size:28px; }
+  .p-ec__body{ padding:14px 16px 16px; }
+  .p-ec__ttl{ font-size:16.5px; }
+  .p-ec__blk{ grid-template-columns:1fr; gap:6px; }
+  .p-ec__tag{ justify-self:start; padding:2px 10px; }
+}
+
+/* ---------- 見つからないとき ---------- */
+.p-ec__none{ margin:10px 0 0; padding:20px; background:#fff8f5; border:1px dashed #f3c7b8; border-radius:12px; text-align:center; }
+.p-ec__none[hidden]{ display:none; }
+.p-ec__nonettl{ margin:0 0 6px; font-weight:900; font-size:16px; color:var(--brand-dark, #c92800); }
+.p-ec__none p{ margin:0; font-size:14px; line-height:1.8; }
+
+/* ---------- 直らないとき ---------- */
+.p-ec__help{
+  margin:32px 0 18px; padding:22px 20px; text-align:center;
+  background:linear-gradient(100deg,#ffece5 0%,#fff 80%); border:2px solid #ffd9cc; border-radius:16px;
+}
+.p-ec__helpttl{ margin:0 0 6px; font-size:19px; font-weight:900; color:var(--ink, #222); }
+.p-ec__helptxt{ margin:0 0 14px; font-size:14px; line-height:1.85; color:#444; }
+.p-ec__helpbtns{ display:flex; flex-wrap:wrap; justify-content:center; gap:10px; }
+.p-ec__btn{
+  display:inline-flex; align-items:center; justify-content:center; min-height:48px; padding:0 20px;
+  border-radius:999px; font-weight:900; font-size:15px; text-decoration:none;
+}
+.p-ec__btn--line{ background:#06c755; color:#fff; }
+.p-ec__btn--tel{ background:#fff; color:var(--brand-dark, #c92800); border:2px solid var(--brand, #fe3301); }
+.p-ec__btn--prd{ background:#fff; color:#333; border:1px solid #ccc; }
+.p-ec__btn:hover{ opacity:.88; }
+
+/* メーカーをえらぶ画面：件数 */
+.p-ec__mkn{ margin-left:6px; font-size:12px; font-weight:700; color:#999; }
+
+/* 管理している人だけに出る「この表を直す」 */
+.p-ec__edit{ margin:14px 0 0; text-align:right; font-size:13px; }
