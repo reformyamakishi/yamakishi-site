@@ -316,6 +316,10 @@
 }
 .p-prd__colors .p-prd__swatch{ overflow:hidden; }
 .p-prd__colors .p-prd__swatch img{ width:100%; height:100%; object-fit:cover; display:block; }
+/* トイレの便座・便器の写真は、切りとらずに白い台紙の上に全体を出します（2026/10/21） */
+.p-prd__colors .p-prd__swatch.is-whole{ background:#fff; }
+.p-prd__colors .p-prd__swatch.is-whole{ aspect-ratio:4/3; }
+.p-prd__colors .p-prd__swatch.is-whole img{ object-fit:contain; box-sizing:border-box; padding:4% 5%; }
 /* 枠を外したので、写真と名前を区切る点線もやめました */
 .p-prd__handles figcaption{
   margin-top:10px;
@@ -637,11 +641,45 @@
   .p-prd__colors:has(> figure:nth-child(5)):not(:has(> figure:nth-child(7))) > figure{
     width:calc(33.333% - 9.34px);
   }
+  /* トイレの便器カラーは、枠ごと大きく（よこ3つまで）
+     （2026/10/21 ユーザー指示「便器カラー、それごともっと大きくして」） */
+  .p-prd__colors.p-prd__colors--whole{ gap:20px; }
+  .p-prd__colors.p-prd__colors--whole > figure,
+  .p-prd__colors.p-prd__colors--whole:has(> figure:nth-child(5)):not(:has(> figure:nth-child(7))) > figure{
+    width:calc(33.333% - 13.34px);
+  }
+  .p-prd__colors--whole figure figcaption{ font-size:14px; }
+  /* 4色・7色以上は、少し小さくして よこ4つ（4色が「3＋1」にならないように）
+     （2026/10/21 ユーザー指示「アメージュZ高機能、カラーバリエーション４つ少し小さくして横並びにして」）。
+     5色・6色は よこ3つのまま（4つにすると「4＋1」「4＋2」になるため） */
+  .p-prd__colors.p-prd__colors--whole:has(> figure:nth-child(4)):not(:has(> figure:nth-child(5))) > figure,
+  .p-prd__colors.p-prd__colors--whole:has(> figure:nth-child(7)) > figure{
+    width:calc(25% - 15px);
+  }
   .p-prd__specs{ grid-template-columns:repeat(3,1fr); gap:34px 20px; }
   .p-prd__opts{ grid-template-columns:repeat(2,1fr); gap:12px; }
   .p-prd__opt{ grid-template-columns:92px minmax(0,1fr); }
   .p-prd__nav{ gap:14px; }
   .p-prd__pack{ padding:32px; }
+}
+
+/* --------------------------------------------------------------------------
+   カラーの写真の大きさ（登録画面で 大・中・小 をえらんだとき。2026/10/21）
+   大：よこ3つ（トイレの便器カラーの大きさ）／中：よこ4つ／小：よこ5つ
+   えらんでいない（おまかせ）ときは、上のこれまでの決まりのままです。
+   -------------------------------------------------------------------------- */
+.p-prd__colors.p-prd__colors--sm{ gap:12px !important; }
+.p-prd__colors.p-prd__colors--sm > figure{ width:calc((100% - 24px) / 3) !important; }
+.p-prd__colors.p-prd__colors--lg > figure,
+.p-prd__colors.p-prd__colors--md > figure{ width:calc(50% - 7px) !important; }
+@media (min-width:768px){
+  .p-prd__colors.p-prd__colors--lg{ gap:20px !important; }
+  .p-prd__colors.p-prd__colors--lg > figure{ width:calc((100% - 40px) / 3) !important; }
+  .p-prd__colors.p-prd__colors--md{ gap:16px !important; }
+  .p-prd__colors.p-prd__colors--md > figure{ width:calc((100% - 48px) / 4) !important; }
+  .p-prd__colors.p-prd__colors--sm{ gap:14px !important; }
+  .p-prd__colors.p-prd__colors--sm > figure{ width:calc((100% - 56px) / 5) !important; }
+  .p-prd__colors--sm figure figcaption{ font-size:12.5px; }
 }
 
 /* 型番などの長い英数字が、狭い画面ではみ出さないように */
