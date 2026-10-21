@@ -585,7 +585,11 @@ add_action( 'manage_ymkrf_staff_posts_custom_column', function ( $col, $post_id 
 		echo '</span>';
 	} elseif ( $col === 'ymkrf_sshop' ) {
 		$v = ymkrf_staff_shop_name( $post_id );
-		echo $v ? esc_html( $v ) : '<span style="color:#a7aaad">—</span>';
+		/* 店舗ごとのまとまりを作るため、店舗の英字と名前を持たせておきます（2026/10/21） */
+		printf( '<span class="ymkrf-sshop" data-slug="%s" data-name="%s">%s</span>',
+			esc_attr( (string) get_post_meta( $post_id, '_ymkrf_staff_shop', true ) ),
+			esc_attr( $v ? $v : '所属なし' ),
+			$v ? esc_html( $v ) : '<span style="color:#a7aaad">—</span>' );
 	} elseif ( $col === 'ymkrf_srole' ) {
 		$v = trim( (string) get_post_meta( $post_id, '_ymkrf_staff_role', true ) );
 		echo $v ? esc_html( $v ) : '<span style="color:#a7aaad">—</span>';
@@ -774,3 +778,65 @@ add_action( 'admin_notices', function () {
 	   . '<b>「下書き」は登録の途中という意味です。</b>下書きの人は、施工事例には何も出ません。'
 	   . '</p></div>';
 } );
+
+
+/* ------------------------------------------------------------
+   4-c. スタッフ一覧を、店舗ごとのまとまりにします
+   （2026/10/21 ユーザー指示「ダッシュボードのスタッフ一覧が見にくい 店舗毎に塊にできないかな？」）
+
+   ・店舗の順（本部 → 工事部 → 田鶴浜店 → …）に並んでいるとき、店舗が変わるところに
+     「田鶴浜店　5人」の見出しの帯を入れます
+   ・一覧の上に、店舗の名前の札をならべます。押すと、その店舗の帯まで移ります
+   ・全員が1ページに入るようにします（20人ずつだと、店舗の途中でページが切れるため）
+   ・「役職」の見出しで並べかえたときは、帯は出しません（店舗がまざるため）
+   ------------------------------------------------------------ */
+add_filter( 'edit_ymkrf_staff_per_page', function () { return 300; } );
+
+add_action( 'admin_footer-edit.php', function () {
+	global $typenow;
+	if ( $typenow !== 'ymkrf_staff' ) return;
+	$by = isset( $_GET['orderby'] ) ? sanitize_key( wp_unslash( $_GET['orderby'] ) ) : '';
+	if ( $by !== '' && $by !== 'ymkrf_sshop' ) return;
+	?>
+	<style>
+	#the-list tr.ymkrf-sgrp td{padding:0!important;border:0!important;background:none!important}
+	.ymkrf-sgrp__bar{display:flex;align-items:baseline;gap:10px;margin:18px 0 0;padding:9px 14px;
+	  background:#fff4ef;border-left:5px solid #fe3301;border-radius:6px 6px 0 0;scroll-margin-top:60px}
+	#the-list tr.ymkrf-sgrp:first-child .ymkrf-sgrp__bar{margin-top:0}
+	.ymkrf-sgrp__name{font-size:15px;font-weight:700;color:#1d2327}
+	.ymkrf-sgrp__cnt{font-size:12px;color:#8c3a1f;font-weight:700}
+	/* 帯で店舗がわかるので、「所属店舗」の列はうすく */
+	.wp-list-table .column-ymkrf_sshop{color:#a7aaad}
+	.ymkrf-snav{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 4px}
+	.ymkrf-snav a{display:inline-flex;align-items:baseline;gap:4px;padding:4px 12px;border:1px solid #dcdcde;border-radius:999px;
+	  background:#fff;text-decoration:none;color:#1d2327;font-weight:600;font-size:13px}
+	.ymkrf-snav a small{color:#8c8f94;font-weight:400;font-size:11px}
+	.ymkrf-snav a:hover{border-color:#fe3301;color:#c92800}
+	</style>
+	<script>
+	jQuery(function ($) {
+		var $rows = $('#the-list > tr').not('.no-items');
+		if (!$rows.length) return;
+		var cols = $('.wp-list-table thead tr').first().children(':visible').length || 5;
+		var groups = [], cur = null;
+		$rows.each(function () {
+			var $s = $(this).find('.ymkrf-sshop').first();
+			var slug = $s.data('slug') || '_none', name = $s.data('name') || '所属なし';
+			if (!cur || cur.slug !== slug) { cur = { slug: String(slug), name: String(name), first: $(this), n: 0 }; groups.push(cur); }
+			cur.n++;
+		});
+		if (groups.length < 2) return;
+		var $nav = $('<div class="ymkrf-snav" aria-label="店舗へ移る"></div>');
+		groups.forEach(function (g) {
+			var id = 'ymkrf-sg-' + g.slug;
+			g.first.before('<tr class="ymkrf-sgrp"><td colspan="' + cols + '"><div class="ymkrf-sgrp__bar" id="' + id + '">'
+				+ '<span class="ymkrf-sgrp__name"></span><span class="ymkrf-sgrp__cnt">' + g.n + '人</span></div></td></tr>');
+			$('#' + id + ' .ymkrf-sgrp__name').text(g.name);
+			$nav.append($('<a>', { href: '#' + id }).text(g.name).append($('<small>').text(g.n)));
+		});
+		$('.wp-list-table').first().before($nav);
+	});
+	</script>
+	<?php
+} );
+

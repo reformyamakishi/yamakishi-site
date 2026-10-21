@@ -369,10 +369,18 @@ if ( $csets || ! empty( $d['handles'] ) ) :
         <?php echo esc_html( $cs['label'] ); ?>（全<?php echo count( $cs['rows'] ); ?>色）
         <?php if ( $cs['note'] ) : ?><small class="p-prd__note"><?php echo esc_html( $cs['note'] ); ?></small><?php endif; ?>
       </p>
-      <div class="p-prd__colors">
+      <?php
+      /* トイレの色は「便座・便器の写真」なので、切りとらずに全体を見せます
+         （2026/10/21 ユーザー指摘「アメージュZの便座カラーの写真が見切れている」）。
+         ほかの分類は色の見本（模様の切れはし）なので、これまでどおり枠いっぱいです */
+      $ymkrf_sw_whole = $cat && $cat->slug === 'toilet';
+      ?>
+      <div class="p-prd__colors<?php echo $ymkrf_sw_whole ? ' p-prd__colors--whole' : '';
+        /* 登録画面でえらんだ「写真の大きさ」（大・中・小。2026/10/21） */
+        echo ! empty( $cs['size'] ) && in_array( $cs['size'], array( 'lg', 'md', 'sm' ), true ) ? ' p-prd__colors--' . $cs['size'] : ''; ?>">
         <?php foreach ( $cs['rows'] as $r ) : ?>
           <figure>
-            <div class="p-prd__swatch"><?php echo ymkrf_img( $r['img'], 'medium',
+            <div class="p-prd__swatch<?php echo $ymkrf_sw_whole ? ' is-whole' : ''; ?>"><?php echo ymkrf_img( $r['img'], 'medium',
               ymkrf_alt( $altb, $cs['label'] . ' ' . $r['name'] ) ); ?></div>
             <figcaption><?php echo esc_html( $r['name'] ); ?></figcaption>
           </figure>

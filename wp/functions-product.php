@@ -924,6 +924,10 @@ function ymkrf_product_repeaters() {
 			   ページでは1枚 よこ300〜350px ほどなので、これで足ります */
 			'size'  => '写真は 400×300px 以上（よこ4：たて3）',
 			'note'  => '標準で付いてくる設備を並べます。',
+			/* トイレは「文字だけの一覧」を使うので、写真の標準仕様は出しません。
+			   中身が入っている商品では、消えないように出します
+			   （2026/10/21 ユーザー指示「登録ぺージトイレの標準仕様 不要かな。とりあえずけしておいて」「空のやつね」） */
+			'not'   => array( 'toilet' ),
 			/* 欄が4つになってもカードで横にならべます */
 			'card'  => 1,
 			'cols'  => array(
@@ -943,7 +947,8 @@ function ymkrf_product_repeaters() {
 			     トイレも文字だけじゃなく、同じ形式にします」）。
 			   すでに文字で入れてある商品では、消えないように引きつづき出します
 			   （下の add_meta_boxes のところで見ています）。 */
-			'not'   => array( 'kitchen', 'bathroom', 'toilet', 'lavatory' ),
+			/* トイレは、こちら（文字だけ）を使います（2026/10/21 ユーザー「トイレは基本、文字だけの一覧です」） */
+			'not'   => array( 'kitchen', 'bathroom', 'lavatory' ),
 			'note'  => '給湯器・エコキュートのように、写真ではなく機能名を並べる商品で使います。'
 			         . '「分類」に 快適機能 などを入れ、「機能」に1行ずつ書いてください。'
 			         . '上の「標準仕様」に写真を入れている商品は、こちらは空のままでOKです。',
@@ -1088,7 +1093,8 @@ add_action( 'add_meta_boxes', function () {
 		   ただし、もう中身が入っている商品では、消えないように出します */
 		if ( ! empty( $r['not'] ) && in_array( $cat_now, (array) $r['not'], true ) ) {
 			$ymkrf_have = get_post_meta( get_the_ID(), $key, true );
-			if ( ! ( is_array( $ymkrf_have ) && $ymkrf_have ) ) continue;
+			/* 空の行しかないときは「中身なし」とみなします（2026/10/21） */
+			if ( ! ymkrf_product_meta_filled( $ymkrf_have ) ) continue;
 		}
 
 		/* 内装・改装では、Before/After だけを出します
@@ -1195,6 +1201,50 @@ function ymkrf_product_fhide_toggle( $post_id, $short ) {
 	);
 }
 
+/**
+ * カラーの枠の言葉を、分類に合わせます
+ * （2026/10/21 ユーザー指摘「カラーバリエーション追加してみたけど、プレイスホルダーのテキストが入れの内容と合っていない」
+ *   → トイレで「＋」を押すと「天板カラー」「ワークトップの色見本です」「例：シャインベージュ」などキッチンの言葉が出ていた）
+ * キッチンは、これまでどおり（扉カラー・天板カラー・シンクカラー）。
+ */
+function ymkrf_color_words( $cat ) {
+	$ex = array(
+		'toilet'   => array( 'head' => '便座カラー', 'name' => 'ピュアホワイト', 'size' => '写真は 600×450px くらい（よこ4：たて3）' ),
+		'bathroom' => array( 'head' => '浴槽カラー', 'name' => 'ホワイト',       'size' => '色見本は 600×400px くらい（よこ3：たて2）' ),
+		'lavatory' => array( 'head' => 'ボウルカラー', 'name' => 'ホワイト',     'size' => '色見本は 600×400px くらい（よこ3：たて2）' ),
+	);
+	return isset( $ex[ $cat ] ) ? $ex[ $cat ]
+		: array( 'head' => 'パネルカラー', 'name' => 'ホワイト', 'size' => '色見本は 600×400px くらい（よこ3：たて2）' );
+}
+/** 見出しを空のままにしたとき、ページに出る見出し（ymkrf_colorsets と同じ決まり） */
+function ymkrf_color_fallback( $short, $cat ) {
+	if ( $cat === 'kitchen' ) {
+		$k = array( 'colors' => '扉カラー', 'tops' => '天板カラー', 'sinks' => 'シンクカラー' );
+		return isset( $k[ $short ] ) ? $k[ $short ] : 'カラー';
+	}
+	if ( $short === 'colors' ) return $cat === 'toilet' ? '便器カラー' : '扉カラー';
+	return 'カラー';
+}
+
+/**
+ * カラーの枠ごとの「写真の大きさ」（ページで、パソコンのとき）
+ * （2026/10/21 ユーザー指示「ここ、大きさをえらべるようにしてほしい
+ *   大：先ほどの3つのトイレ位／中：いま修正してもらったサイズ／小：中より一回り小さいサイズ」）
+ * 保存先は _ymkrf_csize_<枠>（lg／md／sm）。空なら「おまかせ」（これまでどおりの自動）。
+ */
+function ymkrf_csize_choices() {
+	return array( '' => 'おまかせ', 'lg' => '大（よこ3つ）', 'md' => '中（よこ4つ）', 'sm' => '小（よこ5つ）' );
+}
+function ymkrf_product_csize_select( $post_id, $short ) {
+	$now = (string) get_post_meta( $post_id, '_ymkrf_csize_' . $short, true );
+	$out = '<label class="ymkrf-csize" title="商品ページ（パソコン）での写真の大きさ。スマホでは 大・中は よこ2つ、小は よこ3つ">'
+	     . '<span>写真の大きさ</span><select name="ymkrf_csize[' . esc_attr( $short ) . ']">';
+	foreach ( ymkrf_csize_choices() as $v => $l ) {
+		$out .= '<option value="' . esc_attr( $v ) . '"' . selected( $now, $v, false ) . '>' . esc_html( $l ) . '</option>';
+	}
+	return $out . '</select></label>';
+}
+
 function ymkrf_product_cnote_default() {
 	return '※下記カラー以外選択の場合はオプションとなります';
 }
@@ -1220,6 +1270,30 @@ function ymkrf_product_box_colors( $post ) {
 		|| ( isset( $_GET['ymkrf_product_cat'] ) && sanitize_title( wp_unslash( $_GET['ymkrf_product_cat'] ) ) === 'kitchen' );
 	if ( $is_kitchen ) $open_num = 3;
 
+	/* トイレは、中身か見出しが入っている枠だけを出します（取っ手もふくめて）。
+	   どれも空のときだけ、空の枠を1つ残します。足すときは「＋」で
+	   （2026/10/21 ユーザー指示「トイレの登録ぺージですが、天板カラー、シンクカラー、パネルカラー、
+	     取っ手などの空欄はデフォルトでださなくてOK。必要であれば自分で追加しますので
+	     1つだけからのものを残しておいて」） */
+	$cat_now2  = function_exists( 'ymkrf_product_current_cat' ) ? ymkrf_product_current_cat( $post->ID ) : '';
+	if ( $is_kitchen ) $cat_now2 = 'kitchen';
+	$cw        = ymkrf_color_words( $cat_now2 );
+	$is_toilet = $cat_now2 === 'toilet' || has_term( 'toilet', 'ymkrf_product_cat', $post )
+		|| ( isset( $_GET['ymkrf_product_cat'] ) && sanitize_title( wp_unslash( $_GET['ymkrf_product_cat'] ) ) === 'toilet' );
+	$filled = function ( $key ) use ( $post ) {
+		$short = substr( $key, 7 );
+		if ( trim( (string) get_post_meta( $post->ID, '_ymkrf_lbl_' . $short, true ) ) !== '' ) return true;
+		$rows = get_post_meta( $post->ID, $key, true );
+		return is_array( $rows ) && ymkrf_product_meta_filled( $rows );
+	};
+	$toilet_any = false;
+	if ( $is_toilet ) {
+		foreach ( $reps as $k => $df ) {
+			if ( ( ! empty( $df['color'] ) || ! empty( $df['incolor'] ) ) && $filled( $k ) ) { $toilet_any = true; break; }
+		}
+	}
+	$toilet_spare = false;   /* 空の枠を1つ出したかどうか */
+
 	foreach ( $reps as $key => $def ) {
 
 		if ( empty( $def['color'] ) && empty( $def['incolor'] ) ) continue;
@@ -1238,6 +1312,10 @@ function ymkrf_product_box_colors( $post ) {
 		/* はじめの4つはいつも出します。5つ目からは、
 		   中身か見出しが入っているものだけ出します（あとは「＋」で出てきます） */
 		$open = ( $no <= $open_num || $rows || $lbl !== '' );
+		if ( $is_toilet ) {
+			$open = $filled( $key );
+			if ( ! $open && ! $toilet_any && ! $toilet_spare ) { $open = true; $toilet_spare = true; }
+		}
 
 		printf(
 			'<div class="ymkrf-cframe%s" data-key="%s"%s>',
@@ -1253,14 +1331,26 @@ function ymkrf_product_box_colors( $post ) {
 		);
 
 		echo '<div class="ymkrf-cframe__head">';
-		$ph = ! empty( $def['spare'] ) ? '見出しを入れてください（例：パネルカラー）' : $def['label'];
+		/* キッチン以外は、分類に合った言葉にします（2026/10/21） */
+		if ( $cat_now2 === 'kitchen' ) {
+			$ph   = ! empty( $def['spare'] ) ? '見出しを入れてください（例：パネルカラー）' : $def['label'];
+			$size = '色見本は 600×400px くらい（よこ3：たて2）';
+		} else {
+			$ph   = '見出しを入れてください（例：' . $cw['head'] . '）';
+			$size = $cw['size'];
+		}
 		printf(
 			'<span class="ymkrf-hlbl"><input type="text" name="ymkrf_lbl[%s]" value="%s" placeholder="%s"></span>',
 			esc_attr( $short ), esc_attr( $lbl ), esc_attr( $ph )
 		);
+		/* キッチン以外は「空のままなら…」を出しません（2026/10/21 ユーザー指示
+		   「。切りとらずに全体が出ます。空のままなら「便器カラー」と出ます のテキスト削除」） */
 		echo '<span class="ymkrf-note" style="display:inline">'
-		   . '色見本は 600×400px くらい（よこ3：たて2）。'
-		   . '空のままなら「' . esc_html( $def['label'] ) . '」と出ます</span>';
+		   . esc_html( $size )
+		   . ( $cat_now2 === 'kitchen'
+		       ? '。空のままなら「' . esc_html( ymkrf_color_fallback( $short, $cat_now2 ) ) . '」と出ます' : '' )
+		   . '</span>';
+		echo ymkrf_product_csize_select( $post->ID, $short );   /* 写真の大きさ（2026/10/21） */
 		echo ymkrf_product_fhide_toggle( $post->ID, $short );   /* 枠ごと非表示（2026/10/16） */
 		echo '<button type="button" class="ymkrf-cframe__x" title="この枠を消す（中身も消えます）">×</button>';
 		echo '</div>';
@@ -1273,10 +1363,15 @@ function ymkrf_product_box_colors( $post ) {
 
 	/* 取っ手（2026/09/18 ユーザー指示「カラーの中にハンドル取手も入れて」） */
 	foreach ( $after as $key => $def ) {
-		echo '<div class="ymkrf-cframe" data-key="' . esc_attr( $key ) . '">';
+		/* トイレで取っ手が空なら、はじめは出しません（「＋」で出てきます。2026/10/21） */
+		$open = ! $is_toilet || $filled( $key );
 		printf(
-			'<input type="hidden" class="ymkrf-cframe__del" name="ymkrf_delbox[%s]" value="0">',
-			esc_attr( $key )
+			'<div class="ymkrf-cframe%s" data-key="%s"%s>',
+			$open ? '' : ' is-off', esc_attr( $key ), $open ? '' : ' style="display:none"'
+		);
+		printf(
+			'<input type="hidden" class="ymkrf-cframe__del" name="ymkrf_delbox[%s]" value="%s">',
+			esc_attr( $key ), $open ? '0' : '1'
 		);
 		echo '<div class="ymkrf-cframe__head">';
 		/* 見出しは書きかえられます。空のままなら「取っ手」と出ます
@@ -1327,6 +1422,22 @@ function ymkrf_product_box_colors( $post ) {
         ★隠れた欄は、上の「使わない欄も表示する」で出せます。
           （表示・非表示だけの話で、入っているデータは消えません）
    ============================================================ */
+/**
+ * くり返し欄に「中身」が入っているか（空の行や、非表示などのチェックだけの行は数えません）
+ * （2026/10/21 トイレの登録画面で、空の欄が出てしまっていたため。ユーザー「トイレは基本、文字だけの一覧です」）
+ */
+if ( ! function_exists( 'ymkrf_product_meta_filled' ) ) :
+function ymkrf_product_meta_filled( $v ) {
+	if ( ! is_array( $v ) ) return trim( (string) $v ) !== '';
+	foreach ( $v as $k => $x ) {
+		if ( in_array( (string) $k, array( 'hide', 'ghide', 'whole' ), true ) ) continue;
+		if ( is_array( $x ) ) { if ( ymkrf_product_meta_filled( $x ) ) return true; continue; }
+		if ( is_scalar( $x ) && trim( (string) $x ) !== '' && (string) $x !== '0' ) return true;
+	}
+	return false;
+}
+endif;
+
 if ( ! function_exists( 'ymkrf_product_usedmap' ) ) :
 function ymkrf_product_usedmap() {
 
@@ -1360,7 +1471,7 @@ function ymkrf_product_usedmap() {
 		foreach ( $keys as $k ) {
 			foreach ( $ids as $pid ) {
 				$v = get_post_meta( $pid, $k, true );
-				if ( is_array( $v ) && $v ) { $use[] = $k; break; }
+				if ( ymkrf_product_meta_filled( $v ) ) { $use[] = $k; break; }
 			}
 		}
 		$map[ (string) $t->term_id ] = $use;
@@ -1381,7 +1492,7 @@ add_action( 'admin_footer', function () {
 	$has = array();
 	foreach ( array_keys( ymkrf_product_repeaters() ) as $k ) {
 		$v = $post_id ? get_post_meta( $post_id, $k, true ) : '';
-		if ( is_array( $v ) && $v ) $has[] = $k;
+		if ( ymkrf_product_meta_filled( $v ) ) $has[] = $k;
 	}
 	?>
 	<script>
@@ -1714,6 +1825,17 @@ function ymkrf_product_box_basic( $post ) {
 function ymkrf_product_box_repeater( $post, $key ) {
 	$reps = ymkrf_product_repeaters();
 	$def  = $reps[ $key ];
+	/* カラーの枠は、キッチン以外では、キッチンの言葉（ワークトップ・シャインベージュ…）を出しません（2026/10/21） */
+	if ( ! empty( $def['color'] ) && function_exists( 'ymkrf_product_current_cat' ) ) {
+		$ymkrf_c = ymkrf_product_current_cat( $post->ID );
+		if ( $ymkrf_c !== 'kitchen' ) {
+			$ymkrf_w = ymkrf_color_words( $ymkrf_c );
+			$def['note'] = $ymkrf_c === 'toilet'
+				? '便座・便器の写真と、色の名前を入れてください。'
+				: '色見本の写真と、色の名前を入れてください。';
+			if ( isset( $def['cols']['name'] ) ) $def['cols']['name'][2] = '例：' . $ymkrf_w['name'];
+		}
+	}
 	$rows = get_post_meta( $post->ID, $key, true );
 	if ( ! is_array( $rows ) ) $rows = array();
 
@@ -1746,11 +1868,20 @@ function ymkrf_product_box_repeater( $post, $key ) {
 	if ( $card )                                            $cls .= ' ymkrf-rep--card';
 	if ( $cols3 > 1 )                                       $cls .= ' ymkrf-rep--card' . $cols3;
 	if ( $kind === 'point' || $kind === 'option' )          $cls .= ' ymkrf-rep--point';
+	if ( $key === '_ymkrf_speclist' )                       $cls .= ' ymkrf-rep--sl';
 
 	echo '<div class="' . esc_attr( $cls ) . '" data-key="' . esc_attr( $key ) . '">';
 	echo '<div class="ymkrf-rep__rows">';
 
 	$list = $rows ? $rows : array();
+	/* 空き枠（slots）は、まだ何も入っていない商品のときだけ出します。
+	   1つでも入っている商品では、入っている分だけ出します（足すときは「＋ オプションを1つ足す」）。
+	   （2026/10/21 ユーザー指摘「空のやつ消そうと思ったが削除できない」→ 消しても空き枠がもどってこないように） */
+	if ( $slots && ymkrf_product_meta_filled( $rows ) ) $slots = 0;
+	/* トイレのおすすめオプションは、空き枠1つだけ（2026/10/21 ユーザー指示
+	   「オススメオプション、トイレだけ1つだけ空でおいておいて。あとの3つはデフォルトで不要」） */
+	if ( $slots && $key === '_ymkrf_options' && function_exists( 'ymkrf_product_current_cat' )
+	     && ymkrf_product_current_cat( $post->ID ) === 'toilet' ) $slots = 1;
 	if ( $slots ) {
 		for ( $ymkrf_i = count( $list ); $ymkrf_i < $slots; $ymkrf_i++ ) $list[ $ymkrf_i ] = array();
 	}
@@ -1776,6 +1907,8 @@ function ymkrf_product_box_repeater( $post, $key ) {
 		echo '<p><button type="button" class="button button-primary ymkrf-rep__add">＋ ポイントを1つ足す</button></p>';
 	} elseif ( $kind === 'option' ) {
 		echo '<p><button type="button" class="button button-primary ymkrf-rep__add">＋ オプションを1つ足す</button></p>';
+	} elseif ( $key === '_ymkrf_speclist' ) {
+		echo '<p><button type="button" class="button button-primary ymkrf-rep__add">＋ 分類を1つ足す</button></p>';
 	} elseif ( ! $card ) {
 		echo '<p><button type="button" class="button ymkrf-rep__add">＋ 行を追加</button></p>';
 	}
@@ -2113,6 +2246,7 @@ function ymkrf_product_hide_toggle( $key, $n, $row ) {
 }
 
 function ymkrf_product_row_html( $key, $cols, $n, $row, $card = false ) {
+	if ( $key === '_ymkrf_speclist' ) { ymkrf_product_row_speclist( $key, $n, (array) $row ); return; }
 	echo '<div class="ymkrf-row">';
 	echo ymkrf_product_row_move();
 	echo '<div class="ymkrf-row__body">';
@@ -2170,6 +2304,249 @@ function ymkrf_product_row_html( $key, $cols, $n, $row, $card = false ) {
 	echo '<button type="button" class="button-link ymkrf-row__del" title="この行を消す">×</button>';
 	echo '</div>';
 }
+
+
+/**
+ * 標準仕様（文字だけの一覧）の1つぶん。商品ページと同じ形で、そのまま入力します
+ * （2026/10/21 ユーザー指示「引き延ばさなくても全部見えるようにして」
+ *   「フロントと近い状態で入力できるようなデザインにして」
+ *   「ぺージでの見え方みたいに入力したらだめ？」）
+ *
+ * ・上：分類（オレンジの字・下線）　例：快適機能
+ * ・下：機能は、ページと同じ ✓つきの丸い札。
+ *     　札の字を押すとその場で直せます／× で消せます／✓ をつかむと並べかえ
+ *     　最後の「＋ 機能を入力して Enter」で1つ足せます（何行か貼りつけると、まとめて足せます）
+ * 保存の形（ttl／body＝1行に1つ）はこれまでと同じです。札の中身を、かくれた欄（body）に写して送ります。
+ */
+function ymkrf_product_row_speclist( $key, $n, $row ) {
+	$ttl  = isset( $row['ttl'] ) ? (string) $row['ttl'] : '';
+	$body = isset( $row['body'] ) ? (string) $row['body'] : '';
+	$name = function ( $k ) use ( $key, $n ) { return sprintf( '%s[%s][%s]', $key, $n, $k ); };
+	$items = array();
+	foreach ( preg_split( '/\r\n|\r|\n/', $body ) as $line ) {
+		$line = trim( (string) preg_replace( '/^[\s・･\-–—]+/u', '', trim( $line ) ) );
+		if ( $line !== '' ) $items[] = $line;
+	}
+	?>
+	<div class="ymkrf-row ymkrf-sl">
+		<?php echo ymkrf_product_row_move(); ?>
+		<?php if ( in_array( $key, ymkrf_hideable_keys(), true ) ) echo ymkrf_product_hide_toggle( $key, $n, $row ); /* phpcs:ignore */ ?>
+		<button type="button" class="button-link ymkrf-row__del" title="この分類を消す">×</button>
+		<input type="text" class="ymkrf-sl__ttl" name="<?php echo esc_attr( $name( 'ttl' ) ); ?>"
+		       value="<?php echo esc_attr( $ttl ); ?>" placeholder="分類（例：快適機能）" aria-label="分類">
+		<textarea class="ymkrf-sl__body" name="<?php echo esc_attr( $name( 'body' ) ); ?>" hidden
+		          aria-hidden="true"><?php echo esc_textarea( implode( "\n", $items ) ); ?></textarea>
+		<ul class="ymkrf-sl__chips">
+			<?php foreach ( $items as $it ) : ?>
+				<li class="ymkrf-sl__chip"><span class="ymkrf-sl__grip" title="つかんで並べかえ">✓</span><span class="ymkrf-sl__t" contenteditable="plaintext-only" spellcheck="false"><?php echo esc_html( $it ); ?></span><button type="button" class="ymkrf-sl__x" title="この機能を消す">×</button></li>
+			<?php endforeach; ?>
+			<li class="ymkrf-sl__new"><input type="text" class="ymkrf-sl__in" placeholder="＋ 機能を入力して Enter" aria-label="機能を足す"></li>
+		</ul>
+	</div>
+	<?php
+}
+
+/* 「非表示」と「×」を小さなアイコンにする見た目（2026/10/21 お試し） */
+add_action( 'admin_footer', function () {
+	$s = get_current_screen();
+	if ( ! $s || $s->post_type !== 'ymkrf_product' || $s->base !== 'post' ) return;
+	?>
+	<style id="ymkrf-icons">
+	/* ===== 「非表示」と「×」を、小さなアイコンに（2026/10/21 ユーザー「もっと格好よくシンプルで邪魔にならない方法ない？」→ 試してみる）
+	   ・ふだんは出さず、カード（枠）にマウスをのせたときだけ出します
+	   ・目のマーク＝ページに出さない（押すと切りかわる）／ごみ箱＝消す
+	   ・非表示にしたものは、目のマークがオレンジのまま出たまま＋「ページに出しません」
+	   もとにもどすときは、この <style id="ymkrf-icons"> を消せば、前の「☐ 非表示 ×」にもどります ===== */
+	:root{--ymkrf-eye:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E");--ymkrf-off:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4.1M6.6 6.6C3.7 8.4 2 12 2 12s3.6 7 10 7a9.6 9.6 0 0 0 5.4-1.6M9.9 9.9a3 3 0 0 0 4.2 4.2'/%3E%3C/svg%3E");--ymkrf-trash:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6'/%3E%3C/svg%3E")}
+	/* 丸いアイコンの形（共通） */
+	.ymkrf-hide,.ymkrf-fhide,.ymkrf-ghide,
+	.ymkrf-row__del,.ymkrf-cframe__x,.ymkrf-grp__tools .ymkrf-grp__del{
+	  position:relative;display:inline-grid!important;place-items:center;box-sizing:border-box;
+	  width:28px!important;height:28px!important;min-height:0!important;padding:0!important;margin:0!important;
+	  border:1px solid #e3e3e3!important;border-radius:50%!important;background:#fff!important;
+	  box-shadow:0 1px 3px rgba(0,0,0,.08);font-size:0!important;line-height:0!important;color:transparent!important;
+	  cursor:pointer;transition:opacity .15s,background-color .15s,border-color .15s;text-decoration:none!important;
+	}
+	.ymkrf-hide::before,.ymkrf-fhide::before,.ymkrf-ghide::before,
+	.ymkrf-row__del::before,.ymkrf-cframe__x::before,.ymkrf-grp__tools .ymkrf-grp__del::before{
+	  content:"";width:16px;height:16px;background:#646970;
+	  -webkit-mask:var(--ymkrf-eye) center/contain no-repeat;mask:var(--ymkrf-eye) center/contain no-repeat;
+	}
+	.ymkrf-row__del::before,.ymkrf-cframe__x::before,.ymkrf-grp__tools .ymkrf-grp__del::before{
+	  -webkit-mask-image:var(--ymkrf-trash);mask-image:var(--ymkrf-trash);
+	}
+	.ymkrf-hide:hover,.ymkrf-fhide:hover,.ymkrf-ghide:hover{border-color:#fe3301!important}
+	.ymkrf-hide:hover::before,.ymkrf-fhide:hover::before,.ymkrf-ghide:hover::before{background:#fe3301}
+	.ymkrf-row__del:hover,.ymkrf-cframe__x:hover,.ymkrf-grp__tools .ymkrf-grp__del:hover{border-color:#b32d2e!important;background:#fcf0f1!important}
+	.ymkrf-row__del:hover::before,.ymkrf-cframe__x:hover::before,.ymkrf-grp__tools .ymkrf-grp__del:hover::before{background:#b32d2e}
+	/* チェックは見えなくして、丸ぜんぶを押せるように */
+	.ymkrf-hide input[type=checkbox],.ymkrf-fhide input[type=checkbox],.ymkrf-ghide input[type=checkbox]{
+	  position:absolute!important;inset:0;width:100%!important;height:100%!important;margin:0!important;opacity:0;cursor:pointer;
+	}
+	.ymkrf-hide::after,.ymkrf-fhide::after,.ymkrf-ghide::after{content:none!important}
+	/* 非表示にしたとき：オレンジ＋斜め線の目 */
+	.ymkrf-hide:has(input:checked),.ymkrf-fhide:has(input:checked),.ymkrf-ghide:has(input:checked){
+	  background:#fe3301!important;border-color:#fe3301!important;opacity:1!important;
+	}
+	.ymkrf-hide:has(input:checked)::before,.ymkrf-fhide:has(input:checked)::before,.ymkrf-ghide:has(input:checked)::before{
+	  background:#fff;-webkit-mask-image:var(--ymkrf-off);mask-image:var(--ymkrf-off);
+	}
+
+	/* ふだんは隠して、マウスをのせたときだけ（キーボードで選んだときも） */
+	.ymkrf-row > .ymkrf-hide,.ymkrf-row > .ymkrf-row__del,
+	.ymkrf-cframe__head .ymkrf-fhide,.ymkrf-cframe__head .ymkrf-cframe__x,
+	.ymkrf-grp__tools .ymkrf-ghide,.ymkrf-grp__tools .ymkrf-grp__del,
+	#ymkrf_product_catalog .ymkrf-fhide{opacity:0}
+	.ymkrf-row:hover > .ymkrf-hide,.ymkrf-row:hover > .ymkrf-row__del,
+	.ymkrf-row:focus-within > .ymkrf-hide,.ymkrf-row:focus-within > .ymkrf-row__del,
+	.ymkrf-cframe:hover > .ymkrf-cframe__head .ymkrf-fhide,.ymkrf-cframe:hover > .ymkrf-cframe__head .ymkrf-cframe__x,
+	.ymkrf-grp:hover > .ymkrf-grp__tools .ymkrf-ghide,.ymkrf-grp:hover > .ymkrf-grp__tools .ymkrf-grp__del,
+	#ymkrf_product_catalog:hover .ymkrf-fhide{opacity:1}
+
+	/* 置き場所：カード・ポイント・オプション・標準仕様（文字）は右上に「目・ごみ箱」の順 */
+	.ymkrf-rep--card .ymkrf-row > .ymkrf-row__del,.ymkrf-point > .ymkrf-row__del,.ymkrf-sl > .ymkrf-row__del{
+	  position:absolute!important;top:6px!important;right:6px!important;z-index:4;
+	}
+	.ymkrf-rep--card .ymkrf-row > .ymkrf-hide,.ymkrf-point > .ymkrf-hide,.ymkrf-sl > .ymkrf-hide{
+	  position:absolute!important;top:6px!important;right:38px!important;z-index:4;
+	}
+	.ymkrf-rep--card .ymkrf-row{padding-top:40px!important}
+	.ymkrf-rep--card .ymkrf-row > .ymkrf-row__move{position:absolute!important;top:7px;left:8px;margin:0!important;min-height:26px!important;align-items:center}
+	.ymkrf-cframe__head .ymkrf-cframe__x,.ymkrf-cframe__head .ymkrf-fhide{margin-left:4px!important}
+	.ymkrf-grp__tools{gap:4px!important}
+
+	/* 並べかえの ↑↓ も、マウスをのせたときだけ */
+	.ymkrf-rep--card .ymkrf-row__up,.ymkrf-rep--card .ymkrf-row__dn,
+	.ymkrf-point .ymkrf-row__up,.ymkrf-point .ymkrf-row__dn,.ymkrf-sl .ymkrf-row__up,.ymkrf-sl .ymkrf-row__dn{opacity:0;transition:opacity .15s}
+	.ymkrf-row:hover .ymkrf-row__up,.ymkrf-row:hover .ymkrf-row__dn{opacity:1}
+
+	/* 非表示にした行・枠：しま模様＋うすく＋「ページに出しません」 */
+	.ymkrf-row:has(> .ymkrf-hide input:checked){opacity:1!important}
+	.ymkrf-row:has(> .ymkrf-hide input:checked) > :not(.ymkrf-hide):not(.ymkrf-row__del):not(.ymkrf-row__move){opacity:.35}
+	.ymkrf-row:has(> .ymkrf-hide input:checked)::after,
+	.ymkrf-cframe:has(> .ymkrf-cframe__head .ymkrf-fhide input:checked) > .ymkrf-cframe__head::after,
+	.ymkrf-grp:has(> .ymkrf-grp__tools .ymkrf-ghide input:checked) > .ymkrf-grp__tools::before{
+	  content:"ページに出しません";white-space:nowrap;pointer-events:none;
+	  background:#1d2327;color:#fff;font-size:11px;font-weight:700;line-height:1;padding:5px 10px;border-radius:999px;
+	}
+	.ymkrf-row:has(> .ymkrf-hide input:checked)::after{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:5}
+	.ymkrf-cframe:has(> .ymkrf-cframe__head .ymkrf-fhide input:checked) > .ymkrf-cframe__head::after{order:-1}
+	#ymkrf_product_catalog:has(.ymkrf-cat-hide:checked) .ymkrf-fhide{opacity:1}
+	</style>
+	<?php
+}, 99 );
+
+/* 標準仕様（文字だけの一覧）の見た目と動き（2026/10/21） */
+add_action( 'admin_footer', function () {
+	$s = get_current_screen();
+	if ( ! $s || $s->post_type !== 'ymkrf_product' || $s->base !== 'post' ) return;
+	?>
+	<style>
+	.ymkrf-rep--sl .ymkrf-rep__rows{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
+	@media (max-width:1100px){.ymkrf-rep--sl .ymkrf-rep__rows{grid-template-columns:1fr}}
+	.ymkrf-sl.ymkrf-row{display:block;position:relative;margin:0;background:#fff;border:2px solid #e6e1de;border-radius:14px;padding:34px 18px 18px}
+	.ymkrf-sl .ymkrf-row__del{position:absolute;top:6px;right:10px}
+	.ymkrf-sl > .ymkrf-row__move{position:absolute;top:6px;left:10px}
+	.ymkrf-sl .ymkrf-sl__ttl{display:block;width:auto;min-width:10em;max-width:100%;margin:0 0 12px;padding:2px 2px 4px;
+	  border:0;border-bottom:3px solid #ffd9cc;border-radius:0;background:transparent;box-shadow:none;
+	  font-size:16px;font-weight:900;color:#fe3301;field-sizing:content}
+	.ymkrf-sl .ymkrf-sl__ttl:focus{border-bottom-color:#fe3301;outline:none;box-shadow:none}
+	.ymkrf-sl .ymkrf-sl__ttl::placeholder{color:#f3a58f;font-weight:700}
+	/* 札（ページと同じ見た目） */
+	.ymkrf-sl__chips{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+	.ymkrf-sl__chip{margin:0;display:inline-flex;align-items:center;background:#f4f2f1;border-radius:999px;
+	  padding:5px 6px 5px 12px;font-size:13px;font-weight:700;line-height:1.5;cursor:default}
+	.ymkrf-sl__grip{color:#fe3301;margin-right:5px;font-weight:900;cursor:grab}
+	.ymkrf-sl__t{outline:none;min-width:1em;padding:0 1px;border-radius:3px;cursor:text}
+	.ymkrf-sl__t:focus{background:#fff;box-shadow:0 0 0 2px #fe3301}
+	.ymkrf-sl__x{border:0;background:none;color:#a7aaad;font-size:15px;line-height:1;padding:0 4px;margin-left:2px;cursor:pointer}
+	.ymkrf-sl__x:hover{color:#b32d2e}
+	.ymkrf-sl__chip.ui-sortable-helper{box-shadow:0 4px 12px rgba(0,0,0,.15)}
+	.ymkrf-sl__ph{display:inline-block;width:70px;height:31px;border:2px dashed #fe3301;border-radius:999px;background:#fff6f3;visibility:visible!important}
+	.ymkrf-sl__new{margin:0}
+	.ymkrf-sl .ymkrf-sl__in{width:auto;min-width:13em;field-sizing:content;border:2px dashed #dcdcde;border-radius:999px;
+	  padding:3px 12px;font-size:13px;font-weight:700;background:#fff;box-shadow:none;line-height:1.5;min-height:31px}
+	.ymkrf-sl .ymkrf-sl__in:focus{border-color:#fe3301;border-style:solid;outline:none;box-shadow:none}
+	</style>
+	<script>
+	jQuery(function ($) {
+		function clean(t) { return String(t).replace(/^[\s・･\-–—]+/, '').replace(/\s+$/, ''); }
+		/* 札の中身を、かくれた欄に1行ずつ写します（保存されるのはこちら） */
+		function sync($ul) {
+			var lines = [];
+			$ul.find('.ymkrf-sl__chip .ymkrf-sl__t').each(function () {
+				var t = clean($(this).text()); if (t) lines.push(t);
+			});
+			$ul.closest('.ymkrf-sl').find('.ymkrf-sl__body').val(lines.join('\n'));
+		}
+		function chip(t) {
+			var $li = $('<li class="ymkrf-sl__chip"><span class="ymkrf-sl__grip" title="つかんで並べかえ">✓</span>'
+				+ '<span class="ymkrf-sl__t" contenteditable="plaintext-only" spellcheck="false"></span>'
+				+ '<button type="button" class="ymkrf-sl__x" title="この機能を消す">×</button></li>');
+			$li.find('.ymkrf-sl__t').text(t);
+			return $li;
+		}
+		function addFrom($in, raw) {
+			var $ul = $in.closest('.ymkrf-sl__chips'), $new = $ul.find('.ymkrf-sl__new');
+			String(raw !== undefined ? raw : $in.val()).split(/\r\n|\r|\n/).forEach(function (t) { t = clean(t); if (t) $new.before(chip(t)); });
+			$in.val(''); sync($ul);
+		}
+		/* ✓ をつかんで並べかえ。札の上のどこを押しても、分類のカードごとは動かないようにします */
+		function prep($ul) {
+			if ($ul.data('ymkrfSl')) return;
+			$ul.data('ymkrfSl', 1);
+			if ($.fn.sortable) {
+				$ul.sortable({
+					items: '> .ymkrf-sl__chip', handle: '.ymkrf-sl__grip', tolerance: 'pointer',
+					placeholder: 'ymkrf-sl__ph', update: function () { sync($ul); }
+				});
+			}
+			$ul.on('mousedown', function (e) { e.stopPropagation(); });
+		}
+		function init() { $('.ymkrf-rep--sl .ymkrf-sl__chips').each(function () { prep($(this)); }); }
+
+		/* 足す：Enter（日本語の変換中の Enter は数えません）・貼りつけ・欄から出たとき */
+		$(document).on('keydown', '.ymkrf-sl__in', function (e) {
+			var ime = (e.originalEvent && e.originalEvent.isComposing) || e.keyCode === 229;
+			if (e.key === 'Enter' && !ime) { e.preventDefault(); addFrom($(this)); }
+			if (e.key === 'Backspace' && this.value === '') {
+				var $last = $(this).closest('.ymkrf-sl__chips').find('.ymkrf-sl__chip').last();
+				if ($last.length) { e.preventDefault(); $last.find('.ymkrf-sl__t').trigger('focus'); }
+			}
+		});
+		/* 何行かまとめて貼りつけたら、1行ずつ札にします（1行の欄は改行を消してしまうので、貼る前に読みます） */
+		$(document).on('paste', '.ymkrf-sl__in', function (e) {
+			var cd = e.originalEvent && e.originalEvent.clipboardData, txt = cd ? cd.getData('text') : '';
+			if (!/\r|\n/.test(txt)) return;
+			e.preventDefault();
+			var $i = $(this); addFrom($i, $i.val() + '\n' + txt);
+		});
+		$(document).on('blur', '.ymkrf-sl__in', function () { if (clean(this.value)) addFrom($(this)); });
+
+		/* 直す：札の字を押してそのまま。Enter で確定、空にすると消えます */
+		$(document).on('keydown', '.ymkrf-sl__t', function (e) {
+			var ime = (e.originalEvent && e.originalEvent.isComposing) || e.keyCode === 229;
+			if (e.key === 'Enter' && !ime) {
+				e.preventDefault(); $(this).closest('.ymkrf-sl__chips').find('.ymkrf-sl__in').trigger('focus');
+			}
+		});
+		$(document).on('input', '.ymkrf-sl__t', function () { sync($(this).closest('.ymkrf-sl__chips')); });
+		$(document).on('blur', '.ymkrf-sl__t', function () {
+			var $ul = $(this).closest('.ymkrf-sl__chips');
+			if (!clean($(this).text())) $(this).closest('.ymkrf-sl__chip').remove();
+			sync($ul);
+		});
+		/* 消す */
+		$(document).on('click', '.ymkrf-sl__x', function () {
+			var $ul = $(this).closest('.ymkrf-sl__chips'); $(this).closest('.ymkrf-sl__chip').remove(); sync($ul);
+		});
+		/* 分類を足したときも使えるように */
+		$(document).on('click', '.ymkrf-rep--sl .ymkrf-rep__add', function () { window.setTimeout(init, 40); });
+		init();
+	});
+	</script>
+	<?php
+} );
 
 
 /* ============================================================
@@ -2234,6 +2611,17 @@ add_action( 'save_post_ymkrf_product', function ( $post_id ) {
 			if ( $k === '' ) continue;
 			if ( (string) $v === '1' ) update_post_meta( $post_id, '_ymkrf_fhide_' . $k, '1' );
 			else                       delete_post_meta( $post_id, '_ymkrf_fhide_' . $k );
+		}
+	}
+
+	/* カラーの枠ごとの「写真の大きさ」（2026/10/21） */
+	if ( isset( $_POST['ymkrf_csize'] ) && is_array( $_POST['ymkrf_csize'] ) ) {
+		foreach ( wp_unslash( $_POST['ymkrf_csize'] ) as $k => $v ) {
+			$k = preg_replace( '/[^a-z0-9_]/', '', (string) $k );
+			if ( $k === '' ) continue;
+			$v = (string) $v;
+			if ( in_array( $v, array( 'lg', 'md', 'sm' ), true ) ) update_post_meta( $post_id, '_ymkrf_csize_' . $k, $v );
+			else                                                  delete_post_meta( $post_id, '_ymkrf_csize_' . $k );
 		}
 	}
 
@@ -4782,6 +5170,8 @@ function ymkrf_product_admin_assets() {
 .ymkrf-cnote input{flex:1;min-width:240px;font-size:13px;padding:3px 8px}
 .ymkrf-cnote input::placeholder{color:#9aa0a6;opacity:1}
 .ymkrf-cframe__name{font-size:15px;font-weight:700;color:#1d2327}
+.ymkrf-csize{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:#50575e;margin-left:auto}
+.ymkrf-csize select{min-height:28px;font-size:12.5px;padding:0 24px 0 8px}
 .ymkrf-cframe__x{
   margin-left:auto;background:none;border:0;cursor:pointer;
   color:#b32d2e;font-size:12px;font-weight:700;padding:2px 4px;
@@ -5090,6 +5480,21 @@ jQuery(function($){
     e.stopPropagation();
     var $rep = $(this).closest('.ymkrf-rep');
     var $g   = $(this).closest('.ymkrf-grp');
+    /* おすすめオプションは、まとまり（.ymkrf-grp）が無いので、ここで消します
+       （2026/10/21 ユーザー指摘「オススメオプション、空のやつ消そうと思ったが削除できない」）。
+       最後の1つだけは、中身を空にします */
+    if ($(this).closest('.ymkrf-opt').length) {
+      var $o = $(this).closest('.ymkrf-opt');
+      if ($rep.find('.ymkrf-opt').length <= 1) {
+        $o.find('input[type=text],textarea').val('');
+        $o.find('input[type=hidden]').not('[name$="[hide]"]').val('');
+        $o.find('.ymkrf-img__prev').empty();
+        $o.find('input[type=checkbox]').prop('checked', false);
+        return;
+      }
+      $o.remove();
+      return;
+    }
     if ($g.find('.ymkrf-point').length <= 1) {
       var $r = $(this).closest('.ymkrf-point');
       $r.find('input[type=text],textarea').val('');
@@ -5765,6 +6170,11 @@ function ymkrf_colorsets( $d, $post_id = 0 ) {
 	foreach ( $def as $key => $label ) {
 		if ( empty( $d[ $key ] ) ) continue;
 		$custom = get_post_meta( $post_id, '_ymkrf_lbl_' . $key, true );
+		/* 見出しが空のときの言葉は、分類に合わせます（キッチン以外で「天板カラー」などと出さない。2026/10/21） */
+		if ( ! $custom && function_exists( 'ymkrf_color_fallback' ) ) {
+			$ymkrf_pc = function_exists( 'ymkrf_product_current_cat' ) ? ymkrf_product_current_cat( $post_id ) : '';
+			if ( $ymkrf_pc !== '' ) $label = ymkrf_color_fallback( $key, $ymkrf_pc );
+		}
 		$name   = $custom ? $custom : $label;
 		if ( ! $name ) $name = 'カラー';
 		/* 見出しのうしろの「（全4色）」はテンプレート側が自動で付けます。
@@ -5786,6 +6196,7 @@ function ymkrf_colorsets( $d, $post_id = 0 ) {
 			'label' => $name,
 			'rows'  => $d[ $key ],
 			'note'  => $cnote,
+			'size'  => (string) get_post_meta( $post_id, '_ymkrf_csize_' . $key, true ),   /* lg／md／sm／空（2026/10/21） */
 		);
 	}
 	return $out;
@@ -6581,3 +6992,27 @@ function ymkrf_works_for_product( $product_id, $n = 3 ) {
 	return $out;
 }
 endif;
+
+
+/* ------------------------------------------------------------
+   1回だけ：アメージュZ 高機能モデルのURLを変えます
+   /products/toilet/toilet-amage-z-premium/ → /products/toilet/toilet-amage-z-high/
+   （2026/10/21 ユーザー指示「プレミアムはちがうような。ハイスペックな機能がある」→「toilet-amage-z-highにするわ」）
+   ・WordPress が前のURLを「_wp_old_slug」に覚えるので、前のURLで来ても新しいURLへ自動で移ります。
+   ・終わったら、オプション ymkrf_slug_amagez_high_v1 に結果を残します。
+   ------------------------------------------------------------ */
+add_action( 'init', function () {
+	if ( get_option( 'ymkrf_slug_amagez_high_v1' ) ) return;
+	$old = get_posts( array(
+		'post_type' => 'ymkrf_product', 'name' => 'toilet-amage-z-premium',
+		'post_status' => 'any', 'posts_per_page' => 1,
+	) );
+	$taken = get_posts( array(
+		'post_type' => 'ymkrf_product', 'name' => 'toilet-amage-z-high',
+		'post_status' => 'any', 'posts_per_page' => 1, 'fields' => 'ids',
+	) );
+	if ( ! $old ) { update_option( 'ymkrf_slug_amagez_high_v1', 'skip:not-found', false ); return; }
+	if ( $taken ) { update_option( 'ymkrf_slug_amagez_high_v1', 'skip:taken', false ); return; }
+	$r = wp_update_post( array( 'ID' => $old[0]->ID, 'post_name' => 'toilet-amage-z-high' ), true );
+	update_option( 'ymkrf_slug_amagez_high_v1', is_wp_error( $r ) ? 'error:' . $r->get_error_message() : 'done:' . $old[0]->ID, false );
+}, 99 );
