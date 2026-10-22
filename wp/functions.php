@@ -28,6 +28,8 @@ require_once get_stylesheet_directory() . '/inc/functions-product.php';
 require_once get_stylesheet_directory() . '/inc/functions-product-catalog.php';
 /* 商品の写真を差しかえたら、どこにも使われなくなった前の写真をゴミ箱へ（2026/10/19） */
 require_once get_stylesheet_directory() . '/inc/functions-product-mediaclean.php';
+/* 商品ページの管理者メモ（お客様には見えません。2026/10/22） */
+require_once get_stylesheet_directory() . '/inc/functions-product-memo.php';
 /* 商品一覧を、行をつかんで並べかえられるようにします */
 require_once get_stylesheet_directory() . '/inc/functions-product-sort.php';
 require_once get_stylesheet_directory() . '/inc/functions-product-koji.php';

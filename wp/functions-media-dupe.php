@@ -41,20 +41,22 @@ add_action( 'wp_ajax_ymkrf_media_dupe', function () {
 	wp_send_json_success( $out );
 } );
 
-/** 同じタイトルの写真（ゴミ箱はのぞく）。大文字・小文字は区別しません */
+/** 同じタイトルの写真。大文字・小文字は区別しません。
+ *  ゴミ箱の写真もふくめます（「差しかえて更新 → 前の写真がゴミ箱へ → また同じ写真を入れる」ときに知らせるため。2026/10/22） */
 function ymkrf_media_dupe_find( $title ) {
 	global $wpdb;
 	$ids = $wpdb->get_col( $wpdb->prepare(
 		"SELECT ID FROM {$wpdb->posts}
-		  WHERE post_type = 'attachment' AND post_status <> 'trash'
+		  WHERE post_type = 'attachment'
 		    AND LOWER( post_title ) = LOWER( %s )
-		  ORDER BY post_date DESC LIMIT 5",
+		  ORDER BY ( post_status = 'trash' ) ASC, post_date DESC LIMIT 5",
 		$title
 	) );
 	$list = array();
 	foreach ( (array) $ids as $id ) {
 		$id   = (int) $id;
-		$used = function_exists( 'ymkrf_att_in_use_anywhere' ) ? (bool) ymkrf_att_in_use_anywhere( $id ) : true;
+		$trash = ( get_post_status( $id ) === 'trash' );
+		$used  = $trash ? false : ( function_exists( 'ymkrf_att_in_use_anywhere' ) ? (bool) ymkrf_att_in_use_anywhere( $id ) : true );
 		$par  = (int) wp_get_post_parent_id( $id );
 		$list[] = array(
 			'id'    => $id,
@@ -63,6 +65,7 @@ function ymkrf_media_dupe_find( $title ) {
 			'thumb' => (string) wp_get_attachment_image_url( $id, 'thumbnail' ),
 			'date'  => get_the_date( 'Y/n/j', $id ),
 			'used'  => $used,
+			'trash' => $trash,
 			'where' => $par ? get_the_title( $par ) : '',
 			'edit'  => (string) get_edit_post_link( $id, 'raw' ),
 		);
@@ -87,6 +90,20 @@ add_action( 'wp_ajax_ymkrf_media_dupe_trash', function () {
 	update_post_meta( $id, '_ymkrf_retired_at', current_time( 'mysql' ) );
 	update_post_meta( $id, '_ymkrf_retired_dupe', '1' );
 	wp_update_post( array( 'ID' => $id, 'post_status' => 'trash' ) );
+	if ( function_exists( 'ymkrf_media_forget' ) ) ymkrf_media_forget( $id );
+	wp_send_json_success();
+} );
+
+
+/* 2-a. ゴミ箱の写真をもどす（「ゴミ箱の写真をもどして使う」を選んだとき） */
+add_action( 'wp_ajax_ymkrf_media_dupe_restore', function () {
+	check_ajax_referer( 'ymkrf_media_dupe', 'nonce' );
+	$id = isset( $_POST['id'] ) ? (int) $_POST['id'] : 0;
+	if ( ! $id || get_post_type( $id ) !== 'attachment' || get_post_status( $id ) !== 'trash' ) wp_send_json_error( 'notfound' );
+	if ( ! current_user_can( 'edit_post', $id ) ) wp_send_json_error( 'cap' );
+	wp_update_post( array( 'ID' => $id, 'post_status' => 'inherit' ) );
+	delete_post_meta( $id, '_ymkrf_retired_at' );
+	delete_post_meta( $id, '_ymkrf_retired_dupe' );
 	if ( function_exists( 'ymkrf_media_forget' ) ) ymkrf_media_forget( $id );
 	wp_send_json_success();
 } );
@@ -172,19 +189,25 @@ add_action( 'admin_print_footer_scripts', function () {
 		window.ymkrfDupeTrash = window.ymkrfDupeTrash || function (id) {
 			return $.post(CFG.ajax, { action: 'ymkrf_media_dupe_trash', nonce: CFG.nonce, id: id });
 		};
+		window.ymkrfDupeRestore = window.ymkrfDupeRestore || function (id) {
+			return $.post(CFG.ajax, { action: 'ymkrf_media_dupe_restore', nonce: CFG.nonce, id: id });
+		};
 
 		/* 1枚ぶんのえらぶ画面。結果は 'keep'（このまま）／'rename'（file.name を書きかえ済み）／'skip'（やめる） */
-		function ask(file, hits) {
-			var d = $.Deferred(), name = file.name, h = hits[0];
+		function ask(file, all) {
+			var d = $.Deferred(), name = file.name;
+			/* メディアにあるもの（live）を先に。無ければ、ゴミ箱のもの（trash）でききます */
+			var live = all.filter(function (x) { return !x.trash; }), bin = all.filter(function (x) { return x.trash; });
+			var inBin = !live.length, hits = inBin ? bin : live, h = hits[0];
 			var anyUsed = hits.some(function (x) { return x.used; });
 			var $m = $(
 				'<div class="ymkrf-dupe" role="dialog" aria-modal="true"><div class="ymkrf-dupe__box">' +
-				'<p class="ymkrf-dupe__ttl">同じ名前の写真が、もうメディアにあります</p>' +
+				'<p class="ymkrf-dupe__ttl">' + (inBin ? '同じ名前の写真が、ゴミ箱にあります' : '同じ名前の写真が、もうメディアにあります') + '</p>' +
 				'<p class="ymkrf-dupe__lead">入れる前に、どうするかえらんでください。</p>' +
 				'<div class="ymkrf-dupe__cmp">' +
 				  '<div class="ymkrf-dupe__card"><b>これから入れる写真</b><div class="ymkrf-dupe__ph ymkrf-dupe__new"></div>' +
 				    '<div class="ymkrf-dupe__nm">' + esc(name) + '</div></div>' +
-				  '<div class="ymkrf-dupe__card"><b>すでにある写真' + (hits.length > 1 ? '（同じ名前が' + hits.length + '枚）' : '') + '</b>' +
+				  '<div class="ymkrf-dupe__card"><b>' + (inBin ? 'ゴミ箱にある写真' : 'すでにある写真') + (hits.length > 1 ? '（同じ名前が' + hits.length + '枚）' : '') + '</b>' +
 				    '<div class="ymkrf-dupe__ph">' + (h.thumb ? '<img src="' + esc(h.thumb) + '" alt="">' : '') + '</div>' +
 				    '<div class="ymkrf-dupe__nm">' + esc(h.title) + '</div>' +
 				    '<div class="ymkrf-dupe__sub">' + esc(h.date) + ' に追加' + (h.where ? '・' + esc(h.where) : '') + '</div>' +
@@ -192,13 +215,16 @@ add_action( 'admin_print_footer_scripts', function () {
 				  '</div>' +
 				'</div>' +
 				'<div class="ymkrf-dupe__opts">' +
-				  '<button type="button" class="ymkrf-dupe__opt" data-a="keep"><i>＋</i><span>このまま入れる<small>同じ名前の写真が2枚になります</small></span></button>' +
+				  '<button type="button" class="ymkrf-dupe__opt" data-a="keep"><i>＋</i><span>このまま入れる<small>' + (inBin ? 'ゴミ箱の写真はそのまま、新しい写真を入れます' : '同じ名前の写真が2枚になります') + '</small></span></button>' +
 				  '<button type="button" class="ymkrf-dupe__opt" data-a="ren"><i>✎</i><span>名前を変えて入れる<small>下の欄で名前を書きかえてください</small></span></button>' +
 				  '<div class="ymkrf-dupe__ren"><input type="text" class="regular-text" aria-label="新しい名前"><span>' + esc(ext(name)) + '</span>' +
 				    '<button type="button" class="button button-primary" data-a="ren-ok">この名前で入れる</button></div>' +
-				  '<button type="button" class="ymkrf-dupe__opt" data-a="del"' + (anyUsed ? ' disabled' : '') + '><i>🗑</i><span>前の写真をゴミ箱に移してから入れる' +
-				    '<small>' + (anyUsed ? 'サイトのページで使われているので、消せません（消すとページの写真が消えるため）'
-				                         : 'ゴミ箱に移した写真は「商品 ＞ 差しかえた写真」からもどせます') + '</small></span></button>' +
+				  (inBin
+				    ? '<button type="button" class="ymkrf-dupe__opt" data-a="restore"><i>↩</i><span>ゴミ箱の写真をもどして使う' +
+				      '<small>新しい写真は入れずに、前の写真をメディアにもどします（あとは登録画面でえらびなおしてください）</small></span></button>'
+				    : '<button type="button" class="ymkrf-dupe__opt" data-a="del"' + (anyUsed ? ' disabled' : '') + '><i>🗑</i><span>前の写真をゴミ箱に移してから入れる' +
+				      '<small>' + (anyUsed ? 'サイトのページで使われているので、消せません（消すとページの写真が消えるため）'
+				                           : 'ゴミ箱に移した写真は「商品 ＞ 差しかえた写真」からもどせます') + '</small></span></button>') +
 				'</div>' +
 				'<p class="ymkrf-dupe__err" aria-live="polite"></p>' +
 				'<div class="ymkrf-dupe__cancel"><button type="button" data-a="skip">この写真は入れない</button></div>' +
@@ -227,6 +253,17 @@ add_action( 'admin_print_footer_scripts', function () {
 					if (!nb) { $m.find('.ymkrf-dupe__err').text('新しい名前を入れてください。'); return; }
 					file.name = nb + ext(name);
 					return done('rename');
+				}
+				if (a === 'restore') {
+					var $r = $(this).prop('disabled', true);
+					ymkrfDupeRestore(h.id).then(function (res) {
+						if (res && res.success === false) throw 0;
+						done('skip');
+					}).fail(function () {
+						$r.prop('disabled', false);
+						$m.find('.ymkrf-dupe__err').text('もどせませんでした。もう一度ためすか、ほかをえらんでください。');
+					});
+					return;
 				}
 				if (a === 'del') {
 					var $b = $(this).prop('disabled', true);

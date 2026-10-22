@@ -1758,6 +1758,16 @@ function ymkrf_product_box_basic( $post ) {
 		}
 
 		echo $note . '</td></tr>'; /* phpcs:ignore */
+
+		/* 「写真の注意書き」のすぐ下に、管理者メモ（お客様には見えません。2026/10/22） */
+		if ( $key === '_ymkrf_caution' && function_exists( 'ymkrf_product_memo_admin_row' ) ) {
+			echo ymkrf_product_memo_admin_row( $post ); /* phpcs:ignore */
+			$ymkrf_memo_done = true;
+		}
+	}
+	/* 注意書きの欄が無い分類では、表のいちばん下に */
+	if ( empty( $ymkrf_memo_done ) && function_exists( 'ymkrf_product_memo_admin_row' ) ) {
+		echo ymkrf_product_memo_admin_row( $post ); /* phpcs:ignore */
 	}
 	echo '</table>';
 
