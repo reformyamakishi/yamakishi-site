@@ -1430,6 +1430,21 @@ body.term-pack4 .p-cat__cardname{
 .p-colart__body ol{ padding-left:1.4em; }
 .p-colart__body li + li{ margin-top:.5em; }
 .p-colart__body img{ max-width:100%; height:auto; border-radius:var(--radius); }
+/* 編集画面でえらんだ写真の位置（中央・左・右）を、ページでもそのとおりに出します
+   （2026/10/23 ユーザー指摘「コラムに便座の写真を入れたが、フロントで見たらセンターになっていない」） */
+.p-colart__body .aligncenter,
+.p-colart__body .wp-caption.aligncenter{ display:block; margin-left:auto; margin-right:auto; }
+.p-colart__body p:has(> img.aligncenter:only-child),
+.p-colart__body p:has(> a:only-child > img.aligncenter){ text-align:center; }
+.p-colart__body .alignleft{ float:left; margin:.3em 1.4em .8em 0; max-width:50%; }
+.p-colart__body .alignright{ float:right; margin:.3em 0 .8em 1.4em; max-width:50%; }
+.p-colart__body::after{ content:""; display:block; clear:both; }
+.p-colart__body .wp-caption{ max-width:100%; }
+.p-colart__body .wp-caption-text{ margin-top:.4em; font-size:.85em; color:var(--ink-light); text-align:center; }
+@media (max-width:599px){
+  .p-colart__body .alignleft,
+  .p-colart__body .alignright{ float:none; display:block; margin:0 auto; max-width:100%; }
+}
 .p-colart__body a{ color:var(--brand); text-decoration:underline; }
 .p-colart__body table{ width:100%; border-collapse:collapse; font-size:.94em; }
 .p-colart__body th,
