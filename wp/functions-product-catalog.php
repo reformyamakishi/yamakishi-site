@@ -92,6 +92,7 @@ function ymkrf_catalog_box( $post ) {
 						          : '<span style="color:#a7aaad;font-size:12px;font-weight:700">＋ 画像</span>';
 					?></span>
 					<input type="hidden" name="_ymkrf_cat_img" value="<?php echo (int) $img; ?>">
+					<button type="button" class="button-link ymkrf-catimg__all">ほかの写真からえらぶ</button>
 					<button type="button" class="button-link ymkrf-catimg__clear"<?php if ( ! $img ) echo ' style="display:none"'; ?>>画像を外す</button>
 				</span>
 				<?php /* 説明文は消しました（2026/10/14 ユーザー指示） */ ?>
@@ -101,8 +102,14 @@ function ymkrf_catalog_box( $post ) {
 	<script>
 	jQuery(function ($) {
 		var $w = $('.ymkrf-catimg');
-		$w.on('click', '.ymkrf-catimg__prev', function () {
-			var f = wp.media({ title: 'カタログの画像をえらぶ', multiple: false, library: { type: 'image' } });
+		/* 写真をえらぶ小窓は、はじめ「商品 ＞ カタログ」の画像だけを出します
+		   （2026/10/23 ユーザー「カタログが見つけられない」）。下の「ほかの写真からえらぶ」で全部から */
+		var catIds = <?php echo wp_json_encode( function_exists( 'ymkrf_media_catalog_ids' ) ? array_map( 'intval', ymkrf_media_catalog_ids() ) : array() ); ?>;
+		function pick(all) {
+			var lib = { type: 'image' };
+			if (!all && catIds.length) lib.post__in = catIds;
+			var f = wp.media({ title: all ? 'カタログの画像をえらぶ（すべての写真から）' : 'カタログの画像をえらぶ（商品 ＞ カタログ）',
+			                   multiple: false, library: lib });
 			f.on('select', function () {
 				var a = f.state().get('selection').first().toJSON();
 				var u = (a.sizes && a.sizes.medium) ? a.sizes.medium.url : a.url;
@@ -110,8 +117,14 @@ function ymkrf_catalog_box( $post ) {
 				$w.find('.ymkrf-catimg__prev').html('<img src="' + u + '" alt="" style="max-width:100%;max-height:100%">');
 				$w.find('.ymkrf-catimg__clear').show();
 			});
+			/* この窓から新しく入れる画像の保存先は「商品 ＞ カタログ」にします（閉じたら元にもどします） */
+			var was = window.ymkrfDest;
+			if (!all) { f.on('open', function () { window.ymkrfDest = 'catalog'; jQuery('select[name="ymkrf_dest_pick"]').val('catalog'); });
+			            f.on('close', function () { window.ymkrfDest = was; jQuery('select[name="ymkrf_dest_pick"]').val(was || ''); }); }
 			f.open();
-		});
+		}
+		$w.on('click', '.ymkrf-catimg__prev', function () { pick(false); });
+		$w.on('click', '.ymkrf-catimg__all', function () { pick(true); });
 		/* × … URL・ページのメモ・画像を空にします */
 		$('.ymkrf-cat__x').on('click', function () {
 			$('input[name="_ymkrf_cat_url"], input[name="_ymkrf_cat_page"]').val('');

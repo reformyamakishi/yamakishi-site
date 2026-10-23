@@ -42,6 +42,10 @@ add_action( 'all_admin_notices', function () {
 				<option value="">すべてのフォルダ</option>
 				<?php foreach ( $kinds as $key => $k ) : ?>
 					<option value="<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $k['name'] ); ?></option>
+					<?php if ( function_exists( 'ymkrf_media_subkinds' ) ) foreach ( ymkrf_media_subkinds() as $sk => $sd ) :
+						if ( $sd['parent'] !== $key ) continue; ?>
+						<option value="<?php echo esc_attr( $sk ); ?>">　└ <?php echo esc_html( $sd['name'] ); ?></option>
+					<?php endforeach; ?>
 				<?php endforeach; ?>
 			</select>
 		<?php endif; ?>

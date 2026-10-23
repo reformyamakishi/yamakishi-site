@@ -30,13 +30,27 @@ add_action( 'wp_ajax_ymkrf_media_dupe', function () {
 	check_ajax_referer( 'ymkrf_media_dupe', 'nonce' );
 	if ( ! current_user_can( 'upload_files' ) ) wp_send_json_error( 'cap' );
 
-	$names = isset( $_POST['names'] ) ? (array) wp_unslash( $_POST['names'] ) : array();
-	$out   = array();
-	foreach ( array_slice( $names, 0, 100 ) as $name ) {
+	$names  = isset( $_POST['names'] )  ? (array) wp_unslash( $_POST['names'] )  : array();
+	$hashes = isset( $_POST['hashes'] ) ? (array) wp_unslash( $_POST['hashes'] ) : array();
+	$sizes  = isset( $_POST['sizes'] )  ? (array) wp_unslash( $_POST['sizes'] )  : array();
+	$pid    = isset( $_POST['post_id'] ) ? (int) $_POST['post_id'] : 0;
+	$out    = array();
+	foreach ( array_slice( $names, 0, 100 ) as $i => $name ) {
 		$name  = (string) $name;
 		$title = trim( sanitize_text_field( pathinfo( $name, PATHINFO_FILENAME ) ) );
 		if ( $title === '' ) continue;
-		$out[ $name ] = ymkrf_media_dupe_find( $title );
+		$hits = ymkrf_media_dupe_find( $title );
+		/* 中身（写真そのもの）が同じものも探します（名前が変わっていても見つかるように。2026/10/23） */
+		$hash = isset( $hashes[ $i ] ) ? strtolower( preg_replace( '/[^0-9a-f]/i', '', (string) $hashes[ $i ] ) ) : '';
+		$size = isset( $sizes[ $i ] ) ? (int) $sizes[ $i ] : 0;
+		if ( strlen( $hash ) === 40 && $size > 0 ) {
+			$same = ymkrf_media_dupe_find_same( $hash, $size, $pid );
+			$seen = array();
+			foreach ( $same as $h ) $seen[ $h['id'] ] = true;
+			foreach ( $hits as $h ) if ( empty( $seen[ $h['id'] ] ) ) $same[] = $h;
+			$hits = $same;
+		}
+		$out[ $name ] = $hits;
 	}
 	wp_send_json_success( $out );
 } );
@@ -46,21 +60,36 @@ add_action( 'wp_ajax_ymkrf_media_dupe', function () {
 function ymkrf_media_dupe_find( $title ) {
 	global $wpdb;
 	$ids = $wpdb->get_col( $wpdb->prepare(
-		"SELECT ID FROM {$wpdb->posts}
-		  WHERE post_type = 'attachment'
-		    AND LOWER( post_title ) = LOWER( %s )
-		  ORDER BY ( post_status = 'trash' ) ASC, post_date DESC LIMIT 5",
-		$title
+		"SELECT p.ID FROM {$wpdb->posts} p
+		   LEFT JOIN {$wpdb->postmeta} o ON ( o.post_id = p.ID AND o.meta_key = '_ymkrf_orig_name' )
+		  WHERE p.post_type = 'attachment'
+		    AND ( LOWER( p.post_title ) = LOWER( %s ) OR LOWER( o.meta_value ) = LOWER( %s ) )
+		  GROUP BY p.ID
+		  ORDER BY ( p.post_status = 'trash' ) ASC, p.post_date DESC LIMIT 5",
+		$title, $title
 	) );
 	$list = array();
-	foreach ( (array) $ids as $id ) {
-		$id   = (int) $id;
+	foreach ( (array) $ids as $id ) $list[] = ymkrf_media_dupe_item( (int) $id, false );
+	return $list;
+}
+
+/** サイトで使われているか（しらべるのに時間がかかるので、1回のたずねで3枚まで。それより後は「わからない」＝消すときにサーバーでもう一度見ます） */
+function ymkrf_media_dupe_used( $id ) {
+	static $n = 0;
+	if ( ++$n > 3 ) return false;
+	return function_exists( 'ymkrf_att_in_use_anywhere' ) ? (bool) ymkrf_att_in_use_anywhere( $id ) : true;
+}
+
+/** しらべた写真1枚ぶんの情報（$same＝中身がまったく同じ） */
+function ymkrf_media_dupe_item( $id, $same ) {
 		$trash = ( get_post_status( $id ) === 'trash' );
-		$used  = $trash ? false : ( function_exists( 'ymkrf_att_in_use_anywhere' ) ? (bool) ymkrf_att_in_use_anywhere( $id ) : true );
+		$used  = $trash ? false : ymkrf_media_dupe_used( $id );
 		$par  = (int) wp_get_post_parent_id( $id );
-		$list[] = array(
+		return array(
+			'same'  => (bool) $same,
 			'id'    => $id,
 			'title' => get_the_title( $id ),
+			'orig'  => (string) get_post_meta( $id, '_ymkrf_orig_name', true ),   /* 上げたときのファイル名 */
 			'file'  => wp_basename( (string) get_attached_file( $id ) ),
 			'thumb' => (string) wp_get_attachment_image_url( $id, 'thumbnail' ),
 			'date'  => get_the_date( 'Y/n/j', $id ),
@@ -69,9 +98,61 @@ function ymkrf_media_dupe_find( $title ) {
 			'where' => $par ? get_the_title( $par ) : '',
 			'edit'  => (string) get_edit_post_link( $id, 'raw' ),
 		);
-	}
-	return $list;
 }
+
+/**
+ * 中身がまったく同じ写真をさがします（SHA-1 で見くらべます）
+ * 見る範囲：① 同じ記事（商品など）に上げた写真　② ファイルの大きさが同じ写真
+ * WordPress が大きい写真を縮めた「-scaled」でも、もとのファイルで見くらべます。
+ */
+function ymkrf_media_dupe_find_same( $hash, $size, $pid ) {
+	global $wpdb;
+	$ids = array();
+	if ( $pid > 0 ) {
+		$ids = array_merge( $ids, (array) $wpdb->get_col( $wpdb->prepare(
+			"SELECT ID FROM {$wpdb->posts} WHERE post_type = 'attachment' AND post_parent = %d ORDER BY ID DESC LIMIT 300", $pid ) ) );
+	}
+	$ids = array_merge( $ids, (array) $wpdb->get_col( $wpdb->prepare(
+		"SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_wp_attachment_metadata' AND meta_value LIKE %s LIMIT 100",
+		'%' . $wpdb->esc_like( '"filesize";i:' . (int) $size . ';' ) . '%' ) ) );
+	$out = array();
+	foreach ( array_unique( array_map( 'intval', $ids ) ) as $id ) {
+		if ( get_post_type( $id ) !== 'attachment' ) continue;
+		$paths = array_unique( array_filter( array(
+			function_exists( 'wp_get_original_image_path' ) ? (string) wp_get_original_image_path( $id ) : '',
+			(string) get_attached_file( $id ),
+		) ) );
+		foreach ( $paths as $path ) {
+			if ( ! is_file( $path ) || (int) filesize( $path ) !== (int) $size ) continue;
+			if ( strtolower( (string) sha1_file( $path ) ) === $hash ) { $out[] = ymkrf_media_dupe_item( $id, true ); break; }
+		}
+		if ( count( $out ) >= 5 ) break;
+	}
+	/* メディアにあるものを先、ゴミ箱のものをあとに */
+	usort( $out, function ( $a, $b ) { return (int) $a['trash'] - (int) $b['trash']; } );
+	return $out;
+}
+
+
+/* ------------------------------------------------------------
+   1-b. 上げたときのファイル名をおぼえておきます
+   ------------------------------------------------------------
+   商品の登録画面から上げた写真は、ファイル名もタイトルも「toto-purerest-qr」のような
+   商品の名前に置きかわります（functions-media.php）。そのままでは、同じ写真
+   （TCF4714AK.jpg など）をもう一度上げても、名前で見分けられません。
+   そこで、もとのファイル名（拡張子なし）を _ymkrf_orig_name にとっておき、
+   しらべるときに、タイトルといっしょに見ます。
+   （2026/10/23 ユーザー指摘「QRの登録ページで、オプションの写真 TCF4714AK.jpg を連続で登録したが（知らせが出なかった）」）
+   ------------------------------------------------------------ */
+add_action( 'add_attachment', function ( $id ) {
+	if ( empty( $_FILES ) ) return;
+	foreach ( array( 'async-upload', 'file' ) as $k ) {
+		if ( empty( $_FILES[ $k ]['name'] ) ) continue;
+		$orig = trim( sanitize_text_field( pathinfo( (string) $_FILES[ $k ]['name'], PATHINFO_FILENAME ) ) );
+		if ( $orig !== '' ) update_post_meta( $id, '_ymkrf_orig_name', $orig );
+		return;
+	}
+} );
 
 
 /* ============================================================
@@ -171,6 +252,9 @@ add_action( 'admin_print_footer_scripts', function () {
 	.ymkrf-dupe__ren input{flex:1;min-width:0}
 	.ymkrf-dupe__cancel{margin-top:12px;text-align:right}
 	.ymkrf-dupe__cancel button{background:none;border:0;color:#646970;text-decoration:underline;cursor:pointer;font-size:12.5px}
+	.ymkrf-dupe-wait{position:fixed;right:20px;bottom:20px;z-index:200001;background:#1d2327;color:#fff;font-size:13px;
+	  padding:9px 14px;border-radius:999px;box-shadow:0 4px 14px rgba(0,0,0,.2)}
+	body:has(.ymkrf-dupe) .ymkrf-dupe-wait{display:none}
 	.ymkrf-dupe__err{color:#b32d2e;font-weight:600;margin:8px 0 0;min-height:1em}
 	</style>
 	<script id="ymkrf-dupe-js">
@@ -182,8 +266,10 @@ add_action( 'admin_print_footer_scripts', function () {
 		function ext(n)  { var m = String(n).match(/(\.[^.\/\\]+)$/); return m ? m[1] : ''; }
 
 		/* サーバーに「同じタイトルがあるか」をたずねます（試験のときは差しかえられるよう外に出しています） */
-		window.ymkrfDupeCheck = window.ymkrfDupeCheck || function (names) {
-			return $.post(CFG.ajax, { action: 'ymkrf_media_dupe', nonce: CFG.nonce, names: names })
+		window.ymkrfDupeCheck = window.ymkrfDupeCheck || function (names, extra) {
+			extra = extra || {};
+			return $.post(CFG.ajax, { action: 'ymkrf_media_dupe', nonce: CFG.nonce, names: names,
+			                          hashes: extra.hashes || [], sizes: extra.sizes || [], post_id: extra.post_id || 0 })
 				.then(function (r) { return (r && r.success) ? r.data : {}; }, function () { return $.Deferred().resolve({}); });
 		};
 		window.ymkrfDupeTrash = window.ymkrfDupeTrash || function (id) {
@@ -200,22 +286,26 @@ add_action( 'admin_print_footer_scripts', function () {
 			var live = all.filter(function (x) { return !x.trash; }), bin = all.filter(function (x) { return x.trash; });
 			var inBin = !live.length, hits = inBin ? bin : live, h = hits[0];
 			var anyUsed = hits.some(function (x) { return x.used; });
+			var sameBody = hits.some(function (x) { return x.same; });
 			var $m = $(
 				'<div class="ymkrf-dupe" role="dialog" aria-modal="true"><div class="ymkrf-dupe__box">' +
-				'<p class="ymkrf-dupe__ttl">' + (inBin ? '同じ名前の写真が、ゴミ箱にあります' : '同じ名前の写真が、もうメディアにあります') + '</p>' +
+				'<p class="ymkrf-dupe__ttl">' + (sameBody
+				    ? (inBin ? 'まったく同じ写真が、ゴミ箱にあります' : 'まったく同じ写真が、もうメディアにあります')
+				    : (inBin ? '同じ名前の写真が、ゴミ箱にあります' : '同じ名前の写真が、もうメディアにあります')) + '</p>' +
 				'<p class="ymkrf-dupe__lead">入れる前に、どうするかえらんでください。</p>' +
 				'<div class="ymkrf-dupe__cmp">' +
 				  '<div class="ymkrf-dupe__card"><b>これから入れる写真</b><div class="ymkrf-dupe__ph ymkrf-dupe__new"></div>' +
 				    '<div class="ymkrf-dupe__nm">' + esc(name) + '</div></div>' +
-				  '<div class="ymkrf-dupe__card"><b>' + (inBin ? 'ゴミ箱にある写真' : 'すでにある写真') + (hits.length > 1 ? '（同じ名前が' + hits.length + '枚）' : '') + '</b>' +
+				  '<div class="ymkrf-dupe__card"><b>' + (inBin ? 'ゴミ箱にある写真' : 'すでにある写真') + (hits.length > 1 ? '（' + (sameBody ? '同じ写真' : '同じ名前') + 'が' + hits.length + '枚）' : '') + '</b>' +
 				    '<div class="ymkrf-dupe__ph">' + (h.thumb ? '<img src="' + esc(h.thumb) + '" alt="">' : '') + '</div>' +
-				    '<div class="ymkrf-dupe__nm">' + esc(h.title) + '</div>' +
+				    '<div class="ymkrf-dupe__nm">' + esc(h.orig || h.title) + '</div>' +
+				    (h.orig && h.orig !== h.title ? '<div class="ymkrf-dupe__sub">メディアのタイトル：' + esc(h.title) + '</div>' : '') +
 				    '<div class="ymkrf-dupe__sub">' + esc(h.date) + ' に追加' + (h.where ? '・' + esc(h.where) : '') + '</div>' +
 				    (anyUsed ? '<span class="ymkrf-dupe__use">サイトで使われています</span>' : '') +
 				  '</div>' +
 				'</div>' +
 				'<div class="ymkrf-dupe__opts">' +
-				  '<button type="button" class="ymkrf-dupe__opt" data-a="keep"><i>＋</i><span>このまま入れる<small>' + (inBin ? 'ゴミ箱の写真はそのまま、新しい写真を入れます' : '同じ名前の写真が2枚になります') + '</small></span></button>' +
+				  '<button type="button" class="ymkrf-dupe__opt" data-a="keep"><i>＋</i><span>このまま入れる<small>' + (inBin ? 'ゴミ箱の写真はそのまま、新しい写真を入れます' : (sameBody ? '同じ写真が、もう1枚ふえます' : '同じ名前の写真が2枚になります')) + '</small></span></button>' +
 				  '<button type="button" class="ymkrf-dupe__opt" data-a="ren"><i>✎</i><span>名前を変えて入れる<small>下の欄で名前を書きかえてください</small></span></button>' +
 				  '<div class="ymkrf-dupe__ren"><input type="text" class="regular-text" aria-label="新しい名前"><span>' + esc(ext(name)) + '</span>' +
 				    '<button type="button" class="button button-primary" data-a="ren-ok">この名前で入れる</button></div>' +
@@ -280,16 +370,36 @@ add_action( 'admin_print_footer_scripts', function () {
 		}
 
 		/* 何枚か入れたときは、1枚ずつ順番にきいていきます。名前を変えたら、その名前でもう一度しらべます */
-		function walk(files, i, keep) {
+		/* 写真の中身の「指紋」（SHA-1）。名前を変えた同じ写真も見つけるために使います */
+		function fingerprint(f) {
+			var d = $.Deferred();
+			try {
+				var src = f.getNative ? f.getNative() : null;
+				if (!src || !window.crypto || !crypto.subtle || !src.arrayBuffer || src.size > 60 * 1024 * 1024) return d.resolve('').promise();
+				src.arrayBuffer().then(function (buf) { return crypto.subtle.digest('SHA-1', buf); })
+					.then(function (h) {
+						d.resolve(Array.prototype.map.call(new Uint8Array(h), function (b) { return ('0' + b.toString(16)).slice(-2); }).join(''));
+					}, function () { d.resolve(''); });
+			} catch (e) { d.resolve(''); }
+			return d.promise();
+		}
+
+		function walk(files, i, keep, up) {
 			if (i >= files.length) return $.Deferred().resolve(keep).promise();
 			var f = files[i];
-			return ymkrfDupeCheck([f.name]).then(function (map) {
+			var pid = 0;
+			try { pid = (up && up.settings && up.settings.multipart_params && up.settings.multipart_params.post_id) || 0; } catch (e) {}
+			return fingerprint(f).then(function (hash) {
+				/* 「名前を変えて入れる」をえらんだあとは、名前だけで見ます（中身はもちろん同じなので） */
+				var useHash = hash && !f._ymkrfRenamed;
+				return ymkrfDupeCheck([f.name], { hashes: useHash ? [hash] : [], sizes: useHash ? [f.size || 0] : [], post_id: pid });
+			}).then(function (map) {
 				var hits = (map && map[f.name]) || [];
-				if (!hits.length) { keep.push(f); return walk(files, i + 1, keep); }
+				if (!hits.length) { keep.push(f); return walk(files, i + 1, keep, up); }
 				return ask(f, hits).then(function (r) {
-					if (r === 'keep')   { keep.push(f); return walk(files, i + 1, keep); }
-					if (r === 'rename') { return walk(files, i, keep); }   /* 新しい名前でもう一度 */
-					f._ymkrfSkip = true; return walk(files, i + 1, keep);
+					if (r === 'keep')   { keep.push(f); return walk(files, i + 1, keep, up); }
+					if (r === 'rename') { f._ymkrfRenamed = true; return walk(files, i, keep, up); }   /* 新しい名前でもう一度 */
+					f._ymkrfSkip = true; return walk(files, i + 1, keep, up);
 				});
 			});
 		}
@@ -302,7 +412,9 @@ add_action( 'admin_print_footer_scripts', function () {
 				if (files && files._ymkrfChecked) return;          /* しらべ終わって流しなおした分 */
 				var list = (files || []).slice();
 				if (!list.length) return;
-				walk(list, 0, []).then(function (keep) {
+				/* しらべているあいだ、右下に小さく出します（1〜3秒ほど） */
+				var $t = $('<div class="ymkrf-dupe-wait" role="status">同じ写真がないか、しらべています…</div>').appendTo(document.body);
+				walk(list, 0, [], u).always(function () { $t.remove(); }).then(function (keep) {
 					list.forEach(function (f) { if (f._ymkrfSkip) { try { u.removeFile(f); } catch (e) {} } });
 					if (!keep.length) return;
 					keep._ymkrfChecked = true;

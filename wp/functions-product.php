@@ -2465,14 +2465,16 @@ add_action( 'admin_footer', function () {
 	/* 札（ページと同じ見た目） */
 	.ymkrf-sl__chips{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 	.ymkrf-sl__chip{margin:0;display:inline-flex;align-items:center;background:#f4f2f1;border-radius:999px;
-	  padding:5px 6px 5px 12px;font-size:13px;font-weight:700;line-height:1.5;cursor:default}
+	  padding:5px 6px 5px 12px;font-size:13px;font-weight:700;line-height:1.5;cursor:grab;user-select:none;touch-action:none;transition:background .15s}
+	.ymkrf-sl__chip:hover{background:#ffe9e1}
+	.ymkrf-sl__chip.is-drag{position:relative;z-index:5;cursor:grabbing;background:#fff;outline:2px solid #fe3301;box-shadow:0 6px 16px rgba(0,0,0,.18)}
+	body.ymkrf-sl-dragging,body.ymkrf-sl-dragging *{cursor:grabbing!important;user-select:none!important}
 	.ymkrf-sl__grip{color:#fe3301;margin-right:5px;font-weight:900;cursor:grab}
-	.ymkrf-sl__t{outline:none;min-width:1em;padding:0 1px;border-radius:3px;cursor:text}
+	.ymkrf-sl__t{outline:none;min-width:1em;padding:0 1px;border-radius:3px;cursor:grab}
+	.ymkrf-sl__t:focus{cursor:text;user-select:text}
 	.ymkrf-sl__t:focus{background:#fff;box-shadow:0 0 0 2px #fe3301}
 	.ymkrf-sl__x{border:0;background:none;color:#a7aaad;font-size:15px;line-height:1;padding:0 4px;margin-left:2px;cursor:pointer}
 	.ymkrf-sl__x:hover{color:#b32d2e}
-	.ymkrf-sl__chip.ui-sortable-helper{box-shadow:0 4px 12px rgba(0,0,0,.15)}
-	.ymkrf-sl__ph{display:inline-block;width:70px;height:31px;border:2px dashed #fe3301;border-radius:999px;background:#fff6f3;visibility:visible!important}
 	.ymkrf-sl__new{margin:0}
 	.ymkrf-sl .ymkrf-sl__in{width:auto;min-width:13em;field-sizing:content;border:2px dashed #dcdcde;border-radius:999px;
 	  padding:3px 12px;font-size:13px;font-weight:700;background:#fff;box-shadow:none;line-height:1.5;min-height:31px}
@@ -2501,18 +2503,60 @@ add_action( 'admin_footer', function () {
 			String(raw !== undefined ? raw : $in.val()).split(/\r\n|\r|\n/).forEach(function (t) { t = clean(t); if (t) $new.before(chip(t)); });
 			$in.val(''); sync($ul);
 		}
-		/* ✓ をつかんで並べかえ。札の上のどこを押しても、分類のカードごとは動かないようにします */
+		/* 札の上のどこを押しても、分類のカードごとは動かないようにします */
 		function prep($ul) {
 			if ($ul.data('ymkrfSl')) return;
 			$ul.data('ymkrfSl', 1);
-			if ($.fn.sortable) {
-				$ul.sortable({
-					items: '> .ymkrf-sl__chip', handle: '.ymkrf-sl__grip', tolerance: 'pointer',
-					placeholder: 'ymkrf-sl__ph', update: function () { sync($ul); }
-				});
-			}
 			$ul.on('mousedown', function (e) { e.stopPropagation(); });
 		}
+
+		/* 札の並べかえ（2026/10/23 ユーザー「✓の内容、順番換えたいので、スライドして順番換えられるようにして」）
+		   札のどこをつかんでも、すべらせて動かせます。動かさずに字を押したときは、そのまま字を直せます。
+		   （横に並んで折り返す札は、WordPress の並べかえ部品だとうまく入れかわらないので、ここで動かします） */
+		var drag = null;
+		$(document).on('pointerdown', '.ymkrf-sl__chip', function (e) {
+			if (e.button !== 0 || $(e.target).closest('.ymkrf-sl__x, .ymkrf-sl__t:focus').length) return;
+			drag = { li: this, ul: this.parentNode, x: e.clientX, y: e.clientY, on: false, id: e.pointerId };
+		});
+		$(document).on('pointermove', function (e) {
+			if (!drag || e.pointerId !== drag.id) return;
+			var dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+			if (!drag.on) {
+				if (Math.abs(dx) + Math.abs(dy) < 5) return;
+				drag.on = true; drag.li.classList.add('is-drag'); document.body.classList.add('ymkrf-sl-dragging');
+				if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+			}
+			e.preventDefault();
+			drag.li.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
+			/* 指の下の行の、いちばん近い札の前か後ろへ入れます */
+			var best = null, bd = 1e9;
+			$(drag.ul).children('.ymkrf-sl__chip').not(drag.li).each(function () {
+				var r = this.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+				var d = (e.clientY >= r.top - 4 && e.clientY <= r.bottom + 4) ? Math.abs(e.clientX - cx)
+					: 1e5 + Math.abs(e.clientY - cy) * 3 + Math.abs(e.clientX - cx);
+				if (d < bd) { bd = d; best = this; }
+			});
+			if (!best) return;
+			var br = best.getBoundingClientRect(), after = e.clientX > br.left + br.width / 2;
+			if ((after && best.nextSibling === drag.li) || (!after && best.previousSibling === drag.li)) return;
+			var b4 = drag.li.getBoundingClientRect(), t4 = drag.li.style.transform;
+			drag.li.style.transform = '';
+			b4 = drag.li.getBoundingClientRect();
+			drag.ul.insertBefore(drag.li, after ? best.nextSibling : best);
+			/* 入れかえたあとも、札が指の下に残るように */
+			var now = drag.li.getBoundingClientRect();
+			drag.x += now.left - b4.left; drag.y += now.top - b4.top;
+			drag.li.style.transform = 'translate(' + (e.clientX - drag.x) + 'px,' + (e.clientY - drag.y) + 'px)';
+		});
+		$(document).on('pointerup pointercancel', function (e) {
+			if (!drag || e.pointerId !== drag.id) return;
+			var d = drag; drag = null;
+			if (!d.on) return;
+			d.li.classList.remove('is-drag'); d.li.style.transform = ''; document.body.classList.remove('ymkrf-sl-dragging');
+			d.li.setAttribute('data-justdragged', '1');
+			window.setTimeout(function () { d.li.removeAttribute('data-justdragged'); }, 50);
+			sync($(d.ul));
+		});
 		function init() { $('.ymkrf-rep--sl .ymkrf-sl__chips').each(function () { prep($(this)); }); }
 
 		/* 足す：Enter（日本語の変換中の Enter は数えません）・貼りつけ・欄から出たとき */
@@ -2539,6 +2583,17 @@ add_action( 'admin_footer', function () {
 			if (e.key === 'Enter' && !ime) {
 				e.preventDefault(); $(this).closest('.ymkrf-sl__chips').find('.ymkrf-sl__in').trigger('focus');
 			}
+		});
+		/* 札は「つかむ」動きを優先するので、押しただけのときは、ここで字の入力にうつします */
+		$(document).on('click', '.ymkrf-sl__chip', function (e) {
+			if ($(e.target).closest('.ymkrf-sl__x').length || this.hasAttribute('data-justdragged')) return;
+			var t = $(this).find('.ymkrf-sl__t')[0]; if (!t || document.activeElement === t) return;
+			t.focus();
+			var r = document.createRange(), sel = window.getSelection();
+			if (document.caretRangeFromPoint && $(e.target).closest('.ymkrf-sl__t').length) {
+				var c = document.caretRangeFromPoint(e.clientX, e.clientY); if (c) r = c;
+			} else { r.selectNodeContents(t); r.collapse(false); }
+			sel.removeAllRanges(); sel.addRange(r);
 		});
 		$(document).on('input', '.ymkrf-sl__t', function () { sync($(this).closest('.ymkrf-sl__chips')); });
 		$(document).on('blur', '.ymkrf-sl__t', function () {

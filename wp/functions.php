@@ -72,6 +72,10 @@ require_once get_stylesheet_directory() . '/inc/functions-media.php';
 require_once get_stylesheet_directory() . '/inc/functions-media-search.php';
 /* メディアに同じ名前の写真を入れる前に知らせる（2026/10/21） */
 require_once get_stylesheet_directory() . '/inc/functions-media-dupe.php';
+/* 商品写真の名前を「何の写真か分かる名前」にそろえる（2026/10/23） */
+require_once get_stylesheet_directory() . '/inc/functions-media-seoname.php';
+/* 写真の保存先（フォルダ）を、入れるときにえらぶ・あとから引っ越す（2026/10/23） */
+require_once get_stylesheet_directory() . '/inc/functions-media-dest.php';
 require_once get_stylesheet_directory() . '/inc/functions-voice-status.php';
 /* 「勝手に非公開になる」原因がわかったので、調べもの用の読み込みはやめました
    （2026/09/17）。inc/functions-voice-debug.php は、もう使いません。消してかまいません。
