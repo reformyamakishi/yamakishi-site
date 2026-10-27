@@ -192,7 +192,7 @@ add_action( 'init', function () {
 			'kanadu'     => '金津店',
 			'kahahothu'  => '開発店',
 			'asahi'      => '朝日店',
-			/* 2026年10月オープン予定 */
+			/* 2026年11月7日オープン予定（10/31から変更） */
 			'higashikanazawa' => '東金沢店',
 		),
 	);

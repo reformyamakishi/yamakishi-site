@@ -64,6 +64,8 @@ require_once get_stylesheet_directory() . '/inc/functions-works-import.php';
       公開したら、この行と inc/functions-works-import2.php を消してください */
 require_once get_stylesheet_directory() . '/inc/functions-works-import2.php';
 require_once get_stylesheet_directory() . '/inc/functions-shops.php';
+/* 店舗ごとのページ（/shops/<英字>/）。スタッフ ＞ 店舗ページ で直せます（2026/10/27） */
+require_once get_stylesheet_directory() . '/inc/functions-store.php';
 require_once get_stylesheet_directory() . '/inc/functions-area.php';
 require_once get_stylesheet_directory() . '/inc/functions-staff.php';
 require_once get_stylesheet_directory() . '/inc/functions-flyer.php';

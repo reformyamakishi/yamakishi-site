@@ -53,7 +53,8 @@ foreach ( $shops as $s0 ) {
 		$v += (int) $cn['voices'];
 
 		$rows[] = array(
-			'name' => $cty . ( $part ? '（一部）' : '' ),
+			/* 「金沢市（北・東エリア）」のかっこ書きは、そのまま見せます（2026/10/27） */
+			'name' => trim( (string) preg_replace( '/^(石川県|福井県|富山県)/u', '', trim( $a0 ) ) ),
 			'url'  => ( $rm !== '' && function_exists( 'ymkrf_area_url' ) ) ? ymkrf_area_url( $rm ) : '',
 		);
 	}
@@ -92,8 +93,8 @@ foreach ( $shops as $s ) {
 		),
 		'openingHours' => $s['ld'],
 		'areaServed'   => array_map( function ( $c ) { return array( '@type' => 'City', 'name' => $c ); },
-		                             array_map( function ( $a ) { return str_replace( array( '（一部）' ), '', $a ); }, $s['areas'] ) ),
-		'url'          => home_url( '/shops/#' . $s['slug'] ),
+		                             array_map( function ( $a ) { return trim( (string) preg_replace( '/（[^）]*）$/u', '', trim( $a ) ) ); }, $s['areas'] ) ),
+		'url'          => ymkrf_shop_url( $s['slug'] ),
 		'image'        => get_stylesheet_directory_uri() . '/assets/img/shops/' . $s['slug'] . '.jpg',
 	);
 	/* 電話番号がまだ決まっていないお店は、空のまま出すと
@@ -207,7 +208,7 @@ foreach ( $shops as $s ) :
     <div class="p-shop<?php echo ! empty( $s['soon'] ) ? ' p-shop--soon' : ''; ?>" id="<?php echo esc_attr( $s['slug'] ); ?>" data-reveal>
 
       <div class="p-shop__head">
-        <h3 class="p-shop__name"><?php echo esc_html( $s['name'] ); ?></h3>
+        <h3 class="p-shop__name"><a href="<?php echo esc_url( ymkrf_shop_url( $s['slug'] ) ); ?>"><?php echo esc_html( $s['name'] ); ?></a></h3>
         <?php if ( $s['sr'] ) : ?>
           <span class="p-shop__badge">ショールームあります</span>
         <?php endif; ?>
@@ -349,6 +350,13 @@ foreach ( $shops as $s ) :
 		/* お店ごとのリンク。アイコンは画像ではなくSVGで書いているので、
 		   色や大きさをCSSだけで変えられます（余分なファイルも増えません）。 */
 		$shop_links = array(
+			/* 店舗ごとのページ（2026/10/27）。いちばん目立つように、横いっぱいの1行目に出します */
+			array(
+				'url'   => ymkrf_shop_url( $s['slug'] ),
+				'label' => $s['name'] . 'のページを見る',
+				'mod'   => ' is-store',
+				'icon'  => '<path d="M3 9.5 4.6 4.6A1 1 0 0 1 5.6 4h12.8a1 1 0 0 1 1 .6L21 9.5"/><path d="M4.6 12.2V20h14.8v-7.8"/><path d="M9.4 20v-5h5.2v5"/>',
+			),
 			array(
 				'url'   => add_query_arg( 'shop', $s['slug'], home_url( '/flyer/' ) ),
 				'label' => 'チラシ',

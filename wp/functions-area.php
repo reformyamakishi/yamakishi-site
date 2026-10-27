@@ -144,6 +144,8 @@ function ymkrf_area_list() {
 function ymkrf_area_clean( $city ) {
 	$city = trim( (string) $city );
 	$city = preg_replace( '/^(石川県|福井県|富山県)/u', '', $city );
+	/* 「金沢市（北・東エリア）」「志賀町（一部）」のような、うしろのかっこ書きは外します（2026/10/27） */
+	$city = preg_replace( '/（[^）]*）$/u', '', trim( (string) $city ) );
 	return trim( (string) $city );
 }
 

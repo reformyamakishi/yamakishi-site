@@ -65,7 +65,7 @@ function ymkrf_crumb_ld( $crumbs ) {
 }
 endif;
 
-if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '5.2.9' );   // ファイル更新時はここを上げるとキャッシュが切れます
+if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '5.3.3' );   // ファイル更新時はここを上げるとキャッシュが切れます
 
 /* ============================================================
    1. CSS / JS の読み込み
@@ -873,7 +873,9 @@ function ymkrf_shop_url( $slug ) {
 	$slug = sanitize_title( (string) $slug );
 	if ( $slug === '' ) return home_url( '/shops/' );
 
-	/* ★店舗ごとのページができたら、ここを差しかえます */
+	/* 店舗ごとのページ（/shops/<英字>/）ができたので、そちらへ（2026/10/27）。
+	   店舗ページを「下書き」にしたお店は、これまでどおり一覧の中の位置へ送ります */
+	if ( function_exists( 'ymkrf_store_url' ) ) return ymkrf_store_url( $slug );
 	return home_url( '/shops/#' . $slug );
 }
 endif;

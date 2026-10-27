@@ -291,7 +291,7 @@ add_action( 'admin_init', function () {
 
 	$samples = array(
 		array(
-			'title' => '【見本】東金沢店が2026年10月31日（土）にオープンします',
+			'title' => '【見本】東金沢店が2026年11月7日（土）にオープンします',
 			'cat'   => 'oshirase',
 			'shop'  => 'higashikanazawa',
 			'pin'   => '1',

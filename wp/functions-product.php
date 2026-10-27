@@ -1807,10 +1807,12 @@ function ymkrf_product_box_basic( $post ) {
 	    /* カーソルより左にある数字の数を数えておきます */
 	    var left  = raw.slice(0, pos).replace(/[^0-9]/g,'').length;
 	    var n     = raw.replace(/[^0-9]/g,'').replace(/^0+(?=\d)/, '');
-	    var out   = n ? comma(n) : '';
+	    /* オプションの追加金額だけは、頭のマイナス（値引き）を残します（2026/10/27） */
+	    var neg   = el.classList.contains('ymkrf-yen--signed') && /^\s*[-−－‐ー]/.test(raw);
+	    var out   = (neg ? '-' : '') + (n ? comma(n) : '');
 	    el.value  = out;
 	    /* 数字の数が同じところにカーソルを戻します */
-	    var p = 0, cnt = 0;
+	    var p = neg ? 1 : 0, cnt = 0;
 	    while (p < out.length && cnt < left) { if (/[0-9]/.test(out.charAt(p))) cnt++; p++; }
 	    try { el.setSelectionRange(p, p); } catch (err) {}
 	    calc();
@@ -1988,11 +1990,12 @@ function ymkrf_product_row_option( $key, $n, $row ) {
 						echo esc_textarea( $v( 'text' ) ); ?></textarea></label>
 				<label class="ymkrf-f"><span>追加金額</span>
 					<span style="display:flex;align-items:center;gap:6px">
-						<input type="text" inputmode="numeric" class="ymkrf-yen"
+						<input type="text" class="ymkrf-yen ymkrf-yen--signed"
 						       name="<?php echo esc_attr( $name( 'price' ) ); ?>"
 						       value="<?php echo esc_attr( $price !== '' ? number_format( (int) $price ) : '' ); ?>"
 						       placeholder="例：176,000" style="max-width:180px">
 						<span style="font-size:12.5px">円（税込）</span>
+						<span style="font-size:11.5px;color:#787878">値引きは頭に「-」（例：-5,500）</span>
 					</span></label>
 				<label class="ymkrf-f"><span>補足（小さい字。いらなければ空のまま）</span>
 					<input type="text" name="<?php echo esc_attr( $name( 'note' ) ); ?>"
@@ -2737,8 +2740,11 @@ add_action( 'save_post_ymkrf_product', function ( $post_id ) {
 				} elseif ( $c[1] === 'textarea' ) {
 					$r[ $ck ] = sanitize_textarea_field( $v );
 				} elseif ( $c[1] === 'number' ) {
-					/* 金額などは「,」を外して、数字だけで保存します */
-					$r[ $ck ] = preg_replace( '/[^0-9]/', '', (string) $v );
+					/* 金額などは「,」を外して、数字だけで保存します。
+					   頭にマイナスがあれば残します（2026/10/27 ユーザー「オプションのところ、金額マイナスがはいらない」） */
+					$neg = (bool) preg_match( '/^\s*[-−－‐ー]/u', (string) $v );
+					$dg  = preg_replace( '/[^0-9]/', '', mb_convert_kana( (string) $v, 'n', 'UTF-8' ) );
+					$r[ $ck ] = ( $neg && $dg !== '' && (int) $dg !== 0 ) ? '-' . ltrim( $dg, '0' ) : $dg;
 				} else {
 					$r[ $ck ] = sanitize_text_field( $v );
 				}
@@ -3312,6 +3318,17 @@ add_action( 'pre_get_posts', function ( $q ) {
 
 add_action( 'manage_ymkrf_product_posts_custom_column', function ( $col, $post_id ) {
 	if ( $col !== 'ymkrf_order' ) return;
+	/* 「順序」にはグレードのアルファベットを出します（2026/10/27 ユーザー「ダッシュボードの一覧、順序にグレードのアルファベットにして」）。
+	   グレードの無い商品（コンロ・IH など）は、これまでどおり番号です */
+	$g = trim( (string) get_post_meta( $post_id, '_ymkrf_grade', true ) );
+	if ( $g !== '' ) {
+		if ( preg_match( '/premium|プレミアム/iu', $g ) ) {
+			echo '<b style="font-size:11px">プレミアム</b>';
+		} else {
+			echo '<b>' . esc_html( preg_replace( '/\s*グレード$/u', '', $g ) ) . '</b>';
+		}
+		return;
+	}
 	$n = (int) get_post_field( 'menu_order', $post_id );
 	echo $n ? '<b>' . (int) $n . '</b>' : '<span style="color:#a7aaad">—</span>';
 }, 10, 2 );
@@ -3320,7 +3337,7 @@ add_action( 'admin_head-edit.php', function () {
 	$s = get_current_screen();
 	if ( ! $s || $s->post_type !== 'ymkrf_product' ) return;
 	echo '<style>
-	  .wp-list-table .column-ymkrf_order{width:3.6em;text-align:center}
+	  .wp-list-table .column-ymkrf_order{width:4.6em;text-align:center}
 	  .wp-list-table td.column-ymkrf_order{font-size:14px}
 	  .wp-list-table .column-ymkrf_grade{width:7em}
 	</style>';
@@ -3592,6 +3609,19 @@ add_filter( 'posts_clauses', function ( $clauses, $q ) {
 	     0 は「決めていない」あつかいです（前からある控えも、いちおう見ます）。 */
 	$gs = "CAST( COALESCE( NULLIF( {$wpdb->posts}.menu_order, 0 ),"
 	    . " NULLIF( ymkrf_od.meta_value, '' ), ymkrf_gs.meta_value, 999 ) AS SIGNED )";
+
+	/* キッチン・お風呂・トイレ・洗面化粧台は、番号を見ずにグレード順（同じなら価格の安い順）。
+	   トイレの【手洗いカウンター付】は、ひとまとまりで下に置きます（2026/09/25 の指示はそのまま）。
+	   （2026/10/27 ユーザー「番号設定なしにして、ZからA最後プレミアムの順（価格が安い順）にして」） */
+	$gcats = function_exists( 'ymkrf_grade_sorted_cats' ) ? ymkrf_grade_sorted_cats() : array( 'kitchen', 'bathroom', 'toilet', 'lavatory' );
+	$gin   = "'" . implode( "','", array_map( 'esc_sql', $gcats ) ) . "'";
+	$isg   = "EXISTS ( SELECT 1 FROM {$wpdb->term_relationships} ymkrf_gtr"
+	       . " JOIN {$wpdb->term_taxonomy} ymkrf_gtt ON ymkrf_gtt.term_taxonomy_id = ymkrf_gtr.term_taxonomy_id AND ymkrf_gtt.taxonomy = 'ymkrf_product_cat'"
+	       . " JOIN {$wpdb->terms} ymkrf_gt ON ymkrf_gt.term_id = ymkrf_gtt.term_id"
+	       . " WHERE ymkrf_gtr.object_id = {$wpdb->posts}.ID AND ymkrf_gt.slug IN ( {$gin} ) )";
+	$gs = "( CASE WHEN {$isg} THEN CAST( COALESCE( ymkrf_gs.meta_value, 999 ) AS SIGNED )"
+	    . " + ( CASE WHEN {$wpdb->posts}.post_title LIKE '%手洗いカウンター付%' THEN 1000 ELSE 0 END )"
+	    . " ELSE {$gs} END )";
 	$pr = "CAST( COALESCE( NULLIF( ymkrf_ot.meta_value, '' ), 0 ) AS SIGNED )";
 
 	/* エコキュートの一覧は「メーカーごと → その中は価格の安い順」にします。
@@ -5462,7 +5492,7 @@ jQuery(function($){
       window.alert('カラーの枠は、少なくとも1つ残してください。');
       return;
     }
-    if ( ! window.confirm('この枠の見出しと色見本を、ぜんぶ消します。よろしいですか？\n（「更新」を押したときに消えます）') ) return;
+    /* 「削除しますか？」は、下の「消す前に確かめる」でまとめて聞いています（2026/10/27） */
     $f.addClass('is-off').hide();
     $f.find('.ymkrf-cframe__del').val('1');
   });
@@ -7081,3 +7111,129 @@ add_action( 'init', function () {
 	$r = wp_update_post( array( 'ID' => $old[0]->ID, 'post_name' => 'toilet-amage-z-high' ), true );
 	update_option( 'ymkrf_slug_amagez_high_v1', is_wp_error( $r ) ? 'error:' . $r->get_error_message() : 'done:' . $old[0]->ID, false );
 }, 99 );
+
+
+/* ------------------------------------------------------------
+   ごみ箱マークを押したら「削除しますか？」と聞きます
+   （2026/10/27 ユーザー指示「ゴミ箱マーククリックした後、削除しますか?と聞いてほしい。
+     間違ってクリックする場合もあるし」）
+
+   ・ブラウザの確認の窓ではなく、押したマークのすぐ横に小さな吹き出しを出します。
+   ・「やめる」・吹き出しの外を押す・Esc で、何もしません。
+   ・「削除する」を押したときだけ、これまでどおり消えます（「更新」を押すまでサイトには出ません）。
+   ・対象：行のごみ箱／カラーの枠のごみ箱／おすすめポイントのまとまりのごみ箱／カタログの ×
+   ------------------------------------------------------------ */
+add_action( 'admin_footer', function () {
+	$sc = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+	if ( ! $sc || $sc->base !== 'post' || $sc->post_type !== 'ymkrf_product' ) return;
+	?>
+	<style>
+	  .ymkrf-ask{position:absolute;z-index:100050;background:#fff;border:2px solid #b32d2e;border-radius:12px;
+	    box-shadow:0 10px 30px rgba(0,0,0,.18);padding:12px 14px;width:260px;font-size:13px;line-height:1.6}
+	  .ymkrf-ask b{display:block;font-size:14px;color:#b32d2e;margin-bottom:2px}
+	  .ymkrf-ask small{display:block;color:#787878;font-size:11.5px}
+	  .ymkrf-ask__btns{display:flex;gap:8px;margin-top:10px}
+	  .ymkrf-ask__btns button{flex:1;border-radius:8px;padding:6px 8px;font-weight:700;cursor:pointer;font-size:13px}
+	  .ymkrf-ask__yes{background:#b32d2e;border:1px solid #b32d2e;color:#fff}
+	  .ymkrf-ask__yes:hover{background:#8a2424}
+	  .ymkrf-ask__no{background:#fff;border:1px solid #c3c4c7;color:#1d2327}
+	  .ymkrf-ask::before{content:"";position:absolute;top:-9px;right:var(--ymkrf-ask-tip,18px);width:14px;height:14px;
+	    background:#fff;border-left:2px solid #b32d2e;border-top:2px solid #b32d2e;transform:rotate(45deg)}
+	  .is-ymkrf-asking{outline:3px solid rgba(179,45,46,.35);outline-offset:2px;border-radius:12px}
+	</style>
+	<script>
+	(function () {
+	  var SEL = '.ymkrf-row__del, .ymkrf-cframe__x, .ymkrf-grp__del, .ymkrf-cat__x';
+	  var pop = null, target = null;
+
+	  function what(b) {
+	    if (b.matches('.ymkrf-cat__x'))   return ['カタログの内容を消しますか？', 'URL・ページのメモ・画像が空になります。'];
+	    if (b.matches('.ymkrf-cframe__x')) return ['このカラーの枠を削除しますか？', '見出しと色見本がぜんぶ消えます。'];
+	    if (b.matches('.ymkrf-grp__del'))  return ['このまとまりを削除しますか？', '見出し・説明・写真がぜんぶ消えます。'];
+	    return ['この項目を削除しますか？', ''];
+	  }
+	  function boxOf(b) {
+	    return b.closest('.ymkrf-cframe, .ymkrf-grp, .ymkrf-row, .postbox');
+	  }
+	  function close() {
+	    if (pop) { pop.remove(); pop = null; }
+	    if (target) { var bx = boxOf(target); if (bx) bx.classList.remove('is-ymkrf-asking'); target = null; }
+	    document.removeEventListener('keydown', onKey, true);
+	  }
+	  function onKey(e) { if (e.key === 'Escape') { e.preventDefault(); close(); } }
+
+	  function ask(b) {
+	    close();
+	    target = b;
+	    var t = what(b);
+	    pop = document.createElement('div');
+	    pop.className = 'ymkrf-ask';
+	    pop.setAttribute('role', 'alertdialog');
+	    pop.innerHTML = '<b></b><small></small><small>「更新」を押すまで、サイトには反映されません。</small>'
+	      + '<div class="ymkrf-ask__btns"><button type="button" class="ymkrf-ask__no">やめる</button>'
+	      + '<button type="button" class="ymkrf-ask__yes">削除する</button></div>';
+	    pop.querySelector('b').textContent = t[0];
+	    var sm = pop.querySelectorAll('small')[0];
+	    if (t[1]) sm.textContent = t[1]; else sm.remove();
+	    document.body.appendChild(pop);
+	    /* 押したマークの下に出します（画面の右にはみ出さないように） */
+	    var r = b.getBoundingClientRect(), w = pop.offsetWidth;
+	    var left = Math.min(Math.max(8, r.right - w + 6), document.documentElement.clientWidth - w - 8);
+	    pop.style.left = (left + window.scrollX) + 'px';
+	    pop.style.top  = (r.bottom + window.scrollY + 10) + 'px';
+	    pop.style.setProperty('--ymkrf-ask-tip', Math.max(10, Math.min(w - 24, left + w - (r.left + r.width / 2) - 7)) + 'px');
+	    var bx = boxOf(b); if (bx) bx.classList.add('is-ymkrf-asking');
+	    pop.querySelector('.ymkrf-ask__no').addEventListener('click', close);
+	    pop.querySelector('.ymkrf-ask__yes').addEventListener('click', function () {
+	      var btn = target; close();
+	      btn._ymkrfOk = true;
+	      btn.click();   /* ここから、これまでどおりの「消す」が動きます */
+	    });
+	    pop.querySelector('.ymkrf-ask__no').focus({ preventScroll: true });
+	    document.addEventListener('keydown', onKey, true);
+	  }
+
+	  /* ほかの「消す」の動きより先に受けとめます */
+	  window.addEventListener('click', function (e) {
+	    var b = e.target.closest ? e.target.closest(SEL) : null;
+	    if (!b) { if (pop && !pop.contains(e.target)) close(); return; }
+	    if (b._ymkrfOk) { b._ymkrfOk = false; return; }
+	    /* カラーの枠が最後の1つのときは、これまでどおり「1つは残してください」を出します */
+	    if (b.matches('.ymkrf-cframe__x:not(.ymkrf-cat__x)')
+	        && document.querySelectorAll('.ymkrf-cframe:not(.is-off) .ymkrf-cframe__del').length <= 1) return;
+	    e.preventDefault();
+	    e.stopImmediatePropagation();
+	    ask(b);
+	  }, true);
+	})();
+	</script>
+	<?php
+}, 120 );
+
+
+/* キッチン・お風呂・トイレ・洗面化粧台の登録画面では、右の「順序」の番号を出さず、
+   「グレード順（同じなら価格の安い順）で自動で並びます」と出します（2026/10/27） */
+add_action( 'admin_footer', function () {
+	$sc = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+	if ( ! $sc || $sc->base !== 'post' || $sc->post_type !== 'ymkrf_product' ) return;
+	global $post;
+	$cat = function_exists( 'ymkrf_product_current_cat' ) ? ymkrf_product_current_cat( $post ? $post->ID : 0 ) : '';
+	$gc  = function_exists( 'ymkrf_grade_sorted_cats' ) ? ymkrf_grade_sorted_cats() : array();
+	if ( ! in_array( $cat, $gc, true ) ) return;
+	?>
+	<script>
+	(function () {
+	  var mo = document.getElementById('menu_order');
+	  if (!mo) return;
+	  mo.style.display = 'none';
+	  var lab = document.querySelector('label[for="menu_order"]');
+	  var p = mo.closest('p') || mo.parentNode;
+	  var note = document.createElement('p');
+	  note.style.cssText = 'margin:6px 0 0;font-size:12.5px;color:#50575e;line-height:1.7';
+	  note.textContent = '並び順は、グレード順（同じグレードなら価格の安い順）で自動で決まります。番号を入れる必要はありません。';
+	  p.parentNode.insertBefore(note, p.nextSibling);
+	  if (lab) lab.closest('p') ? lab.closest('p').style.display = 'none' : lab.style.display = 'none';
+	})();
+	</script>
+	<?php
+}, 130 );

@@ -1,0 +1,132 @@
+@charset "UTF-8";
+/* ==========================================================================
+   store.css ─ 店舗ごとのページ（/shops/higashikanazawa/ など）
+   テンプレート：single-ymkrf_store.php
+   （2026/10/27）
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. いちばん上（写真・お店の名前・すぐ連絡）
+   -------------------------------------------------------------------------- */
+.p-store__hero{ background:var(--bg-soft); padding:22px 0 26px; }
+.p-store__herowrap{ display:grid; gap:20px; }
+@media (min-width:880px){
+  .p-store__herowrap{ grid-template-columns:minmax(0,1.05fr) minmax(0,1fr); gap:34px; align-items:center; }
+}
+
+.p-store__photo{ position:relative; border-radius:var(--radius-lg); overflow:hidden; box-shadow:var(--shadow-md); background:var(--bg-gray); }
+.p-store__photo img{ display:block; width:100%; aspect-ratio:17/10; object-fit:cover; }
+
+/* ふきだし（お知らせ・オープン） */
+.p-store__bubble{
+  position:absolute; left:14px; top:14px; max-width:calc(100% - 28px);
+  display:flex; align-items:center; gap:8px;
+  background:#fff; color:var(--ink); border-radius:999px;
+  padding:7px 14px 7px 8px; font-size:13.5px; font-weight:900; line-height:1.4;
+  box-shadow:0 6px 18px rgba(0,0,0,.16);
+  animation:ymkrf-store-bubble 3.4s ease-in-out infinite;
+}
+.p-store__bubble i{
+  font-style:normal; background:var(--brand); color:#fff; border-radius:999px;
+  padding:3px 9px; font-size:11px; letter-spacing:.06em;
+}
+.p-store__bubble.is-open{ border:2px solid var(--brand); }
+@keyframes ymkrf-store-bubble{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-4px); } }
+@media (prefers-reduced-motion:reduce){ .p-store__bubble{ animation:none; } }
+
+.p-store__pre{ font-size:13px; font-weight:900; color:var(--brand-dark); letter-spacing:.04em; }
+.p-store__title{ margin-top:6px; font-size:clamp(26px,6vw,38px); font-weight:900; line-height:1.3; }
+.p-store__title span{ display:block; font-size:clamp(13px,3vw,15px); color:var(--ink-sub); font-weight:800; letter-spacing:.05em; }
+.p-store__catch{ margin-top:10px; font-family:var(--font-catch); font-size:clamp(15px,3.6vw,18px); font-weight:700; line-height:1.7; }
+
+.p-store__facts{ list-style:none; margin:14px 0 0; padding:0; border-top:1px dashed var(--border); }
+.p-store__facts li{ display:flex; gap:12px; padding:9px 0; border-bottom:1px dashed var(--border); font-size:14px; line-height:1.7; }
+.p-store__facts b{ flex:0 0 5em; color:var(--ink-sub); font-size:12.5px; font-weight:900; padding-top:1px; }
+.p-store__facts a{ color:var(--brand-dark); font-weight:800; white-space:nowrap; }
+
+.p-store__btns{ display:grid; gap:10px; margin-top:16px; grid-template-columns:1fr 1fr; }
+.p-store__btn{
+  display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center;
+  min-height:54px; border-radius:14px; padding:8px 12px; text-decoration:none;
+  font-size:15px; font-weight:900; color:#fff; background:var(--brand); line-height:1.3;
+  transition:transform .15s, opacity .15s;
+}
+.p-store__btn:hover{ transform:translateY(-2px); opacity:.92; }
+.p-store__btn small{ font-size:11px; font-weight:800; opacity:.9; }
+.p-store__btn--tel{ grid-column:1 / -1; background:#fff; color:var(--brand-dark); border:2px solid var(--brand); font-size:20px; letter-spacing:.03em; }
+.p-store__btn--line{ background:var(--line-green); }
+
+/* 数字 */
+.p-store__stats{
+  list-style:none; margin:22px 0 0; padding:0;
+  display:grid; gap:10px; grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+}
+.p-store__stats li{ background:#fff; border:1px solid var(--border); border-radius:14px; padding:12px 10px; text-align:center; }
+.p-store__stats b{ display:block; font-size:26px; font-weight:900; color:var(--brand); line-height:1.2; }
+.p-store__stats span{ display:block; margin-top:3px; font-size:12px; font-weight:800; color:var(--ink-sub); }
+
+/* --------------------------------------------------------------------------
+   2. ご紹介・3. 店舗情報
+   -------------------------------------------------------------------------- */
+.p-store__intro p{ font-size:15px; line-height:2; margin:0 0 1em; }
+.p-store__intro p:last-child{ margin-bottom:0; }
+
+.p-store__info{ width:100%; border-collapse:collapse; background:#fff; border-radius:14px; overflow:hidden; border:1px solid var(--border); }
+.p-store__info th,
+.p-store__info td{ padding:13px 14px; border-bottom:1px solid var(--border); text-align:left; vertical-align:top; font-size:14.5px; line-height:1.8; }
+.p-store__info tr:last-child th,
+.p-store__info tr:last-child td{ border-bottom:0; }
+.p-store__info th{ width:28%; background:var(--bg-soft); font-size:13px; font-weight:900; color:var(--ink-sub); white-space:nowrap; }
+.p-store__info small{ font-size:12px; color:var(--ink-sub); }
+.p-store__info a{ color:var(--brand-dark); font-weight:800; }
+@media (max-width:520px){ .p-store__info th{ width:32%; padding:12px 10px; } .p-store__info td{ padding:12px 10px; } }
+
+/* --------------------------------------------------------------------------
+   4. 担当エリア
+   -------------------------------------------------------------------------- */
+.p-store__area{ display:flex; flex-wrap:wrap; gap:8px; }
+.p-store__city{
+  display:inline-block; background:var(--brand); color:#fff; border-radius:999px;
+  padding:8px 18px; font-size:15px; font-weight:900; text-decoration:none;
+}
+a.p-store__city:hover{ opacity:.88; }
+.p-store__h3{ margin:20px 0 10px; font-size:15px; font-weight:900; }
+.p-store__note{ margin-top:16px; font-size:13.5px; line-height:1.9; color:var(--ink-sub); }
+.p-store__note b{ color:var(--ink); }
+
+/* --------------------------------------------------------------------------
+   5. 店内の写真
+   -------------------------------------------------------------------------- */
+.p-store__gal{ display:grid; gap:10px; grid-template-columns:repeat(2,1fr); }
+@media (min-width:760px){ .p-store__gal{ grid-template-columns:repeat(4,1fr); } }
+.p-store__gal img{ display:block; width:100%; aspect-ratio:4/3; object-fit:cover; border-radius:12px; }
+
+/* --------------------------------------------------------------------------
+   6. スタッフ（staff.css のカードを使います）
+   -------------------------------------------------------------------------- */
+@media (min-width:760px){ .p-store__staff{ grid-template-columns:1fr 1fr; } }
+
+/* --------------------------------------------------------------------------
+   8. お知らせ・リンク
+   -------------------------------------------------------------------------- */
+.p-store__news{ list-style:none; margin:0 0 14px; padding:0; background:#fff; border:1px solid var(--border); border-radius:14px; }
+.p-store__news li + li{ border-top:1px solid var(--border); }
+.p-store__news a{ display:flex; gap:12px; padding:12px 16px; text-decoration:none; color:var(--ink); font-size:14px; line-height:1.7; }
+.p-store__news a:hover span{ color:var(--brand-dark); text-decoration:underline; }
+.p-store__news time{ flex:0 0 auto; color:var(--ink-sub); font-size:12.5px; font-weight:800; padding-top:2px; }
+.p-store__links{ display:flex; flex-wrap:wrap; gap:8px 18px; }
+.p-store__links a{ color:var(--brand-dark); font-weight:900; font-size:14px; }
+.p-store__more{ text-align:center; margin-top:20px; }
+
+/* --------------------------------------------------------------------------
+   10. 近くのお店
+   -------------------------------------------------------------------------- */
+.p-store__near{ display:grid; gap:10px; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); }
+.p-store__nearcard{
+  display:block; background:#fff; border:1px solid var(--border); border-radius:14px;
+  padding:14px 16px; text-decoration:none; color:var(--ink);
+}
+.p-store__nearcard:hover{ border-color:var(--brand); }
+.p-store__nearcard b{ display:block; font-size:16px; font-weight:900; }
+.p-store__nearcard span{ display:block; margin-top:4px; font-size:13px; color:var(--ink-sub); }
+.p-store__nearcard small{ display:block; margin-top:6px; font-size:12px; font-weight:800; color:var(--brand-dark); }

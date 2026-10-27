@@ -404,7 +404,7 @@ function ymkrf_staff_shop_card( $slug, $comment = '' ) {
 
 	/* お店のページへ（/shops/#tazuruhama） */
 	$h .= '<a class="p-staffcard__more" href="'
-	    . esc_url( home_url( '/shops/' ) . '#' . $slug ) . '">'
+	    . esc_url( function_exists( 'ymkrf_shop_url' ) ? ymkrf_shop_url( $slug ) : home_url( '/shops/' ) . '#' . $slug ) . '">'
 	    . esc_html( $name ) . 'のご案内を見る</a>';
 
 	$h .= '</span></div>';

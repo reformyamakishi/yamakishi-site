@@ -2172,3 +2172,64 @@ add_action( 'init', function () {
 	update_option( 'ymkrf_maker_del_v1', '1', false );
 	update_option( 'ymkrf_maker_del_v1_log', implode( '、', $done ), false );
 }, 61 );
+
+
+/* ------------------------------------------------------------
+   「抜粋」の欄を「ディスクリプション（検索結果の説明文）」にします
+   （2026/10/27 ユーザー「コラムの抜粋って、ディスクリプションの事?」「抜粋ではなくディスクリプション？」）
+
+   ・中身は WordPress の「抜粋」と同じ場所に入ります（SEO PACK がこれを説明文に使います）。
+   ・コラム一覧のカードの紹介文にも、同じ文が出ます。
+   ・空のままなら、本文の書き出しが自動で使われます。
+   ・文字数と、Googleでの見え方のめやすを、打ちながら出します。
+   ------------------------------------------------------------ */
+add_action( 'add_meta_boxes_ymkrf_column', function ( $post ) {
+	remove_meta_box( 'postexcerpt', 'ymkrf_column', 'normal' );
+	add_meta_box( 'ymkrf_coldesc', 'ディスクリプション（検索結果に出る説明文）', function ( $post ) {
+		$v = (string) $post->post_excerpt;
+		?>
+		<textarea name="excerpt" id="excerpt" rows="3" style="width:100%;font-size:14px;line-height:1.7"
+		          placeholder="例：TOTOのトイレ「GGA」のGGA1・GGA2・GGA3の違いを、ヤマキシのスタッフがわかりやすく比較。価格・機能・おすすめの選び方をまとめました。"><?php echo esc_textarea( $v ); ?></textarea>
+		<p class="ymkrf-cd__count" style="margin:6px 0 0;font-size:12.5px"><b>0</b> 文字　<span></span></p>
+		<div class="ymkrf-cd__pv" style="margin-top:10px;padding:10px 14px;border:1px solid #dcdcde;border-radius:8px;background:#fff;max-width:640px">
+		  <div style="font-size:11.5px;color:#4d5156">Googleでの見え方（めやす）</div>
+		  <div class="ymkrf-cd__t" style="color:#1a0dab;font-size:17px;line-height:1.4;margin-top:2px"></div>
+		  <div class="ymkrf-cd__d" style="color:#4d5156;font-size:13px;line-height:1.6;margin-top:2px"></div>
+		</div>
+		<p style="margin:8px 0 0;font-size:12px;color:#646970;line-height:1.7">
+		  ・<b>80〜120文字</b>がめやす。長いと検索結果では途中で「…」になります。<br>
+		  ・「何の記事か」と「探されそうな言葉（例：GGA 違い、トイレ 交換）」を前のほうに。最後は「読むと何がわかるか」で。<br>
+		  ・コラム一覧のカードの紹介文にも同じ文が出ます。空のままなら、本文の書き出しが使われます。
+		</p>
+		<script>
+		(function () {
+		  var ta = document.getElementById('excerpt'), box = document.getElementById('ymkrf_coldesc');
+		  if (!ta || !box) return;
+		  var cnt = box.querySelector('.ymkrf-cd__count b'), msg = box.querySelector('.ymkrf-cd__count span'),
+		      pt = box.querySelector('.ymkrf-cd__t'), pd = box.querySelector('.ymkrf-cd__d'),
+		      title = document.getElementById('title');
+		  function bodyText() {
+		    var ed = window.tinymce && tinymce.get('content');
+		    var h = ed && !ed.isHidden() ? ed.getContent() : ((document.getElementById('content') || {}).value || '');
+		    return h.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+		  }
+		  function upd() {
+		    var t = ta.value.replace(/\s+/g, ' ').trim(), n = t.length;
+		    cnt.textContent = n;
+		    if (!n)        { msg.textContent = '（空なので、本文の書き出しが使われます）'; msg.style.color = '#646970'; }
+		    else if (n < 60)  { msg.textContent = 'もう少し長くてもOKです'; msg.style.color = '#996800'; }
+		    else if (n <= 120) { msg.textContent = 'ちょうどよい長さです'; msg.style.color = '#00782a'; }
+		    else           { msg.textContent = '長めです（検索結果では120文字くらいで切れます）'; msg.style.color = '#b32d2e'; }
+		    var d = n ? t : bodyText();
+		    pd.textContent = d.length > 120 ? d.slice(0, 120) + '…' : d;
+		    pt.textContent = ((title && title.value) || 'コラムの題名') + ' | リフォームヤマキシ';
+		  }
+		  ta.addEventListener('input', upd);
+		  if (title) title.addEventListener('input', upd);
+		  upd();
+		  window.addEventListener('load', upd);
+		})();
+		</script>
+		<?php
+	}, 'ymkrf_column', 'normal', 'high' );
+}, 20 );

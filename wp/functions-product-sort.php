@@ -32,7 +32,15 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 function ymkrf_sortable_cats() {
 	/* キッチン・ユニットバス・トイレ・洗面化粧台（ユーザー指示の4つ）に、
 	   ふだんよく触る分類を足しています。増やしたいときは、ここに書きます。 */
-	return array( 'kitchen', 'bathroom', 'toilet', 'lavatory', 'cooktop', 'pack4' );
+	/* キッチン・お風呂・トイレ・洗面化粧台は、グレード順（価格の安い順）で自動で並ぶようにしたので外しました
+	   （2026/10/27 ユーザー「パック商品となっているトイレ、キッチン、バス、洗面化粧台なんですが、
+	     番号設定なしにして、ZからA最後プレミアムの順（価格が安い順）にして」） */
+	return array( 'cooktop', 'pack4' );
+}
+
+/** グレード順（J → … → A → S → SS → SSS → プレミアム、同じなら価格の安い順）で自動で並べる分類 */
+function ymkrf_grade_sorted_cats() {
+	return array( 'kitchen', 'bathroom', 'toilet', 'lavatory' );
 }
 
 /**
@@ -231,6 +239,10 @@ function ymkrf_product_put_top( $post_id ) {
 	$cats = wp_get_object_terms( $post_id, 'ymkrf_product_cat', array( 'fields' => 'ids' ) );
 	if ( is_wp_error( $cats ) || ! $cats ) return;
 
+	/* グレード順で自動で並べる分類（キッチン・お風呂・トイレ・洗面）は、番号をふりません（2026/10/27） */
+	$slugs = wp_get_object_terms( $post_id, 'ymkrf_product_cat', array( 'fields' => 'slugs' ) );
+	if ( ! is_wp_error( $slugs ) && array_intersect( (array) $slugs, ymkrf_grade_sorted_cats() ) ) return;
+
 	/* 同じ分類の商品を、いまの並び順のままぜんぶ取ります */
 	$ids = get_posts( array(
 		'post_type'      => 'ymkrf_product',
@@ -309,3 +321,31 @@ add_action( 'admin_init', function () {
 
 	update_option( 'ymkrf_product_placed_ver', $ver, false );
 }, 11 );
+
+
+/* ============================================================
+   キッチン・お風呂・トイレ・洗面化粧台の「順序」の番号を、1回だけ消します
+   （2026/10/27 ユーザー「番号設定なしにして」）
+   消したあとは、グレード順（同じなら価格の安い順）で自動で並びます。
+   ============================================================ */
+add_action( 'admin_init', function () {
+	if ( get_option( 'ymkrf_gradesort_clear_v1' ) === '1' ) return;
+	if ( ! current_user_can( 'edit_posts' ) ) return;
+	global $wpdb;
+	$ids = get_posts( array(
+		'post_type' => 'ymkrf_product', 'post_status' => 'any', 'posts_per_page' => -1, 'fields' => 'ids',
+		'tax_query' => array( array( 'taxonomy' => 'ymkrf_product_cat', 'field' => 'slug', 'terms' => ymkrf_grade_sorted_cats() ) ),
+	) );
+	$log = array();
+	foreach ( (array) $ids as $id ) {
+		$mo = (int) get_post_field( 'menu_order', $id );
+		$od = (string) get_post_meta( $id, '_ymkrf_order', true );
+		if ( $mo === 0 && $od === '' ) continue;
+		$log[] = $id . ':' . $mo . '/' . $od;   /* もとの番号を控えておきます（もどしたいとき用） */
+		$wpdb->update( $wpdb->posts, array( 'menu_order' => 0 ), array( 'ID' => $id ) );
+		delete_post_meta( $id, '_ymkrf_order' );
+		clean_post_cache( $id );
+	}
+	update_option( 'ymkrf_gradesort_clear_v1_log', implode( ',', $log ), false );
+	update_option( 'ymkrf_gradesort_clear_v1', '1', false );
+} );
