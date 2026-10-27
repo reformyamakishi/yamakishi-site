@@ -1450,6 +1450,19 @@ body.term-pack4 .p-cat__cardname{
 .p-colart__body th,
 .p-colart__body td{ border:1px solid var(--border); padding:9px 12px; text-align:left; }
 .p-colart__body th{ background:var(--brand-tint); font-weight:900; }
+/* 表の見出しの行に、本文側で色（例：青い背景に白い字）が付いているときは、
+   サイトの色（オレンジの背景に白い字）にそろえます。
+   前は th の背景だけがうすいオレンジになり、白い字が読めませんでした
+   （2026/10/27 ユーザー「表の一番上 機能 GGA1（標準）… の文字が見えにくい 色が」） */
+.p-colart__body tr[style*="background"] > th{ background:var(--brand); color:#fff; border-color:#ffb59e; }
+.p-colart__body tr[style*="background"] > td{ background:transparent; }
+/* 文字色だけ白にしてある見出しで、背景が付いていないときは、読める濃い字にもどします */
+.p-colart__body tr[style*="color"]:not([style*="background"]) > th{ color:var(--ink); }
+/* 表に「中央ぞろえ」が書いてあるときは、そのとおりに（○×の列など。左ぞろえと書いたマスは左のまま） */
+.p-colart__body table[style*="text-align: center"] th:not([style*="text-align"]),
+.p-colart__body table[style*="text-align: center"] td:not([style*="text-align"]),
+.p-colart__body table[style*="text-align:center"] th:not([style*="text-align"]),
+.p-colart__body table[style*="text-align:center"] td:not([style*="text-align"]){ text-align:center; }
 
 /* コラム一覧（準備中の予定タイトル） */
 .p-col__plan{ list-style:none; margin:16px 0 0; padding:0; display:grid; gap:8px; counter-reset:plan; }
@@ -2482,6 +2495,15 @@ body.term-pack4 .p-cat__card:hover .p-cat__cardlink{
 }
 @media (min-width:600px){ .p-colprd{ grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; } }
 @media (min-width:900px){ .p-colprd{ grid-template-columns:repeat(3,minmax(0,1fr)); } }
+/* 商品が1つ・2つのときは、カードの幅はそのままで真ん中にそろえます
+   （2026/10/27 ユーザー「1つとか2つしか関連商品ないとき センターにしてほしい」） */
+@media (min-width:600px){
+  .p-colprd:has(> :only-child){ grid-template-columns:minmax(0,calc((100% - 16px) / 2)); justify-content:center; }
+}
+@media (min-width:900px){
+  .p-colprd:has(> :only-child){ grid-template-columns:minmax(0,calc((100% - 32px) / 3)); }
+  .p-colprd:has(> :nth-child(2):last-child){ grid-template-columns:repeat(2,minmax(0,calc((100% - 32px) / 3))); justify-content:center; }
+}
 
 .p-colprd__card{
   display:grid; grid-template-rows:auto 1fr; min-width:0;
