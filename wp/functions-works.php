@@ -869,9 +869,10 @@ function ymkrf_area_shops_of( $name, $term_id = 0 ) {
 function ymkrf_area_shop_cols() {
 	return array(
 		'石川県' => array(
-			array( 'tazuruhama', 'hakui' ),
-			array( 'higashikanazawa', 'tagami', 'nonoichi' ),
-			array( 'kawakita', 'komathu', 'shinkaga' ),
+			/* 2026/10/28 ユーザー「全てに置いてですが、店舗の順番ですが…」で、列の中もお店の並び順に */
+			array( 'nonoichi', 'tagami', 'higashikanazawa' ),
+			array( 'hakui', 'komathu', 'tazuruhama' ),
+			array( 'kawakita', 'shinkaga' ),
 		),
 		'福井県' => array(
 			array( 'kanadu', 'kahahothu', 'asahi' ),

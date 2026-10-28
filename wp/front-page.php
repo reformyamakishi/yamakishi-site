@@ -808,39 +808,39 @@ get_header();
     </div>
 
     <ul class="p-shops__list" data-shoplist="ishikawa">
-      <li><a class="p-shop" href="<?php echo esc_url( home_url( '/shops/tazuruhama/' ) ); ?>">
-        <svg class="p-shop__pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
-        <span><span class="p-shop__name">田鶴浜店</span><span class="p-shop__info">石川県七尾市／8:00〜21:00</span></span><span class="p-shop__arrow">›</span></a></li>
       <li><a class="p-shop" href="<?php echo esc_url( home_url( '/shops/nonoichi/' ) ); ?>">
         <svg class="p-shop__pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
         <span><span class="p-shop__name">金沢野々市店</span><span class="p-shop__info">石川県野々市市／10:00〜18:00</span></span><span class="p-shop__arrow">›</span></a></li>
-      <li><a class="p-shop" href="<?php echo esc_url( home_url( '/shops/kawakita/' ) ); ?>">
-        <svg class="p-shop__pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
-        <span><span class="p-shop__name">川北店</span><span class="p-shop__info">石川県能美郡川北町／8:00〜22:00</span></span><span class="p-shop__arrow">›</span></a></li>
-      <li><a class="p-shop" href="<?php echo esc_url( home_url( '/shops/komathu/' ) ); ?>">
-        <svg class="p-shop__pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
-        <span><span class="p-shop__name">小松店</span><span class="p-shop__info">石川県小松市／10:00〜18:00</span></span><span class="p-shop__arrow">›</span></a></li>
-      <li><a class="p-shop" href="<?php echo esc_url( home_url( '/shops/shinkaga/' ) ); ?>">
-        <svg class="p-shop__pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
-        <span><span class="p-shop__name">新加賀店</span><span class="p-shop__info">石川県加賀市／8:00〜21:00</span></span><span class="p-shop__arrow">›</span></a></li>
-      <li><a class="p-shop" href="<?php echo esc_url( home_url( '/shops/hakui/' ) ); ?>">
-        <svg class="p-shop__pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
-        <span><span class="p-shop__name">羽咋店</span><span class="p-shop__info">石川県羽咋市／10:00〜18:00</span></span><span class="p-shop__arrow">›</span></a></li>
       <li><a class="p-shop" href="<?php echo esc_url( home_url( '/shops/tagami/' ) ); ?>">
         <svg class="p-shop__pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
         <span><span class="p-shop__name">金沢田上店</span><span class="p-shop__info">石川県金沢市／10:00〜17:00</span></span><span class="p-shop__arrow">›</span></a></li>
       <li><a class="p-shop p-shop--soon" href="<?php echo esc_url( home_url( '/shops/higashikanazawa/' ) ); ?>">
         <svg class="p-shop__pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
         <span><span class="p-shop__name">東金沢店<span class="p-shop__badge">11月7日（土）オープン</span></span><span class="p-shop__info">石川県金沢市大樋町</span></span><span class="p-shop__arrow">›</span></a></li>
+      <li><a class="p-shop" href="<?php echo esc_url( home_url( '/shops/hakui/' ) ); ?>">
+        <svg class="p-shop__pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span><span class="p-shop__name">羽咋店</span><span class="p-shop__info">石川県羽咋市／10:00〜18:00</span></span><span class="p-shop__arrow">›</span></a></li>
+      <li><a class="p-shop" href="<?php echo esc_url( home_url( '/shops/komathu/' ) ); ?>">
+        <svg class="p-shop__pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span><span class="p-shop__name">小松店</span><span class="p-shop__info">石川県小松市／10:00〜18:00</span></span><span class="p-shop__arrow">›</span></a></li>
+      <li><a class="p-shop" href="<?php echo esc_url( home_url( '/shops/tazuruhama/' ) ); ?>">
+        <svg class="p-shop__pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span><span class="p-shop__name">田鶴浜店</span><span class="p-shop__info">石川県七尾市／8:00〜21:00</span></span><span class="p-shop__arrow">›</span></a></li>
+      <li><a class="p-shop" href="<?php echo esc_url( home_url( '/shops/kawakita/' ) ); ?>">
+        <svg class="p-shop__pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span><span class="p-shop__name">川北店</span><span class="p-shop__info">石川県能美郡川北町／8:00〜22:00</span></span><span class="p-shop__arrow">›</span></a></li>
+      <li><a class="p-shop" href="<?php echo esc_url( home_url( '/shops/shinkaga/' ) ); ?>">
+        <svg class="p-shop__pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span><span class="p-shop__name">新加賀店</span><span class="p-shop__info">石川県加賀市／8:00〜21:00</span></span><span class="p-shop__arrow">›</span></a></li>
     </ul>
 
     <ul class="p-shops__list" data-shoplist="fukui" hidden>
-      <li><a class="p-shop" href="<?php echo esc_url( home_url( '/shops/kahahothu/' ) ); ?>">
-        <svg class="p-shop__pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
-        <span><span class="p-shop__name">開発店</span><span class="p-shop__info">福井県／9:00〜19:00</span></span><span class="p-shop__arrow">›</span></a></li>
       <li><a class="p-shop" href="<?php echo esc_url( home_url( '/shops/kanadu/' ) ); ?>">
         <svg class="p-shop__pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
         <span><span class="p-shop__name">金津店</span><span class="p-shop__info">福井県あわら市／8:00〜19:00</span></span><span class="p-shop__arrow">›</span></a></li>
+      <li><a class="p-shop" href="<?php echo esc_url( home_url( '/shops/kahahothu/' ) ); ?>">
+        <svg class="p-shop__pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span><span class="p-shop__name">開発店</span><span class="p-shop__info">福井県／9:00〜19:00</span></span><span class="p-shop__arrow">›</span></a></li>
       <li><a class="p-shop" href="<?php echo esc_url( home_url( '/shops/asahi/' ) ); ?>">
         <svg class="p-shop__pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
         <span><span class="p-shop__name">朝日店</span><span class="p-shop__info">福井県丹生郡／7:00〜21:30</span></span><span class="p-shop__arrow">›</span></a></li>

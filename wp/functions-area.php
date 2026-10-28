@@ -480,40 +480,96 @@ function ymkrf_area_admin() {
 	    <div class="notice notice-success"><p><?php echo esc_html( $msg ); ?></p></div>
 	  <?php endif; ?>
 
-	  <p style="max-width:900px;line-height:1.9">
-	    市町ごとのページ（<code>/area/◯◯/</code>）です。<br>
-	    <b>施工事例・お客様の声・担当店舗は自動で出ます。</b>
-	    手で入れるのは、書き出しの文・よくあるご相談・対応地区の3つだけで、空のままでもページは成り立ちます。<br>
-	    <b style="color:#b26a00">施工事例が<?php echo (int) YMKRF_AREA_MIN; ?>件に満たない市町は、検索エンジンに出しません</b>
-	    （うすいページが並ぶと、サイト全体の評価が下がるためです）。事例が増えれば自動で出るようになります。
-	  </p>
-
 	  <?php if ( $now === '' || ! isset( $all[ $now ] ) ) : ?>
 
-	    <table class="wp-list-table widefat striped" style="max-width:900px">
-	      <thead><tr><th>市町</th><th style="width:110px">施工事例</th><th style="width:120px">お客様の声</th>
-	        <th>担当店舗</th><th style="width:90px">検索</th><th style="width:150px"></th></tr></thead>
-	      <tbody>
-	      <?php foreach ( $all as $slug => $a ) :
-	        $c = ymkrf_area_counts( $a['city'] );
-	        $sh = array(); foreach ( $a['shops'] as $s ) $sh[] = $s['name']; ?>
-	        <tr>
-	          <td><b><?php echo esc_html( $a['city'] ); ?></b>
-	            <div style="color:#6b615c;font-size:12px"><code>/area/<?php echo esc_html( $slug ); ?>/</code></div></td>
-	          <td><?php echo number_format( $c['works'] ); ?> 件</td>
-	          <td><?php echo number_format( $c['voices'] ); ?> 件</td>
-	          <td style="font-size:12.5px"><?php echo esc_html( implode( '／', $sh ) ); ?></td>
-	          <td><?php if ( $c['works'] < YMKRF_AREA_MIN ) : ?>
-	            <span style="color:#b26a00;font-weight:700">出さない</span>
-	          <?php else : ?><span style="color:#0a6b2d">出す</span><?php endif; ?></td>
-	          <td>
-	            <a class="button" href="<?php echo esc_url( add_query_arg( 'area', $slug ) ); ?>">文を入れる</a>
-	            <a class="button" href="<?php echo esc_url( ymkrf_area_url( $slug ) ); ?>" target="_blank">見る</a>
-	          </td>
-	        </tr>
-	      <?php endforeach; ?>
-	      </tbody>
-	    </table>
+	  <?php /* 一覧を見やすく（2026/10/28 ユーザー「対応エリアが見にくい。文を入れるって何？見るって何？もっとわかりやすくして」）
+	           表をやめて、市町ごとのカードにしました。県ごとにまとめています。 */ ?>
+	  <div class="ymkrf-ar__intro">
+	    <p>市町ごとのページ（例：<a href="<?php echo esc_url( ymkrf_area_url( 'kanazawa' ) ); ?>" target="_blank">金沢市のページ</a>）の一覧です。</p>
+	    <ul>
+	      <li><b>施工事例・お客様の声・担当店舗は、自動で入ります。</b></li>
+	      <li>「<b>ページの文章を書く</b>」から、そのページの<b>書き出しの文・対応地区・よくあるご相談</b>を入れられます。空のままでもページは出ます。</li>
+	      <li>「<b>サイトで見る</b>」で、お客様が見るページを新しいタブで開きます。</li>
+	      <li><b>Googleに出すのは、施工事例が<?php echo (int) YMKRF_AREA_MIN; ?>件以上ある市町だけ</b>です（中身のうすいページが多いと、サイト全体の評価が下がるため）。事例が増えれば自動で出るようになります。</li>
+	    </ul>
+	  </div>
+
+	  <?php
+	  $by_pref = array();
+	  foreach ( $all as $slug => $a ) {
+		  $pf = ! empty( $a['pref'] ) ? $a['pref'] : ( function_exists( 'ymkrf_area_pref' ) ? ymkrf_area_pref( $a['city'] ) : '' );
+		  $by_pref[ $pf ][ $slug ] = $a;
+	  }
+	  foreach ( $by_pref as $pf => $list ) : ?>
+	    <h2 class="ymkrf-ar__pref"><?php echo esc_html( $pf ); ?><small><?php echo count( $list ); ?>市町</small></h2>
+	    <div class="ymkrf-ar__grid">
+	    <?php foreach ( $list as $slug => $a ) :
+	      $c  = ymkrf_area_counts( $a['city'] );
+	      $t  = ymkrf_area_text( $slug );
+	      $ld = trim( (string) ( function_exists( 'ymkrf_area_lead' ) ? ymkrf_area_lead( $slug, $a['city'] ) : '' ) );
+	      if ( $ld === '' && isset( $t['lead'] ) ) $ld = trim( (string) $t['lead'] );
+	      $tw = isset( $t['towns'] ) ? trim( (string) $t['towns'] ) : '';
+	      $fq = isset( $t['faq'] ) && is_array( $t['faq'] ) ? count( $t['faq'] ) : 0;
+	      $on = ( $c['works'] >= YMKRF_AREA_MIN );
+	    ?>
+	      <div class="ymkrf-ar__card">
+	        <div class="ymkrf-ar__hd">
+	          <b><?php echo esc_html( $a['city'] ); ?></b>
+	          <?php if ( $on ) : ?>
+	            <span class="ymkrf-ar__st is-on">Googleに出ています</span>
+	          <?php else : ?>
+	            <span class="ymkrf-ar__st">Googleにはまだ出していません</span>
+	          <?php endif; ?>
+	        </div>
+	        <?php if ( ! $on ) : ?>
+	          <p class="ymkrf-ar__why">施工事例があと<?php echo (int) ( YMKRF_AREA_MIN - $c['works'] ); ?>件ふえると、自動で出ます。</p>
+	        <?php endif; ?>
+	        <div class="ymkrf-ar__nums">
+	          <span>施工事例<b><?php echo number_format( $c['works'] ); ?></b>件</span>
+	          <span>お客様の声<b><?php echo number_format( $c['voices'] ); ?></b>件</span>
+	        </div>
+	        <?php if ( $a['shops'] ) : ?>
+	          <p class="ymkrf-ar__shops">担当：<?php foreach ( $a['shops'] as $s ) echo '<span>' . esc_html( $s['name'] ) . '</span>'; ?></p>
+	        <?php endif; ?>
+	        <ul class="ymkrf-ar__fill">
+	          <li class="<?php echo $ld !== '' ? 'is-ok' : ''; ?>">書き出しの文</li>
+	          <li class="<?php echo $tw !== '' ? 'is-ok' : ''; ?>">対応地区</li>
+	          <li class="<?php echo $fq ? 'is-ok' : ''; ?>">よくあるご相談<?php echo $fq ? '（' . (int) $fq . '）' : ''; ?></li>
+	        </ul>
+	        <div class="ymkrf-ar__btns">
+	          <a class="button button-primary" href="<?php echo esc_url( add_query_arg( 'area', $slug ) ); ?>">ページの文章を書く</a>
+	          <a class="ymkrf-ar__view" href="<?php echo esc_url( ymkrf_area_url( $slug ) ); ?>" target="_blank" rel="noopener">サイトで見る ↗</a>
+	        </div>
+	      </div>
+	    <?php endforeach; ?>
+	    </div>
+	  <?php endforeach; ?>
+
+	  <style>
+	    .ymkrf-ar__intro{max-width:980px;background:#fff;border:1px solid #dcdcde;border-left:4px solid #fe3301;border-radius:6px;padding:10px 16px;margin:12px 0 6px}
+	    .ymkrf-ar__intro p{margin:4px 0 6px;font-size:13.5px}
+	    .ymkrf-ar__intro ul{margin:0 0 4px 1.2em;list-style:disc;font-size:13px;line-height:1.8}
+	    .ymkrf-ar__pref{margin:22px 0 10px;padding-left:9px;border-left:4px solid #fe3301;font-size:16px}
+	    .ymkrf-ar__pref small{margin-left:8px;font-size:12px;font-weight:400;color:#787878}
+	    .ymkrf-ar__grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px;max-width:1400px}
+	    .ymkrf-ar__card{background:#fff;border:1px solid #dcdcde;border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+	    .ymkrf-ar__hd{display:flex;align-items:center;justify-content:space-between;gap:8px}
+	    .ymkrf-ar__hd b{font-size:18px}
+	    .ymkrf-ar__st{font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 10px;background:#fff4e5;color:#995200;white-space:nowrap}
+	    .ymkrf-ar__st.is-on{background:#e6f4ea;color:#00782a}
+	    .ymkrf-ar__why{margin:-4px 0 0;font-size:12px;color:#995200}
+	    .ymkrf-ar__nums{display:flex;gap:16px;font-size:12.5px;color:#50575e}
+	    .ymkrf-ar__nums b{font-size:17px;color:#1d2327;margin:0 2px 0 6px}
+	    .ymkrf-ar__shops{margin:0;font-size:12.5px;color:#50575e}
+	    .ymkrf-ar__shops span{display:inline-block;margin:2px 4px 2px 0;padding:1px 8px;border-radius:999px;background:#f0f0f1;color:#1d2327}
+	    .ymkrf-ar__fill{display:flex;flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none}
+	    .ymkrf-ar__fill li{margin:0;font-size:11.5px;padding:2px 8px;border-radius:6px;background:#f6f7f7;color:#8c8f94}
+	    .ymkrf-ar__fill li::before{content:"□ "}
+	    .ymkrf-ar__fill li.is-ok{background:#e6f4ea;color:#00782a;font-weight:700}
+	    .ymkrf-ar__fill li.is-ok::before{content:"✓ "}
+	    .ymkrf-ar__btns{display:flex;align-items:center;gap:12px;margin-top:auto;padding-top:4px}
+	    .ymkrf-ar__view{font-size:13px;font-weight:600}
+	  </style>
 
 	  <?php else :
 	    $a = $all[ $now ];
@@ -522,7 +578,9 @@ function ymkrf_area_admin() {
 	  ?>
 
 	    <p><a href="<?php echo esc_url( remove_query_arg( 'area' ) ); ?>">← 市町の一覧にもどる</a></p>
-	    <h2><?php echo esc_html( $a['city'] ); ?>　<code style="font-size:13px">/area/<?php echo esc_html( $now ); ?>/</code></h2>
+	    <h2 style="display:flex;align-items:center;gap:14px;flex-wrap:wrap"><?php echo esc_html( $a['city'] ); ?>のページの文章
+	      <a class="button" href="<?php echo esc_url( ymkrf_area_url( $now ) ); ?>" target="_blank" rel="noopener">サイトで見る ↗</a></h2>
+	    <p class="description" style="max-width:900px">施工事例・お客様の声・担当店舗は自動で入ります。ここで入れるのは下の3つだけです。どれも空のままでかまいません（空ならその場所は出ないか、自動の文が出ます）。</p>
 
 	    <form method="post">
 	      <?php wp_nonce_field( 'ymkrf_area', 'ymkrf_area_nonce' ); ?>
@@ -530,7 +588,7 @@ function ymkrf_area_admin() {
 
 	      <table class="form-table">
 	        <tr>
-	          <th>書き出しの文</th>
+	          <th>書き出しの文<br><small style="font-weight:400;color:#787878">ページのいちばん上、見出しのすぐ下に出ます</small></th>
 	          <td>
 	            <textarea name="lead" rows="3" class="large-text"
 	              placeholder="空のままなら、自動の文が出ます"><?php
@@ -539,7 +597,7 @@ function ymkrf_area_admin() {
 	          </td>
 	        </tr>
 	        <tr>
-	          <th>対応地区</th>
+	          <th>対応地区<br><small style="font-weight:400;color:#787878">「<?php echo esc_html( $a['city'] ); ?>の対応地区」として、地区名が並びます</small></th>
 	          <td>
 	            <input type="text" name="towns" class="large-text"
 	              value="<?php echo esc_attr( isset( $t['towns'] ) ? $t['towns'] : '' ); ?>"
@@ -551,7 +609,7 @@ function ymkrf_area_admin() {
 	          $q = isset( $faq[ $i - 1 ]['q'] ) ? $faq[ $i - 1 ]['q'] : '';
 	          $an = isset( $faq[ $i - 1 ]['a'] ) ? $faq[ $i - 1 ]['a'] : ''; ?>
 	        <tr>
-	          <th>よくあるご相談 <?php echo (int) $i; ?></th>
+	          <th>よくあるご相談 <?php echo (int) $i; ?><br><small style="font-weight:400;color:#787878">上が質問、下が答えです</small></th>
 	          <td>
 	            <input type="text" name="faq_q<?php echo (int) $i; ?>" class="large-text"
 	              value="<?php echo esc_attr( $q ); ?>"

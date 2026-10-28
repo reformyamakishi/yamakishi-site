@@ -40,9 +40,71 @@ function ymkrf_shops() {
 	}
 	/* 店舗ページ（スタッフ ＞ 店舗ページ）で直した内容を、いちばん上にかぶせます（2026/10/27） */
 	if ( function_exists( 'ymkrf_store_overlay' ) ) $list = ymkrf_store_overlay( $list );
-	return $list;
+	return ymkrf_shop_sort( $list );
 }
 endif;
+
+/**
+ * お店の並び順（サイト全体でこの順番です）
+ * 2026/10/28 ユーザー「全てに置いてですが、店舗の順番ですが、以下の順番に変更して
+ *   本部は一番上、その下は 金沢野々市店 金沢田上店 東金沢店 羽咋店 小松店 田鶴浜店
+ *   川北店 新加賀店 金津店 開発店 朝日店」
+ * 本部・工事部はお店ではないので、スタッフのところ（functions-staff.php）で先頭に足しています。
+ * 順番を変えたいときは、ここだけ直せば全部そろいます。
+ */
+function ymkrf_shop_order() {
+	return array(
+		'nonoichi',         /* 金沢野々市店 */
+		'tagami',           /* 金沢田上店 */
+		'higashikanazawa',  /* 東金沢店 */
+		'hakui',            /* 羽咋店 */
+		'komathu',          /* 小松店 */
+		'tazuruhama',       /* 田鶴浜店 */
+		'kawakita',         /* 川北店 */
+		'shinkaga',         /* 新加賀店 */
+		'kanadu',           /* 金津店 */
+		'kahahothu',        /* 開発店 */
+		'asahi',            /* 朝日店 */
+	);
+}
+
+/** 英字 → 何番目か（書いていないお店はうしろ） */
+function ymkrf_shop_pos( $slug ) {
+	static $pos = null;
+	if ( $pos === null ) $pos = array_flip( ymkrf_shop_order() );
+	return isset( $pos[ $slug ] ) ? $pos[ $slug ] : 999;
+}
+
+/** お店の配列（'slug' を持つもの）を、上の順番に並べます */
+function ymkrf_shop_sort( $list ) {
+	if ( ! is_array( $list ) ) return $list;
+	usort( $list, function ( $a, $b ) {
+		$sa = ( is_array( $a ) && isset( $a['slug'] ) ) ? $a['slug'] : '';
+		$sb = ( is_array( $b ) && isset( $b['slug'] ) ) ? $b['slug'] : '';
+		return ymkrf_shop_pos( $sa ) <=> ymkrf_shop_pos( $sb );
+	} );
+	return $list;
+}
+
+/* 「展示店舗」「対応店舗」などのお店の分類（ymkrf_shop）も、同じ順番で出します */
+function ymkrf_shop_sort_terms( $terms ) {
+	if ( ! is_array( $terms ) || count( $terms ) < 2 ) return $terms;
+	foreach ( $terms as $t ) {
+		if ( ! ( $t instanceof WP_Term ) || $t->taxonomy !== 'ymkrf_shop' ) return $terms;
+	}
+	$cmp = function ( $a, $b ) { return ymkrf_shop_pos( $a->slug ) <=> ymkrf_shop_pos( $b->slug ); };
+	if ( array_keys( $terms ) === range( 0, count( $terms ) - 1 ) ) usort( $terms, $cmp );
+	else uasort( $terms, $cmp );
+	return $terms;
+}
+add_filter( 'get_terms', function ( $terms, $taxonomies = array() ) {
+	if ( array_values( (array) $taxonomies ) !== array( 'ymkrf_shop' ) ) return $terms;
+	return ymkrf_shop_sort_terms( $terms );
+}, 20, 2 );
+add_filter( 'get_the_terms', function ( $terms, $post_id = 0, $taxonomy = '' ) {
+	if ( $taxonomy !== 'ymkrf_shop' ) return $terms;
+	return ymkrf_shop_sort_terms( $terms );
+}, 20, 3 );
 
 /** もとの内容（このファイルに書いてある内容） */
 function ymkrf_shops_base() {

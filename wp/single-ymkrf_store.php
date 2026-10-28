@@ -215,6 +215,14 @@ if ( function_exists( 'ymkrf_crumb_ld' ) ) {
           <span class="p-staff__txt">
             <?php if ( $role ) : ?><span class="p-staff__role"><?php echo esc_html( $role ); ?></span><?php endif; ?>
             <span class="p-staff__name"><?php echo esc_html( get_the_title( $st ) ); ?></span>
+            <?php
+            $also = array();
+            if ( function_exists( 'ymkrf_staff_get_shops' ) ) {
+              $sn = ymkrf_staff_shops();
+              foreach ( ymkrf_staff_get_shops( $st->ID ) as $o ) if ( $o !== $slug && isset( $sn[ $o ] ) ) $also[] = $sn[ $o ];
+            }
+            if ( $also ) echo '<span class="p-staff__also">' . esc_html( implode( '・', $also ) ) . 'と兼任</span>';
+            ?>
             <?php if ( $word ) : ?><span class="p-staff__word"><?php echo esc_html( wp_trim_words( $word, 50, '…' ) ); ?></span><?php endif; ?>
             <?php if ( $lic ) : ?><span class="p-staff__lic">資格：<?php echo esc_html( $lic ); ?></span><?php endif; ?>
           </span>

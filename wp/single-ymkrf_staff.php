@@ -68,7 +68,7 @@ while ( have_posts() ) : the_post();
       <tbody>
         <?php if ( $shop ) : ?>
           <tr><th>所属店舗</th>
-            <td><?php echo esc_html( $shop ); ?></td></tr>
+            <td><?php echo esc_html( function_exists( 'ymkrf_staff_shop_names' ) && ymkrf_staff_shop_names( $id ) !== '' ? ymkrf_staff_shop_names( $id ) : $shop ); ?></td></tr>
         <?php endif; ?>
         <?php if ( $role ) : ?>
           <tr><th>役職</th><td><?php echo esc_html( $role ); ?></td></tr>

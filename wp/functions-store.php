@@ -39,7 +39,10 @@ add_action( 'init', function () {
 		),
 		'public'              => true,
 		'show_ui'             => true,
-		'show_in_menu'        => 'edit.php?post_type=ymkrf_staff',   /* 左メニューはふやしません（スタッフの中へ） */
+		/* 左メニューで「スタッフ」と同じ段に出します（2026/10/28 ユーザー「スタッフと同じ階層にして」） */
+		'show_in_menu'        => true,
+		'menu_position'       => 7,
+		'menu_icon'           => 'dashicons-store',
 		'show_in_rest'        => false,                                /* 入力欄はこの画面だけにします */
 		'has_archive'         => false,                                /* 一覧は /shops/（ymkrf-shops.php）です */
 		'rewrite'             => array( 'slug' => 'shops', 'with_front' => false ),
@@ -209,6 +212,23 @@ add_action( 'admin_menu', function () {
 	remove_submenu_page( 'edit.php?post_type=ymkrf_staff', 'ymkrf-shops-edit' );
 }, 99 );
 
+/* 左メニューで「店舗ページ」を「スタッフ」のすぐ下に置きます（2026/10/28 ユーザー「スタッフと同じ階層にして」） */
+add_action( 'admin_menu', function () {
+	global $menu;
+	if ( ! is_array( $menu ) ) return;
+	$staff = null; $store = null;
+	foreach ( $menu as $k => $m ) {
+		if ( isset( $m[2] ) && $m[2] === 'edit.php?post_type=ymkrf_staff' ) $staff = $k;
+		if ( isset( $m[2] ) && $m[2] === 'edit.php?post_type=ymkrf_store' ) $store = $k;
+	}
+	if ( $staff === null || $store === null ) return;
+	$item = $menu[ $store ];
+	unset( $menu[ $store ] );
+	$pos = (float) $staff + 0.0101;
+	while ( isset( $menu[ (string) $pos ] ) ) $pos += 0.0001;
+	$menu[ (string) $pos ] = $item;
+}, 1000 );
+
 
 /* ============================================================
    4. 編集画面（ページの並びと同じ順に、カードで入力します）
@@ -333,7 +353,43 @@ function ymkrf_store_box( $post ) {
 	    <em class="ymkrf-st__em">質問と答えの両方が入っているものだけページに出ます。Googleの検索結果に質問が出ることもあります。<b>「追加料金なし」のような言い切りは書かないでください。</b></em>
 	  </div>
 
-	  <p class="ymkrf-st__auto">スタッフ・施工事例・お客様の声・お知らせ・チラシ・近くのお店は、<b>自動で入ります</b>（スタッフは「所属店舗」、施工事例は「対応店舗」がこのお店のもの）。</p>
+	  <?php
+	  /* ⑦ このお店のスタッフ（兼任もここでえらべます。2026/10/28 ユーザー「スタッフも選べるように」） */
+	  if ( function_exists( 'ymkrf_staff_get_shops' ) ) :
+	    $all_st = get_posts( array( 'post_type' => 'ymkrf_staff', 'post_status' => array( 'publish', 'draft', 'private' ),
+	                                'posts_per_page' => -1, 'orderby' => array( 'menu_order' => 'ASC', 'title' => 'ASC' ) ) );
+	    $snames = function_exists( 'ymkrf_staff_shops' ) ? ymkrf_staff_shops() : array();
+	    $groups = array();
+	    foreach ( $all_st as $st ) {
+	      $mine = ymkrf_staff_get_shops( $st->ID );
+	      $main = $mine ? $mine[0] : '';
+	      $groups[ $main ][] = array( $st, $mine );
+	    }
+	    $gorder = array_keys( $snames ); $gorder[] = '';
+	  ?>
+	  <div class="ymkrf-st__card">
+	    <h3>⑦ このお店のスタッフ</h3>
+	    <p class="ymkrf-st__em" style="margin:0 0 10px">チェックを入れた人が、このお店のページとスタッフ紹介に出ます。<b>兼任の人もここでえらべます</b>（例：金沢野々市店の人を、金沢田上店にもチェック）。
+	      スタッフの登録画面の「所属店舗」と同じものです（どちらで直しても同じになります）。</p>
+	    <input type="hidden" name="ymkrf_st_staff_sent" value="1">
+	    <div class="ymkrf-st__staff">
+	      <?php foreach ( $gorder as $gk ) : if ( empty( $groups[ $gk ] ) ) continue; ?>
+	        <div class="ymkrf-st__sg">
+	          <b><?php echo esc_html( $gk === '' ? '所属なし' : ( isset( $snames[ $gk ] ) ? $snames[ $gk ] : $gk ) ); ?></b>
+	          <?php foreach ( $groups[ $gk ] as $row ) : list( $st, $mine ) = $row; $on = in_array( $slug, $mine, true ); ?>
+	            <label class="<?php echo $on ? 'is-on' : ''; ?>">
+	              <input type="hidden" name="ymkrf_st_staff_all[]" value="<?php echo (int) $st->ID; ?>">
+	              <input type="checkbox" name="ymkrf_st_staff[]" value="<?php echo (int) $st->ID; ?>"<?php checked( $on ); ?>>
+	              <?php echo esc_html( get_the_title( $st ) ); ?><?php if ( $st->post_status !== 'publish' ) echo '<small>（下書き）</small>'; ?>
+	            </label>
+	          <?php endforeach; ?>
+	        </div>
+	      <?php endforeach; ?>
+	    </div>
+	  </div>
+	  <?php endif; ?>
+
+	  <p class="ymkrf-st__auto">施工事例・お客様の声・お知らせ・チラシ・近くのお店は、<b>自動で入ります</b>（施工事例は「対応店舗」がこのお店のもの）。</p>
 	</div>
 	<style>
 	  #ymkrf_store_box .inside{margin:0;padding:0 12px 12px}
@@ -357,6 +413,12 @@ function ymkrf_store_box( $post ) {
 	  .ymkrf-st__faq{display:grid;grid-template-columns:1fr;gap:6px;padding:10px 12px;border:1px dashed #dcdcde;border-radius:10px;margin:0 0 8px}
 	  .ymkrf-st__faq input{font-weight:700}
 	  .ymkrf-st__faqx{justify-self:end;color:#b32d2e!important;font-size:12px}
+	  .ymkrf-st__staff{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+	  .ymkrf-st__sg{background:#f6f7f7;border-radius:10px;padding:10px 12px}
+	  .ymkrf-st__sg>b{display:block;font-size:12.5px;color:#50575e;margin-bottom:4px}
+	  .ymkrf-st__sg label{display:flex;align-items:center;gap:6px;padding:3px 0;font-size:13px}
+	  .ymkrf-st__sg label.is-on{font-weight:700;color:#c92800}
+	  .ymkrf-st__sg small{color:#787878}
 	  .ymkrf-st__auto{background:#fff8f5;border:1px solid #ffd9cc;border-radius:10px;padding:10px 14px;font-size:13px}
 	</style>
 	<script>
@@ -454,6 +516,18 @@ add_action( 'save_post_ymkrf_store', function ( $post_id ) {
 	if ( $slug !== '' && $p && $p->post_name !== $slug ) {
 		remove_all_actions( 'save_post_ymkrf_store' );
 		wp_update_post( array( 'ID' => $post_id, 'post_name' => $slug ) );
+	}
+	/* このお店のスタッフ（チェックを入れた人に、このお店を足す・外した人から、このお店を外す） */
+	if ( isset( $_POST['ymkrf_st_staff_sent'] ) && $slug !== '' && function_exists( 'ymkrf_staff_set_shops' ) ) {
+		$want = array_map( 'intval', isset( $_POST['ymkrf_st_staff'] ) ? (array) $_POST['ymkrf_st_staff'] : array() );
+		foreach ( array_map( 'intval', isset( $_POST['ymkrf_st_staff_all'] ) ? (array) $_POST['ymkrf_st_staff_all'] : array() ) as $sid ) {
+			if ( ! $sid || get_post_type( $sid ) !== 'ymkrf_staff' || ! current_user_can( 'edit_post', $sid ) ) continue;
+			$mine = ymkrf_staff_get_shops( $sid );
+			$has  = in_array( $slug, $mine, true );
+			$on   = in_array( $sid, $want, true );
+			if ( $on && ! $has ) { $mine[] = $slug; ymkrf_staff_set_shops( $sid, $mine ); }
+			if ( ! $on && $has ) { ymkrf_staff_set_shops( $sid, array_values( array_diff( $mine, array( $slug ) ) ) ); }
+		}
 	}
 	delete_transient( 'ymkrf_store_cnt_' . $slug );
 }, 10 );

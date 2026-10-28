@@ -17,9 +17,12 @@ $all   = ymkrf_staff_list();
 /* 店舗ごとに分けます */
 $by = array();
 foreach ( $all as $st ) {
-	$k = (string) get_post_meta( $st->ID, '_ymkrf_staff_shop', true );
-	if ( $k === '' ) $k = 'other';
-	$by[ $k ][] = $st;
+	/* 兼任の人は、所属するどの店舗にも出します（2026/10/28 ユーザー「金沢田上店は金沢野々市店と兼任したりする」） */
+	$ks = function_exists( 'ymkrf_staff_get_shops' ) ? ymkrf_staff_get_shops( $st->ID )
+	    : array( (string) get_post_meta( $st->ID, '_ymkrf_staff_shop', true ) );
+	$ks = array_filter( $ks, 'strlen' );
+	if ( ! $ks ) $ks = array( 'other' );
+	foreach ( $ks as $k ) $by[ $k ][] = $st;
 }
 
 get_header(); ?>
@@ -99,12 +102,18 @@ get_header(); ?>
             $lic  = trim( (string) get_post_meta( $st->ID, '_ymkrf_staff_lic', true ) );
             $hob  = trim( (string) get_post_meta( $st->ID, '_ymkrf_staff_hobby', true ) );
             $chg  = trim( (string) get_post_meta( $st->ID, '_ymkrf_staff_charge', true ) );
+            /* ほかの店舗とかけもちのときは「○○店と兼任」 */
+            $also = array();
+            if ( function_exists( 'ymkrf_staff_get_shops' ) ) {
+              foreach ( ymkrf_staff_get_shops( $st->ID ) as $o ) if ( $o !== $slug && isset( $shops[ $o ] ) ) $also[] = $shops[ $o ];
+            }
           ?>
           <a class="p-staff" href="<?php echo esc_url( get_permalink( $st ) ); ?>">
             <span class="p-staff__face"><?php echo ymkrf_staff_face( $st->ID, 'medium' ); ?></span>
             <span class="p-staff__txt">
               <?php if ( $role ) : ?><span class="p-staff__role"><?php echo esc_html( $role ); ?></span><?php endif; ?>
               <span class="p-staff__name"><?php echo esc_html( get_the_title( $st ) ); ?></span>
+              <?php if ( $also ) : ?><span class="p-staff__also"><?php echo esc_html( implode( '・', $also ) ); ?>と兼任</span><?php endif; ?>
               <?php if ( $kana ) : ?><span class="p-staff__kana"><?php echo esc_html( $kana ); ?></span><?php endif; ?>
               <?php if ( $word ) : ?><span class="p-staff__word"><?php echo esc_html( wp_trim_words( $word, 60, '…' ) ); ?></span><?php endif; ?>
               <?php if ( $chg ) : ?><span class="p-staff__lic">担当：<?php echo esc_html( $chg ); ?></span><?php endif; ?>

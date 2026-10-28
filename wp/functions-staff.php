@@ -59,23 +59,12 @@ function ymkrf_staff_extra_shops() {
 	);
 }
 
-/** 店舗を出す順番。トップページの「店舗・ショールーム」と同じ並びです */
+/** 所属を出す順番（本部 → 工事部 → お店の並び順） */
 function ymkrf_staff_shop_order() {
-	return array(
-		'honbu',            /* 本部 */
-		'kouji',            /* 工事部 */
-		'tazuruhama',       /* 田鶴浜店 */
-		'nonoichi',         /* 金沢野々市店 */
-		'kawakita',         /* 川北店 */
-		'komathu',          /* 小松店 */
-		'shinkaga',         /* 新加賀店 */
-		'hakui',            /* 羽咋店 */
-		'tagami',           /* 金沢田上店 */
-		'higashikanazawa',  /* 東金沢店 */
-		'kahahothu',        /* 開発店 */
-		'kanadu',           /* 金津店 */
-		'asahi',            /* 朝日店 */
-	);
+	/* 本部・工事部をいちばん上に。そのあとはお店の並び順（functions-shops.php の ymkrf_shop_order）と同じです
+	   （2026/10/28 ユーザー「本部は一番上」「工事部は本部の下でOK」） */
+	$shops = function_exists( 'ymkrf_shop_order' ) ? ymkrf_shop_order() : array();
+	return array_merge( array( 'honbu', 'kouji' ), $shops );
 }
 
 /** 所属さきの一覧。店舗のほかに「本部」を足しています
@@ -103,6 +92,60 @@ function ymkrf_staff_shops() {
 }
 
 
+/* ------------------------------------------------------------
+   所属店舗は「いくつでも」（兼任）
+   （2026/10/28 ユーザー「店舗を登録したり削除したりできるようにして。あと、スタッフも選べるように。
+     金沢田上店は金沢野々市店と兼任したりするので」）
+
+   ・_ymkrf_staff_shop  … メインの店舗（1つ。これまでと同じ。並び順・名前の表示に使います）
+   ・_ymkrf_staff_shops … 所属する店舗ぜんぶ（メインもふくむ。1店舗＝1行）
+   ------------------------------------------------------------ */
+
+/** 所属する店舗（メインがいちばん前） */
+function ymkrf_staff_get_shops( $post_id ) {
+	$main = trim( (string) get_post_meta( $post_id, '_ymkrf_staff_shop', true ) );
+	$all  = array_map( 'strval', (array) get_post_meta( $post_id, '_ymkrf_staff_shops', false ) );
+	$out  = array();
+	if ( $main !== '' ) $out[] = $main;
+	foreach ( $all as $s ) if ( $s !== '' && ! in_array( $s, $out, true ) ) $out[] = $s;
+	return $out;
+}
+
+/** 所属する店舗を保存（1つめがメイン） */
+function ymkrf_staff_set_shops( $post_id, $slugs ) {
+	$ok   = array_keys( ymkrf_staff_shops() );
+	$list = array();
+	foreach ( (array) $slugs as $s ) {
+		$s = sanitize_key( (string) $s );
+		if ( $s !== '' && in_array( $s, $ok, true ) && ! in_array( $s, $list, true ) ) $list[] = $s;
+	}
+	update_post_meta( $post_id, '_ymkrf_staff_shop', $list ? $list[0] : '' );
+	delete_post_meta( $post_id, '_ymkrf_staff_shops' );
+	foreach ( $list as $s ) add_post_meta( $post_id, '_ymkrf_staff_shops', $s );
+	if ( function_exists( 'ymkrf_staff_update_shop_rank' ) ) ymkrf_staff_update_shop_rank( $post_id );
+	/* 店舗ページの「スタッフ○人」の数を数えなおします */
+	foreach ( array_keys( ymkrf_staff_shops() ) as $k ) delete_transient( 'ymkrf_store_cnt_' . $k );
+	return $list;
+}
+
+/** 所属店舗の名前（兼任もふくめて「金沢田上店・金沢野々市店」） */
+function ymkrf_staff_shop_names( $post_id, $sep = '・' ) {
+	$names = ymkrf_staff_shops();
+	$out   = array();
+	foreach ( ymkrf_staff_get_shops( $post_id ) as $s ) if ( isset( $names[ $s ] ) ) $out[] = $names[ $s ];
+	return implode( $sep, $out );
+}
+
+/** その店舗のスタッフをさがす条件（メインでも兼任でも） */
+function ymkrf_staff_shop_meta_query( $slug ) {
+	return array(
+		'relation' => 'OR',
+		array( 'key' => '_ymkrf_staff_shop',  'value' => $slug ),
+		array( 'key' => '_ymkrf_staff_shops', 'value' => $slug ),
+	);
+}
+
+
 /* ============================================================
    2. 入力欄
    ============================================================ */
@@ -116,20 +159,36 @@ function ymkrf_staff_metabox( $post ) {
 		return (string) get_post_meta( $post->ID, $k, true );
 	};
 	$shops = ymkrf_staff_shops();
-	$cur   = $get( '_ymkrf_staff_shop' );
+	$mine  = ymkrf_staff_get_shops( $post->ID );
 	?>
 	<table class="form-table ymkrf-staff__table">
 
 	  <tr>
 	    <th>所属店舗</th>
 	    <td>
-	      <select name="_ymkrf_staff_shop">
-	        <option value="">（えらんでください）</option>
+	      <?php /* 店舗はいくつでも（兼任）。1つめがメインです（2026/10/28） */ ?>
+	      <input type="hidden" name="ymkrf_staff_shops_sent" value="1">
+	      <ul class="ymkrf-sshops">
+	        <?php foreach ( $mine as $i => $slug ) : if ( ! isset( $shops[ $slug ] ) ) continue; ?>
+	          <li data-slug="<?php echo esc_attr( $slug ); ?>">
+	            <input type="hidden" name="ymkrf_staff_shops[]" value="<?php echo esc_attr( $slug ); ?>">
+	            <span class="ymkrf-sshops__name"><?php echo esc_html( $shops[ $slug ] ); ?></span>
+	            <span class="ymkrf-sshops__main">メイン</span>
+	            <button type="button" class="button-link ymkrf-sshops__tomain">メインにする</button>
+	            <button type="button" class="ymkrf-sshops__x" title="この店舗を外す">×</button>
+	          </li>
+	        <?php endforeach; ?>
+	      </ul>
+	      <select class="ymkrf-sshops__add">
+	        <option value="">＋ 店舗を追加する</option>
 	        <?php foreach ( $shops as $slug => $name ) : ?>
-	          <option value="<?php echo esc_attr( $slug ); ?>" <?php selected( $cur, $slug ); ?>>
-	            <?php echo esc_html( $name ); ?></option>
+	          <option value="<?php echo esc_attr( $slug ); ?>"<?php echo in_array( $slug, $mine, true ) ? ' disabled' : ''; ?>><?php echo esc_html( $name ); ?></option>
 	        <?php endforeach; ?>
 	      </select>
+	      <p class="description" style="margin-bottom:8px">
+	        <b>兼任のときは、店舗をいくつでも足せます</b>（例：金沢田上店 ＋ 金沢野々市店）。いちばん上が<b>メイン</b>です。<br>
+	        どの店舗のページ・スタッフ紹介にも出ます。「スタッフ ＞ 店舗ページ」の各お店からも、えらんだり外したりできます。
+	      </p>
 	      <p class="description">
 	        施工事例の「担当した店舗」でこの店舗をえらぶと、
 	        <b>営業担当のところにこの人が出てくる</b>ようになります。<br>
@@ -238,6 +297,39 @@ function ymkrf_staff_metabox( $post ) {
 	  </tr>
 
 	</table>
+	<style>
+	  .ymkrf-sshops{list-style:none;margin:0 0 8px;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+	  .ymkrf-sshops li{display:inline-flex;align-items:center;gap:8px;margin:0;padding:6px 8px 6px 14px;border:2px solid #dcdcde;border-radius:999px;background:#fff;font-weight:700}
+	  .ymkrf-sshops li:first-child{border-color:#fe3301;background:#fff6f3}
+	  .ymkrf-sshops__main{display:none;font-size:11px;background:#fe3301;color:#fff;border-radius:999px;padding:1px 8px}
+	  .ymkrf-sshops li:first-child .ymkrf-sshops__main{display:inline-block}
+	  .ymkrf-sshops li:first-child .ymkrf-sshops__tomain{display:none}
+	  .ymkrf-sshops__tomain{font-size:11.5px}
+	  .ymkrf-sshops__x{border:0;background:#f0f0f1;border-radius:50%;width:22px;height:22px;line-height:1;cursor:pointer;color:#50575e}
+	  .ymkrf-sshops__x:hover{background:#b32d2e;color:#fff}
+	</style>
+	<script>
+	jQuery(function ($) {
+	  var $ul = $('.ymkrf-sshops'), $add = $('.ymkrf-sshops__add');
+	  function sync() {
+	    var on = $ul.children('li').map(function () { return $(this).data('slug'); }).get();
+	    $add.find('option').each(function () { if (this.value) this.disabled = on.indexOf(this.value) >= 0; });
+	  }
+	  $add.on('change', function () {
+	    var v = this.value, t = $(this).find('option:selected').text();
+	    if (!v) return;
+	    var $li = $('<li>').attr('data-slug', v).data('slug', v)
+	      .append($('<input type="hidden" name="ymkrf_staff_shops[]">').val(v))
+	      .append($('<span class="ymkrf-sshops__name">').text(t))
+	      .append('<span class="ymkrf-sshops__main">メイン</span>')
+	      .append('<button type="button" class="button-link ymkrf-sshops__tomain">メインにする</button>')
+	      .append('<button type="button" class="ymkrf-sshops__x" title="この店舗を外す">×</button>');
+	    $ul.append($li); this.value = ''; sync();
+	  });
+	  $ul.on('click', '.ymkrf-sshops__x', function () { $(this).closest('li').remove(); sync(); });
+	  $ul.on('click', '.ymkrf-sshops__tomain', function () { $ul.prepend($(this).closest('li')); });
+	});
+	</script>
 	<?php
 }
 
@@ -247,7 +339,14 @@ add_action( 'save_post_ymkrf_staff', function ( $post_id ) {
 	     ! wp_verify_nonce( $_POST['ymkrf_staff_nonce'], 'ymkrf_staff_save' ) ) return;
 	if ( ! current_user_can( 'edit_post', $post_id ) ) return;
 
-	foreach ( array( '_ymkrf_staff_shop', '_ymkrf_staff_kana',
+	/* 所属店舗（いくつでも。1つめがメイン） */
+	if ( isset( $_POST['ymkrf_staff_shops_sent'] ) ) {
+		ymkrf_staff_set_shops( $post_id, isset( $_POST['ymkrf_staff_shops'] ) ? (array) wp_unslash( $_POST['ymkrf_staff_shops'] ) : array() );
+	} elseif ( isset( $_POST['_ymkrf_staff_shop'] ) ) {
+		ymkrf_staff_set_shops( $post_id, array( wp_unslash( $_POST['_ymkrf_staff_shop'] ) ) );
+	}
+
+	foreach ( array( '_ymkrf_staff_kana',
 	                 '_ymkrf_staff_role', '_ymkrf_staff_lic',
 	                 '_ymkrf_staff_hobby', '_ymkrf_staff_charge' ) as $k ) {
 		update_post_meta( $post_id, $k, isset( $_POST[ $k ] ) ? sanitize_text_field( $_POST[ $k ] ) : '' );
@@ -325,9 +424,8 @@ function ymkrf_staff_list( $shop_slug = '' ) {
 		'no_found_rows'  => true,
 	);
 	if ( $shop_slug !== '' ) {
-		$args['meta_query'] = array( array(
-			'key' => '_ymkrf_staff_shop', 'value' => $shop_slug,
-		) );
+		/* メインの店舗でも、兼任の店舗でも出します（2026/10/28） */
+		$args['meta_query'] = ymkrf_staff_shop_meta_query( $shop_slug );
 	}
 	$q = new WP_Query( $args );
 	$out = $q->posts;
@@ -545,7 +643,7 @@ add_action( 'save_post_ymkrf_staff', 'ymkrf_staff_update_shop_rank', 31 );
 
 /* すでに登録ずみの人にも1回だけ入れます（数字を上げると、もう一度だけ走ります） */
 add_action( 'admin_init', function () {
-	if ( get_option( 'ymkrf_staff_rank_ver' ) === '3' ) return;
+	if ( get_option( 'ymkrf_staff_rank_ver' ) === '5' ) return;   /* 5＝お店の並び順をサイト全体で変えたので数えなおし（2026/10/28） */
 	if ( ! post_type_exists( 'ymkrf_staff' ) ) return;
 
 	$ids = get_posts( array(
@@ -556,7 +654,7 @@ add_action( 'admin_init', function () {
 		ymkrf_staff_update_rank( $id );
 		ymkrf_staff_update_shop_rank( $id );
 	}
-	update_option( 'ymkrf_staff_rank_ver', '3' );
+	update_option( 'ymkrf_staff_rank_ver', '5' );
 }, 20 );
 
 
@@ -586,10 +684,13 @@ add_action( 'manage_ymkrf_staff_posts_custom_column', function ( $col, $post_id 
 	} elseif ( $col === 'ymkrf_sshop' ) {
 		$v = ymkrf_staff_shop_name( $post_id );
 		/* 店舗ごとのまとまりを作るため、店舗の英字と名前を持たせておきます（2026/10/21） */
-		printf( '<span class="ymkrf-sshop" data-slug="%s" data-name="%s">%s</span>',
+		printf( '<span class="ymkrf-sshop" data-slug="%s" data-name="%s" data-also="%s">%s</span>',
 			esc_attr( (string) get_post_meta( $post_id, '_ymkrf_staff_shop', true ) ),
 			esc_attr( $v ? $v : '所属なし' ),
+			esc_attr( wp_json_encode( array_values( array_slice( ymkrf_staff_get_shops( $post_id ), 1 ) ) ) ),
 			$v ? esc_html( $v ) : '<span style="color:#a7aaad">—</span>' );
+		/* 兼任している店舗は、その店舗の欄にも同じ人が出ます（下の並べかえの JavaScript）。
+		   ここには、その欄の店名だけを出します（2026/10/28 ユーザー「兼任・メインは…という表現は良くない」→「その欄の店名だけ」） */
 	} elseif ( $col === 'ymkrf_srole' ) {
 		$v = trim( (string) get_post_meta( $post_id, '_ymkrf_staff_role', true ) );
 		echo $v ? esc_html( $v ) : '<span style="color:#a7aaad">—</span>';
@@ -601,11 +702,12 @@ add_action( 'admin_head', function () {
 	if ( ! $s || $s->post_type !== 'ymkrf_staff' ) return;
 	echo '<style>
 	  /* 名前と所属店舗が離れすぎないよう、幅を決めて左に寄せます。
-	     いちばん右（役職）だけ、あまった幅を受け持ちます。 */
+	     あまった幅は、いちばん右（施工事例のログイン）が受け持ちます
+	     （2026/10/28 ユーザー「やたら真ん中あいてない？」→ 役職の幅を決めました） */
 	  .column-ymkrf_face{width:64px}
 	  .column-title{width:180px}
 	  .column-ymkrf_sshop{width:130px}
-	  .column-ymkrf_srole{width:auto}
+	  .column-ymkrf_srole{width:210px}
 	  .wp-list-table.posts .column-title .row-actions{white-space:nowrap}
 	  .ymkrf-staff__table th{width:150px}
 	  .ymkrf-staff__nosales{
@@ -685,10 +787,7 @@ add_action( 'pre_get_posts', function ( $q ) {
 	if ( $q->get( 'post_type' ) !== 'ymkrf_staff' ) return;
 	if ( empty( $_GET['ymkrf_shop_filter'] ) ) return;
 
-	$q->set( 'meta_query', array( array(
-		'key'   => '_ymkrf_staff_shop',
-		'value' => sanitize_key( $_GET['ymkrf_shop_filter'] ),
-	) ) );
+	$q->set( 'meta_query', ymkrf_staff_shop_meta_query( sanitize_key( $_GET['ymkrf_shop_filter'] ) ) );
 } );
 
 
@@ -807,6 +906,7 @@ add_action( 'admin_footer-edit.php', function () {
 	.ymkrf-sgrp__cnt{font-size:12px;color:#8c3a1f;font-weight:700}
 	/* 帯で店舗がわかるので、「所属店舗」の列はうすく */
 	.wp-list-table .column-ymkrf_sshop{color:#a7aaad}
+
 	.ymkrf-snav{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 4px}
 	.ymkrf-snav a{display:inline-flex;align-items:baseline;gap:4px;padding:4px 12px;border:1px solid #dcdcde;border-radius:999px;
 	  background:#fff;text-decoration:none;color:#1d2327;font-weight:600;font-size:13px}
@@ -818,21 +918,45 @@ add_action( 'admin_footer-edit.php', function () {
 		var $rows = $('#the-list > tr').not('.no-items');
 		if (!$rows.length) return;
 		var cols = $('.wp-list-table thead tr').first().children(':visible').length || 5;
-		var groups = [], cur = null;
+		/* 兼任の人は、兼任している店舗のまとまりにも出します（2026/10/28 ユーザー「金沢田上店の欄をつくって」）。
+		   その行は見るだけ（チェック・クイック編集なし）。名前を押せば、ふつうに編集できます */
+		var ORDER = <?php echo wp_json_encode( array_keys( ymkrf_staff_shops() ) ); ?>;
+		var NAMES = <?php echo wp_json_encode( ymkrf_staff_shops(), JSON_UNESCAPED_UNICODE ); ?>;
+		var by = {}, order = [];
+		function push(slug, name, $r) {
+			if (!by[slug]) { by[slug] = { slug: slug, name: name, rows: [] }; order.push(slug); }
+			by[slug].rows.push($r);
+		}
 		$rows.each(function () {
 			var $s = $(this).find('.ymkrf-sshop').first();
-			var slug = $s.data('slug') || '_none', name = $s.data('name') || '所属なし';
-			if (!cur || cur.slug !== slug) { cur = { slug: String(slug), name: String(name), first: $(this), n: 0 }; groups.push(cur); }
-			cur.n++;
+			var slug = String($s.data('slug') || '_none'), name = String($s.data('name') || '所属なし');
+			push(slug, name, $(this));
+			var also = $s.data('also') || [];
+			var main = name;
+			also.forEach(function (a) {
+				var $c = $(this).clone();
+				$c.removeAttr('id').addClass('ymkrf-also');
+				$c.find('.check-column').empty();
+				$c.find('div.hidden[id^="inline_"]').remove();
+				$c.find('.row-actions .inline, .row-actions .trash').remove();
+				$c.find('.column-ymkrf_sshop').text(NAMES[a] || a);   /* その欄の店名だけ */
+				push(String(a), NAMES[a] || String(a), $c);
+			}, this);
 		});
-		if (groups.length < 2) return;
+		var desc = /[?&]order=desc/i.test(location.search);
+		var idx = function (sl) { var i = ORDER.indexOf(sl); return i < 0 ? 900 : i; };
+		order.sort(function (a, b) { return desc ? idx(b) - idx(a) : idx(a) - idx(b); });
+		if (order.length < 2) return;
+		var $tb = $('#the-list');
 		var $nav = $('<div class="ymkrf-snav" aria-label="店舗へ移る"></div>');
-		groups.forEach(function (g) {
-			var id = 'ymkrf-sg-' + g.slug;
-			g.first.before('<tr class="ymkrf-sgrp"><td colspan="' + cols + '"><div class="ymkrf-sgrp__bar" id="' + id + '">'
-				+ '<span class="ymkrf-sgrp__name"></span><span class="ymkrf-sgrp__cnt">' + g.n + '人</span></div></td></tr>');
-			$('#' + id + ' .ymkrf-sgrp__name').text(g.name);
-			$nav.append($('<a>', { href: '#' + id }).text(g.name).append($('<small>').text(g.n)));
+		order.forEach(function (sl) {
+			var g = by[sl], id = 'ymkrf-sg-' + g.slug;
+			var $h = $('<tr class="ymkrf-sgrp"><td colspan="' + cols + '"><div class="ymkrf-sgrp__bar" id="' + id + '">'
+				+ '<span class="ymkrf-sgrp__name"></span><span class="ymkrf-sgrp__cnt">' + g.rows.length + '人</span></div></td></tr>');
+			$h.find('.ymkrf-sgrp__name').text(g.name);
+			$tb.append($h);
+			g.rows.forEach(function ($r) { $tb.append($r); });
+			$nav.append($('<a>', { href: '#' + id }).text(g.name).append($('<small>').text(g.rows.length)));
 		});
 		$('.wp-list-table').first().before($nav);
 	});
