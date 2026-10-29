@@ -41,7 +41,8 @@ if ( function_exists( 'ymkrf_crumb_ld' ) ) {
   <div class="p-colart__head">
     <div class="l-wrap l-wrap--narrow">
       <p class="p-colart__meta">
-        <?php if ( $catname ) : ?><span class="p-col__tag p-col__tag--solid"><?php echo esc_html( $catname ); ?></span><?php endif; ?>
+        <?php /* カテゴリは全部出します（2026/10/29。前は1つめだけ） */
+              if ( $terms && ! is_wp_error( $terms ) ) : foreach ( $terms as $tm ) : ?><span class="p-col__tag p-col__tag--solid"><?php echo esc_html( $tm->name ); ?></span><?php endforeach; endif; ?>
         <?php /* 公開日と、直したときは更新日（2026/09/25 ユーザー指示）。
                  公開日は書きかえません。積み重ねが消えてしまうためです。 */ ?>
         <?php if ( function_exists( 'ymkrf_column_dateline' ) ) : ymkrf_column_dateline(); else : ?>

@@ -8,7 +8,9 @@
  * ・ダッシュボードに「コラム」というメニューが増えます。
  * ・分類は商品と同じ「商品カテゴリ（キッチン／お風呂 …）」を使います。
  *   記事にキッチンを付けると、キッチンのページに自動で並びます。
- * ・URL は /column/<記事のスラッグ>/ 、一覧は /column/ です。
+ * ・URL は旧ホームページのブログと同じ形です（2026/10/29 ユーザー「https://yamakishi-reform.jp/blog/ のURLと合わせてください」）。
+ *     記事 /blog/entry/<番号>（最後に「/」なし）／一覧 /blog/／カテゴリ /blog/category/<名前>/
+ *   番号・転送は inc/functions-column-url.php。
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
@@ -30,7 +32,7 @@ add_action( 'init', function () {
 			'search_items'  => 'コラムを検索',
 		),
 		'public'        => true,
-		'has_archive'   => 'column',
+		'has_archive'   => 'blog',   /* 一覧は /blog/（旧ブログと同じ。2026/10/29）。/column/ は /blog/ へ転送 */
 		'menu_icon'     => 'dashicons-edit-page',
 		'menu_position' => 6,
 		'rewrite'       => array( 'slug' => 'column', 'with_front' => false ),
@@ -74,13 +76,14 @@ add_action( 'init', function () {
 add_filter( 'query_vars', function ( $v ) { $v[] = 'ymkrf_colcat'; return $v; } );
 
 add_action( 'init', function () {
+	/* 2026/10/29 旧ブログと同じ /blog/category/<名前>/ に（/column/cat/… は転送） */
 	add_rewrite_rule(
-		'^column/cat/([^/]+)/page/([0-9]{1,})/?$',
+		'^blog/category/([^/]+)/page/([0-9]{1,})/?$',
 		'index.php?post_type=ymkrf_column&ymkrf_colcat=$matches[1]&paged=$matches[2]',
 		'top'
 	);
 	add_rewrite_rule(
-		'^column/cat/([^/]+)/?$',
+		'^blog/category/([^/]+)/?$',
 		'index.php?post_type=ymkrf_column&ymkrf_colcat=$matches[1]',
 		'top'
 	);
@@ -97,7 +100,9 @@ function ymkrf_column_cat_link( $slug = '' ) {
 	if ( $slug === '' ) return $base;
 
 	if ( get_option( 'permalink_structure' ) ) {
-		return trailingslashit( $base ) . 'cat/' . $slug . '/';
+		/* 旧ブログと同じ日本語のカテゴリ名（/blog/category/キッチン/）。2026/10/29 */
+		$name = function_exists( 'ymkrf_column_cat_urlname' ) ? ymkrf_column_cat_urlname( $slug ) : $slug;
+		return trailingslashit( $base ) . 'category/' . rawurlencode( $name ) . '/';
 	}
 	return add_query_arg( 'ymkrf_colcat', $slug, $base );
 }
@@ -116,6 +121,11 @@ function ymkrf_column_cat_now() {
 	if ( $s === '' && isset( $_GET['ymkrf_product_cat'] ) ) {
 		$s = (string) wp_unslash( $_GET['ymkrf_product_cat'] );
 	}
+	/* /blog/category/キッチン/ のような日本語の名前 → 英字（2026/10/29） */
+	if ( $s !== '' && function_exists( 'ymkrf_column_cat_from_name' ) ) {
+		$en = ymkrf_column_cat_from_name( $s );
+		if ( $en !== '' ) return $en;
+	}
 	return sanitize_title( $s );
 }
 endif;
@@ -125,7 +135,9 @@ add_action( 'pre_get_posts', function ( $q ) {
 	if ( is_admin() || ! $q->is_main_query() ) return;
 	if ( ! $q->is_post_type_archive( 'ymkrf_column' ) ) return;
 
-	$slug = sanitize_title( (string) $q->get( 'ymkrf_colcat' ) );
+	$raw  = (string) $q->get( 'ymkrf_colcat' );
+	$slug = function_exists( 'ymkrf_column_cat_from_name' ) ? ymkrf_column_cat_from_name( $raw ) : '';   /* 日本語の名前も（2026/10/29） */
+	if ( $slug === '' ) $slug = sanitize_title( $raw );
 	if ( $slug === '' ) return;
 
 	$q->set( 'tax_query', array( array(
@@ -190,9 +202,9 @@ add_action( 'wp_head', function () {
 /* 投稿タイプを足したあと、一度だけURLの設定を作り直します
    （/column/cat/... を足したので '2' にしました） */
 add_action( 'init', function () {
-	if ( get_option( 'ymkrf_column_rewrite_ver' ) === '2' ) return;
+	if ( get_option( 'ymkrf_column_rewrite_ver' ) === '3' ) return;   /* 3＝/blog/ にした（2026/10/29） */
 	flush_rewrite_rules( false );
-	update_option( 'ymkrf_column_rewrite_ver', '2' );
+	update_option( 'ymkrf_column_rewrite_ver', '3' );
 }, 100 );
 
 
@@ -291,15 +303,17 @@ add_filter( 'posts_clauses', function ( $clauses, $q ) {
    ============================================================ */
 if ( ! function_exists( 'ymkrf_column_card' ) ) :
 function ymkrf_column_card() {
+	/* カテゴリは全部出します（2026/10/29 ユーザー「お風呂とキッチン選択したのに、お風呂の文字しかないのなぜ？」。
+	   前は1つめだけ出していました） */
 	$terms = get_the_terms( get_the_ID(), 'ymkrf_product_cat' );
-	$tag   = ( $terms && ! is_wp_error( $terms ) ) ? $terms[0]->name : '';
+	$tags  = ( $terms && ! is_wp_error( $terms ) ) ? wp_list_pluck( $terms, 'name' ) : array();
 	?>
 	<a class="p-col__card" href="<?php the_permalink(); ?>">
 		<div class="p-col__ph">
 			<?php if ( has_post_thumbnail() ) : ?>
 				<?php the_post_thumbnail( 'medium_large', array( 'loading' => 'lazy', 'alt' => '' ) ); ?>
 			<?php endif; ?>
-			<?php if ( $tag ) : ?><span class="p-col__tag"><?php echo esc_html( $tag ); ?></span><?php endif; ?>
+			<?php if ( $tags ) : ?><span class="p-col__tags"><?php foreach ( $tags as $tg ) : ?><span class="p-col__tag"><?php echo esc_html( $tg ); ?></span><?php endforeach; ?></span><?php endif; ?>
 		</div>
 		<div class="p-col__body">
 			<?php
@@ -1436,7 +1450,7 @@ add_action( 'init', function () {
    ------------------------------------------------------------ */
 add_action( 'add_meta_boxes', function () {
 	add_meta_box(
-		'ymkrf_col_products', '関係する商品',
+		'ymkrf_col_products', '関連する商品',   /* 2026/10/29 ユーザー「関係する商品→関連する商品」 */
 		'ymkrf_col_products_box', 'ymkrf_column', 'normal', 'default'
 	);
 } );
@@ -1457,11 +1471,10 @@ function ymkrf_col_products_box( $post ) {
 	/* 商品一覧の並び順に合わせます */
 	if ( function_exists( 'ymkrf_product_cat_sort' ) ) $cats = ymkrf_product_cat_sort( $cats );
 	?>
-	<p class="ymkrf-note">
-	  この記事に関係する商品をえらんでください。いくつでもえらべます。<br>
-	  えらぶと、その商品のページに この記事が出るようになり、
-	  この記事の下には えらんだ商品が出ます。
-	</p>
+	<?php /* 2026/10/29 ユーザー「関連する商品のところ、なんかごちゃついている。スッキリさせて」→
+	         説明は1行に。メーカー・商品を左に見出しのある2段にして、案内の文は1か所にまとめました */ ?>
+	<p class="ymkrf-colx__lead">えらんだメーカー・商品のページにこの記事が出て、この記事の下にはえらんだ商品が出ます。</p>
+	<p class="ymkrf-colx__empty"></p>
 
 	<?php
 	/* メーカーごとにも✓できます（2026/10/19 ユーザー指示
@@ -1487,6 +1500,18 @@ function ymkrf_col_products_box( $post ) {
 		}
 	}
 	$use_ids = array_unique( array_map( 'intval', $use_ids ) );
+
+	/* メーカーごとに「扱っている商品カテゴリ（term_id）」を持たせます。
+	   上の「商品カテゴリ」の✓に合わせて、札をしぼるためです
+	   （2026/10/29 ユーザー「お風呂を選ぶとお風呂にあるメーカーが出て✔できるような仕組みに」→「そうですね」） */
+	$mk_cats = array();
+	if ( function_exists( 'ymkrf_maker_cats_list' ) && function_exists( 'ymkrf_maker_choices' ) ) {
+		foreach ( array_keys( ymkrf_maker_cats_list() ) as $cslug ) {
+			$ct = get_term_by( 'slug', $cslug, 'ymkrf_product_cat' );
+			if ( ! $ct || is_wp_error( $ct ) ) continue;
+			foreach ( ymkrf_maker_choices( $cslug ) as $mid ) $mk_cats[ (int) $mid ][] = (int) $ct->term_id;
+		}
+	}
 	$makers  = array_values( array_filter( $makers, function ( $mk ) use ( $use_ids, $mk_now ) {
 		if ( in_array( (int) $mk->term_id, $mk_now, true ) ) return true;
 		if ( $use_ids && ! in_array( (int) $mk->term_id, $use_ids, true ) ) return false;
@@ -1494,28 +1519,50 @@ function ymkrf_col_products_box( $post ) {
 	} ) );
 	?>
 	<?php if ( $makers ) : ?>
-	<div class="ymkrf-colm">
-	  <p class="ymkrf-colm__ttl">メーカーでえらぶ <span>（✓したメーカーの商品ページ ぜんぶに、この記事が出ます）</span></p>
+	<div class="ymkrf-colx__row ymkrf-colx__row--mk">
+	  <div class="ymkrf-colx__lab">メーカー<small>そのメーカーの商品ページ ぜんぶに出ます</small></div>
+	  <div class="ymkrf-colm">
 	  <div class="ymkrf-colm__list">
 	    <?php foreach ( $makers as $mk ) : $on = in_array( (int) $mk->term_id, $mk_now, true ); ?>
-	      <label class="ymkrf-colm__item<?php echo $on ? ' is-on' : ''; ?>">
+	      <label class="ymkrf-colm__item<?php echo $on ? ' is-on' : ''; ?>"
+	             data-cats="<?php echo esc_attr( implode( ',', isset( $mk_cats[ (int) $mk->term_id ] ) ? array_unique( $mk_cats[ (int) $mk->term_id ] ) : array() ) ); ?>">
 	        <input type="checkbox" name="ymkrf_col_maker[]" value="<?php echo (int) $mk->term_id; ?>"<?php checked( $on ); ?>>
 	        <?php echo esc_html( $mk->name ); ?>
 	        <small><?php echo (int) $mk->count; ?></small>
 	      </label>
 	    <?php endforeach; ?>
 	  </div>
+	  </div>
 	</div>
-	<p class="ymkrf-colm__ttl" style="margin-top:14px">商品でえらぶ</p>
 	<?php endif; ?>
 
-	<p class="ymkrf-colp__find">
-	  <input type="search" id="ymkrf-colp-find" placeholder="商品名・型番でしぼりこむ" style="width:280px">
-	  <span class="ymkrf-colp__count"></span>
-	</p>
+	<div class="ymkrf-colx__row ymkrf-colx__row--pr">
+	  <div class="ymkrf-colx__lab">商品<small class="ymkrf-colp__count"></small></div>
+	  <div>
+	  <p class="ymkrf-colp__find">
+	    <input type="search" id="ymkrf-colp-find" placeholder="商品名・型番でしぼりこむ">
+	  </p>
 
+	<?php
+	/* 給湯器・エコキュート・内装・改装・コンロは、商品ひとつずつの✓は出しません。
+	   上の「商品カテゴリ」の✓だけで足ります（2026/10/29 ユーザー「給湯器、エコキュート、内装改装、コンロは
+	   ここまで詳細✔欄不要です。大カテゴリのみの✔にして」）。
+	   前に✓してあった商品は、消えないように見えない形で残します。 */
+	$ymkrf_colp_skip = array( 'boiler', 'ecocute', 'interior', 'cooktop' );
+	?>
 	<div class="ymkrf-colp">
 	  <?php foreach ( $cats as $c ) :
+	    if ( in_array( $c->slug, $ymkrf_colp_skip, true ) ) {
+	      foreach ( get_posts( array(
+	        'post_type' => 'ymkrf_product', 'posts_per_page' => -1, 'fields' => 'ids',
+	        'post_status' => array( 'publish', 'draft', 'pending', 'private' ),
+	        'post__in' => $now ? $now : array( 0 ),
+	        'tax_query' => array( array( 'taxonomy' => 'ymkrf_product_cat', 'field' => 'term_id', 'terms' => $c->term_id ) ),
+	      ) ) as $keep ) {
+	        echo '<input type="hidden" name="ymkrf_col_product[]" value="' . (int) $keep . '">';
+	      }
+	      continue;
+	    }
 	    $posts = get_posts( array(
 	      'post_type'      => 'ymkrf_product',
 	      'posts_per_page' => -1,
@@ -1527,7 +1574,7 @@ function ymkrf_col_products_box( $post ) {
 	      ) ),
 	    ) );
 	    if ( ! $posts ) continue; ?>
-	    <div class="ymkrf-colp__cat">
+	    <div class="ymkrf-colp__cat" data-cat="<?php echo (int) $c->term_id; ?>">
 	      <h4><?php echo esc_html( $c->name ); ?></h4>
 	      <ul>
 	        <?php foreach ( $posts as $p ) :
@@ -1550,31 +1597,37 @@ function ymkrf_col_products_box( $post ) {
 	    </div>
 	  <?php endforeach; ?>
 	</div>
+	  </div>
+	</div>
 
 	<style>
-	  .ymkrf-colm{margin:8px 0 4px}
-	  .ymkrf-colm__ttl{margin:0 0 6px;font-weight:700;font-size:13px}
-	  .ymkrf-colm__ttl span{font-weight:400;color:#787c82;font-size:12px}
+	  #ymkrf_col_products .inside{margin-top:6px}
+	  .ymkrf-colx__lead{margin:0 0 10px;color:#646970;font-size:12.5px}
+	  .ymkrf-colx__empty{margin:0;padding:16px;border:1px dashed #c3c4c7;border-radius:6px;background:#fbfbfb;
+	    color:#646970;text-align:center;font-size:13px;line-height:1.7}
+	  .ymkrf-colx__empty:empty{display:none}
+	  .ymkrf-colx__row{display:grid;grid-template-columns:120px minmax(0,1fr);gap:14px;padding:12px 0;border-top:1px solid #f0f0f1}
+	  .ymkrf-colx__lab{font-weight:700;font-size:13.5px;padding-top:4px}
+	  .ymkrf-colx__lab small{display:block;margin-top:3px;font-weight:400;font-size:11.5px;color:#8c8f94;line-height:1.5}
 	  .ymkrf-colm__list{display:flex;flex-wrap:wrap;gap:6px}
-	  .ymkrf-colm__item{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;
-	    border:1px solid #dcdcde;border-radius:999px;background:#fff;font-size:13px;cursor:pointer}
-	  .ymkrf-colm__item small{color:#a7aaad;font-size:11px}
-	  .ymkrf-colm__item.is-on{background:#fff4f0;border-color:#fe3301;font-weight:700}
-	  .ymkrf-colp__find{margin:6px 0 10px}
-	  .ymkrf-colp__count{margin-left:10px;font-size:12px;color:#787c82}
-	  .ymkrf-colp{
-	    display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
-	    max-height:420px;overflow:auto;padding:4px;border:1px solid #dcdcde;border-radius:6px;
-	    background:#fff}
-	  .ymkrf-colp__cat h4{
-	    margin:0 0 6px;padding:6px 9px;border-radius:5px;
-	    background:#fdece6;border-bottom:2px solid #fe3301;font-size:12.5px}
+	  .ymkrf-colm__item{display:inline-flex;align-items:center;gap:5px;padding:5px 12px 5px 9px;
+	    border:1px solid #c3c4c7;border-radius:999px;background:#fff;font-size:13px;cursor:pointer}
+	  .ymkrf-colm__item:hover{border-color:#fe3301}
+	  .ymkrf-colm__item input{margin:0}
+	  .ymkrf-colm__item small{display:none}
+	  .ymkrf-colm__item.is-on{background:#fff1ec;border-color:#fe3301;color:#c92800;font-weight:700}
+	  .ymkrf-colp__find{margin:0 0 10px}
+	  .ymkrf-colp__find input{width:100%;max-width:320px}
+	  .ymkrf-colp{display:grid;gap:10px 18px;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));max-height:360px;overflow:auto}
+	  .ymkrf-colp__none{grid-column:1/-1;margin:0;color:#646970;font-size:12.5px}
+	  .ymkrf-colp__cat h4{margin:0 0 4px;padding:0 0 4px;border-bottom:2px solid #fe3301;font-size:12.5px;color:#1d2327}
 	  .ymkrf-colp__cat ul{margin:0;padding:0;list-style:none}
 	  .ymkrf-colp__cat li{margin:0;padding:3px 6px;border-radius:4px;font-size:13px}
-	  .ymkrf-colp__cat li:nth-child(odd){background:#fafafa}
-	  .ymkrf-colp__cat li.is-on{background:#fff4f0}
+	  .ymkrf-colp__cat li:hover{background:#f6f7f7}
+	  .ymkrf-colp__cat li.is-on{background:#fff1ec;color:#c92800;font-weight:700}
 	  .ymkrf-colp__cat label{display:flex;align-items:center;gap:6px;cursor:pointer}
-	  .ymkrf-colp__cat em{font-style:normal;font-size:11px;color:#787c82}
+	  .ymkrf-colp__cat input{margin:0}
+	  .ymkrf-colp__cat em{font-style:normal;font-size:11px;color:#8c8f94;font-weight:400}
 	  .ymkrf-colp__cat b{font-size:10.5px;color:#b32d2e;font-weight:700}
 	</style>
 	<script>
@@ -1582,29 +1635,85 @@ function ymkrf_col_products_box( $post ) {
 
 	  function count() {
 	    var n = $('.ymkrf-colp input:checked').length;
-	    $('.ymkrf-colp__count').text(n ? n + '件えらんでいます' : 'まだえらんでいません');
+	    $('.ymkrf-colp__count').text(n ? n + '件えらんでいます' : '');
 	  }
 	  count();
 
 	  $(document).on('change', '.ymkrf-colm input', function () {
 	    $(this).closest('label').toggleClass('is-on', this.checked);
+	    makers();
 	  });
+
+	  /* 商品カテゴリの✓に合わせて、メーカーの札をしぼります（2026/10/29）。
+	     何も✓していないときは全部。✓してあるメーカーは、しぼっても消しません */
+	  var $catIn = $('#ymkrf_product_catchecklist input[type=checkbox]');
+	  function makers() {
+	    var on = [], names = [];
+	    $catIn.filter(':checked').each(function () {
+	      on.push(String(this.value));
+	      names.push($.trim($(this).closest('label').text()));
+	    });
+	    var shown = 0;
+	    $('.ymkrf-colm__item').each(function () {
+	      var cats = String($(this).data('cats') || '').split(',').filter(Boolean);
+	      /* カテゴリをえらぶまでは出しません（✓してあるものだけ出します）。2026/10/29 ユーザー
+	         「商品カテゴリを選ぶまで商品、メーカーは何も出ない設定にした方がみやすくない？」 */
+	      var hit = $(this).find('input').prop('checked') ||
+	                cats.some(function (c) { return on.indexOf(c) >= 0; });
+	      $(this).toggle(hit);
+	      if (hit) shown++;
+	    });
+	    $('.ymkrf-colx__row--mk').toggle(shown > 0);   /* 出すメーカーが無いときは、段ごとかくします */
+	    mkShown = shown;
+	    products(on, names);
+	  }
+	  var mkShown = 0;
+	  $(document).on('change', '#ymkrf_product_catchecklist input[type=checkbox]', makers);
+	  makers();
 
 	  $(document).on('change', '.ymkrf-colp input', function () {
 	    $(this).closest('li').toggleClass('is-on', this.checked);
 	    count();
 	  });
 
-	  /* 名前・型番でしぼりこみます */
-	  $('#ymkrf-colp-find').on('input', function () {
-	    var q = $.trim(this.value).toLowerCase();
-	    $('.ymkrf-colp li').each(function () {
-	      $(this).toggle(q === '' || ($(this).data('find') + '').indexOf(q) >= 0);
-	    });
+	  /* 商品も、関連する商品カテゴリの✓に合わせてしぼります（2026/10/29 ユーザー「商品も同じにできない？」）。
+	     ✓したカテゴリの商品だけ出します。何も✓していないときは全部。
+	     ✓してある商品は、ほかのカテゴリでも消さずに出します。
+	     名前・型番のしぼりこみ（上の検索）とも、いっしょに効きます */
+	  var catOn;   /* ここで [] を入れると、先に動いた makers() の結果を消してしまうので入れません */
+	  function products(on) {
+	    catOn = on || [];
+	    refresh();
+	  }
+	  function refresh() {
+	    var q = $.trim($('#ymkrf-colp-find').val() || '').toLowerCase();
+	    catOn = catOn || [];
 	    $('.ymkrf-colp__cat').each(function () {
-	      $(this).toggle($(this).find('li:visible').length > 0);
+	      var inCat = catOn.indexOf(String($(this).data('cat'))) >= 0;   /* カテゴリをえらぶまでは、✓してある商品だけ */
+	      $(this).find('li').each(function () {
+	        var hitQ = q === '' || ($(this).data('find') + '').indexOf(q) >= 0;
+	        var on   = $(this).find('input').prop('checked');
+	        $(this).toggle(hitQ && (inCat || on));
+	      });
+	      $(this).toggle($(this).find('li').filter(function () { return this.style.display !== 'none'; }).length > 0);
 	    });
-	  });
+	    var shown = $('.ymkrf-colp__cat').filter(function () { return this.style.display !== 'none'; }).length;
+	    var $n = $('.ymkrf-colp__none');
+	    if (!$n.length) $n = $('<p class="ymkrf-colp__none"></p>').prependTo('.ymkrf-colp');
+	    /* 検索で0件のときだけ、リストの中に一言 */
+	    $n.text(!shown && q !== '' ? '「' + q + '」に当てはまる商品はありません' : '').toggle(!shown && q !== '');
+	    /* 商品の段：カテゴリをえらんでいて商品があるとき（または検索中）だけ出します */
+	    var hasPr = $('.ymkrf-colp__cat li').filter(function () {
+	      return catOn.indexOf(String($(this).closest('.ymkrf-colp__cat').data('cat'))) >= 0 || $(this).find('input').prop('checked');
+	    }).length > 0;
+	    $('.ymkrf-colx__row--pr').toggle(hasPr);
+	    /* 案内の文は1か所だけ */
+	    var msg = '';
+	    if (!catOn.length && !hasPr && !mkShown) msg = '先に、上の「関連する商品カテゴリ」をえらんでください。えらんだカテゴリのメーカーと商品が、ここに出ます。';
+	    else if (catOn.length && !hasPr && !mkShown) msg = 'えらんだカテゴリは、ひとつずつえらぶメーカー・商品がありません。「関連する商品カテゴリ」の✓だけで、そのカテゴリのページに出ます。';
+	    $('.ymkrf-colx__empty').text(msg);
+	  }
+	  $('#ymkrf-colp-find').on('input', refresh);
 	});
 	</script>
 	<?php

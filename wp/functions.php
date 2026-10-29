@@ -23,6 +23,8 @@
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 require_once get_stylesheet_directory() . '/inc/functions-snippet.php';
+/* ホームページ側にサンプル・下書き・非公開を出さない（2026/10/29） */
+require_once get_stylesheet_directory() . '/inc/functions-front-hide.php';
 require_once get_stylesheet_directory() . '/inc/functions-product.php';
 /* メーカーのデジタルカタログへのリンク（2026/10/13） */
 require_once get_stylesheet_directory() . '/inc/functions-product-catalog.php';
@@ -41,6 +43,8 @@ require_once get_stylesheet_directory() . '/inc/functions-slug.php';
 require_once get_stylesheet_directory() . '/inc/functions-product-seo.php';
 require_once get_stylesheet_directory() . '/inc/functions-check.php';
 require_once get_stylesheet_directory() . '/inc/functions-column.php';
+/* コラムのURLを旧ブログと同じ /blog/entry/番号 に（2026/10/29） */
+require_once get_stylesheet_directory() . '/inc/functions-column-url.php';
 /* 給湯器・エコキュートのエラーコード一覧を、管理画面の「エラーコード」から直せるように（2026/10/20） */
 require_once get_stylesheet_directory() . '/inc/functions-errcode.php';
 /* コラムの本文に入っているリンクの点検（見るだけの画面です） */
@@ -68,6 +72,8 @@ require_once get_stylesheet_directory() . '/inc/functions-shops.php';
 require_once get_stylesheet_directory() . '/inc/functions-store.php';
 require_once get_stylesheet_directory() . '/inc/functions-area.php';
 require_once get_stylesheet_directory() . '/inc/functions-staff.php';
+/* スタッフのログイン（施工事例）・だれが編集したかの記録・本部だけ全部編集できる（2026/10/28） */
+require_once get_stylesheet_directory() . '/inc/functions-staff-login.php';
 require_once get_stylesheet_directory() . '/inc/functions-flyer.php';
 require_once get_stylesheet_directory() . '/inc/functions-media.php';
 /* メディアのキーワード検索（ALTでも見つかる）・期間でしぼる欄をなくす（2026/10/13） */

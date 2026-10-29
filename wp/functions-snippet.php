@@ -65,7 +65,7 @@ function ymkrf_crumb_ld( $crumbs ) {
 }
 endif;
 
-if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '5.3.5' );   // ファイル更新時はここを上げるとキャッシュが切れます
+if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '5.3.6' );   // ファイル更新時はここを上げるとキャッシュが切れます
 
 /* ============================================================
    1. CSS / JS の読み込み
@@ -552,11 +552,8 @@ add_action( 'template_redirect', function () {
 		exit;
 	}
 
-	/* スタッフブログは作らず、「コラム（お役立ち情報）」1本にまとめました */
-	if ( $path === 'blog' ) {
-		wp_redirect( home_url( '/column/' ), 301 );
-		exit;
-	}
+	/* /blog/ はコラムの一覧そのものになりました（旧ブログとURLをそろえた。2026/10/29）。
+	   ここの /blog/ → /column/ の転送はやめました（inc/functions-column-url.php） */
 
 	/* ★/area/ は「対応エリアの一覧」になりました（2026/09/23）。
 	     むかしは店舗ページに飛ばしていましたが、市町ごとのページを

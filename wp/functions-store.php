@@ -201,6 +201,24 @@ add_action( 'admin_init', function () {
 	update_option( YMKRF_STORE_SEED, '1', false );
 } );
 
+/* 店舗ページの並び（ダッシュボードの一覧）を、お店の並び順にそろえます。1回だけ動きます
+   （2026/10/28 ユーザー「全てに置いてですが、店舗の順番ですが、以下の順番に変更して」） */
+add_action( 'admin_init', function () {
+	if ( ! current_user_can( 'edit_pages' ) ) return;
+	if ( get_option( 'ymkrf_store_order_v2' ) === '1' ) return;
+	if ( ! function_exists( 'ymkrf_shop_pos' ) ) return;
+	foreach ( get_posts( array( 'post_type' => 'ymkrf_store', 'post_status' => 'any', 'posts_per_page' => -1,
+	                            'suppress_filters' => true ) ) as $p ) {
+		$k = (string) get_post_meta( $p->ID, '_ymkrf_store_slug', true );
+		if ( $k === '' ) $k = $p->post_name;
+		$o = ymkrf_shop_pos( $k ) + 1;
+		if ( (int) $p->menu_order !== $o ) {
+			wp_update_post( array( 'ID' => $p->ID, 'menu_order' => $o ) );
+		}
+	}
+	update_option( 'ymkrf_store_order_v2', '1', false );
+}, 30 );
+
 /* 前の「店舗の内容」の画面は、店舗ページの一覧へ案内します（同じ内容を2か所で直さないように） */
 add_action( 'admin_init', function () {
 	if ( isset( $_GET['page'] ) && $_GET['page'] === 'ymkrf-shops-edit' ) {   /* phpcs:ignore */
@@ -355,7 +373,7 @@ function ymkrf_store_box( $post ) {
 
 	  <?php
 	  /* ⑦ このお店のスタッフ（兼任もここでえらべます。2026/10/28 ユーザー「スタッフも選べるように」） */
-	  if ( function_exists( 'ymkrf_staff_get_shops' ) ) :
+	  if ( function_exists( 'ymkrf_staff_get_shops' ) && current_user_can( 'manage_options' ) ) :   /* スタッフのえらび直しは全権の人だけ（2026/10/29） */
 	    $all_st = get_posts( array( 'post_type' => 'ymkrf_staff', 'post_status' => array( 'publish', 'draft', 'private' ),
 	                                'posts_per_page' => -1, 'orderby' => array( 'menu_order' => 'ASC', 'title' => 'ASC' ) ) );
 	    $snames = function_exists( 'ymkrf_staff_shops' ) ? ymkrf_staff_shops() : array();

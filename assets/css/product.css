@@ -1359,6 +1359,10 @@ body.term-pack4 .p-cat__cardname{
 .p-col__tag--solid{
   position:static; background:var(--brand); color:#fff; display:inline-block;
 }
+/* カテゴリが2つ以上のとき、左上にならべます（2026/10/29） */
+.p-col__tags{ position:absolute; left:10px; top:10px; right:10px; display:flex; flex-wrap:wrap; gap:5px; }
+.p-col__tags .p-col__tag{ position:static; }
+.p-colart__meta .p-col__tag--solid{ margin-right:4px; }
 .p-col__body{ padding:14px 16px 16px; display:flex; flex-direction:column; }
 .p-col__date{
   font-size:12px; font-weight:800; color:var(--ink-light); letter-spacing:.04em;

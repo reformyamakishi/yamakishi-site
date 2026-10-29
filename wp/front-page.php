@@ -935,7 +935,7 @@ if ( $ymkrf_cols && $ymkrf_cols->have_posts() ) :
       <?php endwhile; wp_reset_postdata(); ?>
     </div>
 
-    <a class="c-more" href="<?php echo esc_url( home_url( '/column/' ) ); ?>">お役立ち情報をもっと見る</a>
+    <a class="c-more" href="<?php echo esc_url( home_url( '/blog/' ) ); ?>">お役立ち情報をもっと見る</a>
   </div>
 </section>
 <?php endif; ?>
