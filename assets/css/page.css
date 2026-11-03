@@ -792,3 +792,127 @@
 }
 .p-area__btn--line{ background:#06c755; }
 .p-area__btn:hover{ opacity:.88; }
+
+/* ── 協力業者さん・職人さん募集（/inquiry/conpanyrecruit/ 2026/11/03） ── */
+.p-partner__intro{ display:grid; gap:28px; align-items:center; }
+@media (min-width:900px){
+  .p-partner__intro{ grid-template-columns:1fr 1fr; gap:44px; }
+  .p-partner__intro--noimg{ grid-template-columns:1fr; }
+}
+.p-partner__lead{ font-size:16px; line-height:2; }
+.p-partner__lead b{ color:var(--brand-dark); }
+.p-partner__h{
+  margin:26px 0 10px; font-size:15px; font-weight:900;
+  padding-left:10px; border-left:4px solid var(--brand);
+}
+.p-partner__jobs{ display:flex; flex-wrap:wrap; gap:8px; margin:0; padding:0; list-style:none; }
+.p-partner__jobs li{
+  background:var(--brand); color:#fff; border-radius:8px;
+  padding:8px 22px; font-size:16px; font-weight:900; letter-spacing:.1em;
+}
+.p-partner__areas{ margin:0; padding:0; list-style:none; }
+.p-partner__photo{ margin:0; }
+.p-partner__photo img{ width:100%; height:auto; border-radius:16px; display:block; }
+
+.p-partner__btns{
+  display:grid; gap:12px; margin:34px auto 0; max-width:760px;
+}
+@media (min-width:700px){ .p-partner__btns{ grid-template-columns:1fr 1fr; align-items:stretch; } }
+.p-partner__btns .c-btn{ height:100%; }
+.p-partner__tel{
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  background:#fff; border:2px solid var(--brand); border-radius:14px;
+  padding:12px 16px; text-decoration:none; color:var(--ink);
+}
+.p-partner__tel:hover{ background:var(--brand-tint); }
+.p-partner__tellbl{ font-size:12.5px; font-weight:800; color:var(--ink-sub); }
+.p-partner__telnum{ font-size:clamp(24px,6vw,30px); font-weight:900; color:var(--brand-dark); letter-spacing:.04em; line-height:1.3; }
+.p-partner__telsub{ font-size:12.5px; font-weight:700; color:var(--ink-sub); }
+
+.p-partner__poster{ margin:44px auto 0; max-width:520px; text-align:center; }
+.p-partner__poster img{ width:100%; height:auto; display:block; border:1px solid var(--border); border-radius:8px; }
+.p-partner__poster figcaption{ margin-top:8px; font-size:12.5px; color:var(--ink-light); }
+
+.p-partner__formlead{ text-align:center; font-size:15px; line-height:1.95; margin:0 0 24px; }
+
+.p-partner__staff{ text-align:center; }
+.p-partner__staffttl{ font-size:clamp(17px,4.2vw,20px); font-weight:900; }
+.p-partner__staff p:not(.p-partner__staffttl){ margin:8px 0 16px; font-size:14px; color:var(--ink-sub); }
+@media (min-width:700px){ .p-partner__btns--one{ grid-template-columns:1fr; max-width:380px; } }
+
+/* 協力業者さん募集：固定ページの本文（お知らせと同じ書きかた。2026/11/03） */
+.p-partner__content{ max-width:860px; margin:0 auto; font-size:15.5px; line-height:2.05; }
+.p-partner__content > *:first-child{ margin-top:0; }
+.p-partner__content p{ margin:0 0 1.4em; }
+.p-partner__content strong{ color:var(--brand-dark); }
+.p-partner__content h2{
+  margin:2em 0 .8em; font-size:clamp(18px,4.2vw,22px); font-weight:900; line-height:1.6;
+  padding-left:12px; border-left:5px solid var(--brand);
+}
+.p-partner__content h3{ margin:1.8em 0 .6em; font-size:17px; font-weight:900; }
+.p-partner__content ul, .p-partner__content ol{ margin:0 0 1.4em; padding-left:1.4em; }
+.p-partner__content li{ margin-bottom:.5em; }
+.p-partner__content figure{ margin:0 0 1.6em; }
+.p-partner__content img{ max-width:100%; height:auto; border-radius:12px; display:block; }
+.p-partner__content .aligncenter{ text-align:center; }
+.p-partner__content .aligncenter img{ margin:0 auto; max-width:min(100%,520px); border:1px solid var(--border); border-radius:8px; }
+.p-partner__content a{ color:var(--brand-dark); font-weight:700; }
+.p-partner__content a[href^="tel:"]{ font-size:clamp(24px,6vw,30px); font-weight:900; letter-spacing:.04em; text-decoration:none; }
+/* 募集職種：赤いボタン風 */
+.p-partner__content ul.p-partner-jobs{ display:flex; flex-wrap:wrap; gap:8px; padding:0; list-style:none; }
+.p-partner__content ul.p-partner-jobs li{
+  margin:0; background:var(--brand); color:#fff; border-radius:8px;
+  padding:6px 22px; font-size:16px; font-weight:900; letter-spacing:.1em; line-height:1.8;
+}
+/* 募集エリア：丸い枠 */
+.p-partner__content ul.p-partner-areas{ display:flex; flex-wrap:wrap; gap:7px; padding:0; list-style:none; }
+.p-partner__content ul.p-partner-areas li{
+  margin:0; background:#fff; border:1px solid var(--border); border-radius:999px;
+  padding:4px 14px; font-size:13.5px; font-weight:700; line-height:1.8;
+}
+/* お仕事の流れ：番号つきのカード */
+.p-partner__content ol.p-partner-steps{
+  counter-reset:ptn; list-style:none; padding:0; display:grid; gap:12px;
+}
+.p-partner__content ol.p-partner-steps li{
+  counter-increment:ptn; position:relative; margin:0;
+  background:#fff; border:1px solid #eee; border-radius:14px;
+  padding:16px 18px 16px 66px; font-size:14px; line-height:1.9; color:#444;
+}
+.p-partner__content ol.p-partner-steps li::before{
+  content:counter(ptn); position:absolute; left:16px; top:16px;
+  display:flex; align-items:center; justify-content:center;
+  width:36px; height:36px; border-radius:50%;
+  background:var(--brand); color:#fff; font-size:17px; font-weight:900;
+}
+.p-partner__content ol.p-partner-steps li strong{ display:inline-block; font-size:16px; color:var(--ink); }
+.p-partner__tobtn{ max-width:420px; margin:30px auto 0; }
+/* 協力業者さん募集：前の作りに戻したときの追加（2026/11/03） */
+.p-partner__lead p{ margin:0 0 .6em; }
+.p-partner__lead p:last-child{ margin-bottom:0; }
+.p-partner__lead strong, .p-partner__lead b{ color:var(--brand-dark); }
+.p-partner__telnote{ margin:12px auto 0; max-width:760px; text-align:center; font-size:13px; color:var(--ink-sub); line-height:1.8; }
+
+/* 固定ページ（ふつうのページ）の本文：協力業者さん募集・お知らせと同じ読みやすい見た目（2026/11/03） */
+.p-pagebody,
+.p-pagebody__eyecatch{ max-width:860px; margin-left:auto; margin-right:auto; }
+.p-pagebody{ font-size:15.5px; line-height:2.05; }
+.p-pagebody > *:first-child{ margin-top:0; }
+.p-pagebody p{ margin:0 0 1.4em; }
+.p-pagebody strong, .p-pagebody b{ color:var(--brand-dark); }
+.p-pagebody h2{
+  margin:2em 0 .8em; font-size:clamp(18px,4.2vw,22px); font-weight:900; line-height:1.6;
+  padding-left:12px; border-left:5px solid var(--brand);
+}
+.p-pagebody h3{ margin:1.8em 0 .6em; font-size:17px; font-weight:900; }
+.p-pagebody ul, .p-pagebody ol{ margin:0 0 1.4em; padding-left:1.4em; }
+.p-pagebody li{ margin-bottom:.5em; }
+.p-pagebody figure{ margin:0 0 1.6em; }
+.p-pagebody img{ max-width:100%; height:auto; border-radius:12px; }
+.p-pagebody .aligncenter{ display:block; margin-left:auto; margin-right:auto; text-align:center; }
+.p-pagebody a{ color:var(--brand-dark); font-weight:700; }
+.p-pagebody table{ width:100%; border-collapse:collapse; margin:0 0 1.6em; font-size:14.5px; }
+.p-pagebody th, .p-pagebody td{ border:1px solid var(--border); padding:10px 14px; text-align:left; vertical-align:top; }
+.p-pagebody th{ background:var(--bg-soft); font-weight:800; white-space:nowrap; }
+.p-pagebody__eyecatch{ margin-bottom:24px; }
+.p-pagebody__eyecatch img{ display:block; width:100%; height:auto; border-radius:var(--radius); }
