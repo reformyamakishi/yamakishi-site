@@ -432,3 +432,11 @@ add_action( 'pre_get_posts', function ( $q ) {
 	$st = $q->get( 'post_status' );
 	if ( $st === '' || $st === array() || $st === 'any' ) $q->set( 'post_status', 'publish' );
 }, 20 );
+
+/* リビジョンだけの欄は出さない（2026/11/03 ユーザー「コラムもリビジョンだけの箇所は不要ですね。見たかったら公開のリビジョン開きます」）。
+   リビジョンは、右の「公開」の中の「リビジョン：◯ 表示」から見られます（記録はこれまでどおり残ります）。
+   ※上の「アイキャッチの下へ動かす」しかけは、欄が無ければ何もしません。 */
+add_action( 'add_meta_boxes_ymkrf_column', function () {
+	remove_meta_box( 'revisionsdiv', 'ymkrf_column', 'normal' );
+	remove_meta_box( 'revisionsdiv', 'ymkrf_column', 'side' );
+}, 99 );

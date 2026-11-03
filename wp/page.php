@@ -1,60 +1,54 @@
 <?php
 /**
- * page.php ─ 固定ページ
+ * page.php ─ 固定ページ（ふつうのページ）
  * リフォームヤマキシテーマ
  *
- * ※WordPressはテーマに index.php が無いと「不完全」と判定して
- * 　有効化させてくれません。そのため必ず必要です。
+ * 2026/11/03 ユーザー「他の固定ページも同様なスタイルにして」
+ *   協力業者さん募集のページと同じく、
+ *   パンくず → 題名の帯（p-pagehead） → 本文（お知らせと同じ読みやすい見た目：.p-pagebody）
+ *   の順に出します。本文はダッシュボード「固定ページ」で、お知らせと同じ書きかたで直せます。
+ *   このページだけ見た目を変えたいときは、編集画面の「このページだけのCSS」へ。
+ *
+ * ※専用の作りのページ（会社概要・プライバシーポリシー・協力業者さん募集など）は、
+ *   それぞれのファイルで出しているので、ここは使いません。
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 get_header();
 ?>
-<main id="main" class="l-main">
-  <div class="l-container">
 
-    <?php if ( have_posts() ) : ?>
+<?php while ( have_posts() ) : the_post(); ?>
 
-      <?php if ( is_archive() || is_home() || is_search() ) : ?>
-        <h1 class="c-title"><?php
-          if ( is_search() ) {
-            echo '「' . esc_html( get_search_query() ) . '」の検索結果';
-          } elseif ( is_archive() ) {
-            echo esc_html( wp_strip_all_tags( get_the_archive_title() ) );
-          } else {
-            echo 'お知らせ';
-          }
-        ?></h1>
-      <?php endif; ?>
+<nav class="p-breadcrumb" aria-label="パンくずリスト">
+  <ol class="p-breadcrumb__list">
+    <li><a href="<?php echo esc_url( home_url( '/' ) ); ?>">ホーム</a></li>
+    <?php foreach ( array_reverse( get_post_ancestors( get_the_ID() ) ) as $anc ) : ?>
+      <li><a href="<?php echo esc_url( get_permalink( $anc ) ); ?>"><?php echo esc_html( get_the_title( $anc ) ); ?></a></li>
+    <?php endforeach; ?>
+    <li><?php the_title(); ?></li>
+  </ol>
+</nav>
 
-      <div class="p-cardlist">
-        <?php while ( have_posts() ) : the_post(); ?>
-          <?php if ( is_singular() ) : ?>
-            <article class="c-entry">
-              <h1 class="c-title"><?php the_title(); ?></h1>
-              <div class="c-entry__body"><?php the_content(); ?></div>
-            </article>
-          <?php else : ?>
-            <a class="p-card" href="<?php the_permalink(); ?>">
-              <?php if ( has_post_thumbnail() ) : ?>
-                <div class="p-card__photo"><?php the_post_thumbnail( 'medium_large' ); ?></div>
-              <?php endif; ?>
-              <div class="p-card__body">
-                <h2 class="p-card__title"><?php the_title(); ?></h2>
-                <p class="p-card__text"><?php echo esc_html( wp_trim_words( get_the_excerpt(), 60, '…' ) ); ?></p>
-              </div>
-            </a>
-          <?php endif; ?>
-        <?php endwhile; ?>
-      </div>
+<main id="main">
 
-      <?php the_posts_pagination( array( 'mid_size' => 1, 'prev_text' => '前へ', 'next_text' => '次へ' ) ); ?>
-
-    <?php else : ?>
-      <h1 class="c-title">ページが見つかりません</h1>
-      <p>お探しのページは移動または削除された可能性があります。</p>
-      <p><a class="c-btn c-btn--main" href="<?php echo esc_url( home_url( '/' ) ); ?>">トップページへ戻る</a></p>
-    <?php endif; ?>
-
+<div class="p-pagehead">
+  <div class="l-wrap p-pagehead__inner">
+    <h1 class="p-pagehead__title"><?php the_title(); ?></h1>
   </div>
+</div>
+
+<section class="l-section">
+  <div class="l-wrap">
+    <?php if ( has_post_thumbnail() ) : ?>
+      <figure class="p-pagebody__eyecatch"><?php the_post_thumbnail( 'large' ); ?></figure>
+    <?php endif; ?>
+    <div class="p-pagebody">
+      <?php the_content(); ?>
+    </div>
+  </div>
+</section>
+
 </main>
+
+<?php endwhile; ?>
+
 <?php get_footer();

@@ -2169,7 +2169,22 @@ add_action( 'init', function () {
 		'index.php?post_type=ymkrf_voice&ymkrf_varea=$matches[1]',
 		'top'
 	);
+	/* 工事箇所ごとの一覧の2ページ目から先（/voice/toilet/page/2/）。
+	   2026/11/03 点検で 404 になっていたので足しました
+	   （「page」が1件のページの名前とまちがえられていた） */
+	add_rewrite_rule(
+		'^voice/([a-z0-9-]+)/page/([0-9]+)/?$',
+		'index.php?post_type=ymkrf_voice&ymkrf_vpart=$matches[1]&paged=$matches[2]',
+		'top'
+	);
 }, 5 );
+
+/* 上のURLを WordPress に覚えさせます（1回だけ） */
+add_action( 'init', function () {
+	if ( get_option( 'ymkrf_voice_page_rule_v1' ) === '1' ) return;
+	flush_rewrite_rules( false );
+	update_option( 'ymkrf_voice_page_rule_v1', '1', false );
+}, 120 );
 
 /** ローマ字 → 市町（例：kanazawa → 金沢市） */
 function ymkrf_voice_city_from_roman( $roman ) {

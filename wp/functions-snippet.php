@@ -65,7 +65,7 @@ function ymkrf_crumb_ld( $crumbs ) {
 }
 endif;
 
-if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '5.3.6' );   // ファイル更新時はここを上げるとキャッシュが切れます
+if ( ! defined( 'YMKRF_VER' ) ) define( 'YMKRF_VER', '5.4.0' );   // ファイル更新時はここを上げるとキャッシュが切れます
 
 /* ============================================================
    1. CSS / JS の読み込み
@@ -101,6 +101,7 @@ add_action( 'wp_enqueue_scripts', function () {
 	           || ( function_exists( 'ymkrf_is_ts' ) && ymkrf_is_ts() )
 	           || ( function_exists( 'ymkrf_is_inquiry' ) && ymkrf_is_inquiry() )
 	           || ( function_exists( 'ymkrf_is_webrsv' ) && ymkrf_is_webrsv() )
+	           || ( function_exists( 'ymkrf_is_partner' ) && ymkrf_is_partner() )
 	           || ( function_exists( 'ymkrf_is_flyer' ) && ymkrf_is_flyer() )
 	           || ( function_exists( 'ymkrf_is_privacy' ) && ymkrf_is_privacy() );
 	$is_top = is_front_page() && ! $is_special;

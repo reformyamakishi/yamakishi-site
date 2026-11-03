@@ -698,3 +698,16 @@
 @media (min-width:1024px){
   .p-col__cards{ grid-template-columns:repeat(3,minmax(0,1fr)); }
 }
+
+/* 出してから1週間の「NEW」（2026/11/03） */
+.p-news__new{
+  display:inline-block; vertical-align:1px; margin-right:7px;
+  background:#fff1ec; color:#c92800; border:1px solid var(--brand); border-radius:4px;
+  padding:1px 6px; font-size:10.5px; font-weight:900; letter-spacing:.06em; line-height:1.5;
+  font-family:"Helvetica Neue",Arial,sans-serif;
+}
+
+/* 協力業者さん・職人さん募集のバナー（お知らせの下。2026/11/03） */
+.p-partner-bnr{ display:block; width:min(100%,360px); margin:28px auto 0; border-radius:10px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,.08); }
+.p-partner-bnr img{ display:block; width:100%; height:auto; }
+.p-partner-bnr:hover{ opacity:.88; }

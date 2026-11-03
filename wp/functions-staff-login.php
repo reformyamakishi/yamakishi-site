@@ -276,11 +276,13 @@ add_filter( 'map_meta_cap', function ( $caps, $cap, $uid, $args ) {
     ・執筆者が「お店から」で、そのお店が自分のお店
     「広報」「出さない」の記事・ほかのお店の人の記事は直せません */
 function ymkrf_column_same_shop( $p, $uid, $sid ) {
-	if ( (int) $p->post_author === (int) $uid ) return true;
 	$mine = function_exists( 'ymkrf_staff_get_shops' ) ? (array) ymkrf_staff_get_shops( $sid ) : array();
+	if ( in_array( 'kouji', $mine, true ) ) return true;   /* 工事部は全店のコラムを直せます（2026/11/03 ユーザー指示） */
+	$w    = trim( (string) get_post_meta( $p->ID, '_ymkrf_staff', true ) );
+	/* 執筆者がまだ決まっていない（または「出さない」「広報」）ものは、自分で書き始めた記事だけ（新規）
+	   （2026/10/29 ユーザー「所属している店舗のみの修正もしくは新規のみに限定」） */
+	if ( $w === '' || (int) $w <= 0 && strpos( $w, 'shop:' ) !== 0 ) return (int) $p->post_author === (int) $uid;
 	if ( ! $mine ) return false;
-	$w = trim( (string) get_post_meta( $p->ID, '_ymkrf_staff', true ) );
-	if ( $w === '' ) return false;
 	if ( strpos( $w, 'shop:' ) === 0 ) return in_array( substr( $w, 5 ), $mine, true );
 	$wid = (int) $w;
 	if ( $wid <= 0 || get_post_type( $wid ) !== 'ymkrf_staff' ) return false;
@@ -790,7 +792,7 @@ add_action( 'untrashed_post', function ( $post_id ) {
 } );
 
 /* ------------------------------------------------------------
-   編集の権限：本部はすべて、お店のスタッフは自分のお店・自分の担当・自分の登録だけ
+   編集の権限：「すべて」の人はすべて、ほかは自分の所属店舗の事例だけ（2026/10/29 変更）
    ------------------------------------------------------------ */
 add_filter( 'map_meta_cap', function ( $caps, $cap, $uid, $args ) {
 	if ( ! in_array( $cap, array( 'edit_post', 'delete_post' ), true ) || empty( $args[0] ) ) return $caps;
@@ -799,24 +801,35 @@ add_filter( 'map_meta_cap', function ( $caps, $cap, $uid, $args ) {
 	if ( in_array( 'do_not_allow', (array) $caps, true ) ) return $caps;
 	if ( $p->post_status === 'auto-draft' ) return $caps;   /* 新しく登録中 */
 
-	static $busy = false;   /* ymkrf_is_honbu の中の user_can で、ここがもう一度呼ばれないように */
+	/* 2026/10/29 ユーザー「施工事例、コラム、店頭ぺージ、各編集権限は、その人が所属している店舗のみの
+	   修正もしくは新規のみに限定してください」
+	   → 「すべて」の人だけ全部。ほかは「担当した店舗」が自分の所属店舗（兼任ふくむ）の事例だけ。
+	     店舗をまだえらんでいない自分の登録中の事例も直せます（新規）。
+	     前の「本部ならすべて」「自分が担当者なら」は、やめました。 */
+	static $busy = false;
 	if ( $busy ) return $caps;
 	$busy = true;
-	$honbu = ymkrf_is_honbu( $uid );
+	$all = user_can( (int) $uid, 'manage_options' );
 	$busy = false;
-	if ( $honbu ) return $caps;
+	if ( $all ) return $caps;
 
-	if ( (int) $p->post_author === (int) $uid ) return $caps;   /* 自分が登録した */
-	if ( $cap === 'delete_post' ) return array( 'do_not_allow' );   /* ゴミ箱は自分が登録したものだけ */
-
-	$sid = (int) get_user_meta( $uid, 'ymkrf_staff_post', true );
-	if ( $sid ) {
-		$tanto = trim( (string) get_post_meta( $p->ID, '_ymkrf_staff', true ) );
-		if ( $tanto !== '' && (int) $tanto === $sid ) return $caps;   /* 自分が担当者 */
-		$mine = function_exists( 'ymkrf_staff_get_shops' ) ? (array) ymkrf_staff_get_shops( $sid ) : array();
-		$shop = trim( (string) get_post_meta( $p->ID, '_ymkrf_shop', true ) );
-		if ( $shop !== '' && in_array( $shop, $mine, true ) ) return $caps;   /* 自分のお店 */
+	$sid  = (int) get_user_meta( $uid, 'ymkrf_staff_post', true );
+	$mine = ( $sid && function_exists( 'ymkrf_staff_get_shops' ) ) ? (array) ymkrf_staff_get_shops( $sid ) : array();
+	$shop = trim( (string) get_post_meta( $p->ID, '_ymkrf_shop', true ) );
+	$own  = (int) $p->post_author === (int) $uid;
+	/* 工事部は、どこの店舗の工事もするので全店の事例を直せます（2026/11/03 ユーザー
+	   「工事部はどこの店舗の工事もするので、全店の施工事例とコラムを編集できる権限を特別にお願いします」）。
+	   ゴミ箱は、ほかの人と同じく自分が登録したものだけ */
+	if ( in_array( 'kouji', $mine, true ) ) {
+		if ( $cap === 'delete_post' ) return $own ? $caps : array( 'do_not_allow' );
+		return $caps;
 	}
+	if ( $cap === 'delete_post' ) {
+		/* ゴミ箱は、自分が登録した自分のお店の事例だけ */
+		return ( $own && ( $shop === '' || in_array( $shop, $mine, true ) ) ) ? $caps : array( 'do_not_allow' );
+	}
+	if ( $shop !== '' && in_array( $shop, $mine, true ) ) return $caps;   /* 自分のお店 */
+	if ( $shop === '' && $own ) return $caps;                             /* 自分が登録中（店舗まだ） */
 	return array( 'do_not_allow' );
 }, 20, 4 );
 
@@ -918,3 +931,60 @@ add_action( 'admin_init', function () {
 	update_option( 'ymkrf_staff_role_sync_log', $log, false );
 	update_option( 'ymkrf_staff_role_sync_v2', '1', false );
 }, 50 );
+
+/* ------------------------------------------------------------
+   権限の確認（管理者だけ・見るだけ）（2026/10/29）
+   お店の人のIDでログインしなくても、その人が何を直せるかを調べられます。
+   admin-ajax.php?action=ymkrf_perm_check&uid=ユーザー番号
+   ------------------------------------------------------------ */
+add_action( 'wp_ajax_ymkrf_perm_check', function () {
+	if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error( 'no' );
+	$uid = isset( $_REQUEST['uid'] ) ? (int) $_REQUEST['uid'] : 0;
+	$u   = get_userdata( $uid );
+	if ( ! $u ) wp_send_json_error( 'no user' );
+	$sid  = (int) get_user_meta( $uid, 'ymkrf_staff_post', true );
+	$mine = ( $sid && function_exists( 'ymkrf_staff_get_shops' ) ) ? (array) ymkrf_staff_get_shops( $sid ) : array();
+	$out  = array(
+		'user'  => $u->user_login, 'roles' => $u->roles,
+		'staff' => $sid ? get_the_title( $sid ) : '', 'shops' => $mine,
+		'perms' => $sid ? ymkrf_staff_perms( $sid ) : array(),
+		'menu'  => ymkrf_staff_editor_of( $u ) ? ymkrf_user_menu_keep( $u ) : array( '(all)' ),
+		'cap'   => array(),
+	);
+	foreach ( array( 'edit_ymkrf_works', 'create_ymkrf_works', 'edit_posts', 'edit_pages', 'manage_options', 'upload_files' ) as $c ) {
+		$out['cap'][ $c ] = user_can( $u, $c );
+	}
+	$test = array();
+	/* 施工事例：自分の店・ほかの店を1件ずつ */
+	$w_own = $mine ? get_posts( array( 'post_type' => 'ymkrf_works', 'posts_per_page' => 1, 'post_status' => 'any', 'fields' => 'ids',
+		'meta_query' => array( array( 'key' => '_ymkrf_shop', 'value' => $mine, 'compare' => 'IN' ) ) ) ) : array();
+	$w_oth = get_posts( array( 'post_type' => 'ymkrf_works', 'posts_per_page' => 1, 'post_status' => 'any', 'fields' => 'ids',
+		'meta_query' => array( array( 'key' => '_ymkrf_shop', 'value' => $mine ? $mine : array( '-' ), 'compare' => 'NOT IN' ) ) ) );
+	if ( $w_own ) $test[] = array( '施工事例（自分の店）', $w_own[0] );
+	if ( $w_oth ) $test[] = array( '施工事例（ほかの店）', $w_oth[0] );
+	/* コラム：自分の店の人が執筆者・ほかの店の人が執筆者 */
+	foreach ( get_posts( array( 'post_type' => 'ymkrf_column', 'posts_per_page' => 60, 'post_status' => 'any', 'fields' => 'ids' ) ) as $cid ) {
+		$w = (int) get_post_meta( $cid, '_ymkrf_staff', true );
+		if ( $w <= 0 || get_post_type( $w ) !== 'ymkrf_staff' ) continue;
+		$same = (bool) array_intersect( $mine, (array) ymkrf_staff_get_shops( $w ) );
+		$k = $same ? 'コラム（同じ店の人）' : 'コラム（ほかの店の人）';
+		$has = false; foreach ( $test as $t ) if ( $t[0] === $k ) $has = true;
+		if ( ! $has ) $test[] = array( $k, $cid );
+	}
+	/* 店舗ページ：自分の店・ほかの店 */
+	foreach ( get_posts( array( 'post_type' => 'ymkrf_store', 'posts_per_page' => -1, 'post_status' => 'any' ) ) as $st ) {
+		$sl = (string) get_post_meta( $st->ID, '_ymkrf_store_slug', true ); if ( $sl === '' ) $sl = $st->post_name;
+		$k = in_array( $sl, $mine, true ) ? '店舗ページ（自分の店）' : '店舗ページ（ほかの店）';
+		$has = false; foreach ( $test as $t ) if ( $t[0] === $k ) $has = true;
+		if ( ! $has ) $test[] = array( $k, $st->ID );
+	}
+	/* そのほか */
+	foreach ( array( 'ymkrf_news' => 'お知らせ', 'ymkrf_product' => '商品', 'ymkrf_voice' => 'お客様の声', 'ymkrf_staff' => 'スタッフ', 'page' => '固定ページ' ) as $pt => $lab ) {
+		$x = get_posts( array( 'post_type' => $pt, 'posts_per_page' => 1, 'post_status' => 'any', 'fields' => 'ids' ) );
+		if ( $x ) $test[] = array( $lab, $x[0] );
+	}
+	foreach ( $test as $t ) {
+		$out['edit'][] = $t[0] . '：' . ( user_can( $u, 'edit_post', $t[1] ) ? '〇' : '×' ) . '（' . get_the_title( $t[1] ) . '）';
+	}
+	wp_send_json_success( $out );
+} );

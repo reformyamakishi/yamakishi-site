@@ -35,7 +35,10 @@ $home  = home_url( '/' );
           <li><a href="<?php echo esc_url( $home . 'warranty/' ); ?>">保証について</a></li>
           <li><a href="<?php echo esc_url( $home . 'staff/' ); ?>">スタッフ紹介</a></li>
           <li><a href="<?php echo esc_url( $home . 'message/' ); ?>">代表あいさつ</a></li>
-          <li><a href="<?php echo esc_url( $home . 'recruit/' ); ?>">職人・スタッフ募集</a></li>
+          <?php /* 2026/11/03 ユーザー「スタッフ募集のページは別で作ってほしい」
+                   社員の募集 → 会社の採用サイト／協力業者さん・職人さん → このサイトの募集ページ */ ?>
+          <li><a href="https://yamakishi.co.jp/recruit/" target="_blank" rel="noopener">スタッフ募集（採用情報）</a></li>
+          <li><a href="<?php echo esc_url( $home . 'inquiry/conpanyrecruit/' ); ?>">協力業者さん・職人さん募集</a></li>
           <li><a href="<?php echo esc_url( $home . 'privacy/' ); ?>">プライバシーポリシー</a></li>
         </ul>
       </div>

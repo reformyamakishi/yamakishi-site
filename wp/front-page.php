@@ -976,6 +976,17 @@ if ( $ymkrf_cols && $ymkrf_cols->have_posts() ) :
     <?php endif; ?>
 
     <a class="c-more" href="<?php echo esc_url( home_url( '/news/' ) ); ?>">お知らせ一覧へ</a>
+
+    <?php /* 協力業者さん・職人さん募集のバナー（ダッシュボード「協力業者さん募集」⑥でえらんだ画像）。
+             画像がメディアから消えていたら、何も出しません。 */
+    $ymkrf_pbnr = function_exists( 'ymkrf_partner_imgs' ) ? ymkrf_partner_imgs() : array();
+    if ( ! empty( $ymkrf_pbnr['banner'] ) && function_exists( 'ymkrf_partner_url' ) ) : ?>
+      <a class="p-partner-bnr" href="<?php echo esc_url( ymkrf_partner_url() ); ?>" data-cta="top-partner">
+        <?php echo wp_get_attachment_image( (int) $ymkrf_pbnr['banner'], 'full', false, array(
+          'alt' => function_exists( 'ymkrf_partner_alt' ) ? ymkrf_partner_alt( (int) $ymkrf_pbnr['banner'], '協力業者さん・職人さん募集中' ) : '協力業者さん・職人さん募集中', 'loading' => 'lazy',
+        ) ); ?>
+      </a>
+    <?php endif; ?>
   </div>
 </section>
 

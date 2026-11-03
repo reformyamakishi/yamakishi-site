@@ -147,6 +147,17 @@ function ymkrf_news_query( $number = 4, $cat = '' ) {
 }
 endif;
 
+/** 出してから1週間のお知らせか（「NEW」を付けます）
+    2026/11/03 ユーザー「お知らせの他に投稿後1週間はNEWって表示ほしい」
+    公開日から7日間。8日目から自動で消えます（直す作業はいりません） */
+function ymkrf_news_is_new( $post_id, $days = 7 ) {
+	$t = (int) get_post_time( 'U', true, $post_id );
+	return $t > 0 && ( time() - $t ) < $days * DAY_IN_SECONDS && get_post_status( $post_id ) === 'publish';
+}
+function ymkrf_news_new_badge( $post_id ) {
+	return ymkrf_news_is_new( $post_id ) ? '<span class="p-news__new">NEW</span>' : '';
+}
+
 /** 一覧の1行ぶんを出します（トップページ・お知らせ一覧の両方で使います） */
 if ( ! function_exists( 'ymkrf_news_row' ) ) :
 function ymkrf_news_row( $post_id = 0 ) {
@@ -165,6 +176,7 @@ function ymkrf_news_row( $post_id = 0 ) {
 	    <?php endif; ?>
 	    <span class="p-news__title"><?php
 	      if ( $pin ) echo '<span class="p-news__pin">重要</span>';
+	      echo ymkrf_news_new_badge( $post_id );   // 固定の文字だけ
 	      echo esc_html( get_the_title( $post_id ) );
 	      if ( $shop !== '' ) echo '<span class="p-news__shop">' . esc_html( $shop ) . '</span>';
 	    ?></span>
@@ -231,6 +243,7 @@ add_filter( 'manage_ymkrf_news_posts_columns', function ( $cols ) {
 	$new['ymkrf_ncat']  = '種類';
 	$new['ymkrf_nshop'] = 'お店';
 	$new['ymkrf_npin']  = '重要';
+	$new['ymkrf_nby']   = '投稿者';   /* 2026/11/03 ユーザー「投稿者も一覧に欲しいな」 */
 	foreach ( $cols as $k => $v ) {
 		if ( ! isset( $new[ $k ] ) ) $new[ $k ] = $v;
 	}
@@ -247,6 +260,12 @@ add_action( 'manage_ymkrf_news_posts_custom_column', function ( $col, $post_id )
 		case 'ymkrf_nshop':
 			$v = ymkrf_news_shop_name( $post_id );
 			echo $v !== '' ? esc_html( $v ) : $none;
+			break;
+		case 'ymkrf_nby':
+			$aid = (int) get_post_field( 'post_author', $post_id );
+			$nm  = function_exists( 'ymkrf_user_label' ) ? ymkrf_user_label( $aid ) : '';
+			if ( $nm === '' && $aid ) { $au = get_userdata( $aid ); $nm = $au ? $au->display_name : ''; }
+			echo $nm !== '' ? esc_html( $nm ) : $none;
 			break;
 		case 'ymkrf_npin':
 			echo get_post_meta( $post_id, '_ymkrf_news_pin', true ) === '1'
@@ -272,10 +291,15 @@ add_action( 'restrict_manage_posts', function ( $post_type ) {
 add_action( 'admin_head', function () {
 	$s = get_current_screen();
 	if ( ! $s || $s->id !== 'edit-ymkrf_news' ) return;
+	/* 題名の幅を決めて、種類などを題名のすぐ横に（あまった幅はいちばん右の日付へ）
+	   2026/11/03 ユーザー「お知らせ一覧のところ、タイトルと種類がはなれている」 */
 	echo '<style>
+	  .wp-list-table .column-title{width:460px}
+	  .wp-list-table .column-date{width:auto}
 	  .column-ymkrf_ncat{width:120px}
 	  .column-ymkrf_nshop{width:130px}
 	  .column-ymkrf_npin{width:80px}
+	  .column-ymkrf_nby{width:130px}
 	</style>';
 } );
 
@@ -325,3 +349,9 @@ add_action( 'admin_init', function () {
 		update_post_meta( $id, '_ymkrf_news_sample', '1' );
 	}
 }, 30 );
+
+/* 編集画面のまん中の大きな「リビジョン」の欄は出さない（2026/11/03 ユーザー「お知らせの編集ページですが真ん中の大きいリビジョンは不要」）。
+   リビジョンは、右の「公開」の中の「リビジョン：◯ 表示」から見られます（記録はこれまでどおり残ります）。 */
+add_action( 'add_meta_boxes_ymkrf_news', function () {
+	remove_meta_box( 'revisionsdiv', 'ymkrf_news', 'normal' );
+}, 99 );

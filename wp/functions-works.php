@@ -2299,10 +2299,19 @@ function ymkrf_works_metabox( $post ) {
 	    <tr>
 	      <th>担当した店舗</th>
 	      <td>
-	        <?php $cur = (string) $get( '_ymkrf_shop' ); ?>
+	        <?php $cur = (string) $get( '_ymkrf_shop' );
+	        /* 「すべて」の人でなければ、自分の所属店舗だけえらべます（2026/10/29 ユーザー「その人が所属している店舗のみの
+	           修正もしくは新規のみに限定」）。ほかのお店をえらぶと、保存したあと直せなくなるためです */
+	        $ymkrf_mine = null;
+	        if ( ! current_user_can( 'manage_options' ) && function_exists( 'ymkrf_staff_get_shops' ) ) {
+	          $ymkrf_sid  = (int) get_user_meta( get_current_user_id(), 'ymkrf_staff_post', true );
+	          $ymkrf_mine = $ymkrf_sid ? (array) ymkrf_staff_get_shops( $ymkrf_sid ) : array();
+	          if ( in_array( 'kouji', $ymkrf_mine, true ) ) $ymkrf_mine = null;   /* 工事部は全店（2026/11/03） */
+	        } ?>
 	        <select name="_ymkrf_shop" id="ymkrf-shop-sel">
 	          <option value="">（えらんでください）</option>
-	          <?php if ( ! is_wp_error( $shops ) ) foreach ( (array) $shops as $sh ) : ?>
+	          <?php if ( ! is_wp_error( $shops ) ) foreach ( (array) $shops as $sh ) :
+	            if ( is_array( $ymkrf_mine ) && ! in_array( $sh->slug, $ymkrf_mine, true ) && $sh->slug !== $cur ) continue; ?>
 	            <option value="<?php echo esc_attr( $sh->slug ); ?>" <?php selected( $cur, $sh->slug ); ?>>
 	              <?php echo esc_html( $sh->name ); ?></option>
 	          <?php endforeach; ?>
@@ -4903,3 +4912,22 @@ add_action( 'init', function () {
 
 	update_option( 'ymkrf_works_cooktop_slug_ver', '1', false );
 }, 25 );
+
+/* ============================================================
+   部位ごとの一覧の2ページ目から先（/works/kitchen/page/2/）
+   2026/11/03 点検で、1件のページのルール（/works/部位/案件）に先に当たって
+   404 になることがわかったので、先に見るルールを足しました。
+   （お客様の声の /voice/toilet/page/2/ と同じ直し方です）
+   ============================================================ */
+add_action( 'init', function () {
+	add_rewrite_rule(
+		'^works/([a-z0-9-]+)/page/([0-9]+)/?$',
+		'index.php?ymkrf_works_cat=$matches[1]&paged=$matches[2]',
+		'top'
+	);
+}, 25 );
+add_action( 'init', function () {
+	if ( get_option( 'ymkrf_works_page_rule_v1' ) === '1' ) return;
+	flush_rewrite_rules( false );
+	update_option( 'ymkrf_works_page_rule_v1', '1', false );
+}, 120 );

@@ -1,0 +1,114 @@
+================================================================
+Contact Form 7 用 フォームタグ（協力業者さん・職人さんエントリー）2026/11/03
+----------------------------------------------------------------
+・タイトル ★「協力業者さん・職人さんエントリー」★
+  （この名前で /inquiry/conpanyrecruit/ のページが自動で見つけます）
+・項目は旧サイトのエントリーフォームと同じです
+  お名前・フリガナ・郵便番号・住所・電話番号・メールアドレス・職種・備考
+================================================================
+
+【フォーム】ここから ↓ ------------------------------------------
+
+<div class="p-form__row">
+  <label class="p-form__label">お名前 <span class="c-req">必須</span></label>
+  [text* your-name autocomplete:name class:p-form__input]
+</div>
+
+<div class="p-form__row">
+  <label class="p-form__label">フリガナ <span class="c-req">必須</span></label>
+  [text* kana class:p-form__input]
+</div>
+
+<div class="p-form__row">
+  <span class="p-form__label">住所 <span class="c-req">必須</span></span>
+  <div class="p-form__zip">
+    [text* zip id:ptn-zip autocomplete:postal-code class:p-form__input class:p-form__input--zip placeholder "郵便番号　例：921-8815"]
+    <button class="p-form__zipbtn" type="button" id="ptn-zipbtn">郵便番号から住所を入力</button>
+  </div>
+  [text* address id:ptn-addr autocomplete:street-address class:p-form__input placeholder "例：石川県野々市市本町6丁目12-70"]
+  <p class="p-form__help" id="ptn-ziphelp" role="status"></p>
+</div>
+
+<div class="p-form__row">
+  <label class="p-form__label">電話番号 <span class="c-req">必須</span></label>
+  [tel* tel autocomplete:tel class:p-form__input placeholder "例：090-1234-5678"]
+</div>
+
+<div class="p-form__row">
+  <label class="p-form__label">メールアドレス <span class="c-req">必須</span></label>
+  [email* mail autocomplete:email class:p-form__input]
+  <p class="p-form__help">携帯電話・スマートフォンで【受信拒否設定】をされている方は、メールが受けとれなくなってしまいますので、<b>@yamakishi.co.jp</b> のドメイン指定受信の設定を行ってください。</p>
+</div>
+
+<div class="p-form__row">
+  <span class="p-form__label">職種<small>（複数選択可）</small></span>
+  [checkbox job use_label_element "大工" "設備" "内装" "塗装"]
+</div>
+
+<div class="p-form__row">
+  <label class="p-form__label">備考</label>
+  [textarea message rows:6 class:p-form__textarea placeholder "例：会社名・屋号、対応できる工事、経験年数、対応できるエリアなど"]
+</div>
+
+<p class="p-form__privacy">
+  <a href="/privacy/" target="_blank" rel="noopener">プライバシーポリシー</a>をご確認のうえ、送信してください。
+</p>
+
+<div class="p-form__submit">
+  [submit class:c-btn class:c-btn--block "この内容で送信する"]
+</div>
+
+【フォーム】ここまで ↑ ------------------------------------------
+
+
+【メール】管理者宛 ------------------------------------------------
+送信先： reform@yamakishi.co.jp（お見積りフォームと同じ。担当の方のアドレスに変えてもOK）
+送信元： [_site_title] <wordpress@yamakishi-reform.jp>
+題名  ： 【協力業者さんエントリー】[your-name] 様（[job]）
+本文  ：
+ホームページの協力業者さん・職人さんエントリーフォームから届きました。
+
+お名前　　： [your-name]（[kana]）
+ご住所　　： [zip] [address]
+電話番号　： [tel]
+メール　　： [mail]
+職種　　　： [job]
+
+── 備考 ──────────
+[message]
+──────────────────────
+送信日時： [_date] [_time]
+送信元IP： [_remote_ip]
+
+
+【メール(2)】エントリーした方への自動返信 --------------------------
+送信先： [mail]
+送信元： リフォームヤマキシ <reform@yamakishi.co.jp>
+題名  ： 【リフォームヤマキシ】エントリーありがとうございます
+追加ヘッダー： Reply-To: reform@yamakishi.co.jp
+本文  ：
+[your-name] 様
+
+このたびは、リフォームヤマキシの協力業者さん・職人さん募集に
+エントリーいただき、ありがとうございます。
+
+下記の内容で承りました。
+採用担当者より、あらためてご連絡いたします。
+
+ご不明な点・ご質問等は、お電話でもお問い合わせいただけます。
+　0761-23-3636（担当：伊達）
+
+──────────────────
+お名前　　： [your-name]（[kana]）
+ご住所　　： [zip] [address]
+電話番号　： [tel]
+職種　　　： [job]
+
+備考：
+[message]
+──────────────────
+
+株式会社山岸（リフォームヤマキシ）
+https://yamakishi-reform.jp/
+
+※このメールは自動でお送りしています。

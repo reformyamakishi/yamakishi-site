@@ -23,6 +23,10 @@
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 require_once get_stylesheet_directory() . '/inc/functions-snippet.php';
+/* 協力業者さん・職人さん募集（/inquiry/conpanyrecruit/）2026/11/03 */
+require_once get_stylesheet_directory() . '/inc/functions-partner.php';
+/* ダッシュボードの「抜粋」→「ディスクリプション」2026/11/03 */
+require_once get_stylesheet_directory() . '/inc/functions-excerpt-label.php';
 /* ホームページ側にサンプル・下書き・非公開を出さない（2026/10/29） */
 require_once get_stylesheet_directory() . '/inc/functions-front-hide.php';
 require_once get_stylesheet_directory() . '/inc/functions-product.php';

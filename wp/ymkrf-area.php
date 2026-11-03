@@ -295,7 +295,8 @@ if ( $vq->have_posts() ) : ?>
       <b><?php echo esc_html( $city ); ?>のリフォーム、まずはご相談ください</b>
       <p>見積り・現地調査は無料です。しつこい営業はいたしません。</p>
       <div class="p-area__cta__btns">
-        <a class="p-area__btn p-area__btn--line" href="<?php echo esc_url( home_url( '/inquiry/line/' ) ); ?>">LINEで相談する</a>
+        <?php /* 2026/11/03 リンク切れ（/inquiry/line/ は無いページ）だったので、ほかのページと同じLINEのURLに */ ?>
+        <a class="p-area__btn p-area__btn--line" href="https://line.me/R/ti/p/@233okcdx" rel="noopener" data-cta="area">LINEで相談する</a>
         <a class="p-area__btn" href="<?php echo esc_url( home_url( '/inquiry/' ) ); ?>">無料見積りを依頼する</a>
       </div>
     </div>

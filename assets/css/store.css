@@ -130,3 +130,11 @@ a.p-store__city:hover{ opacity:.88; }
 .p-store__nearcard b{ display:block; font-size:16px; font-weight:900; }
 .p-store__nearcard span{ display:block; margin-top:4px; font-size:13px; color:var(--ink-sub); }
 .p-store__nearcard small{ display:block; margin-top:6px; font-size:12px; font-weight:800; color:var(--brand-dark); }
+
+/* 出してから1週間の「NEW」（2026/11/03） */
+.p-news__new{
+  display:inline-block; vertical-align:1px; margin-right:7px;
+  background:#fff1ec; color:#c92800; border:1px solid var(--brand); border-radius:4px;
+  padding:1px 6px; font-size:10.5px; font-weight:900; letter-spacing:.06em; line-height:1.5;
+  font-family:"Helvetica Neue",Arial,sans-serif;
+}
