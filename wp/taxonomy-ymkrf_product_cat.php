@@ -853,7 +853,8 @@ if ( ! empty( $pn['items'] ) ) :
   <div class="l-wrap">
     <h2 class="p-prd__bar"><?php echo esc_html( ymkrf_cat_listtitle( $slug, $name ) ); ?></h2>
 
-    <?php if ( $slug === 'interior' && $q->have_posts() ) : ?>
+    <?php /* クロス・床（interior）・内装・改装（renovation）・窓・断熱（window）は、同じ「パック料金」の作り（2026/11/03） */ ?>
+    <?php if ( in_array( $slug, function_exists( 'ymkrf_pack_cats' ) ? ymkrf_pack_cats() : array( 'interior' ), true ) && $q->have_posts() ) : ?>
 
       <?php
       /* =========== 内装・改装は1ページにまとめます ===========
@@ -915,6 +916,44 @@ if ( ! empty( $pn['items'] ) ) :
                   );
                 }
               }
+
+              /* 6帖と8帖は同じ工事なので、写真（Before/After・アイキャッチ）を共有します
+                 （2026/11/03 ユーザー指示「6畳と8畳おなじ内容だからBefore＆Afterのイメージは共有してほしい」「値段が違うだけ」）
+                 この商品に写真が無いときは、商品名の（　）の前が同じ商品（例：畳 → フローリング（6帖パック））の写真を使います。 */
+              $ithumb = has_post_thumbnail( $ip->ID ) ? (int) get_post_thumbnail_id( $ip->ID ) : 0;
+              if ( ! $ibarows && ! $ithumb ) {
+                $ibase = preg_replace( '/\s*[（(][^（）()]*[）)]\s*$/u', '', get_the_title( $ip->ID ) );
+                foreach ( $q->posts as $isib ) {
+                  if ( $isib->ID === $ip->ID ) continue;
+                  if ( preg_replace( '/\s*[（(][^（）()]*[）)]\s*$/u', '', get_the_title( $isib->ID ) ) !== $ibase ) continue;
+                  $sba = get_post_meta( $isib->ID, '_ymkrf_ba', true );
+                  if ( is_array( $sba ) ) {
+                    foreach ( $sba as $ibr ) {
+                      if ( ! is_array( $ibr ) ) continue;
+                      $bid = isset( $ibr['before'] ) ? (int) $ibr['before'] : 0;
+                      $aid = isset( $ibr['after'] )  ? (int) $ibr['after']  : 0;
+                      if ( ! $bid && ! $aid ) continue;
+                      $ibarows[] = array( 'before' => $bid, 'after' => $aid,
+                        'text' => isset( $ibr['text'] ) ? trim( (string) $ibr['text'] ) : '' );
+                    }
+                  }
+                  if ( ! $ibarows && has_post_thumbnail( $isib->ID ) ) $ithumb = (int) get_post_thumbnail_id( $isib->ID );
+                  if ( $ibarows || $ithumb ) break;
+                }
+              }
+
+              /* 「工事の中身」も同じく、空のときは（　）の前が同じ商品のものを使います（値段がちがうだけのため） */
+              $ispec_has = false;
+              if ( is_array( $ispec ) ) foreach ( $ispec as $sp ) { if ( isset( $sp['body'] ) && trim( (string) $sp['body'] ) !== '' ) { $ispec_has = true; break; } }
+              if ( ! $ispec_has ) {
+                $ibase2 = preg_replace( '/\s*[（(][^（）()]*[）)]\s*$/u', '', get_the_title( $ip->ID ) );
+                foreach ( $q->posts as $isib ) {
+                  if ( $isib->ID === $ip->ID ) continue;
+                  if ( preg_replace( '/\s*[（(][^（）()]*[）)]\s*$/u', '', get_the_title( $isib->ID ) ) !== $ibase2 ) continue;
+                  $sspec = get_post_meta( $isib->ID, '_ymkrf_speclist', true );
+                  if ( is_array( $sspec ) && $sspec ) { $ispec = $sspec; break; }
+                }
+              }
             ?>
               <div class="p-pack__item">
 
@@ -937,8 +976,8 @@ if ( ! empty( $pn['items'] ) ) :
                   </div>
                 <?php else : ?>
                   <div class="p-pack__photo">
-                    <?php if ( has_post_thumbnail( $ip->ID ) ) : ?>
-                      <?php echo get_the_post_thumbnail( $ip->ID, 'medium_large', array(
+                    <?php if ( $ithumb ) : ?>
+                      <?php echo wp_get_attachment_image( $ithumb, 'medium_large', false, array(
                         'alt' => esc_attr( get_the_title( $ip->ID ) ),
                         'loading' => 'lazy', 'decoding' => 'async',
                       ) ); ?>

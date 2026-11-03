@@ -22,7 +22,10 @@ $home  = home_url( '/' );
           <li><a href="<?php echo esc_url( ymkrf_cat_url( 'ecocute' ) ); ?>">エコキュート</a></li>
           <li><a href="<?php echo esc_url( ymkrf_cat_url( 'outer-wall' ) ); ?>">外壁塗装・屋根</a></li>
           <li><a href="<?php echo esc_url( ymkrf_cat_url( 'exterior' ) ); ?>">エクステリア</a></li>
-          <li><a href="<?php echo esc_url( ymkrf_cat_url( 'interior' ) ); ?>">内装・窓・断熱</a></li>
+          <?php /* 2026/11/03 トップページのリフォームメニューと同じ分けかたに */ ?>
+          <li><a href="<?php echo esc_url( ymkrf_cat_url( 'interior' ) ); ?>">クロス・床</a></li>
+          <li><a href="<?php echo esc_url( ymkrf_cat_url( 'renovation' ) ); ?>">内装・改装</a></li>
+          <li><a href="<?php echo esc_url( ymkrf_cat_url( 'window' ) ); ?>">窓・断熱</a></li>
         </ul>
       </div>
 

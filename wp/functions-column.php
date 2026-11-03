@@ -1891,40 +1891,35 @@ endif;
      手で消したいときは、カスタムフィールドから消してください。
    ============================================================ */
 
-/** 公開中のコラムの中身が変わったら、更新日を控えます */
-add_action( 'post_updated', function ( $post_id, $after, $before ) {
+/* 更新日は、編集画面の「更新日」の欄でだけ決めます（2026/11/03 ユーザー指示
+   「コラムですが、基本上に出さない（いまの順番のまま）にして。一番上に出したいときもあるので、
+     更新日の設定を設けて。その更新日順にします」）
+   ・ふつうに直して「更新」しても、更新日は変わりません（＝一覧の順番はそのまま）
+   ・上に出したいときは、「更新日」の欄に日付を入れる（「今日にする」ボタン）→ その日付の順で並びます
+   ・欄を空にすると、更新日は消えて、公開日の位置に戻ります
+   （もとは「題名か本文が変わったら自動で今日」でしたが、それをやめました） */
+add_action( 'save_post_ymkrf_column', function ( $post_id ) {
 
-	if ( ! $after || $after->post_type !== 'ymkrf_column' ) return;
 	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
+	if ( wp_is_post_revision( $post_id ) ) return;
+	if ( ! isset( $_POST['ymkrf_updbox_nonce'] )
+	  || ! wp_verify_nonce( sanitize_key( wp_unslash( $_POST['ymkrf_updbox_nonce'] ) ), 'ymkrf_updbox' ) ) return;
+	if ( ! current_user_can( 'edit_post', $post_id ) ) return;
 
-	/* 公開中 → 公開中 のときだけ。下書きを直しているあいだは動きません */
-	if ( $before->post_status !== 'publish' || $after->post_status !== 'publish' ) return;
+	$day = isset( $_POST['ymkrf_col_upd_day'] ) ? trim( sanitize_text_field( wp_unslash( $_POST['ymkrf_col_upd_day'] ) ) ) : '';
+	$now = trim( (string) get_post_meta( $post_id, '_ymkrf_col_updated', true ) );
 
-	/* 編集画面で選んだ「保存したら、この記事を…」を先に見ます
-	   （2026/09/25 ユーザー相談
-	     「昔の記事をちょっと直しただけで、いちばん上に出したくない」）。
-	     up    … 上に出す（更新日を今日に）※何も選ばなかったときもこれ
-	     keep  … 出さない（更新日はそのまま）
-	     clear … 出さない（更新日を消す） */
-	if ( isset( $_POST['ymkrf_updbox_nonce'] )
-	  && wp_verify_nonce( sanitize_key( wp_unslash( $_POST['ymkrf_updbox_nonce'] ) ), 'ymkrf_updbox' ) ) {
-
-		$mode = isset( $_POST['ymkrf_upd_mode'] )
-			? sanitize_key( wp_unslash( $_POST['ymkrf_upd_mode'] ) ) : 'up';
-
-		if ( $mode === 'clear' ) {
-			delete_post_meta( $post_id, '_ymkrf_col_updated' );
-			return;
-		}
-		if ( $mode === 'keep' ) return;
+	if ( $day === '' ) {                       /* 空 → 更新日なし（公開日の位置） */
+		if ( $now !== '' ) delete_post_meta( $post_id, '_ymkrf_col_updated' );
+		return;
 	}
+	if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $day ) ) return;
+	if ( $now !== '' && substr( $now, 0, 10 ) === $day ) return;   /* 日付が同じなら、そのまま */
 
-	$changed = ( $before->post_content !== $after->post_content )
-	        || ( $before->post_title   !== $after->post_title );
-	if ( ! $changed ) return;
-
-	update_post_meta( $post_id, '_ymkrf_col_updated', current_time( 'Y-m-d H:i:s' ) );
-}, 10, 3 );
+	/* 今日なら今の時刻、ほかの日なら その日の 12:00（同じ日の記事どうしの並びのため） */
+	$val = ( $day === current_time( 'Y-m-d' ) ) ? current_time( 'Y-m-d H:i:s' ) : $day . ' 12:00:00';
+	update_post_meta( $post_id, '_ymkrf_col_updated', $val );
+}, 20 );
 
 /**
  * そのコラムの日付。
@@ -2102,37 +2097,18 @@ add_action( 'post_submitbox_misc_actions', function ( $post ) {
 
 	</div>
 
-	<?php /* 「更新するとどうなるか」を、ひとつの質問で選べるようにしました
-	         （2026/09/25 ユーザー指摘「この2つのチェック分かりにくいな」）。
-	         チェック2つだと、組み合わせを考えないといけないためです。 */ ?>
-	<?php if ( $post->post_status === 'publish' ) : ?>
+	<?php /* 更新日の欄（2026/11/03 ユーザー指示「基本上に出さない（いまの順番のまま）にして。
+	         一番上に出したいときもあるので、更新日の設定を設けて。その更新日順にします」）
+	         もとの「更新したら、この記事を（上に出す／出さない）」の選択はやめました。 */ ?>
 	<div class="misc-pub-section ymkrf-updpick">
 	  <?php wp_nonce_field( 'ymkrf_updbox', 'ymkrf_updbox_nonce' ); ?>
-
-	  <p class="ymkrf-updpick__q">更新したら、この記事を</p>
-
-	  <label class="ymkrf-updpick__opt">
-	    <input type="radio" name="ymkrf_upd_mode" value="up" checked>
-	    <b>一覧のいちばん上に出す</b>
-	    <span>更新日が今日になります。書き直したときは、こちら。</span>
-	  </label>
-
-	  <label class="ymkrf-updpick__opt">
-	    <input type="radio" name="ymkrf_upd_mode" value="keep">
-	    <b>上に出さない（いまの順番のまま）</b>
-	    <span>誤字やリンクの直しなど。更新日は<?php
-	      echo $upd !== '' ? '、いまのままです' : '付きません'; ?>。</span>
-	  </label>
-
-	  <?php if ( $upd !== '' ) : ?>
-	    <label class="ymkrf-updpick__opt">
-	      <input type="radio" name="ymkrf_upd_mode" value="clear">
-	      <b>上に出さない＋更新日を消す</b>
-	      <span>まちがえて更新日が付いたときに。公開日の位置に戻ります。</span>
-	    </label>
-	  <?php endif; ?>
+	  <p class="ymkrf-updpick__q">更新日（一覧の並び順）</p>
+	  <input type="date" name="ymkrf_col_upd_day" id="ymkrf_col_upd_day"
+	         value="<?php echo esc_attr( $upd !== '' ? substr( $upd, 0, 10 ) : ( ( $raw = trim( (string) get_post_meta( $post->ID, '_ymkrf_col_updated', true ) ) ) !== '' ? substr( $raw, 0, 10 ) : '' ) ); ?>"
+	         style="width:100%;max-width:170px">
+	<?php /* 「今日にする」「空にする」のボタンと説明文は、出さないことにしました（2026/11/03 ユーザー「ここ不要」）。
+	         日付を入れる・消すだけで使います。 */ ?>
 	</div>
-	<?php endif; ?>
 
 	<style>
 	  .ymkrf-updrow__day{ color:#b32d2e; }
@@ -2144,6 +2120,7 @@ add_action( 'post_submitbox_misc_actions', function ( $post ) {
 	    display:block; margin:1px 0 0 24px; color:#646970; font-size:11.5px; line-height:1.5;
 	  }
 	  .ymkrf-updpick__opt:has(input:checked) b{ color:#b32d2e; }
+	  .ymkrf-updpick__help{ display:block; margin-top:6px; color:#646970; font-size:11.5px; line-height:1.6; }
 	</style>
 	<?php
 } );

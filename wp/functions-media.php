@@ -679,11 +679,14 @@ function ymkrf_media_product_folders( $map ) {
 	$groups = array();   /* 分類のslug => 名前・並び・商品 */
 	$cats   = get_terms( array( 'taxonomy' => 'ymkrf_product_cat', 'hide_empty' => false ) );
 	$order  = array();
-	/* 並びはサイトの商品ページと同じ（キッチン → お風呂 → トイレ → 洗面 → 4点セット → 給湯器 → エコキュート → … → 内装） */
-	$pref = array( 'kitchen', 'bathroom', 'toilet', 'lavatory', 'pack4', 'boiler', 'ecocute' );
+	/* 並びは、ダッシュボードの商品の大分類と同じ（4点セット → キッチン → … → その他）。
+	   2026/11/03 ユーザー「メディアですが、たしかダッシュボードの大分類ごとにファイル分けしたはずなんだけど」
+	   → 大分類が増えた・並びが変わったので、それに合わせました。商品がまだ無い分類のフォルダも出します。 */
+	$pref = function_exists( 'ymkrf_product_cat_order_list' ) ? ymkrf_product_cat_order_list()
+		: array( 'pack4', 'kitchen', 'bathroom', 'toilet', 'lavatory', 'boiler', 'ecocute' );
 	if ( ! is_wp_error( $cats ) ) foreach ( array_values( $cats ) as $i => $t ) {
 		$at = array_search( $t->slug, $pref, true );
-		$order[ $t->slug ] = ( $at !== false ) ? $at : ( in_array( $t->slug, array( 'interior', 'outer-wall' ), true ) ? 90 + $i : 50 + $i );
+		$order[ $t->slug ] = ( $at !== false ) ? $at : 500 + $i;
 	}
 	foreach ( $posts as $p ) {
 		$ts = get_the_terms( $p->ID, 'ymkrf_product_cat' );
@@ -703,6 +706,11 @@ function ymkrf_media_product_folders( $map ) {
 			'n'     => isset( $prod[ $p->ID ] ) ? count( $prod[ $p->ID ] ) : 0,
 			'thumb' => get_the_post_thumbnail_url( $p->ID, 'thumbnail' ),
 		);
+	}
+	/* 商品がまだ無い大分類も、空のフォルダとして出します（ダッシュボードの大分類と同じ数・同じ並びに） */
+	if ( ! is_wp_error( $cats ) ) foreach ( $cats as $t ) {
+		if ( isset( $groups[ $t->slug ] ) ) continue;
+		$groups[ $t->slug ] = array( 'name' => $t->name, 'ord' => isset( $order[ $t->slug ] ) ? $order[ $t->slug ] : 9999, 'items' => array() );
 	}
 	uasort( $groups, function ( $a, $b ) { return $a['ord'] - $b['ord']; } );
 	$back = admin_url( 'upload.php?page=ymkrf-media-folders' );

@@ -139,8 +139,10 @@ $asset = get_stylesheet_directory_uri();
         <li><a href="<?php echo esc_url( ymkrf_cat_url( 'boiler' ) ); ?>">給湯器</a></li>
         <li><a href="<?php echo esc_url( ymkrf_cat_url( 'ecocute' ) ); ?>">エコキュート</a></li>
         <li><a href="<?php echo esc_url( ymkrf_cat_url( 'outer-wall' ) ); ?>">外壁・屋根</a></li>
-        <li><a href="<?php echo esc_url( ymkrf_cat_url( 'window' ) ); ?>">窓・玄関ドア</a></li>
-        <li><a href="<?php echo esc_url( ymkrf_cat_url( 'interior' ) ); ?>">内装・改装</a></li>
+        <?php /* 2026/11/03 トップページのリフォームメニューと同じ名前に */ ?>
+        <li><a href="<?php echo esc_url( ymkrf_cat_url( 'interior' ) ); ?>">クロス・床</a></li>
+        <li><a href="<?php echo esc_url( ymkrf_cat_url( 'renovation' ) ); ?>">内装・改装</a></li>
+        <li><a href="<?php echo esc_url( ymkrf_cat_url( 'window' ) ); ?>">窓・断熱</a></li>
       </ul>
     <?php } ?>
 
@@ -153,7 +155,7 @@ $asset = get_stylesheet_directory_uri();
       <li><a href="<?php echo esc_url( home_url( '/voice/' ) ); ?>">お客様の声</a></li>
       <li><a href="<?php echo esc_url( home_url( '/shops/' ) ); ?>">店舗・対応エリア</a></li>
       <li><a href="<?php echo esc_url( home_url( '/faq/' ) ); ?>">よくあるご質問</a></li>
-      <li><a href="<?php echo esc_url( home_url( '/column/' ) ); ?>">コラム・お役立ち情報</a></li>
+      <li><a href="<?php echo esc_url( home_url( '/blog/' ) ); ?>">コラム・お役立ち情報</a></li>
     </ul>
   </div>
 </div>

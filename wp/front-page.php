@@ -467,87 +467,87 @@ get_header();
     </div>
 
     <div class="p-menu__grid" data-reveal>
-      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_cat_url( 'kitchen' ) ); ?>" data-icon="kitchen">
+      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_menu_cat_link( 'kitchen' ) ); ?>" data-icon="kitchen">
         <span class="p-menu__icon"></span>
         <span class="p-menu__name">キッチン</span><span class="p-menu__note">システムキッチン交換</span>
       </a>
-      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_cat_url( 'bathroom' ) ); ?>" data-icon="bath">
+      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_menu_cat_link( 'bathroom' ) ); ?>" data-icon="bath">
         <span class="p-menu__icon"></span>
         <span class="p-menu__name">お風呂</span><span class="p-menu__note">断熱浴槽であたたかく</span>
       </a>
-      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_cat_url( 'toilet' ) ); ?>" data-icon="toilet">
+      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_menu_cat_link( 'toilet' ) ); ?>" data-icon="toilet">
         <span class="p-menu__icon"></span>
         <span class="p-menu__name">トイレ</span><span class="p-menu__note">最短半日で交換</span>
       </a>
-      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_cat_url( 'lavatory' ) ); ?>" data-icon="washroom">
+      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_menu_cat_link( 'lavatory' ) ); ?>" data-icon="washroom">
         <span class="p-menu__icon"></span>
         <span class="p-menu__name">洗面化粧台</span><span class="p-menu__note">収納たっぷり</span>
       </a>
-      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_cat_url( 'boiler' ) ); ?>" data-icon="boiler">
+      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_menu_cat_link( 'boiler' ) ); ?>" data-icon="boiler">
         <span class="p-menu__icon"></span>
         <span class="p-menu__name">給湯器</span><span class="p-menu__note">故障・交換のご相談</span>
       </a>
-      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_cat_url( 'oiltank' ) ); ?>" data-icon="oiltank">
+      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_menu_cat_link( 'oiltank' ) ); ?>" data-icon="oiltank">
         <span class="p-menu__icon"></span>
         <span class="p-menu__name">オイルタンク</span><span class="p-menu__note">灯油タンクの交換</span>
       </a>
-      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_cat_url( 'ecocute' ) ); ?>" data-icon="ecocute">
+      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_menu_cat_link( 'ecocute' ) ); ?>" data-icon="ecocute">
         <span class="p-menu__icon"></span>
         <span class="p-menu__name">エコキュート</span><span class="p-menu__note">電気でお湯をつくる</span>
       </a>
-      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_cat_url( 'cooktop' ) ); ?>" data-icon="ih">
+      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_menu_cat_link( 'cooktop' ) ); ?>" data-icon="ih">
         <span class="p-menu__icon"></span>
         <span class="p-menu__name">IH・ガスコンロ</span><span class="p-menu__note">クッキングヒーター交換</span>
       </a>
-      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_cat_url( 'ventilation' ) ); ?>" data-icon="ventilation">
+      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_menu_cat_link( 'ventilation' ) ); ?>" data-icon="ventilation">
         <span class="p-menu__icon"></span>
         <span class="p-menu__name">換気扇・レンジフード</span><span class="p-menu__note">お手入れしやすいものに</span>
       </a>
-      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_cat_url( 'interior' ) ); ?>" data-icon="interior">
+      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_menu_cat_link( 'interior' ) ); ?>" data-icon="interior">
         <span class="p-menu__icon"></span>
         <span class="p-menu__name">クロス・床</span><span class="p-menu__note">お部屋の模様替え</span>
       </a>
-      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_cat_url( 'renovation' ) ); ?>" data-icon="renovation">
+      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_menu_cat_link( 'renovation' ) ); ?>" data-icon="renovation">
         <span class="p-menu__icon"></span>
         <span class="p-menu__name">内装・改装</span><span class="p-menu__note">間取りの変更も</span>
       </a>
-      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_cat_url( 'window' ) ); ?>" data-icon="window">
+      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_menu_cat_link( 'window' ) ); ?>" data-icon="window">
         <span class="p-menu__icon"></span>
         <span class="p-menu__name">窓・断熱</span><span class="p-menu__note">補助金の対象工事</span>
       </a>
-      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_cat_url( 'door' ) ); ?>" data-icon="door">
+      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_menu_cat_link( 'door' ) ); ?>" data-icon="door">
         <span class="p-menu__icon"></span>
         <span class="p-menu__name">ドア</span><span class="p-menu__note">玄関ドア・勝手口</span>
       </a>
-      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_cat_url( 'exterior' ) ); ?>" data-icon="exterior">
+      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_menu_cat_link( 'exterior' ) ); ?>" data-icon="exterior">
         <span class="p-menu__icon"></span>
         <span class="p-menu__name">エクステリア</span><span class="p-menu__note">ベランダ・サンルーム・風除室・テラスなど</span>
       </a>
-      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_cat_url( 'carport' ) ); ?>" data-icon="carport">
+      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_menu_cat_link( 'carport' ) ); ?>" data-icon="carport">
         <span class="p-menu__icon"></span>
         <span class="p-menu__name">カーポート</span><span class="p-menu__note">雪や雨から車を守る</span>
       </a>
-      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_cat_url( 'storage' ) ); ?>" data-icon="storage">
+      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_menu_cat_link( 'storage' ) ); ?>" data-icon="storage">
         <span class="p-menu__icon"></span>
         <span class="p-menu__name">物置</span><span class="p-menu__note">庭まわりの収納に</span>
       </a>
-      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_cat_url( 'fence' ) ); ?>" data-icon="fence">
+      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_menu_cat_link( 'fence' ) ); ?>" data-icon="fence">
         <span class="p-menu__icon"></span>
         <span class="p-menu__name">フェンス・門まわり</span><span class="p-menu__note">目隠し・境界のブロック</span>
       </a>
-      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_cat_url( 'outer-wall' ) ); ?>" data-icon="wall">
+      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_menu_cat_link( 'outer-wall' ) ); ?>" data-icon="wall">
         <span class="p-menu__icon"></span>
         <span class="p-menu__name">外壁・屋根</span><span class="p-menu__note">塗装・サイディング</span>
       </a>
-      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_products_url() ); ?>" data-icon="repair">
+      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_menu_cat_link( 'repair' ) ); ?>" data-icon="repair">
         <span class="p-menu__icon"></span>
         <span class="p-menu__name">修理・小工事</span><span class="p-menu__note">水漏れ・建具・電気</span>
       </a>
-      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_products_url() ); ?>" data-icon="demolition">
+      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_menu_cat_link( 'demolition' ) ); ?>" data-icon="demolition">
         <span class="p-menu__icon"></span>
         <span class="p-menu__name">解体</span><span class="p-menu__note">建物・部分解体</span>
       </a>
-      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_products_url() ); ?>" data-icon="other">
+      <a class="p-menu__item" href="<?php echo esc_url( ymkrf_menu_cat_link( 'other' ) ); ?>" data-icon="other">
         <span class="p-menu__icon"></span>
         <span class="p-menu__name">その他</span><span class="p-menu__note">まずはご相談ください</span>
       </a>

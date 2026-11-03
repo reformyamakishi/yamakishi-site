@@ -24,12 +24,16 @@ get_header();
 <nav class="p-breadcrumb" aria-label="パンくずリスト">
   <ol class="p-breadcrumb__list">
     <li><a href="<?php echo esc_url( home_url( '/' ) ); ?>">ホーム</a></li>
-    <li>保証について</li>
+    <li><?php echo esc_html( function_exists( 'ymkrf_ep_crumb' ) ? ymkrf_ep_crumb( 'warranty', '保証について' ) : '保証について' ); ?></li>
   </ol>
 </nav>
 
 <main id="main">
 
+<?php /* ★2026/11/03 ここから下（いちばん下のボタンの手前まで）は、ダッシュボード「固定ページ」→「保証について」で直せます。
+         固定ページが無い・公開していないときだけ、下のもとの中身を出します（控え）。inc/functions-editpages.php */
+$ymkrf_ep = function_exists( 'ymkrf_ep_page' ) ? ymkrf_ep_page( 'warranty' ) : null;
+if ( $ymkrf_ep ) : ymkrf_ep_output( 'warranty', $ymkrf_ep ); else : ?>
 <div class="p-pagehead">
   <div class="l-wrap p-pagehead__inner">
     <img class="p-pagehead__chara c-chara--float" src="<?php echo $asset; ?>/assets/img/character/char-anshin.webp"
@@ -199,6 +203,8 @@ get_header();
     </ul>
   </div>
 </section>
+
+<?php endif; /* ここまで固定ページ（控え） */ ?>
 
 <!-- =========== CTA =========== -->
 <section class="l-section l-section--soft">

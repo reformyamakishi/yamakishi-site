@@ -266,6 +266,14 @@ add_action( 'init', function () {
    2. 入力欄の定義　★項目を増やすときはここ
    ============================================================ */
 
+/** 「パック料金」型の分類（内装・改装と同じ作り。2026/11/03 トップページのリフォームメニューに合わせて3つに分けた）
+ *  interior＝クロス・床／renovation＝内装・改装／window＝窓・断熱 */
+if ( ! function_exists( 'ymkrf_pack_cats' ) ) :
+function ymkrf_pack_cats() {
+	return array( 'interior', 'renovation', 'window' );
+}
+endif;
+
 /** 1つだけ入力する欄 */
 function ymkrf_product_fields() {
 	return array(
@@ -370,7 +378,7 @@ function ymkrf_product_fields() {
 			'サイズ・質量など、お客様に伝えたいことを自由に書いてください。'
 			. '商品写真の下に出ます。空のままなら、見出しごと出ません。'
 			. '※商品名のすぐ下の一文は、これとは別に自動で作られます',
-			array(), array( 'cooktop' ) ),
+			array(), array( 'cooktop', 'interior', 'renovation', 'window' ) ),   /* パック料金の分類でも使います（2026/11/03） */
 		'_ymkrf_list'    => array( 'メーカー定価', 'yen', '例：249,370',
 			'入れると「定価249,370円の品」と出ます。無ければ空のままでOK',
 			array(), array( 'cooktop' ) ),
@@ -677,12 +685,29 @@ function ymkrf_product_fields_for( $cat = '' ) {
 	/* 内装・改装は、使う欄がとても少ないので、ここでしぼります
 	   （2026/09/17 ユーザー指示
 	     「グレード／商品名／商品名の横の言葉／標準工事費／特徴1〜3」） */
-	if ( $cat === 'interior' ) {
+	if ( in_array( $cat, ymkrf_pack_cats(), true ) ) {
+		/* 2026/11/03 工期・説明を足しました（ユーザー「旧サイトから読み取って完成させて」。
+		   旧サイトの工期・説明文をダッシュボードで直せるように） */
 		$keep = array( '_ymkrf_grade', '_ymkrf_name', '_ymkrf_catch', '_ymkrf_sub',
-		               '_ymkrf_pts', '_ymkrf_work' );
+		               '_ymkrf_pts', '_ymkrf_work', '_ymkrf_days', '_ymkrf_desc' );
 		$only = array();
 		foreach ( $keep as $k ) {
 			if ( isset( $out[ $k ] ) ) $only[ $k ] = $out[ $k ];
+		}
+		/* 内装・改装での意味に合わせて、見出しと説明を変えます */
+		if ( isset( $only['_ymkrf_catch'] ) ) {
+			$only['_ymkrf_catch'][0] = 'まとまり（見出し）';
+			$only['_ymkrf_catch'][2] = '例：床リフォーム';
+			$only['_ymkrf_catch'][3] = 'ページの見出しになります。同じ言葉の商品が1つのまとまりに入ります（クロスリフォーム／床リフォーム／部屋リフォーム／窓リフォーム／断熱リフォーム）';
+		}
+		if ( isset( $only['_ymkrf_work'] ) ) {
+			$only['_ymkrf_work'][0] = '価格（材料費・工事費込み）';
+			$only['_ymkrf_work'][3] = '★税込の金額を入れてください。空のときは「お見積りいたします」と出ます。'
+				. '商品名のうしろの（6帖）などだけがちがう商品は、ページでは1枚のカードの料金表にまとまります';
+		}
+		if ( isset( $only['_ymkrf_desc'] ) ) {
+			$only['_ymkrf_desc'][0] = '説明';
+			$only['_ymkrf_desc'][3] = 'カードの商品名の下に出ます。6帖・8帖など同じカードにまとまる商品は、どれか1つに入れれば出ます';
 		}
 		return $only;
 	}
@@ -1042,7 +1067,7 @@ function ymkrf_product_repeaters() {
 			'size'  => '写真は 1200×900px くらい（よこ4：たて3）',
 			'note'  => '1行につき、施工前と施工後の写真を1枚ずつ入れてください。'
 			         . '何組でも足せます。説明は空でもかまいません。',
-			'only'  => array( 'interior' ),
+			'only'  => array( 'interior', 'renovation', 'window' ),
 			'cols'  => array(
 				'before' => array( 'Before（施工前）', 'image' ),
 				'after'  => array( 'After（施工後）',  'image' ),
@@ -1099,7 +1124,7 @@ add_action( 'add_meta_boxes', function () {
 
 		/* 内装・改装では、Before/After だけを出します
 		   （2026/09/17 ユーザー指示。標準仕様や扉カラーなどは使いません） */
-		if ( $cat_now === 'interior' && $key !== '_ymkrf_ba' ) continue;
+		if ( in_array( $cat_now, ymkrf_pack_cats(), true ) && ! in_array( $key, array( '_ymkrf_ba', '_ymkrf_speclist' ), true ) ) continue;
 
 		/* IH・コンロは、いまのところ「商品データ（基本）」だけです
 		   （2026/09/22 ユーザー指示「これらの商品は、とりあえず基本情報だけでよいわ」）。
@@ -1115,6 +1140,8 @@ add_action( 'add_meta_boxes', function () {
 		if ( ! empty( $r['color'] ) || ! empty( $r['incolor'] ) ) { $ymkrf_has_color = true; continue; }
 
 		$box_ttl = $r['label'];
+		/* 内装・改装では「工事の中身」として使います（2026/11/03） */
+		if ( in_array( $cat_now, ymkrf_pack_cats(), true ) && $key === '_ymkrf_speclist' ) $box_ttl = '工事の中身';
 
 		/* 写真のおすすめの大きさは、見出しのよこに小さく出します
 		   （2026/09/18 ユーザー指示「オススメポイントの横に小さく入れて」） */
@@ -1847,6 +1874,16 @@ function ymkrf_product_box_repeater( $post, $key ) {
 				: '色見本の写真と、色の名前を入れてください。';
 			if ( isset( $def['cols']['name'] ) ) $def['cols']['name'][2] = '例：' . $ymkrf_w['name'];
 		}
+	}
+	/* 内装・改装の「工事の中身」（2026/11/03） */
+	if ( $key === '_ymkrf_speclist' && function_exists( 'ymkrf_product_current_cat' )
+	  && in_array( ymkrf_product_current_cat( $post->ID ), ymkrf_pack_cats(), true ) ) {
+		$def['note'] = '「見出し」に 工事の中身 などを入れ、「中身」に1行ずつ書いてください。'
+		             . '6帖・8帖など同じカードにまとまる商品は、どれか1つに入れれば出ます。';
+		$def['cols']['ttl'][0]  = '見出し';
+		$def['cols']['ttl'][2]  = '例：工事の中身';
+		$def['cols']['body'][0] = '中身';
+		$def['cols']['body'][2] = "例：\n既存壁紙はがし\n下地処理";
 	}
 	$rows = get_post_meta( $post->ID, $key, true );
 	if ( ! is_array( $rows ) ) $rows = array();
@@ -3712,8 +3749,11 @@ function ymkrf_product_cat_sort( $terms ) {
 	/* 商品一覧ページ（/products/）のカードと同じ順にします。
 	   ここに無い分類は、うしろに付きます。 */
 	/* 外壁・屋根は商品から外しました（2026/09/17 ユーザー指示） */
-	$order = array( 'kitchen', 'bathroom', 'toilet', 'lavatory', 'boiler', 'ecocute',
-	                'window', 'interior' );
+	/* 2026/11/03 トップページのリフォームメニューと同じ順に（ユーザー「商品の大分類は、トップページのリフォームメニューと同じにして」） */
+	/* 2026/11/03 ユーザー「4点セットはキッチンの前に。その他は最後」 */
+	$order = array( 'pack4', 'kitchen', 'bathroom', 'toilet', 'lavatory', 'boiler', 'oiltank', 'ecocute', 'cooktop',
+	                'ventilation', 'interior', 'renovation', 'window', 'door', 'exterior', 'carport', 'storage',
+	                'fence', 'outer-wall', 'repair', 'demolition', 'other' );
 	usort( $terms, function ( $a, $b ) use ( $order ) {
 		$ia = array_search( $a->slug, $order, true );
 		$ib = array_search( $b->slug, $order, true );
@@ -4152,8 +4192,11 @@ add_action( 'admin_bar_menu', function ( $bar ) {
 
 	/* 並べる順は、左メニューや商品一覧ページと同じにします */
 	/* 外壁・屋根は商品から外しました（2026/09/17 ユーザー指示） */
-	$order = array( 'kitchen', 'bathroom', 'toilet', 'lavatory', 'boiler', 'ecocute',
-	                'window', 'interior' );
+	/* 2026/11/03 トップページのリフォームメニューと同じ順に（ユーザー「商品の大分類は、トップページのリフォームメニューと同じにして」） */
+	/* 2026/11/03 ユーザー「4点セットはキッチンの前に。その他は最後」 */
+	$order = array( 'pack4', 'kitchen', 'bathroom', 'toilet', 'lavatory', 'boiler', 'oiltank', 'ecocute', 'cooktop',
+	                'ventilation', 'interior', 'renovation', 'window', 'door', 'exterior', 'carport', 'storage',
+	                'fence', 'outer-wall', 'repair', 'demolition', 'other' );
 	usort( $terms, function ( $a, $b ) use ( $order ) {
 		$ia = array_search( $a->slug, $order, true );
 		$ib = array_search( $b->slug, $order, true );
@@ -4203,8 +4246,11 @@ add_filter( 'views_edit-ymkrf_product', function ( $views ) {
 
 	/* 並べる順は、商品一覧ページ（/products/）のカードと同じ */
 	/* 外壁・屋根は商品から外しました（2026/09/17 ユーザー指示） */
-	$order = array( 'kitchen', 'bathroom', 'toilet', 'lavatory', 'boiler', 'ecocute',
-	                'window', 'interior' );
+	/* 2026/11/03 トップページのリフォームメニューと同じ順に（ユーザー「商品の大分類は、トップページのリフォームメニューと同じにして」） */
+	/* 2026/11/03 ユーザー「4点セットはキッチンの前に。その他は最後」 */
+	$order = array( 'pack4', 'kitchen', 'bathroom', 'toilet', 'lavatory', 'boiler', 'oiltank', 'ecocute', 'cooktop',
+	                'ventilation', 'interior', 'renovation', 'window', 'door', 'exterior', 'carport', 'storage',
+	                'fence', 'outer-wall', 'repair', 'demolition', 'other' );
 	usort( $terms, function ( $a, $b ) use ( $order ) {
 		$ia = array_search( $a->slug, $order, true );
 		$ib = array_search( $b->slug, $order, true );
@@ -4834,9 +4880,9 @@ function ymkrf_cat_label( $slug, $fallback = '' ) {
 		'boiler'   => '給湯器',
 		'ecocute'  => 'エコキュート',
 		/* 2026/09/22 追加 */
-		'cooktop'       => 'IH・コンロ',
+		'cooktop'       => 'IH・ガスコンロ',   /* 2026/11/03 トップページのメニューと同じ名前に */
 		'exterior' => 'エクステリア',
-		'window'   => '窓リフォーム',
+		'window'   => '窓・断熱',             /* 2026/11/03 同上（もとは「窓リフォーム」） */
 	);
 	return isset( $map[ $slug ] ) ? $map[ $slug ] : $fallback;
 }
@@ -6542,8 +6588,8 @@ add_action( 'admin_init', function () {
 		'lavatory'   => '洗面化粧台',
 		'boiler'     => '給湯器',
 		'ecocute'    => 'エコキュート',
-		'window'     => '窓・玄関ドア',
-		'interior'   => '内装・改装',
+		'window'     => '窓・断熱',     /* 2026/11/03 トップページのメニューに合わせて名前を変えました */
+		'interior'   => 'クロス・床',
 		/* 外壁・屋根は商品から外しましたが、専用ページがあるので消しません */
 		'outer-wall' => '外壁・屋根',
 	);
@@ -6718,7 +6764,7 @@ add_action( 'admin_notices', function () {
 add_action( 'add_meta_boxes', function () {
 
 	if ( ! function_exists( 'ymkrf_product_current_cat' ) ) return;
-	if ( ymkrf_product_current_cat( get_the_ID() ) !== 'interior' ) return;
+	if ( ! in_array( ymkrf_product_current_cat( get_the_ID() ), ymkrf_pack_cats(), true ) ) return;
 
 	remove_meta_box( 'ymkrf_product_catdiv', 'ymkrf_product', 'side' );   /* 商品カテゴリ */
 	remove_meta_box( 'ymkrf_makerdiv',       'ymkrf_product', 'side' );   /* メーカー */
@@ -6734,7 +6780,10 @@ add_action( 'save_post_ymkrf_product', function ( $post_id ) {
 	/* 画面にカテゴリの箱が無かったときだけ、付けなおします */
 	if ( ! isset( $_POST['ymkrf_interior_keep'] ) ) return;
 
-	$term = get_term_by( 'slug', 'interior', 'ymkrf_product_cat' );
+	/* 画面をひらいたときの分類（クロス・床／内装・改装／窓・断熱）に付けなおします（2026/11/03） */
+	$keep_slug = sanitize_title( wp_unslash( $_POST['ymkrf_interior_keep'] ) );
+	if ( ! in_array( $keep_slug, ymkrf_pack_cats(), true ) ) $keep_slug = 'interior';
+	$term = get_term_by( 'slug', $keep_slug, 'ymkrf_product_cat' );
 	if ( $term && ! is_wp_error( $term ) ) {
 		wp_set_object_terms( $post_id, array( (int) $term->term_id ), 'ymkrf_product_cat' );
 	}
@@ -6744,8 +6793,9 @@ add_action( 'save_post_ymkrf_product', function ( $post_id ) {
 add_action( 'edit_form_after_title', function ( $post ) {
 	if ( ! $post || $post->post_type !== 'ymkrf_product' ) return;
 	if ( ! function_exists( 'ymkrf_product_current_cat' ) ) return;
-	if ( ymkrf_product_current_cat( $post->ID ) !== 'interior' ) return;
-	echo '<input type="hidden" name="ymkrf_interior_keep" value="1">';
+	$keep_now = ymkrf_product_current_cat( $post->ID );
+	if ( ! in_array( $keep_now, ymkrf_pack_cats(), true ) ) return;
+	echo '<input type="hidden" name="ymkrf_interior_keep" value="' . esc_attr( $keep_now ) . '">';
 } );
 
 /* 「並び順」は、まん中の入力欄には出しません（右の「公開」の下にあります）。

@@ -86,7 +86,9 @@ function ymkrf_media_dest_label( $dest ) {
 function ymkrf_media_dest_products() {
 	static $out = null;
 	if ( $out !== null ) return $out;
-	$pref  = array( 'kitchen', 'bathroom', 'toilet', 'lavatory', 'pack4', 'boiler', 'ecocute' );
+	/* 並びはダッシュボードの商品の大分類と同じ（2026/11/03） */
+	$pref  = function_exists( 'ymkrf_product_cat_order_list' ) ? ymkrf_product_cat_order_list()
+		: array( 'pack4', 'kitchen', 'bathroom', 'toilet', 'lavatory', 'boiler', 'ecocute' );
 	$posts = get_posts( array( 'post_type' => 'ymkrf_product', 'post_status' => array( 'publish', 'draft', 'pending', 'private', 'future' ),
 	                           'posts_per_page' => -1, 'orderby' => array( 'menu_order' => 'ASC', 'title' => 'ASC' ) ) );
 	$g = array();
@@ -97,7 +99,7 @@ function ymkrf_media_dest_products() {
 		if ( ! isset( $g[ $k ] ) ) {
 			$at = $t ? array_search( $t->slug, $pref, true ) : false;
 			$g[ $k ] = array( 'name' => $t ? $t->name : '分類なし',
-			                  'ord'  => $at !== false ? $at : ( $t && in_array( $t->slug, array( 'interior', 'outer-wall' ), true ) ? 90 : 50 ),
+			                  'ord'  => $at !== false ? $at : 500,
 			                  'items' => array() );
 		}
 		$g[ $k ]['items'][] = array( $p->ID, get_the_title( $p ) . ( $p->post_status !== 'publish' ? '（下書き）' : '' ) );

@@ -27,6 +27,12 @@ require_once get_stylesheet_directory() . '/inc/functions-snippet.php';
 require_once get_stylesheet_directory() . '/inc/functions-partner.php';
 /* ダッシュボードの「抜粋」→「ディスクリプション」2026/11/03 */
 require_once get_stylesheet_directory() . '/inc/functions-excerpt-label.php';
+/* 文章のページ（こだわり・会社概要・代表挨拶・保証・流れ・よくある質問・プライバシー）を固定ページで直す 2026/11/03 */
+require_once get_stylesheet_directory() . '/inc/functions-editpages.php';
+/* 内装・改装（床・窓・断熱）：旧サイトの商品を下書きで足す 2026/11/03 */
+require_once get_stylesheet_directory() . '/inc/functions-interior.php';
+/* 商品の大分類をトップページのリフォームメニューと同じに 2026/11/03 */
+require_once get_stylesheet_directory() . '/inc/functions-productcats.php';
 /* ホームページ側にサンプル・下書き・非公開を出さない（2026/10/29） */
 require_once get_stylesheet_directory() . '/inc/functions-front-hide.php';
 require_once get_stylesheet_directory() . '/inc/functions-product.php';

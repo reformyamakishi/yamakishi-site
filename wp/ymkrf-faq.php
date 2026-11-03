@@ -182,12 +182,16 @@ get_header();
 <nav class="p-breadcrumb" aria-label="パンくずリスト">
   <ol class="p-breadcrumb__list">
     <li><a href="<?php echo esc_url( home_url( '/' ) ); ?>">ホーム</a></li>
-    <li>よくあるご質問</li>
+    <li><?php echo esc_html( function_exists( 'ymkrf_ep_crumb' ) ? ymkrf_ep_crumb( 'faq', 'よくあるご質問' ) : 'よくあるご質問' ); ?></li>
   </ol>
 </nav>
 
 <main id="main">
 
+<?php /* ★2026/11/03 ここから下（いちばん下のボタンの手前まで）は、ダッシュボード「固定ページ」→「よくあるご質問」で直せます。
+         固定ページが無い・公開していないときだけ、下のもとの中身を出します（控え）。inc/functions-editpages.php */
+$ymkrf_ep = function_exists( 'ymkrf_ep_page' ) ? ymkrf_ep_page( 'faq' ) : null;
+if ( $ymkrf_ep ) : ymkrf_ep_output( 'faq', $ymkrf_ep ); else : ?>
 <div class="p-pagehead">
   <div class="l-wrap p-pagehead__inner">
     <img class="p-pagehead__chara c-chara--float" src="<?php echo $asset; ?>/assets/img/character/char-hello.webp"
@@ -269,6 +273,8 @@ get_header();
   </div>
 </section>
 
+<?php endif; /* ここまで固定ページ（控え） */ ?>
+
 <!-- =========== CTA =========== -->
 <section class="l-section l-section--soft">
   <div class="l-wrap l-wrap--narrow">
@@ -295,7 +301,8 @@ get_header();
   </div>
 </section>
 
-<script type="application/ld+json"><?php echo wp_json_encode( $ld, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ); ?></script>
+<?php if ( $ymkrf_ep ) $ld = isset( $GLOBALS['ymkrf_ep_faq_ld'] ) ? $GLOBALS['ymkrf_ep_faq_ld'] : null; ?>
+<?php if ( $ld ) : ?><script type="application/ld+json"><?php echo wp_json_encode( $ld, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ); ?></script><?php endif; ?>
 
 </main>
 

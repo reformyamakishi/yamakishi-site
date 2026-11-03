@@ -24,12 +24,16 @@ get_header();
 <nav class="p-breadcrumb" aria-label="パンくずリスト">
   <ol class="p-breadcrumb__list">
     <li><a href="<?php echo esc_url( home_url( '/' ) ); ?>">ホーム</a></li>
-    <li>代表挨拶</li>
+    <li><?php echo esc_html( function_exists( 'ymkrf_ep_crumb' ) ? ymkrf_ep_crumb( 'message', '代表挨拶' ) : '代表挨拶' ); ?></li>
   </ol>
 </nav>
 
 <main id="main">
 
+<?php /* ★2026/11/03 ここから下（いちばん下のボタンの手前まで）は、ダッシュボード「固定ページ」→「代表挨拶」で直せます。
+         固定ページが無い・公開していないときだけ、下のもとの中身を出します（控え）。inc/functions-editpages.php */
+$ymkrf_ep = function_exists( 'ymkrf_ep_page' ) ? ymkrf_ep_page( 'message' ) : null;
+if ( $ymkrf_ep ) : ymkrf_ep_output( 'message', $ymkrf_ep ); else : ?>
 <div class="p-pagehead">
   <div class="l-wrap p-pagehead__inner">
     <span class="p-pagehead__en">MESSAGE</span>
@@ -137,6 +141,8 @@ get_header();
 
   </div>
 </section>
+
+<?php endif; /* ここまで固定ページ（控え） */ ?>
 
 <!-- =========== CTA =========== -->
 <section class="l-section l-section--soft">

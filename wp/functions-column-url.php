@@ -440,3 +440,46 @@ add_action( 'add_meta_boxes_ymkrf_column', function () {
 	remove_meta_box( 'revisionsdiv', 'ymkrf_column', 'normal' );
 	remove_meta_box( 'revisionsdiv', 'ymkrf_column', 'side' );
 }, 99 );
+
+/* コラムの編集画面の「コラムを編集」の左に ← （一覧へもどる）を置きます
+   （2026/11/03 ユーザー「コラム1つ前のページを編集したいので、商品ページみたいに、コラムの編集の左横に戻るボタンつくって」）
+   ・見た目は商品の編集画面の ← と同じ（濃いグレーの丸）
+   ・もどり先は、さっきまで見ていたコラム一覧（ページ送り・しぼりこみもそのまま）。
+     わからないときは、コラム一覧のはじめのページ */
+add_action( 'admin_footer', function () {
+	$sc = get_current_screen();
+	if ( ! $sc || $sc->post_type !== 'ymkrf_column' ) return;
+
+	/* 一覧を開いたら、そのURLをおぼえておきます（このブラウザのタブの中だけ） */
+	if ( $sc->base === 'edit' ) {
+		echo '<script>try{sessionStorage.setItem("ymkrfColList",location.href);}catch(e){}</script>';
+		return;
+	}
+	if ( $sc->base !== 'post' ) return;
+	$all = admin_url( 'edit.php?post_type=ymkrf_column' );
+	?>
+	<style>
+	  .ymkrf-back{
+	    display:inline-flex;align-items:center;justify-content:center;
+	    width:36px;height:36px;margin-right:12px;border-radius:50%;
+	    background:#3c434a;color:#fff;text-decoration:none;
+	    vertical-align:middle;line-height:0}
+	  .post-type-ymkrf_column .wp-heading-inline{vertical-align:middle}
+	  .post-type-ymkrf_column .page-title-action{vertical-align:middle;top:0}
+	  .ymkrf-back svg{display:block}
+	  .ymkrf-back:hover,.ymkrf-back:focus{background:#1d2327;color:#fff}
+	</style>
+	<script>
+	jQuery(function ($) {
+	  var $h = $('.wrap > .wp-heading-inline').first();
+	  if (!$h.length || $('.ymkrf-back').length) return;
+	  var url = <?php echo wp_json_encode( $all ); ?>;
+	  try { var s = sessionStorage.getItem('ymkrfColList'); if (s && s.indexOf('post_type=ymkrf_column') > -1) url = s; } catch (e) {}
+	  $h.before(
+	    $('<a class="ymkrf-back"></a>').html('<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M19 12H6"/><path d="M11 5 4 12l7 7"/></svg>')
+	      .attr('href', url).attr('title', 'コラムの一覧へもどる').attr('aria-label', 'コラムの一覧へもどる')
+	  );
+	});
+	</script>
+	<?php
+} );
