@@ -2603,3 +2603,71 @@ body.term-pack4 .p-cat__card:hover .p-cat__cardlink{
   .p-prd__catpic{ width:96px; }
   .p-prd__catttl{ font-size:17px; }
 }
+
+/* ============================================================
+   内装・改装（床・窓・断熱）のページ（2026/11/03 作りなおし）
+   ユーザー「シンプルで見やすくお洒落にして」
+   ・まとまりごとに見出し（小さな英字＋題名）、カードは白地に細い線
+   ・6帖／8帖などは1枚のカードの料金表にまとめる
+   ============================================================ */
+.p-int__lead{ text-align:center; font-size:14.5px; line-height:1.9; color:var(--ink-sub); margin:0 0 22px; }
+.p-int__lead strong{ color:var(--brand-dark); }
+
+.p-int__nav{ display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:0 0 44px; }
+.p-int__nav a{
+  display:inline-block; padding:9px 18px; border:1px solid var(--border); border-radius:999px;
+  background:#fff; color:var(--ink); font-size:14px; font-weight:800; text-decoration:none; line-height:1.4;
+}
+.p-int__nav a::after{ content:"↓"; margin-left:6px; color:var(--brand); font-size:12px; }
+.p-int__nav a:hover{ border-color:var(--brand); color:var(--brand-dark); }
+
+.p-int{ margin:0 0 56px; scroll-margin-top:90px; }
+.p-int__ttl{
+  display:flex; flex-direction:column; gap:2px; margin:0 0 20px; padding:0 0 12px;
+  border-bottom:1px solid var(--border); font-size:clamp(20px,4.6vw,24px); font-weight:900; line-height:1.4;
+}
+.p-int__en{ font-size:11.5px; font-weight:800; letter-spacing:.2em; color:var(--brand); }
+
+.p-int__list{ display:grid; gap:20px; }
+@media (min-width:760px){ .p-int__list{ grid-template-columns:repeat(2,1fr); } }
+
+.p-int__card{
+  display:flex; flex-direction:column; background:#fff; border:1px solid #ececec; border-radius:16px;
+  overflow:hidden; box-shadow:0 1px 2px rgba(0,0,0,.03);
+}
+.p-int__media{ background:#f6f4f2; }
+.p-int__media--photo{ aspect-ratio:4/3; }
+.p-int__media--photo img{ display:block; width:100%; height:100%; object-fit:cover; }
+.p-int__media .p-compare{ border-radius:0; }
+.p-int__batext{ margin:0; padding:8px 16px; font-size:12.5px; color:var(--ink-sub); background:#fff; }
+
+.p-int__body{ display:flex; flex-direction:column; gap:12px; padding:18px 18px 20px; flex:1; }
+.p-int__name{ margin:0; font-size:18px; font-weight:900; line-height:1.45; }
+.p-int__tags{ display:flex; flex-wrap:wrap; gap:6px; margin:0; }
+.p-int__tag{
+  display:inline-block; padding:3px 10px; border-radius:999px; background:var(--bg-soft,#faf7f5);
+  font-size:12px; font-weight:800; color:var(--ink-sub); line-height:1.6;
+}
+.p-int__tag--days{ background:var(--brand-tint,#fff1ec); color:var(--brand-dark); }
+.p-int__desc{ font-size:14px; line-height:1.85; color:#444; }
+.p-int__desc p{ margin:0 0 .5em; }
+.p-int__desc p:last-child{ margin-bottom:0; }
+
+.p-int__spec{ font-size:13.5px; line-height:1.7; }
+.p-int__specttl{ margin:0 0 4px; font-size:12px; font-weight:800; color:var(--ink-sub); letter-spacing:.05em; }
+.p-int__spec ul{ margin:0; padding:0; list-style:none; display:flex; flex-wrap:wrap; gap:4px 14px; }
+.p-int__spec li{ position:relative; padding-left:14px; }
+.p-int__spec li::before{
+  content:""; position:absolute; left:0; top:.62em; width:7px; height:7px; border-radius:50%; background:var(--brand);
+}
+
+.p-int__price{ width:100%; margin-top:auto; border-collapse:collapse; border-top:1px solid #f0eeec; }
+.p-int__price th, .p-int__price td{ padding:10px 2px; border-bottom:1px solid #f0eeec; vertical-align:baseline; }
+.p-int__price th{ text-align:left; font-size:14px; font-weight:800; color:var(--ink); white-space:nowrap; padding-right:12px; }
+.p-int__price td{ text-align:right; white-space:nowrap; }
+.p-int__price b{ font-size:22px; font-weight:900; color:var(--brand-dark); letter-spacing:.01em; }
+.p-int__price td span{ font-size:12px; font-weight:700; color:var(--ink-sub); margin-left:2px; }
+.p-int__price .p-int__ask{ font-size:13px; color:var(--ink-sub); }
+.p-int__list{ align-items:start; }
+.p-int__card--text{ border-top:3px solid var(--brand); }
+.p-int__draft{ display:inline-block; margin-left:6px; padding:1px 6px; border-radius:4px; background:#fff3c4; color:#7a5b00; font-size:10.5px; font-weight:800; vertical-align:middle; }
