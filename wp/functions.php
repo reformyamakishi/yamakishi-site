@@ -94,6 +94,8 @@ require_once get_stylesheet_directory() . '/inc/functions-media-dupe.php';
 require_once get_stylesheet_directory() . '/inc/functions-media-seoname.php';
 /* 写真の保存先（フォルダ）を、入れるときにえらぶ・あとから引っ越す（2026/10/23） */
 require_once get_stylesheet_directory() . '/inc/functions-media-dest.php';
+/* 商品の登録画面の「写真をえらぶ窓」で、この商品・同じ大分類の写真にしぼり込む（2026/11/04） */
+require_once get_stylesheet_directory() . '/inc/functions-media-pick.php';
 require_once get_stylesheet_directory() . '/inc/functions-voice-status.php';
 /* 「勝手に非公開になる」原因がわかったので、調べもの用の読み込みはやめました
    （2026/09/17）。inc/functions-voice-debug.php は、もう使いません。消してかまいません。
