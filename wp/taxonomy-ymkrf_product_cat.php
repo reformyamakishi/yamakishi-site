@@ -868,91 +868,117 @@ if ( ! empty( $pn['items'] ) ) :
          「キャッチコピー」欄に入れた言葉（床リフォーム／部屋リフォーム）で
          まとまりに分けています。 */
 
+      /* 内装・改装（renovation）のページには、クロス・床（interior）の「床リフォーム」の商品も、上に出します
+         （2026/11/05 ユーザー「内装改装はこの内容に変えて」＋チラシ：床リフォーム／部屋リフォーム）
+         商品の分類は変えません（クロス・床のまま）。このページにも「床リフォーム」として並べるだけです。
+         どの商品を出すかは、商品の「まとまり（見出し）」欄が「床リフォーム」かどうかで決めます。 */
+      $ymkrf_pk_posts = $q->posts;
+      if ( $slug === 'renovation' ) {
+        $ymkrf_ft = get_term_by( 'slug', 'interior', 'ymkrf_product_cat' );
+        if ( $ymkrf_ft && ! is_wp_error( $ymkrf_ft ) ) {
+          $ymkrf_fq = new WP_Query( array(
+            'post_type'      => 'ymkrf_product',
+            'posts_per_page' => -1,
+            'no_found_rows'  => true,
+            'tax_query'      => array( array( 'taxonomy' => 'ymkrf_product_cat', 'field' => 'term_id', 'terms' => $ymkrf_ft->term_id ) ),
+            'ymkrf_sort'     => 'price',
+          ) );
+          $ymkrf_floor = array_values( array_filter( $ymkrf_fq->posts, function ( $p ) {
+            return trim( (string) get_post_meta( $p->ID, '_ymkrf_catch', true ) ) === '床リフォーム';
+          } ) );
+          if ( $ymkrf_floor ) $ymkrf_pk_posts = array_merge( $ymkrf_floor, $ymkrf_pk_posts );
+        }
+      }
+
+      /* 「まとまり（見出し）」欄に入れた言葉（床リフォーム／部屋リフォーム）で分けます */
       $ymkrf_ig = array();
-      foreach ( $q->posts as $ip ) {
+      foreach ( $ymkrf_pk_posts as $ip ) {
         $g = trim( (string) get_post_meta( $ip->ID, '_ymkrf_catch', true ) );
         if ( $g === '' ) $g = 'パック料金';
         if ( ! isset( $ymkrf_ig[ $g ] ) ) $ymkrf_ig[ $g ] = array();
         $ymkrf_ig[ $g ][] = $ip;
       }
+
+      /* 6帖と8帖は、同じ工事で値段がちがうだけなので、1枚のカードにまとめます
+         （2026/11/05 ユーザー「6畳と8畳はかかくだけ違うだけだしもっと見やすくして」）
+         商品名の（　）の前が同じ商品を1枚にして、（　）の中（6帖パック など）と値段を並べます。
+           例：畳 → フローリング（6帖パック）／畳 → フローリング（8帖パック）
+               → カード「畳 → フローリング」に「6帖パック 19.8万円〜」「8帖パック 23.8万円〜」
+         写真と工事の中身は、入っているほうの商品のものを使います。 */
+      $ymkrf_pk_base = function ( $t ) { return trim( preg_replace( '/\s*[（(][^（）()]*[）)]\s*$/u', '', $t ) ); };
+      $ymkrf_pk_size = function ( $t ) { return preg_match( '/[（(]([^（）()]*)[）)]\s*$/u', $t, $m ) ? trim( $m[1] ) : ''; };
+      $ymkrf_pk_total = function ( $id ) {
+        $v = (int) get_post_meta( $id, '_ymkrf_total', true );
+        if ( ! $v ) $v = (int) get_post_meta( $id, '_ymkrf_work', true ) + (int) get_post_meta( $id, '_ymkrf_item', true );
+        return $v;
+      };
+      $ymkrf_pk_man = function ( $v ) { return $v ? rtrim( rtrim( number_format( $v / 10000, 1, '.', '' ), '0' ), '.' ) : ''; };
       ?>
 
       <p class="p-cat__listlead">
         価格はすべて<strong>材料費・工事費まで込み</strong>の税込表示です。
       </p>
 
-      <?php foreach ( $ymkrf_ig as $gname => $gposts ) : ?>
+      <?php foreach ( $ymkrf_ig as $gname => $gposts ) :
+        /* 同じ工事ごとに、まとめなおします（並びは、はじめに出てきた順） */
+        $ymkrf_sets = array();
+        foreach ( $gposts as $ip ) {
+          $k = $ymkrf_pk_base( get_the_title( $ip->ID ) );
+          if ( ! isset( $ymkrf_sets[ $k ] ) ) $ymkrf_sets[ $k ] = array();
+          $ymkrf_sets[ $k ][] = $ip;
+        }
+      ?>
         <div class="p-pack">
           <h3 class="p-pack__ttl"><?php echo esc_html( $gname ); ?></h3>
 
-          <div class="p-pack__list">
-            <?php foreach ( $gposts as $ip ) :
+          <?php /* 横長のカード（左に写真、右に説明と値段）を1段に1枚（2026/11/05 ユーザー「種類がまだ少ないので、フロントでの見せ方を変えた方が良い」→「横長カード」） */ ?>
+          <div class="p-pack__list p-pack__list--wide">
+            <?php foreach ( $ymkrf_sets as $ibasename => $iset ) :
 
-              $itotal = (int) get_post_meta( $ip->ID, '_ymkrf_total', true );
-              if ( ! $itotal ) {
-                $itotal = (int) get_post_meta( $ip->ID, '_ymkrf_work', true )
-                        + (int) get_post_meta( $ip->ID, '_ymkrf_item', true );
+              /* 値段の行（6帖 → 8帖 のように、安い順。値段が空のものは出しません） */
+              $iprices = array();
+              foreach ( $iset as $sp_post ) {
+                $v = $ymkrf_pk_total( $sp_post->ID );
+                if ( ! $v ) continue;
+                $iprices[] = array( 'label' => $ymkrf_pk_size( get_the_title( $sp_post->ID ) ), 'v' => $v );
               }
-              $ispec = get_post_meta( $ip->ID, '_ymkrf_speclist', true );
-              $iman  = $itotal ? rtrim( rtrim( number_format( $itotal / 10000, 1, '.', '' ), '0' ), '.' ) : '';
+              usort( $iprices, function ( $a, $b ) { return $a['v'] - $b['v']; } );
 
               /* Before / After の写真
                  （2026/09/17 ユーザー指示
                    「施工事例みたいに、BeforeとAfterにするので、写真入れる箇所作って」）
-                 商品の編集ページ「Before / After の写真」に入れた行を読みます。
-                 入っていないときは、これまでどおりアイキャッチを出します。 */
-              $iba     = get_post_meta( $ip->ID, '_ymkrf_ba', true );
+                 6帖と8帖で共有します（2026/11/03 ユーザー「Before＆Afterのイメージは共有してほしい」）。
+                 まとめた商品のうち、写真が入っている最初の商品のものを使います。
+                 Before/After が無いときは、アイキャッチを出します。 */
               $ibarows = array();
-              if ( is_array( $iba ) ) {
-                foreach ( $iba as $ibr ) {
-                  if ( ! is_array( $ibr ) ) continue;
-                  $bid = isset( $ibr['before'] ) ? (int) $ibr['before'] : 0;
-                  $aid = isset( $ibr['after'] )  ? (int) $ibr['after']  : 0;
-                  if ( ! $bid && ! $aid ) continue;
-                  $ibarows[] = array(
-                    'before' => $bid,
-                    'after'  => $aid,
-                    'text'   => isset( $ibr['text'] ) ? trim( (string) $ibr['text'] ) : '',
-                  );
-                }
-              }
-
-              /* 6帖と8帖は同じ工事なので、写真（Before/After・アイキャッチ）を共有します
-                 （2026/11/03 ユーザー指示「6畳と8畳おなじ内容だからBefore＆Afterのイメージは共有してほしい」「値段が違うだけ」）
-                 この商品に写真が無いときは、商品名の（　）の前が同じ商品（例：畳 → フローリング（6帖パック））の写真を使います。 */
-              $ithumb = has_post_thumbnail( $ip->ID ) ? (int) get_post_thumbnail_id( $ip->ID ) : 0;
-              if ( ! $ibarows && ! $ithumb ) {
-                $ibase = preg_replace( '/\s*[（(][^（）()]*[）)]\s*$/u', '', get_the_title( $ip->ID ) );
-                foreach ( $q->posts as $isib ) {
-                  if ( $isib->ID === $ip->ID ) continue;
-                  if ( preg_replace( '/\s*[（(][^（）()]*[）)]\s*$/u', '', get_the_title( $isib->ID ) ) !== $ibase ) continue;
-                  $sba = get_post_meta( $isib->ID, '_ymkrf_ba', true );
-                  if ( is_array( $sba ) ) {
-                    foreach ( $sba as $ibr ) {
-                      if ( ! is_array( $ibr ) ) continue;
-                      $bid = isset( $ibr['before'] ) ? (int) $ibr['before'] : 0;
-                      $aid = isset( $ibr['after'] )  ? (int) $ibr['after']  : 0;
-                      if ( ! $bid && ! $aid ) continue;
-                      $ibarows[] = array( 'before' => $bid, 'after' => $aid,
-                        'text' => isset( $ibr['text'] ) ? trim( (string) $ibr['text'] ) : '' );
-                    }
+              $ithumb  = 0;
+              foreach ( $iset as $sp_post ) {
+                $iba = get_post_meta( $sp_post->ID, '_ymkrf_ba', true );
+                if ( is_array( $iba ) ) {
+                  foreach ( $iba as $ibr ) {
+                    if ( ! is_array( $ibr ) ) continue;
+                    $bid = isset( $ibr['before'] ) ? (int) $ibr['before'] : 0;
+                    $aid = isset( $ibr['after'] )  ? (int) $ibr['after']  : 0;
+                    if ( ! $bid && ! $aid ) continue;
+                    $ibarows[] = array( 'before' => $bid, 'after' => $aid,
+                      'text' => isset( $ibr['text'] ) ? trim( (string) $ibr['text'] ) : '' );
                   }
-                  if ( ! $ibarows && has_post_thumbnail( $isib->ID ) ) $ithumb = (int) get_post_thumbnail_id( $isib->ID );
-                  if ( $ibarows || $ithumb ) break;
+                }
+                if ( $ibarows ) break;
+              }
+              if ( ! $ibarows ) {
+                foreach ( $iset as $sp_post ) {
+                  if ( has_post_thumbnail( $sp_post->ID ) ) { $ithumb = (int) get_post_thumbnail_id( $sp_post->ID ); break; }
                 }
               }
 
-              /* 「工事の中身」も同じく、空のときは（　）の前が同じ商品のものを使います（値段がちがうだけのため） */
-              $ispec_has = false;
-              if ( is_array( $ispec ) ) foreach ( $ispec as $sp ) { if ( isset( $sp['body'] ) && trim( (string) $sp['body'] ) !== '' ) { $ispec_has = true; break; } }
-              if ( ! $ispec_has ) {
-                $ibase2 = preg_replace( '/\s*[（(][^（）()]*[）)]\s*$/u', '', get_the_title( $ip->ID ) );
-                foreach ( $q->posts as $isib ) {
-                  if ( $isib->ID === $ip->ID ) continue;
-                  if ( preg_replace( '/\s*[（(][^（）()]*[）)]\s*$/u', '', get_the_title( $isib->ID ) ) !== $ibase2 ) continue;
-                  $sspec = get_post_meta( $isib->ID, '_ymkrf_speclist', true );
-                  if ( is_array( $sspec ) && $sspec ) { $ispec = $sspec; break; }
-                }
+              /* 工事の中身も、入っている最初の商品のもの */
+              $ispec = array();
+              foreach ( $iset as $sp_post ) {
+                $s = get_post_meta( $sp_post->ID, '_ymkrf_speclist', true );
+                $has = false;
+                if ( is_array( $s ) ) foreach ( $s as $sp ) { if ( isset( $sp['body'] ) && trim( (string) $sp['body'] ) !== '' ) { $has = true; break; } }
+                if ( $has ) { $ispec = $s; break; }
               }
             ?>
               <div class="p-pack__item">
@@ -964,7 +990,7 @@ if ( ! empty( $pn['items'] ) ) :
                       /* 施工事例と同じ、左右に動かして見くらべるスライダーです
                          （2026/09/17 ユーザー指示「施工事例みたいに写真をスライドさせてほしい」） */
                       $ibhtml = function_exists( 'ymkrf_product_compare' )
-                        ? ymkrf_product_compare( $ibr['before'], $ibr['after'], get_the_title( $ip->ID ) )
+                        ? ymkrf_product_compare( $ibr['before'], $ibr['after'], $ibasename )
                         : '';
                       if ( $ibhtml === '' ) continue;
                       echo $ibhtml;
@@ -973,12 +999,14 @@ if ( ! empty( $pn['items'] ) ) :
                         <p class="p-pack__batext"><?php echo esc_html( $ibr['text'] ); ?></p>
                       <?php endif; ?>
                     <?php endforeach; ?>
+                    <?php /* 2026/11/05 ユーザー「Before&Afterの写真の箇所に、それぞれ小さく ※写真はイメージです って入れておいて」 */ ?>
+                    <p class="p-pack__banote">※写真はイメージです</p>
                   </div>
                 <?php else : ?>
                   <div class="p-pack__photo">
                     <?php if ( $ithumb ) : ?>
                       <?php echo wp_get_attachment_image( $ithumb, 'medium_large', false, array(
-                        'alt' => esc_attr( get_the_title( $ip->ID ) ),
+                        'alt' => esc_attr( $ibasename ),
                         'loading' => 'lazy', 'decoding' => 'async',
                       ) ); ?>
                     <?php else : ?>
@@ -988,7 +1016,7 @@ if ( ! empty( $pn['items'] ) ) :
                 <?php endif; ?>
 
                 <div class="p-pack__body">
-                  <h4 class="p-pack__name"><?php echo esc_html( get_the_title( $ip->ID ) ); ?></h4>
+                  <h4 class="p-pack__name"><?php echo esc_html( $ibasename ); ?></h4>
                   <?php if ( is_array( $ispec ) ) : foreach ( $ispec as $sp ) :
                     $sbody = isset( $sp['body'] ) ? trim( (string) $sp['body'] ) : '';
                     if ( $sbody === '' ) continue; ?>
@@ -1001,12 +1029,18 @@ if ( ! empty( $pn['items'] ) ) :
                   <?php endforeach; endif; ?>
                 </div>
 
-                <?php if ( $iman !== '' ) : ?>
-                  <p class="p-pack__price">
-                    <span class="p-pack__komi">工事費込</span>
-                    <span class="p-pack__num"><?php echo esc_html( $iman ); ?></span>万円<span class="p-pack__kara">〜</span>
-                    <small class="p-pack__tax">（税込）</small>
-                  </p>
+                <?php if ( $iprices ) : ?>
+                  <div class="p-pack__prices">
+                    <p class="p-pack__pricehead"><span class="p-pack__komi">工事費込</span><small class="p-pack__tax">（税込）</small></p>
+                    <ul class="p-pack__rows">
+                      <?php foreach ( $iprices as $ipr ) : ?>
+                        <li class="p-pack__row">
+                          <?php if ( $ipr['label'] !== '' ) : ?><span class="p-pack__size"><?php echo esc_html( $ipr['label'] ); ?></span><?php endif; ?>
+                          <span class="p-pack__yen"><span class="p-pack__num"><?php echo esc_html( $ymkrf_pk_man( $ipr['v'] ) ); ?></span>万円<span class="p-pack__kara">〜</span></span>
+                        </li>
+                      <?php endforeach; ?>
+                    </ul>
+                  </div>
                 <?php endif; ?>
               </div>
             <?php endforeach; ?>

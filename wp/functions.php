@@ -96,6 +96,8 @@ require_once get_stylesheet_directory() . '/inc/functions-media-seoname.php';
 require_once get_stylesheet_directory() . '/inc/functions-media-dest.php';
 /* 商品の登録画面の「写真をえらぶ窓」で、この商品・同じ大分類の写真にしぼり込む（2026/11/04） */
 require_once get_stylesheet_directory() . '/inc/functions-media-pick.php';
+/* クロス・床／内装・改装／窓・断熱 の商品一覧（ダッシュボード）を見やすく（2026/11/05） */
+require_once get_stylesheet_directory() . '/inc/functions-pack-list.php';
 require_once get_stylesheet_directory() . '/inc/functions-voice-status.php';
 /* 「勝手に非公開になる」原因がわかったので、調べもの用の読み込みはやめました
    （2026/09/17）。inc/functions-voice-debug.php は、もう使いません。消してかまいません。

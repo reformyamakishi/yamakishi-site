@@ -6824,6 +6824,50 @@ function ymkrf_product_ba_ar( $att_id ) {
 }
 
 /**
+ * 写真の左右に白い帯があるとき、写真の部分がどこからどこまでか（左端・右端の割合 0〜1）。
+ * たて長の写真を、白い帯をつけて横長にした画像（施工事例 2112-0074 の After など）のためです。
+ * 小さいサイズの画像で1回だけ調べて、写真のメディア情報（_ymkrf_side_bounds）に覚えておきます。
+ * （2026/11/05 ユーザー「洋室リフレッシュの写真、Afterの写真、スペースの左端にもってきて」）
+ */
+function ymkrf_product_ba_bounds( $att_id ) {
+	$att_id = (int) $att_id;
+	$file   = (string) get_attached_file( $att_id );
+	if ( $file === '' || ! is_file( $file ) ) return array( 0.0, 1.0 );
+	$mt = (string) filemtime( $file );
+	$c  = get_post_meta( $att_id, '_ymkrf_side_bounds', true );
+	if ( is_array( $c ) && isset( $c['mt'], $c['l'], $c['r'] ) && $c['mt'] === $mt ) return array( (float) $c['l'], (float) $c['r'] );
+
+	$l = 0.0; $r = 1.0;
+	if ( function_exists( 'imagecreatefromstring' ) ) {
+		$path = $file;
+		$m = wp_get_attachment_metadata( $att_id );
+		if ( is_array( $m ) && ! empty( $m['sizes']['medium']['file'] ) ) {
+			$small = trailingslashit( dirname( $file ) ) . $m['sizes']['medium']['file'];
+			if ( is_file( $small ) ) $path = $small;
+		}
+		$im = @imagecreatefromstring( (string) file_get_contents( $path ) );
+		if ( $im ) {
+			$w = imagesx( $im ); $h = imagesy( $im );
+			$white = function ( $x ) use ( $im, $h ) {
+				$n = 0; $all = 0;
+				for ( $y = 0; $y < $h; $y += 4 ) {
+					$all++;
+					$rgb = imagecolorat( $im, $x, $y );
+					if ( ( ( $rgb >> 16 ) & 255 ) > 240 && ( ( $rgb >> 8 ) & 255 ) > 240 && ( $rgb & 255 ) > 240 ) $n++;
+				}
+				return $all && $n / $all > 0.97;
+			};
+			$a = 0;      while ( $a < $w && $white( $a ) ) $a++;
+			$b = $w - 1; while ( $b > $a && $white( $b ) ) $b--;
+			if ( $w > 0 && $b > $a ) { $l = $a / $w; $r = ( $b + 1 ) / $w; }
+			imagedestroy( $im );
+		}
+	}
+	update_post_meta( $att_id, '_ymkrf_side_bounds', array( 'mt' => $mt, 'l' => round( $l, 4 ), 'r' => round( $r, 4 ) ) );
+	return array( $l, $r );
+}
+
+/**
  * Before / After を、左右に動かして見くらべる形にします。
  * 片方しか無いときは、ふつうの写真1枚として出します。
  *
@@ -6842,10 +6886,11 @@ function ymkrf_product_compare( $before_id, $after_id, $name = '' ) {
 		return trim( $name ) !== '' ? $name . 'の' . $jp . 'のようす' : $jp . 'のようす';
 	};
 
-	$img = function ( $id, $which ) use ( $alt ) {
+	$img = function ( $id, $which, $style = '' ) use ( $alt ) {
 		$url = wp_get_attachment_image_url( (int) $id, 'large' );
 		if ( ! $url ) return '';
 		return '<img src="' . esc_url( $url ) . '" alt="' . esc_attr( $alt( $which ) ) . '"'
+		     . ( $style !== '' ? ' style="' . esc_attr( $style ) . '"' : '' )
 		     . ' loading="lazy" decoding="async">';
 	};
 
@@ -6863,7 +6908,16 @@ function ymkrf_product_compare( $before_id, $after_id, $name = '' ) {
 
 	$h  = '<div class="p-compare" data-compare style="--pos:50%;--cmp-ar:' . esc_attr( round( $ar, 3 ) ) . '">';
 	$h .= '<div class="p-compare__layer p-compare__layer--before">' . $img( $before_id, 'before' ) . '</div>';
-	$h .= '<div class="p-compare__layer p-compare__layer--after">'  . $img( $after_id,  'after'  ) . '</div>';
+	/* After の写真の左右に白い帯があるときは、写真の部分を、まん中（スライダーのつまみの位置）から右へ寄せます。
+	   はじめに見たとき、右半分に After の写真がまるごと見えるようにするためです（2026/11/05） */
+	$ashift = '';
+	list( $al, $arr ) = ymkrf_product_ba_bounds( $after_id );
+	if ( $al > 0.08 && $arr < 0.92 ) {
+		$mv = min( 0.5 - $al, 1 - $arr );
+		if ( $mv > 0.01 ) $ashift = 'transform:translateX(' . round( $mv * 100, 1 ) . '%)';
+	}
+	$h .= '<div class="p-compare__layer p-compare__layer--after"' . ( $ashift !== '' ? ' style="background:#fff"' : '' ) . '>'
+	    . $img( $after_id,  'after', $ashift ) . '</div>';
 	$h .= '<span class="p-compare__tag p-compare__tag--before">BEFORE</span>';
 	$h .= '<span class="p-compare__tag p-compare__tag--after">AFTER</span>';
 	$h .= '<span class="p-compare__handle"></span>';
